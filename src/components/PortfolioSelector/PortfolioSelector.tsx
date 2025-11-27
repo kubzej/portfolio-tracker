@@ -6,7 +6,7 @@ import './PortfolioSelector.css';
 
 interface PortfolioSelectorProps {
   selectedPortfolioId: string | null;
-  onPortfolioChange: (portfolioId: string | null) => void;
+  onPortfolioChange: (portfolioId: string | null, portfolio: Portfolio | null) => void;
   showAllOption?: boolean;
 }
 
@@ -35,9 +35,9 @@ export function PortfolioSelector({
       if (selectedPortfolioId === null && data.length > 0) {
         const defaultPortfolio = data.find((p) => p.is_default);
         if (defaultPortfolio) {
-          onPortfolioChange(defaultPortfolio.id);
+          onPortfolioChange(defaultPortfolio.id, defaultPortfolio);
         } else {
-          onPortfolioChange(data[0].id);
+          onPortfolioChange(data[0].id, data[0]);
         }
       }
     } catch (err) {
@@ -54,8 +54,19 @@ export function PortfolioSelector({
   };
 
   const handlePortfolioCreated = (portfolio: Portfolio) => {
-    onPortfolioChange(portfolio.id);
+    onPortfolioChange(portfolio.id, portfolio);
   };
+
+  const handleSelectChange = (value: string) => {
+    if (value === 'all') {
+      onPortfolioChange(null, null);
+    } else {
+      const portfolio = portfolios.find((p) => p.id === value) || null;
+      onPortfolioChange(value, portfolio);
+    }
+  };
+
+  const selectedPortfolio = portfolios.find((p) => p.id === selectedPortfolioId);
 
   if (loading) {
     return <div className="portfolio-selector loading">Loading...</div>;
@@ -70,9 +81,7 @@ export function PortfolioSelector({
       <div className="portfolio-selector">
         <select
           value={selectedPortfolioId ?? 'all'}
-          onChange={(e) =>
-            onPortfolioChange(e.target.value === 'all' ? null : e.target.value)
-          }
+          onChange={(e) => handleSelectChange(e.target.value)}
           className="portfolio-select"
         >
           {showAllOption && <option value="all">All Portfolios</option>}
@@ -84,13 +93,11 @@ export function PortfolioSelector({
           ))}
         </select>
         <div className="portfolio-indicator">
-          {selectedPortfolioId && (
+          {selectedPortfolio && (
             <span
               className="portfolio-color"
               style={{
-                backgroundColor:
-                  portfolios.find((p) => p.id === selectedPortfolioId)?.color ??
-                  '#6366f1',
+                backgroundColor: selectedPortfolio.color ?? '#6366f1',
               }}
             />
           )}

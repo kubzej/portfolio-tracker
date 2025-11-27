@@ -6,6 +6,7 @@ import { StocksList } from './components/StocksList';
 import { StockDetail } from './components/StockDetail';
 import { PortfolioSelector } from './components/PortfolioSelector';
 import { refreshAllPrices } from './services/api';
+import type { Portfolio } from './types/database';
 import './App.css';
 
 type View =
@@ -19,6 +20,9 @@ function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [selectedStockId, setSelectedStockId] = useState<string | null>(null);
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | null>(
+    null
+  );
+  const [selectedPortfolio, setSelectedPortfolio] = useState<Portfolio | null>(
     null
   );
   const [refreshKey, setRefreshKey] = useState(0);
@@ -61,11 +65,27 @@ function App() {
     }
   };
 
+  const portfolioColor = selectedPortfolio?.color ?? '#94a3b8';
+  const headerTitle = selectedPortfolio 
+    ? selectedPortfolio.name 
+    : 'All Portfolios';
+
   return (
     <div className="app">
-      <header className="app-header">
+      <header 
+        className="app-header"
+        style={{
+          '--portfolio-color': portfolioColor,
+        } as React.CSSProperties}
+      >
+        <div className="portfolio-color-bar" />
         <div className="header-top">
-          <h1>Portfolio Tracker</h1>
+          <div className="header-title">
+            <h1>{headerTitle}</h1>
+            {selectedPortfolio && (
+              <span className="header-subtitle">Portfolio Tracker</span>
+            )}
+          </div>
           <div className="header-actions">
             <button
               className="refresh-prices-btn"
@@ -77,8 +97,9 @@ function App() {
             </button>
             <PortfolioSelector
               selectedPortfolioId={selectedPortfolioId}
-              onPortfolioChange={(id) => {
+              onPortfolioChange={(id, portfolio) => {
                 setSelectedPortfolioId(id);
+                setSelectedPortfolio(portfolio);
                 setRefreshKey((k) => k + 1);
               }}
               showAllOption={
@@ -105,16 +126,16 @@ function App() {
             Stocks
           </button>
           <button
-            className={currentView === 'add-stock' ? 'active' : ''}
+            className={`add-action ${currentView === 'add-stock' ? 'active' : ''}`}
             onClick={() => setCurrentView('add-stock')}
           >
-            + Stock
+            + Add Stock
           </button>
           <button
-            className={currentView === 'add-transaction' ? 'active' : ''}
+            className={`add-action ${currentView === 'add-transaction' ? 'active' : ''}`}
             onClick={() => setCurrentView('add-transaction')}
           >
-            + Transaction
+            + Add Transaction
           </button>
         </nav>
       </header>
