@@ -4,6 +4,7 @@ import { StockForm } from './components/StockForm';
 import { TransactionForm } from './components/TransactionForm';
 import { StocksList } from './components/StocksList';
 import { StockDetail } from './components/StockDetail';
+import { PortfolioSelector } from './components/PortfolioSelector';
 import './App.css';
 
 type View =
@@ -16,6 +17,9 @@ type View =
 function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [selectedStockId, setSelectedStockId] = useState<string | null>(null);
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | null>(
+    null
+  );
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleSuccess = () => {
@@ -42,7 +46,19 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Portfolio Tracker</h1>
+        <div className="header-top">
+          <h1>Portfolio Tracker</h1>
+          <PortfolioSelector
+            selectedPortfolioId={selectedPortfolioId}
+            onPortfolioChange={(id) => {
+              setSelectedPortfolioId(id);
+              setRefreshKey((k) => k + 1);
+            }}
+            showAllOption={
+              currentView === 'dashboard' || currentView === 'stocks'
+            }
+          />
+        </div>
         <nav className="app-nav">
           <button
             className={currentView === 'dashboard' ? 'active' : ''}
@@ -77,7 +93,11 @@ function App() {
 
       <main className="app-main">
         {currentView === 'dashboard' && (
-          <Dashboard key={refreshKey} onStockClick={handleStockClick} />
+          <Dashboard
+            key={`${refreshKey}-${selectedPortfolioId}`}
+            portfolioId={selectedPortfolioId}
+            onStockClick={handleStockClick}
+          />
         )}
         {currentView === 'stocks' && (
           <StocksList
@@ -89,6 +109,7 @@ function App() {
         {currentView === 'stock-detail' && selectedStockId && (
           <StockDetail
             stockId={selectedStockId}
+            portfolioId={selectedPortfolioId}
             onBack={handleBackFromStock}
             onDeleted={handleStockDeleted}
           />
@@ -101,6 +122,7 @@ function App() {
         )}
         {currentView === 'add-transaction' && (
           <TransactionForm
+            portfolioId={selectedPortfolioId}
             onSuccess={handleSuccess}
             onCancel={() => setCurrentView('dashboard')}
           />

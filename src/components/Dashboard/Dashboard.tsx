@@ -19,10 +19,11 @@ type SortKey =
 type SortDirection = 'asc' | 'desc';
 
 interface DashboardProps {
+  portfolioId?: string | null;
   onStockClick?: (stockId: string) => void;
 }
 
-export function Dashboard({ onStockClick }: DashboardProps) {
+export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
   const [holdings, setHoldings] = useState<PortfolioSummary[]>([]);
   const [totals, setTotals] = useState<PortfolioTotals | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,14 +34,14 @@ export function Dashboard({ onStockClick }: DashboardProps) {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [portfolioId]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       const [holdingsData, totalsData] = await Promise.all([
-        holdingsApi.getPortfolioSummary(),
-        holdingsApi.getPortfolioTotals(),
+        holdingsApi.getPortfolioSummary(portfolioId ?? undefined),
+        holdingsApi.getPortfolioTotals(portfolioId ?? undefined),
       ]);
       setHoldings(holdingsData);
       setTotals(totalsData);

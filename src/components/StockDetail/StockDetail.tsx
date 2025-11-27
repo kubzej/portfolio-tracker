@@ -12,11 +12,17 @@ import './StockDetail.css';
 
 interface StockDetailProps {
   stockId: string;
+  portfolioId?: string | null;
   onBack: () => void;
   onDeleted: () => void;
 }
 
-export function StockDetail({ stockId, onBack, onDeleted }: StockDetailProps) {
+export function StockDetail({
+  stockId,
+  portfolioId,
+  onBack,
+  onDeleted,
+}: StockDetailProps) {
   const [stock, setStock] = useState<StockWithSector | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [sectors, setSectors] = useState<Sector[]>([]);
@@ -38,14 +44,14 @@ export function StockDetail({ stockId, onBack, onDeleted }: StockDetailProps) {
 
   useEffect(() => {
     loadData();
-  }, [stockId]);
+  }, [stockId, portfolioId]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       const [stockData, transactionsData, sectorsData] = await Promise.all([
         stocksApi.getById(stockId),
-        transactionsApi.getByStockId(stockId),
+        transactionsApi.getByStockId(stockId, portfolioId ?? undefined),
         sectorsApi.getAll(),
       ]);
       setStock(stockData);
@@ -112,10 +118,15 @@ export function StockDetail({ stockId, onBack, onDeleted }: StockDetailProps) {
   };
 
   const handleAddTransaction = async () => {
+    if (!portfolioId) {
+      setError('Please select a portfolio to add transactions');
+      return;
+    }
     try {
       await transactionsApi.create({
         ...(transactionForm as CreateTransactionInput),
         stock_id: stockId,
+        portfolio_id: portfolioId,
       });
       setAddingTransaction(false);
       setTransactionForm({});

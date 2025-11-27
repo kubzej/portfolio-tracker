@@ -1,29 +1,34 @@
 import { useState, useEffect } from 'react';
-import { stocksApi, transactionsApi } from '@/services/api';
+import { stocksApi, transactionsApi, portfoliosApi } from '@/services/api';
 import type {
   Stock,
+  Portfolio,
   CreateTransactionInput,
   TransactionType,
 } from '@/types/database';
 import './TransactionForm.css';
 
 interface TransactionFormProps {
+  portfolioId?: string | null;
   preselectedStockId?: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
 export function TransactionForm({
+  portfolioId,
   preselectedStockId,
   onSuccess,
   onCancel,
 }: TransactionFormProps) {
   const [stocks, setStocks] = useState<Stock[]>([]);
+  const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<CreateTransactionInput>({
     stock_id: preselectedStockId || '',
+    portfolio_id: portfolioId || '',
     date: new Date().toISOString().split('T')[0],
     type: 'BUY',
     quantity: 0,
@@ -35,7 +40,7 @@ export function TransactionForm({
   });
 
   useEffect(() => {
-    loadStocks();
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -44,21 +49,33 @@ export function TransactionForm({
     }
   }, [preselectedStockId]);
 
-  const loadStocks = async () => {
+  useEffect(() => {
+    if (portfolioId) {
+      setFormData((prev) => ({ ...prev, portfolio_id: portfolioId }));
+    }
+  }, [portfolioId]);
+
+  const loadData = async () => {
     try {
-      const data = await stocksApi.getAll();
-      setStocks(data);
+      const [stocksData, portfoliosData] = await Promise.all([
+        stocksApi.getAll(),
+        portfoliosApi.getAll(),
+      ]);
+      setStocks(stocksData);
+      setPortfolios(portfoliosData);
 
       // If we have stocks and no preselected one, select the first and use its currency
-      if (data.length > 0 && !preselectedStockId) {
+      if (stocksData.length > 0 && !preselectedStockId) {
         setFormData((prev) => ({
           ...prev,
-          stock_id: data[0].id,
-          currency: data[0].currency || 'USD',
+          stock_id: prev.stock_id || stocksData[0].id,
+          currency: stocksData[0].currency || 'USD',
         }));
       } else if (preselectedStockId) {
         // If preselected, find that stock and use its currency
-        const selectedStock = data.find((s) => s.id === preselectedStockId);
+        const selectedStock = stocksData.find(
+          (s) => s.id === preselectedStockId
+        );
         if (selectedStock) {
           setFormData((prev) => ({
             ...prev,
@@ -66,8 +83,18 @@ export function TransactionForm({
           }));
         }
       }
+
+      // Set default portfolio if none provided
+      if (!portfolioId && portfoliosData.length > 0) {
+        const defaultPortfolio = portfoliosData.find((p) => p.is_default);
+        setFormData((prev) => ({
+          ...prev,
+          portfolio_id:
+            prev.portfolio_id || (defaultPortfolio?.id ?? portfoliosData[0].id),
+        }));
+      }
     } catch (err) {
-      console.error('Failed to load stocks:', err);
+      console.error('Failed to load data:', err);
     }
   };
 
@@ -168,6 +195,25 @@ export function TransactionForm({
 
       <div className="form-row">
         <div className="form-group">
+          <label htmlFor="portfolio_id">Portfolio *</label>
+          <select
+            id="portfolio_id"
+            name="portfolio_id"
+            value={formData.portfolio_id}
+            onChange={handleChange}
+            required
+            disabled={!!portfolioId}
+          >
+            <option value="">Select portfolio...</option>
+            {portfolios.map((portfolio) => (
+              <option key={portfolio.id} value={portfolio.id}>
+                {portfolio.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-group">
           <label htmlFor="stock_id">Stock *</label>
           <select
             id="stock_id"
@@ -184,7 +230,9 @@ export function TransactionForm({
             ))}
           </select>
         </div>
+      </div>
 
+      <div className="form-row">
         <div className="form-group">
           <label htmlFor="date">Date *</label>
           <input

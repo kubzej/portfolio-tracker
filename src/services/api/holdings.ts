@@ -8,22 +8,32 @@ import type {
 
 export const holdingsApi = {
   /**
-   * Get all current holdings (from view)
+   * Get all current holdings (from view), optionally filtered by portfolio
    */
-  async getAll(): Promise<Holding[]> {
-    const { data, error } = await supabase.from('holdings').select('*');
+  async getAll(portfolioId?: string): Promise<Holding[]> {
+    let query = supabase.from('holdings').select('*');
+
+    if (portfolioId) {
+      query = query.eq('portfolio_id', portfolioId);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
     return data || [];
   },
 
   /**
-   * Get portfolio summary with current prices (from view)
+   * Get portfolio summary with current prices (from view), optionally filtered by portfolio
    */
-  async getPortfolioSummary(): Promise<PortfolioSummary[]> {
-    const { data, error } = await supabase
-      .from('portfolio_summary')
-      .select('*');
+  async getPortfolioSummary(portfolioId?: string): Promise<PortfolioSummary[]> {
+    let query = supabase.from('portfolio_summary').select('*');
+
+    if (portfolioId) {
+      query = query.eq('portfolio_id', portfolioId);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
     return data || [];
@@ -71,10 +81,10 @@ export const holdingsApi = {
   },
 
   /**
-   * Calculate portfolio totals
+   * Calculate portfolio totals (optionally filtered by portfolio)
    */
-  async getPortfolioTotals(): Promise<PortfolioTotals> {
-    const summary = await this.getPortfolioSummary();
+  async getPortfolioTotals(portfolioId?: string): Promise<PortfolioTotals> {
+    const summary = await this.getPortfolioSummary(portfolioId);
 
     const totalInvestedCzk = summary.reduce(
       (sum, item) => sum + (item.total_invested_czk || 0),
@@ -118,7 +128,7 @@ export const holdingsApi = {
       .sort((a, b) => b.value - a.value);
 
     // Get realized gains from holdings
-    const holdings = await this.getAll();
+    const holdings = await this.getAll(portfolioId);
     const totalRealizedGains = holdings.reduce(
       (sum, h) => sum + (h.realized_gains || 0),
       0

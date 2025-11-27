@@ -8,10 +8,10 @@ import type {
 
 export const transactionsApi = {
   /**
-   * Get all transactions with stock info
+   * Get all transactions with stock info (optionally filtered by portfolio)
    */
-  async getAll(): Promise<TransactionWithStock[]> {
-    const { data, error } = await supabase
+  async getAll(portfolioId?: string): Promise<TransactionWithStock[]> {
+    let query = supabase
       .from('transactions')
       .select(
         `
@@ -21,19 +21,34 @@ export const transactionsApi = {
       )
       .order('date', { ascending: false });
 
+    if (portfolioId) {
+      query = query.eq('portfolio_id', portfolioId);
+    }
+
+    const { data, error } = await query;
+
     if (error) throw error;
     return data || [];
   },
 
   /**
-   * Get transactions for a specific stock
+   * Get transactions for a specific stock (optionally filtered by portfolio)
    */
-  async getByStockId(stockId: string): Promise<Transaction[]> {
-    const { data, error } = await supabase
+  async getByStockId(
+    stockId: string,
+    portfolioId?: string
+  ): Promise<Transaction[]> {
+    let query = supabase
       .from('transactions')
       .select('*')
       .eq('stock_id', stockId)
       .order('date', { ascending: false });
+
+    if (portfolioId) {
+      query = query.eq('portfolio_id', portfolioId);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
     return data || [];
@@ -66,6 +81,7 @@ export const transactionsApi = {
       .from('transactions')
       .insert({
         stock_id: input.stock_id,
+        portfolio_id: input.portfolio_id,
         date: input.date,
         type: input.type,
         quantity: input.quantity,

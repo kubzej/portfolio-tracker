@@ -1,4 +1,4 @@
-export * from './portfolio';
+export * from './portfolios';
 export * from './sectors';
 export * from './stocks';
 export * from './transactions';

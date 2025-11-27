@@ -3,6 +3,17 @@
 
 export type TransactionType = 'BUY' | 'SELL';
 
+// Portfolio
+export interface Portfolio {
+  id: string;
+  name: string;
+  description: string | null;
+  color: string;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // Sector (lookup table)
 export interface Sector {
   id: string;
@@ -33,6 +44,7 @@ export interface StockWithSector extends Stock {
 export interface Transaction {
   id: string;
   stock_id: string;
+  portfolio_id: string;
   date: string; // ISO date string YYYY-MM-DD
   type: TransactionType;
   quantity: number;
@@ -65,6 +77,7 @@ export interface CurrentPrice {
 
 // Holdings view (calculated from transactions)
 export interface Holding {
+  portfolio_id: string;
   stock_id: string;
   ticker: string;
   stock_name: string;
@@ -86,6 +99,7 @@ export interface Holding {
 
 // Portfolio summary view (holdings + current prices)
 export interface PortfolioSummary {
+  portfolio_id: string;
   stock_id: string;
   ticker: string;
   stock_name: string;
@@ -133,6 +147,7 @@ export interface UpdateStockInput {
 
 export interface CreateTransactionInput {
   stock_id: string;
+  portfolio_id: string;
   date: string;
   type: TransactionType;
   quantity: number;
@@ -159,6 +174,20 @@ export interface UpdateCurrentPriceInput {
   price: number;
   currency?: string;
   exchange_rate_to_czk?: number;
+}
+
+export interface CreatePortfolioInput {
+  name: string;
+  description?: string;
+  color?: string;
+  is_default?: boolean;
+}
+
+export interface UpdatePortfolioInput {
+  name?: string;
+  description?: string | null;
+  color?: string;
+  is_default?: boolean;
 }
 
 // ==========================================

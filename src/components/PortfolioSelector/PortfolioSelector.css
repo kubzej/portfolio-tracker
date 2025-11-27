@@ -1,0 +1,78 @@
+.portfolio-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.portfolio-selector.loading,
+.portfolio-selector.error {
+  font-size: 0.875rem;
+  color: #888;
+  padding: 0.5rem;
+}
+
+.portfolio-selector.error {
+  color: #ef4444;
+}
+
+.portfolio-select {
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid #333;
+  border-radius: 0.375rem;
+  background-color: #1a1a2e;
+  color: #e2e8f0;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  min-width: 160px;
+}
+
+.portfolio-select:hover {
+  border-color: #6366f1;
+}
+
+.portfolio-select:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.portfolio-indicator {
+  display: flex;
+  align-items: center;
+}
+
+.portfolio-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.portfolio-manage-btn {
+  background: transparent;
+  border: 1px solid #333;
+  border-radius: 0.375rem;
+  color: #888;
+  font-size: 1rem;
+  padding: 0.375rem 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.portfolio-manage-btn:hover {
+  border-color: #6366f1;
+  color: #fff;
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+  .portfolio-select {
+    min-width: 120px;
+    font-size: 0.8125rem;
+    padding: 0.375rem 1.75rem 0.375rem 0.5rem;
+  }
+}
