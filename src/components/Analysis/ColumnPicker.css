@@ -505,14 +505,151 @@
   .picker-dropdown {
     width: 100%;
     max-width: calc(100vw - 32px);
+    max-height: 70vh;
   }
   
   .category-tabs {
-    width: 120px;
+    width: 100px;
   }
   
   .category-tab {
-    font-size: 12px;
+    font-size: 11px;
+    padding: 8px 8px;
+  }
+
+  .category-tab .count {
+    font-size: 10px;
+  }
+
+  .indicator-item {
     padding: 8px 10px;
+  }
+
+  .indicator-name {
+    font-size: 13px;
+  }
+
+  .indicator-desc {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .column-picker-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .picker-trigger {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .save-view-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .picker-dropdown {
+    position: fixed;
+    top: 10%;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-height: 80vh;
+    border-radius: 16px;
+  }
+
+  .picker-content {
+    flex-direction: column;
+  }
+
+  .category-tabs {
+    width: 100%;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-light);
+    padding: 8px;
+    gap: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .category-tab {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    border-radius: 6px;
+    flex-direction: row;
+    gap: 4px;
+  }
+
+  .category-tab .count {
+    display: none;
+  }
+
+  .indicator-list {
+    max-height: 300px;
+  }
+
+  .selected-columns {
+    flex-wrap: wrap;
+  }
+
+  .selected-column-tag {
+    font-size: 11px;
+    padding: 4px 4px 4px 6px;
+  }
+
+  .selected-column-tag .remove-btn {
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+  }
+
+  .views-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .views-list {
+    width: 100%;
+  }
+
+  .view-chip {
+    flex: 1;
+  }
+
+  .view-chip-name {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .picker-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .reset-btn,
+  .done-btn {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .save-dialog {
+    margin: 16px;
+    min-width: auto;
+    width: calc(100% - 32px);
+  }
+
+  .dialog-actions {
+    flex-direction: column;
+  }
+
+  .dialog-actions button {
+    width: 100%;
+    padding: 12px;
   }
 }

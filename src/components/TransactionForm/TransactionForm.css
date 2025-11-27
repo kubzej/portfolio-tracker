@@ -208,3 +208,63 @@
   color: var(--text-primary);
   background: var(--bg-tertiary);
 }
+
+/* Mobile Responsive */
+@media (max-width: 640px) {
+  .transaction-form {
+    padding: 1.25rem;
+    margin: 0;
+    border-radius: var(--radius-md);
+  }
+
+  .transaction-form h3 {
+    font-size: 1.125rem;
+  }
+
+  .type-toggle {
+    gap: 0.375rem;
+  }
+
+  .type-btn {
+    padding: 0.75rem 0.875rem;
+    font-size: 0.875rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .btn-primary,
+  .form-actions .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .total-czk {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .transaction-form {
+    padding: 1rem;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 1rem; /* Prevents zoom on iOS */
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .type-btn {
+    padding: 0.625rem 0.5rem;
+    font-size: 0.8125rem;
+  }
+}

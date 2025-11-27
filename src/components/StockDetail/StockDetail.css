@@ -539,3 +539,120 @@
   border-radius: var(--radius-sm);
   cursor: pointer;
 }
+
+/* Mobile Responsive Enhancements */
+@media (max-width: 640px) {
+  .stock-detail-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-actions {
+    justify-content: flex-end;
+  }
+
+  .back-btn {
+    align-self: flex-start;
+  }
+
+  .stock-info-card {
+    padding: 1rem;
+  }
+
+  .stock-title .ticker {
+    font-size: 1.375rem;
+  }
+
+  .stock-title .name {
+    font-size: 0.875rem;
+  }
+
+  .stock-meta {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .transactions-section {
+    padding: 1rem;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .transaction-form-card {
+    padding: 1rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .stock-detail {
+    padding: 0;
+  }
+
+  .stock-info-card {
+    border-radius: var(--radius-md);
+  }
+
+  .transactions-section {
+    border-radius: var(--radius-md);
+  }
+
+  .stock-title .ticker {
+    font-size: 1.25rem;
+  }
+
+  .stock-meta {
+    gap: 0.625rem;
+  }
+
+  .meta-item .value {
+    font-size: 0.9375rem;
+  }
+
+  .summary-card {
+    padding: 1rem;
+  }
+
+  .summary-card .value {
+    font-size: 1.125rem;
+  }
+
+  .transaction-card-body {
+    gap: 0.5rem;
+  }
+
+  .header-actions {
+    width: 100%;
+    gap: 0.375rem;
+  }
+
+  .header-actions button {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .stock-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .transaction-card-body {
+    grid-template-columns: 1fr;
+  }
+}
