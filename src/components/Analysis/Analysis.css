@@ -3068,3 +3068,302 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ADX - Average Directional Index Section */
+.adx-section {
+  margin-top: 2rem;
+}
+
+.adx-values {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.adx-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.adx-stat .label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.adx-stat .value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.adx-stat .value.plus-di {
+  color: #22c55e;
+}
+
+.adx-stat .value.minus-di {
+  color: #ef4444;
+}
+
+.adx-stat .value.adx-strong,
+.adx-stat .value.strength-strong {
+  color: #8b5cf6;
+}
+
+.adx-stat .value.adx-moderate,
+.adx-stat .value.strength-moderate {
+  color: #3b82f6;
+}
+
+.adx-stat .value.adx-weak,
+.adx-stat .value.strength-weak {
+  color: #f59e0b;
+}
+
+.adx-stat .value.adx-no-trend,
+.adx-stat .value.strength-no-trend {
+  color: var(--text-secondary);
+}
+
+.adx-signal-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.adx-signal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.adx-signal.strong {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+.adx-signal.moderate {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.adx-signal.weak {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.adx-signal.no-trend {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.adx-direction {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.adx-direction.bullish {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.adx-direction.bearish {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.adx-direction.neutral {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+/* Fibonacci Retracement Section */
+.fibonacci-section {
+  margin-top: 2rem;
+}
+
+.fibonacci-visual {
+  position: relative;
+  margin: 1.5rem 0;
+}
+
+.fib-price-bar {
+  position: relative;
+  background: linear-gradient(to bottom, 
+    rgba(34, 197, 94, 0.1) 0%,
+    rgba(34, 197, 94, 0.05) 23.6%,
+    rgba(59, 130, 246, 0.1) 38.2%,
+    rgba(139, 92, 246, 0.1) 50%,
+    rgba(245, 158, 11, 0.1) 61.8%,
+    rgba(239, 68, 68, 0.05) 78.6%,
+    rgba(239, 68, 68, 0.1) 100%
+  );
+  border-radius: var(--radius-md);
+  padding: 0.5rem;
+  min-height: 300px;
+}
+
+.fib-level {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px dashed var(--border-color);
+  font-size: 0.875rem;
+}
+
+.fib-level:last-of-type {
+  border-bottom: none;
+}
+
+.fib-label {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.fib-price {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.fib-level.level-0 .fib-label { color: #22c55e; }
+.fib-level.level-236 .fib-label { color: #22c55e; }
+.fib-level.level-382 .fib-label { color: #3b82f6; }
+.fib-level.level-500 .fib-label { color: #8b5cf6; }
+.fib-level.level-618 .fib-label { color: #f59e0b; }
+.fib-level.level-786 .fib-label { color: #ef4444; }
+.fib-level.level-100 .fib-label { color: #ef4444; }
+
+.fib-current-price {
+  position: absolute;
+  right: -10px;
+  transform: translateY(-50%);
+  background: #3b82f6;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.fib-current-price::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-right-color: #3b82f6;
+}
+
+.fibonacci-info {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.fib-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.fib-stat .label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.fib-stat .value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.fib-stat .value.trend-uptrend {
+  color: #22c55e;
+}
+
+.fib-stat .value.trend-downtrend {
+  color: #ef4444;
+}
+
+.fib-stat .value.highlight {
+  color: #3b82f6;
+}
+
+.fibonacci-signal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.fib-tip {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.fib-tip.bullish {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.fib-tip.bearish {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.fib-current-level-tip {
+  padding: 0.75rem 1rem;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+@media (max-width: 600px) {
+  .adx-values {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .fibonacci-info {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .fib-current-price {
+    right: 5px;
+    font-size: 0.65rem;
+    padding: 0.2rem 0.5rem;
+  }
+}

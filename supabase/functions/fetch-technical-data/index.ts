@@ -53,6 +53,26 @@ interface TechnicalData {
   obv: number | null; // Current OBV value
   obvTrend: 'bullish' | 'bearish' | 'neutral' | null; // OBV trend
   obvDivergence: 'bullish' | 'bearish' | null; // Divergence with price
+  // ADX (Average Directional Index)
+  adx: number | null; // ADX value (trend strength)
+  plusDI: number | null; // +DI (bullish directional indicator)
+  minusDI: number | null; // -DI (bearish directional indicator)
+  adxSignal: 'strong' | 'moderate' | 'weak' | 'no-trend' | null;
+  adxTrend: 'bullish' | 'bearish' | 'neutral' | null; // Based on +DI vs -DI
+  // Fibonacci Retracement
+  fibonacciLevels: {
+    high: number;
+    low: number;
+    level0: number; // 0% (high)
+    level236: number; // 23.6%
+    level382: number; // 38.2%
+    level500: number; // 50%
+    level618: number; // 61.8%
+    level786: number; // 78.6%
+    level100: number; // 100% (low)
+    currentLevel: string | null; // Which level price is near
+    trend: 'uptrend' | 'downtrend'; // Direction of the move
+  } | null;
   // Historical data for charts
   historicalPrices: {
     date: string;
@@ -94,6 +114,12 @@ interface TechnicalData {
     date: string;
     obv: number;
     obvSma: number | null; // 20-day SMA of OBV for trend
+  }[];
+  adxHistory: {
+    date: string;
+    adx: number;
+    plusDI: number;
+    minusDI: number;
   }[];
   // Error tracking
   error?: string;
@@ -393,6 +419,12 @@ async function fetchTechnicalData(
     obv: null,
     obvTrend: null,
     obvDivergence: null,
+    adx: null,
+    plusDI: null,
+    minusDI: null,
+    adxSignal: null,
+    adxTrend: null,
+    fibonacciLevels: null,
     historicalPrices: [],
     sma50History: [],
     sma200History: [],
@@ -402,6 +434,7 @@ async function fetchTechnicalData(
     volumeHistory: [],
     atrHistory: [],
     obvHistory: [],
+    adxHistory: [],
   };
 
   try {
@@ -867,6 +900,204 @@ async function fetchTechnicalData(
       }
     }
 
+    // ============ ADX (Average Directional Index) Calculation ============
+    let adx: number | null = null;
+    let plusDI: number | null = null;
+    let minusDI: number | null = null;
+    let adxSignal: 'strong' | 'moderate' | 'weak' | 'no-trend' | null = null;
+    let adxTrend: 'bullish' | 'bearish' | 'neutral' | null = null;
+    const adxHistory: {
+      date: string;
+      adx: number;
+      plusDI: number;
+      minusDI: number;
+    }[] = [];
+
+    if (chronologicalHighs.length >= 28 && chronologicalLows.length >= 28) {
+      // Calculate True Range, +DM, -DM
+      const trValues: number[] = [];
+      const plusDMValues: number[] = [];
+      const minusDMValues: number[] = [];
+
+      for (let i = 1; i < chronologicalHighs.length; i++) {
+        const high = chronologicalHighs[i];
+        const low = chronologicalLows[i];
+        const prevHigh = chronologicalHighs[i - 1];
+        const prevLow = chronologicalLows[i - 1];
+        const prevClose = chronologicalCloses[i - 1];
+
+        // True Range
+        const tr = Math.max(
+          high - low,
+          Math.abs(high - prevClose),
+          Math.abs(low - prevClose)
+        );
+        trValues.push(tr);
+
+        // +DM and -DM
+        const upMove = high - prevHigh;
+        const downMove = prevLow - low;
+
+        if (upMove > downMove && upMove > 0) {
+          plusDMValues.push(upMove);
+        } else {
+          plusDMValues.push(0);
+        }
+
+        if (downMove > upMove && downMove > 0) {
+          minusDMValues.push(downMove);
+        } else {
+          minusDMValues.push(0);
+        }
+      }
+
+      // Calculate smoothed ATR14, +DI14, -DI14 using Wilder's smoothing
+      const period = 14;
+      if (trValues.length >= period) {
+        // Initial smoothed values (sum of first 14)
+        let smoothedTR = trValues.slice(0, period).reduce((a, b) => a + b, 0);
+        let smoothedPlusDM = plusDMValues
+          .slice(0, period)
+          .reduce((a, b) => a + b, 0);
+        let smoothedMinusDM = minusDMValues
+          .slice(0, period)
+          .reduce((a, b) => a + b, 0);
+
+        const dxValues: number[] = [];
+
+        for (let i = period; i < trValues.length; i++) {
+          // Wilder's smoothing
+          smoothedTR = smoothedTR - smoothedTR / period + trValues[i];
+          smoothedPlusDM =
+            smoothedPlusDM - smoothedPlusDM / period + plusDMValues[i];
+          smoothedMinusDM =
+            smoothedMinusDM - smoothedMinusDM / period + minusDMValues[i];
+
+          // Calculate +DI and -DI
+          const pDI = smoothedTR > 0 ? (smoothedPlusDM / smoothedTR) * 100 : 0;
+          const mDI = smoothedTR > 0 ? (smoothedMinusDM / smoothedTR) * 100 : 0;
+
+          // Calculate DX
+          const diSum = pDI + mDI;
+          const dx = diSum > 0 ? (Math.abs(pDI - mDI) / diSum) * 100 : 0;
+          dxValues.push(dx);
+
+          // Calculate ADX (14-period smoothed DX)
+          if (dxValues.length >= period) {
+            let adxValue: number;
+            if (dxValues.length === period) {
+              // First ADX is simple average
+              adxValue = dxValues.reduce((a, b) => a + b, 0) / period;
+            } else {
+              // Subsequent ADX uses Wilder's smoothing
+              const prevAdx = adxHistory[adxHistory.length - 1]?.adx || 0;
+              adxValue = (prevAdx * (period - 1) + dx) / period;
+            }
+
+            adxHistory.push({
+              date: chronologicalPrices[i + 1].date, // +1 because we started from index 1
+              adx: Math.round(adxValue * 100) / 100,
+              plusDI: Math.round(pDI * 100) / 100,
+              minusDI: Math.round(mDI * 100) / 100,
+            });
+          }
+        }
+
+        // Get current values
+        if (adxHistory.length > 0) {
+          const latest = adxHistory[adxHistory.length - 1];
+          adx = latest.adx;
+          plusDI = latest.plusDI;
+          minusDI = latest.minusDI;
+
+          // Determine trend strength signal
+          if (adx >= 40) {
+            adxSignal = 'strong';
+          } else if (adx >= 25) {
+            adxSignal = 'moderate';
+          } else if (adx >= 20) {
+            adxSignal = 'weak';
+          } else {
+            adxSignal = 'no-trend';
+          }
+
+          // Determine trend direction based on +DI vs -DI
+          if (plusDI > minusDI + 5) {
+            adxTrend = 'bullish';
+          } else if (minusDI > plusDI + 5) {
+            adxTrend = 'bearish';
+          } else {
+            adxTrend = 'neutral';
+          }
+        }
+      }
+    }
+
+    // ============ Fibonacci Retracement Calculation ============
+    let fibonacciLevels: TechnicalData['fibonacciLevels'] = null;
+
+    // Use last 50 trading days to find swing high/low
+    const lookbackDays = Math.min(50, chronologicalCloses.length);
+    if (lookbackDays >= 20) {
+      const recentCloses = chronologicalCloses.slice(-lookbackDays);
+      const recentHighs = chronologicalHighs.slice(-lookbackDays);
+      const recentLows = chronologicalLows.slice(-lookbackDays);
+
+      const periodHigh = Math.max(...recentHighs);
+      const periodLow = Math.min(...recentLows);
+      const range = periodHigh - periodLow;
+
+      if (range > 0) {
+        // Determine trend direction: is price closer to high or low?
+        const latestClose = chronologicalCloses[chronologicalCloses.length - 1];
+        const midPoint = (periodHigh + periodLow) / 2;
+        const isUptrend = latestClose >= midPoint;
+
+        // Calculate Fibonacci levels
+        // In uptrend: retracement from high
+        // In downtrend: retracement from low
+        const level0 = periodHigh;
+        const level100 = periodLow;
+        const level236 = periodHigh - range * 0.236;
+        const level382 = periodHigh - range * 0.382;
+        const level500 = periodHigh - range * 0.5;
+        const level618 = periodHigh - range * 0.618;
+        const level786 = periodHigh - range * 0.786;
+
+        // Determine which level price is near (within 2%)
+        let currentLevel: string | null = null;
+        const tolerance = range * 0.02;
+
+        if (Math.abs(latestClose - level0) <= tolerance) currentLevel = '0%';
+        else if (Math.abs(latestClose - level236) <= tolerance)
+          currentLevel = '23.6%';
+        else if (Math.abs(latestClose - level382) <= tolerance)
+          currentLevel = '38.2%';
+        else if (Math.abs(latestClose - level500) <= tolerance)
+          currentLevel = '50%';
+        else if (Math.abs(latestClose - level618) <= tolerance)
+          currentLevel = '61.8%';
+        else if (Math.abs(latestClose - level786) <= tolerance)
+          currentLevel = '78.6%';
+        else if (Math.abs(latestClose - level100) <= tolerance)
+          currentLevel = '100%';
+
+        fibonacciLevels = {
+          high: Math.round(periodHigh * 100) / 100,
+          low: Math.round(periodLow * 100) / 100,
+          level0: Math.round(level0 * 100) / 100,
+          level236: Math.round(level236 * 100) / 100,
+          level382: Math.round(level382 * 100) / 100,
+          level500: Math.round(level500 * 100) / 100,
+          level618: Math.round(level618 * 100) / 100,
+          level786: Math.round(level786 * 100) / 100,
+          level100: Math.round(level100 * 100) / 100,
+          currentLevel,
+          trend: isUptrend ? 'uptrend' : 'downtrend',
+        };
+      }
+    }
+
     return {
       ticker,
       stockName,
@@ -901,6 +1132,12 @@ async function fetchTechnicalData(
       obv,
       obvTrend,
       obvDivergence,
+      adx,
+      plusDI,
+      minusDI,
+      adxSignal,
+      adxTrend,
+      fibonacciLevels,
       // All in chronological order (oldest to newest)
       historicalPrices: chronologicalPrices,
       sma50History,
@@ -911,6 +1148,7 @@ async function fetchTechnicalData(
       volumeHistory,
       atrHistory,
       obvHistory,
+      adxHistory,
     };
   } catch (error) {
     console.error(`Error fetching technical data for ${ticker}:`, error);

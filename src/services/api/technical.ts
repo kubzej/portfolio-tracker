@@ -59,6 +59,29 @@ export interface OBVPoint {
   obvSma: number | null;
 }
 
+// ADX data point for charts
+export interface ADXPoint {
+  date: string;
+  adx: number;
+  plusDI: number;
+  minusDI: number;
+}
+
+// Fibonacci Retracement levels
+export interface FibonacciLevels {
+  high: number;
+  low: number;
+  level0: number; // 0% (high)
+  level236: number; // 23.6%
+  level382: number; // 38.2%
+  level500: number; // 50%
+  level618: number; // 61.8%
+  level786: number; // 78.6%
+  level100: number; // 100% (low)
+  currentLevel: string | null; // Which level price is near
+  trend: 'uptrend' | 'downtrend'; // Direction of the move
+}
+
 // Technical data for a single stock
 export interface TechnicalData {
   ticker: string;
@@ -101,6 +124,14 @@ export interface TechnicalData {
   obv: number | null;
   obvTrend: 'bullish' | 'bearish' | 'neutral' | null;
   obvDivergence: 'bullish' | 'bearish' | null;
+  // ADX (Average Directional Index)
+  adx: number | null;
+  plusDI: number | null;
+  minusDI: number | null;
+  adxSignal: 'strong' | 'moderate' | 'weak' | 'no-trend' | null;
+  adxTrend: 'bullish' | 'bearish' | 'neutral' | null;
+  // Fibonacci Retracement
+  fibonacciLevels: FibonacciLevels | null;
   // Historical data for charts
   historicalPrices: PricePoint[];
   sma50History: SMAPoint[];
@@ -111,6 +142,7 @@ export interface TechnicalData {
   volumeHistory: VolumePoint[];
   atrHistory: ATRPoint[];
   obvHistory: OBVPoint[];
+  adxHistory: ADXPoint[];
   // Error tracking
   error?: string;
 }

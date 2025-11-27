@@ -24,6 +24,8 @@ import type {
   VolumePoint,
   ATRPoint,
   OBVPoint,
+  ADXPoint,
+  FibonacciLevels,
 } from '@/services/api/technical';
 import { InfoTooltip } from '@/components/shared/InfoTooltip';
 
@@ -84,6 +86,14 @@ interface OBVChartPoint {
   displayDate: string;
   obv: number;
   obvSma: number | null;
+}
+
+interface ADXChartPoint {
+  date: string;
+  displayDate: string;
+  adx: number;
+  plusDI: number;
+  minusDI: number;
 }
 
 // Format date helper
@@ -166,6 +176,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
   const [volumeTimeRange, setVolumeTimeRange] = useState<TimeRange>('1M');
   const [atrTimeRange, setAtrTimeRange] = useState<TimeRange>('1M');
   const [obvTimeRange, setObvTimeRange] = useState<TimeRange>('3M');
+  const [adxTimeRange, setAdxTimeRange] = useState<TimeRange>('3M');
 
   // Get days for each chart using helper
   const priceDays = getDaysForRange(priceTimeRange);
@@ -175,6 +186,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
   const volumeDays = getDaysForRange(volumeTimeRange);
   const atrDays = getDaysForRange(atrTimeRange);
   const obvDays = getDaysForRange(obvTimeRange);
+  const adxDays = getDaysForRange(adxTimeRange);
 
   // Merge price and SMA data for the chart
   // All data from API is now in chronological order (oldest to newest)
@@ -332,6 +344,25 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
 
     return filterByDateRange(fullData, obvDays);
   }, [data, obvDays]);
+
+  // Build ADX chart data
+  const adxData = useMemo((): ADXChartPoint[] => {
+    const adxArr = data.adxHistory || [];
+
+    if (adxArr.length === 0) {
+      return [];
+    }
+
+    const fullData = adxArr.map((a: ADXPoint) => ({
+      date: a.date,
+      displayDate: formatDateStr(a.date),
+      adx: a.adx,
+      plusDI: a.plusDI,
+      minusDI: a.minusDI,
+    }));
+
+    return filterByDateRange(fullData, adxDays);
+  }, [data, adxDays]);
 
   // Format volume for display (e.g., 1.5M, 250K)
   const formatVolume = (value: number): string => {
@@ -1626,7 +1657,280 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
               )}
             </div>
 
-            {/* Section 11: What These Indicators Tell You */}
+            {/* Section 11: ADX - Average Directional Index */}
+            <div className="tech-section adx-section">
+              <div className="section-header">
+                <h4>📈 ADX (Average Directional Index)</h4>
+                <TimeRangeSelector
+                  value={adxTimeRange}
+                  onChange={setAdxTimeRange}
+                />
+                <InfoTooltip text="ADX měří SÍLU trendu (ne směr!). Hodnoty: pod 20 = slabý/žádný trend, 20-25 = trend se formuje, 25-40 = silný trend, nad 40 = velmi silný trend. +DI nad -DI = bullish trend, -DI nad +DI = bearish trend. Používejte ADX k rozhodnutí zda obchodovat trendy nebo range." />
+              </div>
+
+              {adxData.length > 0 && data.adx !== null ? (
+                <>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <ComposedChart data={adxData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                      <XAxis
+                        dataKey="displayDate"
+                        tick={{ fontSize: 11 }}
+                        interval="preserveStartEnd"
+                      />
+                      <YAxis tick={{ fontSize: 11 }} domain={[0, 60]} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          border: '1px solid #e0e0e0',
+                          borderRadius: '8px',
+                        }}
+                      />
+                      <Legend />
+                      <ReferenceLine
+                        y={20}
+                        stroke="#9ca3af"
+                        strokeDasharray="5 5"
+                        label={{ value: '20', position: 'right', fontSize: 10 }}
+                      />
+                      <ReferenceLine
+                        y={40}
+                        stroke="#9ca3af"
+                        strokeDasharray="5 5"
+                        label={{ value: '40', position: 'right', fontSize: 10 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="adx"
+                        stroke="#8b5cf6"
+                        strokeWidth={3}
+                        dot={false}
+                        name="ADX"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="plusDI"
+                        stroke="#22c55e"
+                        strokeWidth={2}
+                        dot={false}
+                        name="+DI"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="minusDI"
+                        stroke="#ef4444"
+                        strokeWidth={2}
+                        dot={false}
+                        name="-DI"
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+
+                  <div className="adx-values">
+                    <div className="adx-stat">
+                      <span className="label">ADX</span>
+                      <span
+                        className={`value adx-${data.adxSignal ?? 'no-trend'}`}
+                      >
+                        {data.adx?.toFixed(1) ?? 'N/A'}
+                      </span>
+                    </div>
+                    <div className="adx-stat">
+                      <span className="label">+DI</span>
+                      <span className="value plus-di">
+                        {data.plusDI?.toFixed(1) ?? 'N/A'}
+                      </span>
+                    </div>
+                    <div className="adx-stat">
+                      <span className="label">-DI</span>
+                      <span className="value minus-di">
+                        {data.minusDI?.toFixed(1) ?? 'N/A'}
+                      </span>
+                    </div>
+                    <div className="adx-stat">
+                      <span className="label">Trend Strength</span>
+                      <span
+                        className={`value strength-${
+                          data.adxSignal ?? 'no-trend'
+                        }`}
+                      >
+                        {data.adxSignal === 'strong' && '💪 Very Strong'}
+                        {data.adxSignal === 'moderate' && '📈 Strong'}
+                        {data.adxSignal === 'weak' && '〰️ Weak'}
+                        {data.adxSignal === 'no-trend' && '😴 No Trend'}
+                        {!data.adxSignal && 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="adx-signal-wrapper">
+                    <div
+                      className={`adx-signal ${data.adxSignal ?? 'no-trend'}`}
+                    >
+                      {data.adxSignal === 'strong' &&
+                        '💪 Velmi silný trend — momentum strategie fungují skvěle, následujte trend!'}
+                      {data.adxSignal === 'moderate' &&
+                        '📈 Silný trend — dobré podmínky pro trendové obchody.'}
+                      {data.adxSignal === 'weak' &&
+                        '〰️ Slabý trend — buďte opatrní, trend může brzy skončit.'}
+                      {data.adxSignal === 'no-trend' &&
+                        '😴 Žádný trend — trh je v range, vyhněte se trendovým strategiím.'}
+                      {!data.adxSignal && 'Nedostatek dat'}
+                    </div>
+                    {data.adxTrend && data.adxSignal !== 'no-trend' && (
+                      <div className={`adx-direction ${data.adxTrend}`}>
+                        {data.adxTrend === 'bullish' &&
+                          '🟢 +DI > -DI → Býci mají kontrolu, trend je rostoucí'}
+                        {data.adxTrend === 'bearish' &&
+                          '🔴 -DI > +DI → Medvědi mají kontrolu, trend je klesající'}
+                        {data.adxTrend === 'neutral' &&
+                          '➡️ +DI ≈ -DI → Nerozhodný boj mezi býky a medvědy'}
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="no-data-message">
+                  Insufficient data to display ADX Analysis
+                </div>
+              )}
+            </div>
+
+            {/* Section 12: Fibonacci Retracement */}
+            <div className="tech-section fibonacci-section">
+              <div className="section-header">
+                <h4>📐 Fibonacci Retracement</h4>
+                <InfoTooltip text="Fibonacci retracementy identifikují klíčové úrovně podpory/odporu na základě poměrů (23.6%, 38.2%, 50%, 61.8%, 78.6%). Tyto úrovně často fungují jako body obratu při korekcích. 38.2% a 61.8% jsou nejdůležitější úrovně. Pokud cena prorazí 61.8%, je pravděpodobný pokračující trend." />
+              </div>
+
+              {data.fibonacciLevels ? (
+                <>
+                  <div className="fibonacci-visual">
+                    <div className="fib-price-bar">
+                      <div className="fib-level level-0">
+                        <span className="fib-label">0% (High)</span>
+                        <span className="fib-price">
+                          ${data.fibonacciLevels.level0.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="fib-level level-236">
+                        <span className="fib-label">23.6%</span>
+                        <span className="fib-price">
+                          ${data.fibonacciLevels.level236.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="fib-level level-382">
+                        <span className="fib-label">38.2%</span>
+                        <span className="fib-price">
+                          ${data.fibonacciLevels.level382.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="fib-level level-500">
+                        <span className="fib-label">50%</span>
+                        <span className="fib-price">
+                          ${data.fibonacciLevels.level500.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="fib-level level-618">
+                        <span className="fib-label">61.8%</span>
+                        <span className="fib-price">
+                          ${data.fibonacciLevels.level618.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="fib-level level-786">
+                        <span className="fib-label">78.6%</span>
+                        <span className="fib-price">
+                          ${data.fibonacciLevels.level786.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="fib-level level-100">
+                        <span className="fib-label">100% (Low)</span>
+                        <span className="fib-price">
+                          ${data.fibonacciLevels.level100.toFixed(2)}
+                        </span>
+                      </div>
+                      {/* Current price indicator */}
+                      <div
+                        className="fib-current-price"
+                        style={{
+                          top: `${
+                            ((data.fibonacciLevels.high -
+                              (data.currentPrice || 0)) /
+                              (data.fibonacciLevels.high -
+                                data.fibonacciLevels.low)) *
+                            100
+                          }%`,
+                        }}
+                      >
+                        <span className="current-label">
+                          Current: ${data.currentPrice?.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="fibonacci-info">
+                    <div className="fib-stat">
+                      <span className="label">Period High</span>
+                      <span className="value">
+                        ${data.fibonacciLevels.high.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="fib-stat">
+                      <span className="label">Period Low</span>
+                      <span className="value">
+                        ${data.fibonacciLevels.low.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="fib-stat">
+                      <span className="label">Trend</span>
+                      <span
+                        className={`value trend-${data.fibonacciLevels.trend}`}
+                      >
+                        {data.fibonacciLevels.trend === 'uptrend'
+                          ? '📈 Uptrend'
+                          : '📉 Downtrend'}
+                      </span>
+                    </div>
+                    <div className="fib-stat">
+                      <span className="label">Near Level</span>
+                      <span className="value highlight">
+                        {data.fibonacciLevels.currentLevel || 'Between levels'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="fibonacci-signal">
+                    {data.fibonacciLevels.trend === 'uptrend' ? (
+                      <div className="fib-tip bullish">
+                        📈 <strong>Uptrend:</strong> Hledejte nákupní
+                        příležitosti při poklesech k 38.2% nebo 61.8% úrovním.
+                        Tyto úrovně často fungují jako support.
+                      </div>
+                    ) : (
+                      <div className="fib-tip bearish">
+                        📉 <strong>Downtrend:</strong> Úrovně mohou fungovat
+                        jako resistance při rally. Proražení 61.8% úrovně může
+                        signalizovat pokračování downtrendu.
+                      </div>
+                    )}
+                    {data.fibonacciLevels.currentLevel && (
+                      <div className="fib-current-level-tip">
+                        ⚡ Cena je blízko{' '}
+                        <strong>{data.fibonacciLevels.currentLevel}</strong>{' '}
+                        úrovně — sledujte reakci ceny na této úrovni!
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="no-data-message">
+                  Insufficient data to calculate Fibonacci levels
+                </div>
+              )}
+            </div>
+
+            {/* Section 13: What These Indicators Tell You */}
             <div className="tech-section tech-summary-section">
               <div className="section-header">
                 <h4>How to Use This Analysis</h4>
