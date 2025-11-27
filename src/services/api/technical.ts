@@ -6,6 +6,7 @@ export interface PricePoint {
   close: number;
   high: number;
   low: number;
+  volume: number;
 }
 
 // SMA data point for charts
@@ -37,6 +38,13 @@ export interface StochasticPoint {
   d: number;
 }
 
+// Volume data point for charts
+export interface VolumePoint {
+  date: string;
+  volume: number;
+  avgVolume: number | null;
+}
+
 // Technical data for a single stock
 export interface TechnicalData {
   ticker: string;
@@ -66,6 +74,11 @@ export interface TechnicalData {
   stochasticK: number | null;
   stochasticD: number | null;
   stochasticSignal: 'overbought' | 'oversold' | 'neutral' | null;
+  // Volume Analysis
+  currentVolume: number | null;
+  avgVolume20: number | null;
+  volumeChange: number | null;
+  volumeSignal: 'high' | 'low' | 'normal' | null;
   // Historical data for charts
   historicalPrices: PricePoint[];
   sma50History: SMAPoint[];
@@ -73,6 +86,7 @@ export interface TechnicalData {
   macdHistory: MACDPoint[];
   bollingerHistory: BollingerPoint[];
   stochasticHistory: StochasticPoint[];
+  volumeHistory: VolumePoint[];
   // Error tracking
   error?: string;
 }

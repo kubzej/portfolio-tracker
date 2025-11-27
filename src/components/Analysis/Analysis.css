@@ -102,6 +102,16 @@
   margin: 0 0 1.25rem 0;
 }
 
+.section-description.hint-highlight {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  display: inline-block;
+}
+
 /* Table */
 .analysis-table-wrapper {
   overflow-x: auto;
@@ -2621,6 +2631,122 @@
   color: var(--text-secondary);
 }
 
+/* Volume Analysis Section */
+.volume-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.volume-values {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.volume-value-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.vol-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.vol-val {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.vol-val.high {
+  color: var(--color-accent);
+}
+
+.vol-val.low {
+  color: var(--text-muted);
+}
+
+.volume-info-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.vol-info-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.vol-zone-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.vol-zone-label.high {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.vol-zone-label.normal {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.vol-zone-label.low {
+  background: rgba(var(--text-muted-rgb), 0.15);
+  color: var(--text-muted);
+}
+
+.vol-zone-meaning {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.volume-signal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.volume-signal.high {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.volume-signal.low {
+  background: rgba(var(--text-muted-rgb), 0.1);
+  color: var(--text-muted);
+}
+
+.volume-signal.normal {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
 /* No Data Message */
 .no-data-message {
   display: flex;
@@ -2653,6 +2779,14 @@
   }
 
   .stochastic-values {
+    grid-template-columns: 1fr;
+  }
+
+  .volume-values {
+    grid-template-columns: 1fr;
+  }
+
+  .volume-info-cards {
     grid-template-columns: 1fr;
   }
 }

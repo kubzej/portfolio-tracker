@@ -40,12 +40,18 @@ interface TechnicalData {
   stochasticK: number | null; // %K line (fast)
   stochasticD: number | null; // %D line (slow, SMA of %K)
   stochasticSignal: 'overbought' | 'oversold' | 'neutral' | null;
+  // Volume Analysis
+  currentVolume: number | null; // Latest trading volume
+  avgVolume20: number | null; // 20-day average volume
+  volumeChange: number | null; // % change vs average
+  volumeSignal: 'high' | 'low' | 'normal' | null;
   // Historical data for charts
   historicalPrices: {
     date: string;
     close: number;
     high: number;
     low: number;
+    volume: number;
   }[];
   sma50History: { date: string; value: number }[];
   sma200History: { date: string; value: number }[];
@@ -65,6 +71,11 @@ interface TechnicalData {
     date: string;
     k: number;
     d: number;
+  }[];
+  volumeHistory: {
+    date: string;
+    volume: number;
+    avgVolume: number | null;
   }[];
   // Error tracking
   error?: string;
@@ -300,12 +311,17 @@ async function fetchTechnicalData(
     stochasticK: null,
     stochasticD: null,
     stochasticSignal: null,
+    currentVolume: null,
+    avgVolume20: null,
+    volumeChange: null,
+    volumeSignal: null,
     historicalPrices: [],
     sma50History: [],
     sma200History: [],
     macdHistory: [],
     bollingerHistory: [],
     stochasticHistory: [],
+    volumeHistory: [],
   };
 
   try {
@@ -339,26 +355,31 @@ async function fetchTechnicalData(
       close: number;
       high: number;
       low: number;
+      volume: number;
     }[] = [];
     const closePrices: number[] = [];
     const highPrices: number[] = [];
     const lowPrices: number[] = [];
+    const volumes: number[] = [];
 
     for (let i = timestamps.length - 1; i >= 0; i--) {
       const close = quotes.close[i];
       const high = quotes.high[i];
       const low = quotes.low[i];
+      const volume = quotes.volume[i];
       if (
         close !== null &&
         close !== undefined &&
         high !== null &&
-        low !== null
+        low !== null &&
+        volume !== null
       ) {
         const date = new Date(timestamps[i] * 1000).toISOString().split('T')[0];
-        historicalPrices.push({ date, close, high, low });
+        historicalPrices.push({ date, close, high, low, volume });
         closePrices.push(close);
         highPrices.push(high);
         lowPrices.push(low);
+        volumes.push(volume);
       }
     }
 
@@ -399,6 +420,7 @@ async function fetchTechnicalData(
     const chronologicalCloses = chronologicalPrices.map((p) => p.close);
     const chronologicalHighs = chronologicalPrices.map((p) => p.high);
     const chronologicalLows = chronologicalPrices.map((p) => p.low);
+    const chronologicalVolumes = chronologicalPrices.map((p) => p.volume);
 
     // Calculate SMA histories in chronological order
     const sma50History: { date: string; value: number }[] = [];
@@ -571,6 +593,68 @@ async function fetchTechnicalData(
       }
     }
 
+    // Calculate Volume Analysis
+    let currentVolume: number | null = null;
+    let avgVolume20: number | null = null;
+    let volumeChange: number | null = null;
+    let volumeSignal: 'high' | 'low' | 'normal' | null = null;
+    const volumeHistory: {
+      date: string;
+      volume: number;
+      avgVolume: number | null;
+    }[] = [];
+
+    if (chronologicalVolumes.length > 0) {
+      // Current volume (most recent)
+      currentVolume = chronologicalVolumes[chronologicalVolumes.length - 1];
+
+      // Calculate 20-day average volume
+      if (chronologicalVolumes.length >= 20) {
+        let sum = 0;
+        for (
+          let i = chronologicalVolumes.length - 20;
+          i < chronologicalVolumes.length;
+          i++
+        ) {
+          sum += chronologicalVolumes[i];
+        }
+        avgVolume20 = Math.round(sum / 20);
+      }
+
+      // Calculate volume change vs average
+      if (avgVolume20 !== null && avgVolume20 > 0) {
+        volumeChange = Math.round(
+          ((currentVolume - avgVolume20) / avgVolume20) * 100
+        );
+
+        // Determine signal
+        if (volumeChange > 50) {
+          volumeSignal = 'high'; // 50% above average
+        } else if (volumeChange < -50) {
+          volumeSignal = 'low'; // 50% below average
+        } else {
+          volumeSignal = 'normal';
+        }
+      }
+
+      // Build volume history with moving average
+      for (let i = 0; i < chronologicalVolumes.length; i++) {
+        let avg: number | null = null;
+        if (i >= 19) {
+          let sum = 0;
+          for (let j = i - 19; j <= i; j++) {
+            sum += chronologicalVolumes[j];
+          }
+          avg = Math.round(sum / 20);
+        }
+        volumeHistory.push({
+          date: chronologicalPrices[i].date,
+          volume: chronologicalVolumes[i],
+          avgVolume: avg,
+        });
+      }
+    }
+
     return {
       ticker,
       stockName,
@@ -595,6 +679,10 @@ async function fetchTechnicalData(
       stochasticK,
       stochasticD,
       stochasticSignal,
+      currentVolume,
+      avgVolume20,
+      volumeChange,
+      volumeSignal,
       // All in chronological order (oldest to newest)
       historicalPrices: chronologicalPrices,
       sma50History,
@@ -602,6 +690,7 @@ async function fetchTechnicalData(
       macdHistory,
       bollingerHistory,
       stochasticHistory,
+      volumeHistory,
     };
   } catch (error) {
     console.error(`Error fetching technical data for ${ticker}:`, error);

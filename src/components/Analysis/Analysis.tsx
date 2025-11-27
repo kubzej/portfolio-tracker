@@ -106,10 +106,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
       if (result.data && result.data.length > 0) {
         setTechnicalData(result.data);
-        // Select first stock by default
-        if (!selectedTechnicalStock) {
-          setSelectedTechnicalStock(result.data[0].ticker);
-        }
+        // Don't auto-select - let user click to open detail
       }
     } catch (err) {
       console.error('Failed to load technical data:', err);
@@ -1328,9 +1325,8 @@ export function Analysis({ portfolioId }: AnalysisProps) {
         <>
           <section className="analysis-section">
             <h3>Price Analysis</h3>
-            <p className="section-description">
-              52-week ranges and price position. Click on a stock row to view
-              detailed technical chart with moving averages and RSI.
+            <p className="section-description hint-highlight">
+              👆 Click on a stock row to view detailed technical charts
             </p>
 
             <div className="analysis-table-wrapper">

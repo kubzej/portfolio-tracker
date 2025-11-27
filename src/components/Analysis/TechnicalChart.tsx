@@ -22,6 +22,7 @@ import type {
   MACDPoint,
   BollingerPoint,
   StochasticPoint,
+  VolumePoint,
 } from '@/services/api/technical';
 import { InfoTooltip } from '@/components/shared/InfoTooltip';
 
@@ -60,6 +61,14 @@ interface StochasticChartPoint {
   displayDate: string;
   k: number | null;
   d: number | null;
+}
+
+interface VolumeChartPoint {
+  date: string;
+  displayDate: string;
+  volume: number;
+  avgVolume: number | null;
+  isAboveAvg: boolean;
 }
 
 // Format date helper
@@ -162,6 +171,37 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
       d: s.d,
     }));
   }, [data]);
+
+  // Build Volume chart data
+  const volumeData = useMemo((): VolumeChartPoint[] => {
+    const volArr = data.volumeHistory || [];
+
+    if (volArr.length === 0) {
+      return [];
+    }
+
+    return volArr.map((v: VolumePoint) => ({
+      date: v.date,
+      displayDate: formatDateStr(v.date),
+      volume: v.volume,
+      avgVolume: v.avgVolume,
+      isAboveAvg: v.avgVolume !== null && v.volume > v.avgVolume,
+    }));
+  }, [data]);
+
+  // Format volume for display (e.g., 1.5M, 250K)
+  const formatVolume = (value: number): string => {
+    if (value >= 1000000000) {
+      return (value / 1000000000).toFixed(1) + 'B';
+    }
+    if (value >= 1000000) {
+      return (value / 1000000).toFixed(1) + 'M';
+    }
+    if (value >= 1000) {
+      return (value / 1000).toFixed(0) + 'K';
+    }
+    return value.toString();
+  };
 
   const formatPrice = (value: number): string => {
     return value.toFixed(2);
@@ -1009,7 +1049,157 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
               )}
             </div>
 
-            {/* Section 8: What These Indicators Tell You */}
+            {/* Section 8: Volume Analysis */}
+            <div className="tech-section">
+              <div className="section-header">
+                <h4>Volume Analysis</h4>
+                <InfoTooltip text="CO TO JE: Volume (objem) = počet akcií zobchodovaných za den. Je klíčový pro potvrzení cenových pohybů. JAK ČÍST: VYSOKÝ objem při růstu ceny = silný nákupní zájem, růst je pravděpodobně udržitelný. VYSOKÝ objem při poklesu = silný prodejní tlak, pokles může pokračovat. NÍZKÝ objem = slabý pohyb, může se rychle obrátit. IDEÁLNÍ: Růst ceny s rostoucím objemem. Oranžová čára = 20denní průměr objemu." />
+              </div>
+              {volumeData.length > 0 ? (
+                <>
+                  <div className="chart-wrapper">
+                    <ResponsiveContainer width="100%" height={200}>
+                      <ComposedChart
+                        data={volumeData}
+                        margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+                      >
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="var(--border-color)"
+                        />
+                        <XAxis
+                          dataKey="displayDate"
+                          tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                          tickLine={{ stroke: 'var(--border-color)' }}
+                          axisLine={{ stroke: 'var(--border-color)' }}
+                          interval="preserveStartEnd"
+                          minTickGap={50}
+                        />
+                        <YAxis
+                          tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                          tickLine={{ stroke: 'var(--border-color)' }}
+                          axisLine={{ stroke: 'var(--border-color)' }}
+                          tickFormatter={formatVolume}
+                          width={50}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'var(--bg-secondary)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '8px',
+                            color: 'var(--text-primary)',
+                          }}
+                          formatter={(value: number, name: string) => [
+                            formatVolume(value),
+                            name === 'volume' ? 'Volume' : 'Avg Volume (20d)',
+                          ]}
+                        />
+                        <Bar dataKey="volume" name="volume">
+                          {volumeData.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={
+                                entry.isAboveAvg
+                                  ? 'rgba(59, 130, 246, 0.7)'
+                                  : 'rgba(59, 130, 246, 0.3)'
+                              }
+                            />
+                          ))}
+                        </Bar>
+                        <Line
+                          type="monotone"
+                          dataKey="avgVolume"
+                          name="avgVolume"
+                          stroke="#f59e0b"
+                          strokeWidth={2}
+                          dot={false}
+                          connectNulls
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="volume-summary">
+                    <div className="volume-values">
+                      <div className="volume-value-item">
+                        <span className="vol-label">Current Volume:</span>
+                        <span className="vol-val">
+                          {data.currentVolume !== null
+                            ? formatVolume(data.currentVolume)
+                            : '—'}
+                        </span>
+                      </div>
+                      <div className="volume-value-item">
+                        <span className="vol-label">20-Day Average:</span>
+                        <span className="vol-val">
+                          {data.avgVolume20 !== null
+                            ? formatVolume(data.avgVolume20)
+                            : '—'}
+                        </span>
+                      </div>
+                      <div className="volume-value-item">
+                        <span className="vol-label">vs Average:</span>
+                        <span
+                          className={`vol-val ${
+                            (data.volumeChange ?? 0) > 0
+                              ? 'high'
+                              : (data.volumeChange ?? 0) < 0
+                              ? 'low'
+                              : ''
+                          }`}
+                        >
+                          {data.volumeChange !== null
+                            ? `${data.volumeChange > 0 ? '+' : ''}${
+                                data.volumeChange
+                              }%`
+                            : '—'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="volume-info-cards">
+                      <div className="vol-info-card">
+                        <span className="vol-zone-label high">High Volume</span>
+                        <span className="vol-zone-meaning">
+                          Strong conviction in price move
+                        </span>
+                      </div>
+                      <div className="vol-info-card">
+                        <span className="vol-zone-label normal">
+                          Normal Volume
+                        </span>
+                        <span className="vol-zone-meaning">
+                          Typical trading activity
+                        </span>
+                      </div>
+                      <div className="vol-info-card">
+                        <span className="vol-zone-label low">Low Volume</span>
+                        <span className="vol-zone-meaning">
+                          Weak conviction, potential reversal
+                        </span>
+                      </div>
+                    </div>
+                    <div
+                      className={`volume-signal ${
+                        data.volumeSignal ?? 'normal'
+                      }`}
+                    >
+                      {data.volumeSignal === 'high' &&
+                        '📊 Volume significantly above average — strong interest, confirms price movement'}
+                      {data.volumeSignal === 'low' &&
+                        '📉 Volume significantly below average — weak interest, price move may not be sustainable'}
+                      {data.volumeSignal === 'normal' &&
+                        '✅ Volume near average — normal trading activity'}
+                      {data.volumeSignal === null && 'Insufficient data'}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="no-data-message">
+                  Insufficient data to display Volume Analysis
+                </div>
+              )}
+            </div>
+
+            {/* Section 9: What These Indicators Tell You */}
             <div className="tech-section tech-summary-section">
               <div className="section-header">
                 <h4>How to Use This Analysis</h4>
@@ -1022,7 +1212,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                     Golden Cross, cena nad klouzavými průměry, RSI stoupá z
                     oversold zóny, MACD kříží signal linii nahoru, cena se
                     odráží od dolního Bollinger pásma, Stochastic %K kříží %D
-                    zespoda v oversold zóně
+                    zespoda v oversold zóně, růst ceny s vysokým objemem
                   </span>
                 </div>
                 <div className="usage-item">
@@ -1031,7 +1221,15 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                     Death Cross, cena pod klouzavými průměry, RSI klesá z
                     overbought zóny, MACD kříží signal linii dolů, cena je
                     odmítnuta u horního Bollinger pásma, Stochastic %K kříží %D
-                    shora v overbought zóně
+                    shora v overbought zóně, pokles ceny s vysokým objemem
+                  </span>
+                </div>
+                <div className="usage-item">
+                  <strong>📊 Volume tip:</strong>
+                  <span>
+                    Objem potvrzuje cenové pohyby. Růst s vysokým objemem je
+                    silnější než růst s nízkým objemem. Pokles s nízkým objemem
+                    může signalizovat blížící se obrat.
                   </span>
                 </div>
                 <div className="usage-item">
