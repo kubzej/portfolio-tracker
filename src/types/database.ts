@@ -31,6 +31,7 @@ export interface Stock {
   currency: string;
   target_price: number | null;
   notes: string | null;
+  finnhub_ticker: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -133,6 +134,7 @@ export interface CreateStockInput {
   currency?: string;
   target_price?: number;
   notes?: string;
+  finnhub_ticker?: string;
 }
 
 export interface UpdateStockInput {
@@ -143,6 +145,7 @@ export interface UpdateStockInput {
   currency?: string;
   target_price?: number | null;
   notes?: string | null;
+  finnhub_ticker?: string | null;
 }
 
 export interface CreateTransactionInput {

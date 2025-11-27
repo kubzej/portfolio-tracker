@@ -21,6 +21,7 @@ export function StockForm({ onSuccess, onCancel }: StockFormProps) {
     currency: 'USD',
     target_price: undefined,
     notes: '',
+    finnhub_ticker: '',
   });
 
   useEffect(() => {
@@ -56,6 +57,7 @@ export function StockForm({ onSuccess, onCancel }: StockFormProps) {
         currency: 'USD',
         target_price: undefined,
         notes: '',
+        finnhub_ticker: '',
       });
 
       onSuccess?.();
@@ -187,6 +189,24 @@ export function StockForm({ onSuccess, onCancel }: StockFormProps) {
             step="0.01"
             min="0"
           />
+        </div>
+      </div>
+
+      <div className="form-row">
+        <div className="form-group">
+          <label htmlFor="finnhub_ticker">Finnhub Ticker</label>
+          <input
+            type="text"
+            id="finnhub_ticker"
+            name="finnhub_ticker"
+            value={formData.finnhub_ticker || ''}
+            onChange={handleChange}
+            placeholder="e.g., ZAL for ZAL.DE"
+            maxLength={20}
+          />
+          <small className="form-hint">
+            Only needed for non-US stocks if auto-detection fails
+          </small>
         </div>
       </div>
 

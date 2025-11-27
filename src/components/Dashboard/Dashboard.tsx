@@ -296,7 +296,7 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                         </span>
                       </div>
                       <div className="holding-card-stat">
-                        <span className="label">% of PTF</span>
+                        <span className="label">Weight</span>
                         <span className="value">
                           {portfolioPercentage !== null
                             ? `${portfolioPercentage.toFixed(1)}%`
@@ -371,7 +371,7 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                       className="right"
                     />
                     <SortHeader
-                      label="% of PTF"
+                      label="Weight"
                       sortKeyName="portfolio"
                       className="right"
                     />

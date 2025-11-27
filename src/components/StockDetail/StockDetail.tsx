@@ -67,6 +67,7 @@ export function StockDetail({
           currency: stockData.currency,
           target_price: stockData.target_price,
           notes: stockData.notes,
+          finnhub_ticker: stockData.finnhub_ticker,
         });
       }
     } catch (err) {
@@ -334,6 +335,25 @@ export function StockDetail({
                     })
                   }
                 />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Finnhub Ticker</label>
+                <input
+                  type="text"
+                  value={stockForm.finnhub_ticker || ''}
+                  onChange={(e) =>
+                    setStockForm({
+                      ...stockForm,
+                      finnhub_ticker: e.target.value || null,
+                    })
+                  }
+                  placeholder="e.g., ZAL for ZAL.DE"
+                />
+                <small className="form-hint">
+                  Only needed for non-US stocks
+                </small>
               </div>
             </div>
             <div className="form-group">
