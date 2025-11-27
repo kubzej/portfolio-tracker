@@ -49,14 +49,27 @@ export function InfoTooltip({
 
   const content = children || <p>{text}</p>;
 
+  // Prevent clicks on the tooltip from bubbling to parent elements (like table headers)
+  const handleWrapperClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
   return (
-    <div className="info-tooltip" ref={wrapperRef}>
+    <div
+      className="info-tooltip"
+      ref={wrapperRef}
+      onClick={handleWrapperClick}
+      onMouseDown={handleWrapperClick}
+    >
       <button
         className="info-tooltip__trigger"
         onClick={(e) => {
           e.stopPropagation();
+          e.preventDefault();
           setIsOpen(!isOpen);
         }}
+        onMouseDown={(e) => e.stopPropagation()}
         aria-label="More information"
         aria-expanded={isOpen}
       >

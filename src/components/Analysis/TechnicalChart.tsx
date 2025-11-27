@@ -8,11 +8,19 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
+  ReferenceLine,
+  Area,
+  ComposedChart,
 } from 'recharts';
 import type {
   TechnicalData,
   PricePoint,
   SMAPoint,
+  MACDPoint,
+  BollingerPoint,
 } from '@/services/api/technical';
 import { InfoTooltip } from '@/components/shared/InfoTooltip';
 
@@ -27,6 +35,23 @@ interface ChartDataPoint {
   price: number | null;
   sma50: number | null;
   sma200: number | null;
+}
+
+interface BollingerChartPoint {
+  date: string;
+  displayDate: string;
+  price: number | null;
+  upper: number | null;
+  middle: number | null;
+  lower: number | null;
+}
+
+interface MACDChartPoint {
+  date: string;
+  displayDate: string;
+  macd: number | null;
+  signal: number | null;
+  histogram: number | null;
 }
 
 // Format date helper
@@ -66,6 +91,51 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
       price: p.close,
       sma50: sma50Map.get(p.date) ?? null,
       sma200: sma200Map.get(p.date) ?? null,
+    }));
+  }, [data]);
+
+  // Build Bollinger Bands chart data
+  const bollingerData = useMemo((): BollingerChartPoint[] => {
+    const prices = data.historicalPrices || [];
+    const bbArr = data.bollingerHistory || [];
+
+    if (prices.length === 0 || bbArr.length === 0) {
+      return [];
+    }
+
+    // Create map for quick lookup
+    const bbMap = new Map<string, BollingerPoint>();
+    bbArr.forEach((b: BollingerPoint) => {
+      bbMap.set(b.date, b);
+    });
+
+    return prices.map((p: PricePoint) => {
+      const bb = bbMap.get(p.date);
+      return {
+        date: p.date,
+        displayDate: formatDateStr(p.date),
+        price: p.close,
+        upper: bb?.upper ?? null,
+        middle: bb?.middle ?? null,
+        lower: bb?.lower ?? null,
+      };
+    });
+  }, [data]);
+
+  // Build MACD chart data
+  const macdData = useMemo((): MACDChartPoint[] => {
+    const macdArr = data.macdHistory || [];
+
+    if (macdArr.length === 0) {
+      return [];
+    }
+
+    return macdArr.map((m: MACDPoint) => ({
+      date: m.date,
+      displayDate: formatDateStr(m.date),
+      macd: m.macd,
+      signal: m.signal,
+      histogram: m.histogram,
     }));
   }, [data]);
 
@@ -204,7 +274,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             <div className="tech-section">
               <div className="section-header">
                 <h4>Trend Signal</h4>
-                <InfoTooltip text="Overall trend assessment based on moving average crossovers and price position. Combines multiple indicators into a single actionable signal." />
+                <InfoTooltip text="CO TO JE: Souhrnné hodnocení trendu akcie na základě klouzavých průměrů (Moving Averages). JAK ČÍST: 🟢 Strong Bullish = silný růstový trend, ideální pro držení/nákup. 🟢 Bullish = růstový trend. 🔴 Bearish = klesající trend, opatrnost. 🔴 Strong Bearish = silný pokles, zvážit prodej. ⚪ Mixed = nejasný signál, vyčkat." />
               </div>
               <div className="tech-overview">
                 <div className={`trend-signal ${trendSignal.type}`}>
@@ -218,7 +288,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             <div className="tech-section">
               <div className="section-header">
                 <h4>Price & Moving Averages</h4>
-                <InfoTooltip text="Shows 1-year price history with 50-day and 200-day moving averages. Moving averages smooth out price fluctuations to reveal underlying trends. When price is above the averages, it's generally bullish; below is bearish." />
+                <InfoTooltip text="CO TO JE: Graf ceny za poslední rok s klouzavými průměry (Moving Averages). Klouzavý průměr vyhlazuje denní výkyvy a ukazuje skutečný trend. JAK ČÍST: Když je CENA NAD průměry = akcie roste (bullish). Když je CENA POD průměry = akcie klesá (bearish). IDEÁLNÍ STAV PRO NÁKUP: Cena nad oběma čárami (50 DMA i 200 DMA)." />
               </div>
               <div className="chart-wrapper">
                 <ResponsiveContainer width="100%" height={300}>
@@ -319,13 +389,13 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             <div className="tech-section">
               <div className="section-header">
                 <h4>Moving Average Analysis</h4>
-                <InfoTooltip text="Compares current price to moving averages. Being above/below indicates trend strength. The 50 DMA vs 200 DMA relationship creates Golden Cross (bullish) or Death Cross (bearish) signals." />
+                <InfoTooltip text="CO TO JE: Porovnání aktuální ceny s klouzavými průměry. JAK ČÍST: Procenta ukazují, o kolik je cena NAD (↑ zelená = dobře) nebo POD (↓ červená = špatně) průměrem. GOLDEN CROSS: 50 DMA je NAD 200 DMA = silný nákupní signál, akcie pravděpodobně poroste. DEATH CROSS: 50 DMA je POD 200 DMA = varovný signál, akcie může klesat." />
               </div>
               <div className="ma-cards">
                 <div className="ma-card">
                   <div className="ma-card-header">
                     <span className="ma-label">50 DMA</span>
-                    <InfoTooltip text="50-day moving average: average price over last 50 trading days. Used for short-to-medium term trend identification. Price above = bullish, below = bearish." />
+                    <InfoTooltip text="CO TO JE: 50 Day Moving Average = průměrná cena za posledních 50 obchodních dnů. Ukazuje krátkodobý až střednědobý trend. JAK ČÍST: Cena NAD 50 DMA = krátkodobě roste (dobré). Cena POD 50 DMA = krátkodobě klesá (opatrnost). IDEÁLNÍ: Být co nejvíce NAD touto hodnotou." />
                   </div>
                   <span className="ma-value">
                     {data.sma50 !== null ? data.sma50.toFixed(2) : '—'}
@@ -345,7 +415,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                 <div className="ma-card">
                   <div className="ma-card-header">
                     <span className="ma-label">200 DMA</span>
-                    <InfoTooltip text="200-day moving average: average price over last 200 trading days. Key long-term trend indicator watched by institutional investors. Often acts as support/resistance." />
+                    <InfoTooltip text="CO TO JE: 200 Day Moving Average = průměrná cena za posledních 200 obchodních dnů (~1 rok). Nejdůležitější dlouhodobý ukazatel, který sledují velcí investoři. JAK ČÍST: Cena NAD 200 DMA = dlouhodobý růstový trend (velmi dobré). Cena POD 200 DMA = dlouhodobý klesající trend (varovné). IDEÁLNÍ: Být NAD touto hodnotou." />
                   </div>
                   <span className="ma-value">
                     {data.sma200 !== null ? data.sma200.toFixed(2) : '—'}
@@ -365,7 +435,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                 <div className="ma-card">
                   <div className="ma-card-header">
                     <span className="ma-label">Cross Signal</span>
-                    <InfoTooltip text="Golden Cross: 50 DMA crosses above 200 DMA — bullish signal indicating potential uptrend. Death Cross: 50 DMA crosses below 200 DMA — bearish signal indicating potential downtrend. Widely followed by traders." />
+                    <InfoTooltip text="CO TO JE: Signál křížení klouzavých průměrů - jeden z nejspolehlivějších indikátorů. GOLDEN CROSS (Zlatý kříž): 50 DMA překříží 200 DMA směrem NAHORU = silný nákupní signál, očekává se růst. DEATH CROSS (Kříž smrti): 50 DMA překříží 200 DMA směrem DOLŮ = varovný signál, očekává se pokles. IDEÁLNÍ: Golden Cross." />
                   </div>
                   <span className="ma-value">
                     {data.currentPrice !== null
@@ -391,7 +461,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             <div className="tech-section">
               <div className="section-header">
                 <h4>RSI (Relative Strength Index)</h4>
-                <InfoTooltip text="RSI measures momentum on a 0-100 scale using 14-day price changes. Shows if a stock is potentially overbought (above 70) or oversold (below 30). Useful for timing entries/exits." />
+                <InfoTooltip text="CO TO JE: Relative Strength Index = Index relativní síly. Měří rychlost a změnu cenových pohybů na stupnici 0-100. Pomáhá určit, zda je akcie 'překoupená' nebo 'přeprodaná'. JAK ČÍST: RSI > 70 = Overbought (překoupená) - cena možná příliš vyrostla, může přijít pokles. RSI < 30 = Oversold (přeprodaná) - cena možná příliš klesla, může přijít růst. RSI 30-70 = Neutral (normální stav). IDEÁLNÍ PRO NÁKUP: RSI kolem 30-50 (levnější)." />
               </div>
               <div className="rsi-display">
                 <div className="rsi-gauge">
@@ -434,14 +504,14 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                     <span className="rsi-zone-meaning">
                       Potential pullback ahead
                     </span>
-                    <InfoTooltip text="When RSI is above 70, the stock may be overbought. The price may have risen too fast and could be due for a pullback." />
+                    <InfoTooltip text="OVERBOUGHT (překoupená): RSI nad 70 znamená, že akcie v poslední době hodně rostla a může být 'drahá'. Mnoho investorů už nakoupilo a tlak na růst slábne. CO TO ZNAMENÁ: Možná není nejlepší čas na nákup - cena může brzy klesnout. Pokud akcie držíte, zvažte částečný prodej." />
                   </div>
                   <div className="rsi-info-card">
                     <span className="rsi-zone-label neutral">
                       30-70 Neutral
                     </span>
                     <span className="rsi-zone-meaning">Normal momentum</span>
-                    <InfoTooltip text="RSI between 30-70 indicates normal trading conditions. The stock is neither overbought nor oversold." />
+                    <InfoTooltip text="NEUTRAL (neutrální zóna): RSI mezi 30-70 znamená normální obchodní podmínky. Akcie není ani překoupená, ani přeprodaná. CO TO ZNAMENÁ: Můžete nakupovat nebo prodávat podle jiných faktorů. Sledujte směr - roste RSI k 70 nebo klesá k 30?" />
                   </div>
                   <div className="rsi-info-card">
                     <span className="rsi-zone-label oversold">
@@ -450,7 +520,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                     <span className="rsi-zone-meaning">
                       Potential bounce ahead
                     </span>
-                    <InfoTooltip text="When RSI is below 30, the stock may be oversold. The price may have fallen too fast and could be due for a bounce." />
+                    <InfoTooltip text="OVERSOLD (přeprodaná): RSI pod 30 znamená, že akcie v poslední době hodně klesala a může být 'levná'. Mnoho investorů už prodalo a tlak na pokles slábne. CO TO ZNAMENÁ: Může být dobrá příležitost k nákupu - cena může brzy vzrůst. Ale pozor - někdy akcie klesá z dobrého důvodu!" />
                   </div>
                 </div>
                 <div className="rsi-current">
@@ -466,32 +536,330 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
               </div>
             </div>
 
-            {/* Section 5: What These Indicators Tell You */}
+            {/* Section 5: MACD */}
+            <div className="tech-section">
+              <div className="section-header">
+                <h4>MACD (Moving Average Convergence Divergence)</h4>
+                <InfoTooltip text="CO TO JE: Moving Average Convergence Divergence = ukazatel směru trendu a síly momentum (hybnosti). Skládá se z: MACD linie (modrá), Signal linie (oranžová) a Histogramu (sloupce). JAK ČÍST: Modrá PŘEKŘÍŽÍ oranžovou NAHORU = nákupní signál (bullish). Modrá PŘEKŘÍŽÍ oranžovou DOLŮ = prodejní signál (bearish). HISTOGRAM zelený = momentum roste. HISTOGRAM červený = momentum klesá. IDEÁLNÍ: MACD nad Signal linií + zelený histogram." />
+              </div>
+              {macdData.length > 0 ? (
+                <>
+                  <div className="chart-wrapper">
+                    <ResponsiveContainer width="100%" height={200}>
+                      <ComposedChart
+                        data={macdData}
+                        margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+                      >
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="var(--border-color)"
+                        />
+                        <XAxis
+                          dataKey="displayDate"
+                          tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                          tickLine={{ stroke: 'var(--border-color)' }}
+                          axisLine={{ stroke: 'var(--border-color)' }}
+                          interval="preserveStartEnd"
+                          minTickGap={50}
+                        />
+                        <YAxis
+                          tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                          tickLine={{ stroke: 'var(--border-color)' }}
+                          axisLine={{ stroke: 'var(--border-color)' }}
+                          tickFormatter={(value: number) => value.toFixed(2)}
+                          width={50}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'var(--bg-secondary)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '8px',
+                            color: 'var(--text-primary)',
+                          }}
+                          formatter={(value: number, name: string) => [
+                            value.toFixed(3),
+                            name,
+                          ]}
+                        />
+                        <ReferenceLine
+                          y={0}
+                          stroke="var(--text-muted)"
+                          strokeDasharray="3 3"
+                        />
+                        <Bar dataKey="histogram" name="Histogram">
+                          {macdData.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={
+                                (entry.histogram ?? 0) >= 0
+                                  ? 'rgba(34, 197, 94, 0.6)'
+                                  : 'rgba(239, 68, 68, 0.6)'
+                              }
+                            />
+                          ))}
+                        </Bar>
+                        <Line
+                          type="monotone"
+                          dataKey="macd"
+                          name="MACD"
+                          stroke="#3b82f6"
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="signal"
+                          name="Signal"
+                          stroke="#f59e0b"
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="macd-summary">
+                    <div className="macd-values">
+                      <div className="macd-value-item">
+                        <span className="macd-label">MACD:</span>
+                        <span
+                          className={`macd-val ${
+                            (data.macd ?? 0) >= 0 ? 'positive' : 'negative'
+                          }`}
+                        >
+                          {data.macd !== null ? data.macd.toFixed(3) : '—'}
+                        </span>
+                      </div>
+                      <div className="macd-value-item">
+                        <span className="macd-label">Signal:</span>
+                        <span className="macd-val">
+                          {data.macdSignal !== null
+                            ? data.macdSignal.toFixed(3)
+                            : '—'}
+                        </span>
+                      </div>
+                      <div className="macd-value-item">
+                        <span className="macd-label">Histogram:</span>
+                        <span
+                          className={`macd-val ${
+                            (data.macdHistogram ?? 0) >= 0
+                              ? 'positive'
+                              : 'negative'
+                          }`}
+                        >
+                          {data.macdHistogram !== null
+                            ? data.macdHistogram.toFixed(3)
+                            : '—'}
+                        </span>
+                      </div>
+                    </div>
+                    <div
+                      className={`macd-signal ${data.macdTrend ?? 'neutral'}`}
+                    >
+                      {data.macdTrend === 'bullish' &&
+                        '📈 Bullish momentum — MACD above signal line'}
+                      {data.macdTrend === 'bearish' &&
+                        '📉 Bearish momentum — MACD below signal line'}
+                      {data.macdTrend === 'neutral' &&
+                        '➡️ Neutral — Momentum transitioning'}
+                      {data.macdTrend === null && 'Insufficient data'}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="no-data-message">
+                  Insufficient data to calculate MACD
+                </div>
+              )}
+            </div>
+
+            {/* Section 6: Bollinger Bands */}
+            <div className="tech-section">
+              <div className="section-header">
+                <h4>Bollinger Bands</h4>
+                <InfoTooltip text="CO TO JE: Bollingerova pásma = ukazatel volatility (kolísavosti) ceny. Tři linie: Upper Band (horní), Middle (střední = 20denní průměr), Lower Band (dolní). JAK ČÍST: Cena u HORNÍHO pásma = možná překoupená (overbought), může klesnout. Cena u DOLNÍHO pásma = možná přeprodaná (oversold), může vzrůst. Cena u STŘEDU = normální stav. ŠIROKÁ pásma = vysoká volatilita. ÚZKÁ pásma = nízká volatilita, možná přijde velký pohyb. IDEÁLNÍ PRO NÁKUP: Cena blízko dolního pásma (20-30%)." />
+              </div>
+              {bollingerData.length > 0 && data.bollingerUpper !== null ? (
+                <>
+                  <div className="chart-wrapper">
+                    <ResponsiveContainer width="100%" height={250}>
+                      <ComposedChart
+                        data={bollingerData}
+                        margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+                      >
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="var(--border-color)"
+                        />
+                        <XAxis
+                          dataKey="displayDate"
+                          tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                          tickLine={{ stroke: 'var(--border-color)' }}
+                          axisLine={{ stroke: 'var(--border-color)' }}
+                          interval="preserveStartEnd"
+                          minTickGap={50}
+                        />
+                        <YAxis
+                          tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                          tickLine={{ stroke: 'var(--border-color)' }}
+                          axisLine={{ stroke: 'var(--border-color)' }}
+                          tickFormatter={(value: number) => value.toFixed(0)}
+                          width={50}
+                          domain={['auto', 'auto']}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'var(--bg-secondary)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '8px',
+                            color: 'var(--text-primary)',
+                          }}
+                          formatter={(value: number, name: string) => [
+                            value.toFixed(2),
+                            name,
+                          ]}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="upper"
+                          stroke="transparent"
+                          fill="rgba(139, 92, 246, 0.1)"
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="lower"
+                          stroke="transparent"
+                          fill="var(--bg-primary)"
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="upper"
+                          name="Upper Band"
+                          stroke="#8b5cf6"
+                          strokeWidth={1}
+                          strokeDasharray="4 4"
+                          dot={false}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="middle"
+                          name="Middle (20 SMA)"
+                          stroke="#8b5cf6"
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="lower"
+                          name="Lower Band"
+                          stroke="#8b5cf6"
+                          strokeWidth={1}
+                          strokeDasharray="4 4"
+                          dot={false}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="price"
+                          name="Price"
+                          stroke="#3b82f6"
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="bollinger-summary">
+                    <div className="bollinger-values">
+                      <div className="bollinger-value-item">
+                        <span className="bb-label">Upper Band:</span>
+                        <span className="bb-val">
+                          {data.bollingerUpper?.toFixed(2) ?? '—'}
+                        </span>
+                      </div>
+                      <div className="bollinger-value-item">
+                        <span className="bb-label">Middle (20 SMA):</span>
+                        <span className="bb-val">
+                          {data.bollingerMiddle?.toFixed(2) ?? '—'}
+                        </span>
+                      </div>
+                      <div className="bollinger-value-item">
+                        <span className="bb-label">Lower Band:</span>
+                        <span className="bb-val">
+                          {data.bollingerLower?.toFixed(2) ?? '—'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="bollinger-position">
+                      <div className="bb-pos-header">
+                        <span className="bb-pos-label">
+                          Position within bands:
+                        </span>
+                        <span className="bb-position-value">
+                          {data.bollingerPosition ?? 0}%
+                        </span>
+                      </div>
+                      <div className="bb-position-bar">
+                        <div
+                          className="bb-position-indicator"
+                          style={{ left: `${data.bollingerPosition ?? 50}%` }}
+                        />
+                      </div>
+                      <div className="bb-position-zones">
+                        <span className="bb-zone lower">Lower Band</span>
+                        <span className="bb-zone middle">Middle</span>
+                        <span className="bb-zone upper">Upper Band</span>
+                      </div>
+                    </div>
+                    <div
+                      className={`bollinger-signal ${
+                        data.bollingerSignal ?? 'neutral'
+                      }`}
+                    >
+                      {data.bollingerSignal === 'overbought' &&
+                        '⚠️ Price above upper band — potentially overbought'}
+                      {data.bollingerSignal === 'oversold' &&
+                        '💡 Price below lower band — potentially oversold'}
+                      {data.bollingerSignal === 'neutral' &&
+                        '✅ Price within bands — normal trading range'}
+                      {data.bollingerSignal === null && 'Insufficient data'}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="no-data-message">
+                  Insufficient data to calculate Bollinger Bands
+                </div>
+              )}
+            </div>
+
+            {/* Section 7: What These Indicators Tell You */}
             <div className="tech-section tech-summary-section">
               <div className="section-header">
                 <h4>How to Use This Analysis</h4>
-                <InfoTooltip text="Quick guide on interpreting these technical indicators for investment decisions." />
+                <InfoTooltip text="DŮLEŽITÉ: Technická analýza není 100% spolehlivá! Používejte ji jako JEDEN z nástrojů, ne jako jediný důvod k nákupu/prodeji. NEJLEPŠÍ VÝSLEDKY: Kombinujte více indikátorů. Když většina ukazuje stejný směr (bullish nebo bearish), signál je silnější. ZLATÉ PRAVIDLO: Nikdy neinvestujte jen na základě jednoho indikátoru." />
               </div>
               <div className="usage-guide">
                 <div className="usage-item">
-                  <strong>🟢 Bullish Signs:</strong>
+                  <strong>🟢 Bullish (růstové) signály:</strong>
                   <span>
-                    Price above both MAs, Golden Cross active, RSI rising from
-                    oversold
+                    Golden Cross, cena nad klouzavými průměry, RSI stoupá z
+                    oversold zóny, MACD kříží signal linii nahoru, cena se
+                    odráží od dolního Bollinger pásma
                   </span>
                 </div>
                 <div className="usage-item">
-                  <strong>🔴 Bearish Signs:</strong>
+                  <strong>🔴 Bearish (klesající) signály:</strong>
                   <span>
-                    Price below both MAs, Death Cross active, RSI falling from
-                    overbought
+                    Death Cross, cena pod klouzavými průměry, RSI klesá z
+                    overbought zóny, MACD kříží signal linii dolů, cena je
+                    odmítnuta u horního Bollinger pásma
                   </span>
                 </div>
                 <div className="usage-item">
-                  <strong>⚠️ Caution:</strong>
+                  <strong>⚠️ Důležité upozornění:</strong>
                   <span>
-                    Technical analysis works best combined with fundamental
-                    analysis. No indicator is 100% reliable.
+                    Technická analýza funguje nejlépe v kombinaci s
+                    fundamentální analýzou. Žádný indikátor není 100%
+                    spolehlivý. Vždy hledejte potvrzení z více zdrojů!
                   </span>
                 </div>
               </div>

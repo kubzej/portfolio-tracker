@@ -12,6 +12,22 @@ export interface SMAPoint {
   value: number;
 }
 
+// MACD data point for charts
+export interface MACDPoint {
+  date: string;
+  macd: number;
+  signal: number;
+  histogram: number;
+}
+
+// Bollinger Bands data point for charts
+export interface BollingerPoint {
+  date: string;
+  upper: number;
+  middle: number;
+  lower: number;
+}
+
 // Technical data for a single stock
 export interface TechnicalData {
   ticker: string;
@@ -26,10 +42,23 @@ export interface TechnicalData {
   // RSI
   rsi14: number | null;
   rsiSignal: 'overbought' | 'oversold' | 'neutral' | null;
+  // MACD
+  macd: number | null;
+  macdSignal: number | null;
+  macdHistogram: number | null;
+  macdTrend: 'bullish' | 'bearish' | 'neutral' | null;
+  // Bollinger Bands
+  bollingerUpper: number | null;
+  bollingerMiddle: number | null;
+  bollingerLower: number | null;
+  bollingerPosition: number | null;
+  bollingerSignal: 'overbought' | 'oversold' | 'neutral' | null;
   // Historical data for charts
   historicalPrices: PricePoint[];
   sma50History: SMAPoint[];
   sma200History: SMAPoint[];
+  macdHistory: MACDPoint[];
+  bollingerHistory: BollingerPoint[];
   // Error tracking
   error?: string;
 }

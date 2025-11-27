@@ -42,11 +42,8 @@ type SortKey =
   | 'priceChangePercent'
   | 'numberOfAnalysts'
   | 'consensusScore'
-  | 'peRatio'
-  | 'beta'
-  | 'roe'
-  | 'dividendYield'
-  | 'insiderMspr';
+  | 'insiderMspr'
+  | string; // Allow any string for dynamic fundamental columns
 
 type TabType = 'analysts' | 'fundamentals' | 'technicals' | 'recommendations';
 
@@ -226,17 +223,15 @@ export function Analysis({ portfolioId }: AnalysisProps) {
         return item.numberOfAnalysts ?? 0;
       case 'consensusScore':
         return item.consensusScore ?? 0;
-      case 'peRatio':
-        return item.fundamentals?.peRatio ?? 0;
-      case 'beta':
-        return item.fundamentals?.beta ?? 0;
-      case 'roe':
-        return item.fundamentals?.roe ?? 0;
-      case 'dividendYield':
-        return item.fundamentals?.dividendYield ?? 0;
       case 'insiderMspr':
         return item.insiderSentiment?.mspr ?? 0;
       default:
+        // Try to get value from fundamentals for dynamic columns
+        if (item.fundamentals) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const value = (item.fundamentals as any)[key];
+          if (typeof value === 'number') return value;
+        }
         return 0;
     }
   };
@@ -594,7 +589,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                       onClick={() => handleSort('consensusScore')}
                     >
                       Score{' '}
-                      <InfoTooltip text="Weighted consensus score from -2 (strong sell) to +2 (strong buy). 0 = hold." />{' '}
+                      <InfoTooltip text="CO TO JE: Consensus Score = váž ené skóre doporučení analytiků. STUPNICE: -2 (Strong Sell) → 0 (Hold) → +2 (Strong Buy). JAK ČÍST: Kladné číslo (+) = analytici doporučují nákup. Záporné číslo (-) = analytici doporučují prodej. Blízko 0 = držet. IDEÁLNÍ: Nad +0.5 je dobré, nad +1 je výborné." />{' '}
                       <SortIcon column="consensusScore" />
                     </th>
                     <th className="center">Breakdown</th>
@@ -607,7 +602,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     <th className="center">Earnings (4Q)</th>
                     <th className="center">
                       Updated{' '}
-                      <InfoTooltip text="When Finnhub last updated consensus data for this stock." />
+                      <InfoTooltip text="CO TO JE: Datum poslední aktualizace dat od Finnhub. PROČ JE TO DŮLEŽITÉ: Starší data mohou být méně relevantní. Ideálně by měla být data aktualizována v posledních 1-2 měsících. Pokud je datum staré (více než 3 měsíce), berte doporučení s rezervou." />
                     </th>
                   </tr>
                 </thead>
@@ -759,7 +754,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
               <div className="insight-card">
                 <span className="insight-label">
                   Avg Consensus Score{' '}
-                  <InfoTooltip text="Weighted average across all stocks. Scale: -2 (strong sell) → 0 (hold) → +2 (strong buy)." />
+                  <InfoTooltip text="CO TO JE: Průměrné skóre doporučení analytiků přes celé portfolio. STUPNICE: -2 (Strong Sell = silný prodej) → 0 (Hold = držet) → +2 (Strong Buy = silný nákup). JAK ČÍST: Nad 0 = analytici jsou celkově optimističtí. Pod 0 = analytici jsou celkově pesimističtí. IDEÁLNÍ: Nad +0.5 značí zdravé portfolio z pohledu analytiků." />
                 </span>
                 <span
                   className={`insight-value ${
@@ -920,10 +915,11 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                         <th
                           key={key}
                           className="right"
-                          title={indicator.description}
+                          onClick={() => handleSort(key)}
                         >
                           {indicator.short_name}
-                          <span className="tooltip-icon">ⓘ</span>
+                          <InfoTooltip text={indicator.description} />
+                          <SortIcon column={key} />
                         </th>
                       );
                     })}
@@ -982,23 +978,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
             <div className="insider-section-header">
               <div className="insider-title-row">
                 <h3>Insider Sentiment</h3>
-                <InfoTooltip>
-                  <p>
-                    <strong>What is Insider Sentiment?</strong>
-                  </p>
-                  <p>
-                    Tracks buying/selling by company executives and directors
-                    (Form 4 filings). High insider buying often signals
-                    confidence in the company's future.
-                  </p>
-                  <p>
-                    <strong>MSPR</strong>: Monthly Share Purchase Ratio (-100 to
-                    +100)
-                  </p>
-                  <p>
-                    <strong>Net Shares</strong>: Total shares bought minus sold
-                  </p>
-                </InfoTooltip>
+                <InfoTooltip text="CO TO JE: Insider Sentiment = nálada insiderů (vedení firmy). Sleduje nákupy a prodeje akcií managementem a řediteli (Form 4 filings). PROČ JE TO DŮLEŽITÉ: Vysoký nákup insiderů často signalizuje důvěru ve firmu. MSPR: Monthly Share Purchase Ratio (-100 až +100). Kladné = nákup, záporné = prodej. Net Shares: Celkový počet akcií nakoupených minus prodaných." />
               </div>
               <div className="insider-time-filter">
                 {INSIDER_TIME_RANGES.map((range) => (
@@ -1160,7 +1140,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 <div className="insight-card">
                   <span className="insight-label">
                     Avg P/E{' '}
-                    <InfoTooltip text="Portfolio-weighted average P/E ratio. Lower may indicate undervaluation, higher may indicate growth expectations." />
+                    <InfoTooltip text="CO TO JE: Price-to-Earnings = poměr ceny akcie k zisku na akcii. Udává, kolik let by trvalo, než se investice 'vrátí' ze zisků. JAK ČÍST: Nížší P/E = akcie může být levnější (podhodnocená). Vyšší P/E = investori očekávají růst. TYPICKÉ HODNOTY: Pod 15 = levné, 15-25 = normální, Nad 25 = drahé nebo růstové." />
                   </span>
                   <span className="insight-value">
                     {getWeightedAverage('peRatio').toFixed(1)}x
@@ -1169,7 +1149,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 <div className="insight-card">
                   <span className="insight-label">
                     Avg Fwd P/E{' '}
-                    <InfoTooltip text="Portfolio-weighted average forward P/E based on estimated earnings. Compare with trailing P/E to gauge growth expectations." />
+                    <InfoTooltip text="CO TO JE: Forward P/E = P/E založené na ODHADOVANÝCH budoucích ziskách (následující rok). JAK ČÍST: Porovnejte s běžným P/E. Fwd P/E NIŽŠÍ než P/E = analytici očekávají růst zisků. Fwd P/E VYŠŠÍ než P/E = analytici očekávají pokles zisků." />
                   </span>
                   <span className="insight-value">
                     {getWeightedAverage('forwardPe').toFixed(1)}x
@@ -1178,7 +1158,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 <div className="insight-card">
                   <span className="insight-label">
                     Avg P/B{' '}
-                    <InfoTooltip text="Portfolio-weighted average price-to-book ratio. Below 1 may indicate undervaluation, above 3 may indicate overvaluation." />
+                    <InfoTooltip text="CO TO JE: Price-to-Book = poměr ceny akcie k účetní hodnotě (aktiva - dluhy). JAK ČÍST: P/B pod 1 = akcie se obchoduje pod hodnotou majetku (potenciálně levná). P/B nad 3 = akcie je drahá nebo má velkou hodnotu značky/technologií. POZOR: Tech firmy mají běžně vysoké P/B." />
                   </span>
                   <span className="insight-value">
                     {getWeightedAverage('pbRatio').toFixed(2)}x
@@ -1187,7 +1167,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 <div className="insight-card">
                   <span className="insight-label">
                     Avg EV/EBITDA{' '}
-                    <InfoTooltip text="Portfolio-weighted average EV/EBITDA. Lower values may indicate better value. Useful for comparing companies with different capital structures." />
+                    <InfoTooltip text="CO TO JE: Enterprise Value / EBITDA = hodnota firmy dělená provozním ziskem. Lepší než P/E pro porovnání firem s různým zadlužením. JAK ČÍST: Nižší = levnější. TYPICKÉ HODNOTY: Pod 10 = levné, 10-15 = normální, Nad 15 = drahé nebo růstové." />
                   </span>
                   <span className="insight-value">
                     {getWeightedAverage('evEbitda').toFixed(1)}x
@@ -1203,7 +1183,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 <div className="insight-card">
                   <span className="insight-label">
                     Avg ROE{' '}
-                    <InfoTooltip text="Portfolio-weighted average return on equity. Measures how effectively the company uses shareholder equity. Above 15% is generally good." />
+                    <InfoTooltip text="CO TO JE: Return on Equity = návratnost vlastního kapitálu. Ukazuje, jak efektivně firma využívá peníze akcionářů k tvorbě zisku. JAK ČÍST: Vyšší = lepší. Nad 15% je obecně dobré. Nad 20% je výborné. Pod 10% je slabé. IDEÁLNÍ: Co nejvyšší ROE." />
                   </span>
                   <span
                     className={`insight-value ${
@@ -1216,7 +1196,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 <div className="insight-card">
                   <span className="insight-label">
                     Avg Net Margin{' '}
-                    <InfoTooltip text="Portfolio-weighted average net profit margin. The percentage of revenue that becomes profit. Higher is better." />
+                    <InfoTooltip text="CO TO JE: Net Profit Margin = čistá zisková marže. Kolik procent z tržeb zůstane jako čistý zisk. JAK ČÍST: Vyšší = lepší. Nad 10% je dobré. Nad 20% je výborné. Závisí na odvětví - tech firmy mají vyšší marže než maloobchod." />
                   </span>
                   <span
                     className={`insight-value ${
@@ -1229,7 +1209,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 <div className="insight-card">
                   <span className="insight-label">
                     Avg Gross Margin{' '}
-                    <InfoTooltip text="Portfolio-weighted average gross margin. Revenue minus cost of goods sold. Higher indicates pricing power." />
+                    <InfoTooltip text="CO TO JE: Gross Margin = hrubá marže. Tržby minus náklady na výrobu/služby. JAK ČÍST: Vyšší = větší cenová síla a konkurenceschopnost. Nad 40% je dobré. Nad 60% značí silné konkurencenční výhody (jako Apple, Microsoft)." />
                   </span>
                   <span className="insight-value">
                     {getWeightedAverage('grossMargin').toFixed(1)}%
@@ -1238,7 +1218,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 <div className="insight-card">
                   <span className="insight-label">
                     Dividend Payers{' '}
-                    <InfoTooltip text="Number of stocks in your portfolio that pay dividends." />
+                    <InfoTooltip text="CO TO JE: Počet akcií ve vašem portfoliu, které vyplácejí dividendy. Dividendy = pravidelný příjem z drž ení akcií. JAK ČÍST: Více dividendových akcií = stabilnější příjem, ale možná nižší růst. Růstové firmy často dividendy nevyplácejí a raději reinvestují." />
                   </span>
                   <span className="insight-value">
                     {
@@ -1261,7 +1241,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 <div className="insight-card">
                   <span className="insight-label">
                     Avg Beta{' '}
-                    <InfoTooltip text="Portfolio-weighted average beta. Above 1 = more volatile than market, below 1 = less volatile, 1 = moves with market." />
+                    <InfoTooltip text="CO TO JE: Beta = míra volatility (kolísavosti) ve srovnání s trhem (S&P 500). JAK ČÍST: Beta = 1 znamená pohyb s trhem. Beta > 1 = větší výkyvy než trh (riskantnější). Beta < 1 = menší výkyvy (stabilnější). Beta < 0 = pohyb opačně než trh. IDEÁLNÍ: Záleží na vaší toleranci k riziku. Konzervativní investori preferují Beta pod 1." />
                   </span>
                   <span
                     className={`insight-value ${
@@ -1278,7 +1258,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 <div className="insight-card">
                   <span className="insight-label">
                     Avg D/E{' '}
-                    <InfoTooltip text="Portfolio-weighted average debt-to-equity ratio. Lower is generally safer. Above 2 may indicate high leverage risk." />
+                    <InfoTooltip text="CO TO JE: Debt-to-Equity = poměr dluhu k vlastnímu kapitálu. Ukazuje, jak moc je firma zadlužená. JAK ČÍST: Nižší = bezpečnější. Pod 0.5 = nízký dluh (výborné). 0.5-2 = normální. Nad 2 = vysoký dluh (rizikovejší). POZOR: Některá odvětví (banky, reality) mají přirozeně vyšší D/E." />
                   </span>
                   <span
                     className={`insight-value ${
@@ -1295,7 +1275,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 <div className="insight-card">
                   <span className="insight-label">
                     Avg Revenue Growth{' '}
-                    <InfoTooltip text="Portfolio-weighted average revenue growth (trailing 12 months). Positive indicates growing companies." />
+                    <InfoTooltip text="CO TO JE: Revenue Growth = růst tržeb za poslední rok. JAK ČÍST: Kladné číslo (+) = firma roste. Záporné číslo (-) = tržby klesají. TYPICKÉ HODNOTY: Růstové firmy: +15% a více. Stabilní firmy: 0-10%. Pokles tržeb: varovný signál. IDEÁLNÍ: Kladný růst, ideelně nad 10%." />
                   </span>
                   <span
                     className={`insight-value ${
@@ -1313,7 +1293,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 <div className="insight-card">
                   <span className="insight-label">
                     Insider Buying ({insiderTimeRange}M){' '}
-                    <InfoTooltip text="Number of stocks where insiders are net buyers in the selected time range." />
+                    <InfoTooltip text="CO TO JE: Počet akcií, kde ředitelé a manažeři firmy NAKUPUJÍ vlastní akcie. PROČ JE TO DŮLEŽITÉ: Když insideri nakupují, věří v budoucnost firmy - to je pozitivní signál. Když prodávají, nemusí to být špatné (mohou potřebovat hotovost). JAK ČÍST: Více firem s insider buying = dobré znamení pro portfolio." />
                   </span>
                   <span className="insight-value positive">
                     {
@@ -1379,11 +1359,11 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     <th className="right">52W High</th>
                     <th className="center">
                       52W Range Position{' '}
-                      <InfoTooltip text="Shows where the current price sits within the 52-week range. 0% = at yearly low, 100% = at yearly high. Above 80% = near highs (strong momentum or overbought), below 20% = near lows (weak momentum or oversold)." />
+                      <InfoTooltip text="CO TO JE: Pozice aktuální ceny v rámci 52týdenního (ročního) rozpětí. 0% = na ročním minimu, 100% = na ročním maximu. JAK ČÍST: Nad 80% = blízko maximům (silné momentum NEBO překoupená). Pod 20% = blízko minimům (slabé momentum NEBO příležitost k nákupu). 40-60% = střed rozpětí. POZOR: Vysoká pozice může znamenat buď sílu, nebo že je akcie drahá." />
                     </th>
                     <th className="left">
                       Peers{' '}
-                      <InfoTooltip text="Similar companies in the same industry/sector for comparison." />
+                      <InfoTooltip text="CO TO JE: Konkurenti a podobné firmy ve stejném odvětví. PROČ JE TO DŮLEŽITÉ: Můžete porovnat metriky vaší akcie s konkurenty. Pomáhá zjistit, zda je akcie lepší nebo horší než obdobné firmy." />
                     </th>
                   </tr>
                 </thead>

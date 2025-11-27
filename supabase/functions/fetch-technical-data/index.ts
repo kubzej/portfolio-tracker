@@ -25,10 +25,33 @@ interface TechnicalData {
   // RSI
   rsi14: number | null;
   rsiSignal: 'overbought' | 'oversold' | 'neutral' | null;
-  // Historical data for charts (last 200 days)
+  // MACD
+  macd: number | null; // MACD line (12 EMA - 26 EMA)
+  macdSignal: number | null; // 9-day EMA of MACD
+  macdHistogram: number | null; // MACD - Signal
+  macdTrend: 'bullish' | 'bearish' | 'neutral' | null;
+  // Bollinger Bands
+  bollingerUpper: number | null;
+  bollingerMiddle: number | null; // 20 SMA
+  bollingerLower: number | null;
+  bollingerPosition: number | null; // Where price is within bands (0-100%)
+  bollingerSignal: 'overbought' | 'oversold' | 'neutral' | null;
+  // Historical data for charts
   historicalPrices: { date: string; close: number }[];
   sma50History: { date: string; value: number }[];
   sma200History: { date: string; value: number }[];
+  macdHistory: {
+    date: string;
+    macd: number;
+    signal: number;
+    histogram: number;
+  }[];
+  bollingerHistory: {
+    date: string;
+    upper: number;
+    middle: number;
+    lower: number;
+  }[];
   // Error tracking
   error?: string;
 }
@@ -39,6 +62,114 @@ function calculateSMA(prices: number[], period: number): number | null {
   const slice = prices.slice(0, period);
   const sum = slice.reduce((acc, val) => acc + val, 0);
   return sum / period;
+}
+
+// Calculate Exponential Moving Average
+// prices should be in chronological order (oldest first)
+function calculateEMA(prices: number[], period: number): number[] {
+  if (prices.length < period) return [];
+
+  const emaValues: number[] = [];
+  const multiplier = 2 / (period + 1);
+
+  // Start with SMA for first EMA value
+  let sum = 0;
+  for (let i = 0; i < period; i++) {
+    sum += prices[i];
+  }
+  let ema = sum / period;
+  emaValues.push(ema);
+
+  // Calculate EMA for remaining prices
+  for (let i = period; i < prices.length; i++) {
+    ema = (prices[i] - ema) * multiplier + ema;
+    emaValues.push(ema);
+  }
+
+  return emaValues;
+}
+
+// Calculate MACD (12, 26, 9)
+// Returns arrays aligned so all three arrays have the same length and correspond to the same dates
+function calculateMACD(prices: number[]): {
+  macd: number[];
+  signal: number[];
+  histogram: number[];
+  startIndex: number; // Index in original prices array where data starts
+} {
+  // Need at least 26 + 9 - 1 = 34 days for signal line
+  if (prices.length < 34)
+    return { macd: [], signal: [], histogram: [], startIndex: 0 };
+
+  const ema12 = calculateEMA(prices, 12);
+  const ema26 = calculateEMA(prices, 26);
+
+  // EMA12 has (prices.length - 11) values, starting at index 11
+  // EMA26 has (prices.length - 25) values, starting at index 25
+  // MACD line = EMA12 - EMA26, aligned to where EMA26 starts
+  const macdLine: number[] = [];
+  const ema12Offset = 26 - 12; // 14 - how many more values EMA12 has
+
+  for (let i = 0; i < ema26.length; i++) {
+    macdLine.push(ema12[i + ema12Offset] - ema26[i]);
+  }
+
+  // Signal line = 9-day EMA of MACD line
+  // This will have (macdLine.length - 8) values
+  const signalLine = calculateEMA(macdLine, 9);
+
+  if (signalLine.length === 0)
+    return { macd: [], signal: [], histogram: [], startIndex: 0 };
+
+  // Align all arrays to have same length (where signal line starts)
+  const alignedMacd = macdLine.slice(8); // Remove first 8 values to align with signal
+  const histogram: number[] = [];
+
+  for (let i = 0; i < signalLine.length; i++) {
+    histogram.push(alignedMacd[i] - signalLine[i]);
+  }
+
+  // Start index in original prices: 25 (EMA26 start) + 8 (signal start) = 33
+  return { macd: alignedMacd, signal: signalLine, histogram, startIndex: 33 };
+}
+
+// Calculate Bollinger Bands (20, 2)
+function calculateBollingerBands(
+  prices: number[],
+  period: number = 20,
+  stdDev: number = 2
+): {
+  upper: number[];
+  middle: number[];
+  lower: number[];
+} {
+  if (prices.length < period) return { upper: [], middle: [], lower: [] };
+
+  const upper: number[] = [];
+  const middle: number[] = [];
+  const lower: number[] = [];
+
+  for (let i = period - 1; i < prices.length; i++) {
+    // Calculate SMA (middle band)
+    let sum = 0;
+    for (let j = i - period + 1; j <= i; j++) {
+      sum += prices[j];
+    }
+    const sma = sum / period;
+
+    // Calculate standard deviation
+    let sumSquaredDiff = 0;
+    for (let j = i - period + 1; j <= i; j++) {
+      sumSquaredDiff += Math.pow(prices[j] - sma, 2);
+    }
+    const std = Math.sqrt(sumSquaredDiff / period);
+
+    middle.push(sma);
+    upper.push(sma + stdDev * std);
+    lower.push(sma - stdDev * std);
+  }
+
+  return { upper, middle, lower };
 }
 
 // Calculate RSI (Relative Strength Index)
@@ -91,9 +222,20 @@ async function fetchTechnicalData(
     priceVsSma200: null,
     rsi14: null,
     rsiSignal: null,
+    macd: null,
+    macdSignal: null,
+    macdHistogram: null,
+    macdTrend: null,
+    bollingerUpper: null,
+    bollingerMiddle: null,
+    bollingerLower: null,
+    bollingerPosition: null,
+    bollingerSignal: null,
     historicalPrices: [],
     sma50History: [],
     sma200History: [],
+    macdHistory: [],
+    bollingerHistory: [],
   };
 
   try {
@@ -168,9 +310,9 @@ async function fetchTechnicalData(
 
     // Convert to chronological order for charts (oldest first)
     const chronologicalPrices = [...historicalPrices].reverse();
+    const chronologicalCloses = chronologicalPrices.map((p) => p.close);
 
     // Calculate SMA histories in chronological order
-    // SMA for day N uses prices from day N-period+1 to day N
     const sma50History: { date: string; value: number }[] = [];
     const sma200History: { date: string; value: number }[] = [];
 
@@ -200,6 +342,105 @@ async function fetchTechnicalData(
       }
     }
 
+    // Calculate MACD
+    const macdResult = calculateMACD(chronologicalCloses);
+    let macd: number | null = null;
+    let macdSignalValue: number | null = null;
+    let macdHistogram: number | null = null;
+    let macdTrend: 'bullish' | 'bearish' | 'neutral' | null = null;
+    const macdHistory: {
+      date: string;
+      macd: number;
+      signal: number;
+      histogram: number;
+    }[] = [];
+
+    if (macdResult.macd.length > 0) {
+      // Get current values (most recent)
+      const lastIdx = macdResult.macd.length - 1;
+      macd = Math.round(macdResult.macd[lastIdx] * 1000) / 1000;
+      macdSignalValue = Math.round(macdResult.signal[lastIdx] * 1000) / 1000;
+      macdHistogram = Math.round(macdResult.histogram[lastIdx] * 1000) / 1000;
+
+      // Determine MACD trend
+      if (macdHistogram > 0 && macd > 0) {
+        macdTrend = 'bullish';
+      } else if (macdHistogram < 0 && macd < 0) {
+        macdTrend = 'bearish';
+      } else {
+        macdTrend = 'neutral';
+      }
+
+      // Build MACD history - all arrays are aligned
+      for (let i = 0; i < macdResult.macd.length; i++) {
+        const dateIndex = macdResult.startIndex + i;
+        if (dateIndex < chronologicalPrices.length) {
+          macdHistory.push({
+            date: chronologicalPrices[dateIndex].date,
+            macd: Math.round(macdResult.macd[i] * 1000) / 1000,
+            signal: Math.round(macdResult.signal[i] * 1000) / 1000,
+            histogram: Math.round(macdResult.histogram[i] * 1000) / 1000,
+          });
+        }
+      }
+    }
+
+    // Calculate Bollinger Bands
+    const bbResult = calculateBollingerBands(chronologicalCloses, 20, 2);
+    let bollingerUpper: number | null = null;
+    let bollingerMiddle: number | null = null;
+    let bollingerLower: number | null = null;
+    let bollingerPosition: number | null = null;
+    let bollingerSignal: 'overbought' | 'oversold' | 'neutral' | null = null;
+    const bollingerHistory: {
+      date: string;
+      upper: number;
+      middle: number;
+      lower: number;
+    }[] = [];
+
+    if (bbResult.upper.length > 0) {
+      // Get current values
+      bollingerUpper =
+        Math.round(bbResult.upper[bbResult.upper.length - 1] * 100) / 100;
+      bollingerMiddle =
+        Math.round(bbResult.middle[bbResult.middle.length - 1] * 100) / 100;
+      bollingerLower =
+        Math.round(bbResult.lower[bbResult.lower.length - 1] * 100) / 100;
+
+      // Calculate position within bands (0% = at lower, 100% = at upper)
+      const bandWidth = bollingerUpper - bollingerLower;
+      if (bandWidth > 0) {
+        bollingerPosition = Math.round(
+          ((currentPrice - bollingerLower) / bandWidth) * 100
+        );
+        bollingerPosition = Math.max(0, Math.min(100, bollingerPosition)); // Clamp to 0-100
+      }
+
+      // Determine Bollinger signal
+      if (currentPrice > bollingerUpper) {
+        bollingerSignal = 'overbought';
+      } else if (currentPrice < bollingerLower) {
+        bollingerSignal = 'oversold';
+      } else {
+        bollingerSignal = 'neutral';
+      }
+
+      // Build Bollinger history
+      const bbStartIndex = 19; // 0-indexed, starts at day 20
+      for (let i = 0; i < bbResult.upper.length; i++) {
+        const dateIndex = bbStartIndex + i;
+        if (dateIndex < chronologicalPrices.length) {
+          bollingerHistory.push({
+            date: chronologicalPrices[dateIndex].date,
+            upper: Math.round(bbResult.upper[i] * 100) / 100,
+            middle: Math.round(bbResult.middle[i] * 100) / 100,
+            lower: Math.round(bbResult.lower[i] * 100) / 100,
+          });
+        }
+      }
+    }
+
     return {
       ticker,
       stockName,
@@ -212,10 +453,21 @@ async function fetchTechnicalData(
         priceVsSma200 !== null ? Math.round(priceVsSma200 * 100) / 100 : null,
       rsi14,
       rsiSignal,
+      macd,
+      macdSignal: macdSignalValue,
+      macdHistogram,
+      macdTrend,
+      bollingerUpper,
+      bollingerMiddle,
+      bollingerLower,
+      bollingerPosition,
+      bollingerSignal,
       // All in chronological order (oldest to newest)
       historicalPrices: chronologicalPrices,
       sma50History,
       sma200History,
+      macdHistory,
+      bollingerHistory,
     };
   } catch (error) {
     console.error(`Error fetching technical data for ${ticker}:`, error);

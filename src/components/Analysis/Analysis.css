@@ -372,7 +372,6 @@
   font-size: 0.75rem;
   color: var(--text-muted);
   font-weight: 500;
-  text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 
@@ -2298,5 +2297,238 @@
     margin: 1.5rem -1rem -1rem;
     padding: 1rem;
     border-radius: 0;
+  }
+}
+
+/* MACD Section */
+.macd-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.macd-values {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.macd-value-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.macd-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.macd-val {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.macd-signal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.macd-signal.bullish {
+  background: rgba(var(--color-positive-rgb), 0.1);
+  color: var(--color-positive);
+}
+
+.macd-signal.bearish {
+  background: rgba(var(--color-negative-rgb), 0.1);
+  color: var(--color-negative);
+}
+
+.macd-signal.neutral {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+/* Bollinger Bands Section */
+.bollinger-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.bollinger-values {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+.bollinger-value-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.bb-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bb-val {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.bollinger-position {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.bb-pos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bb-pos-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.bb-position-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.bb-position-bar {
+  position: relative;
+  height: 0.75rem;
+  background: linear-gradient(to right, 
+    #22c55e33 0%, 
+    #22c55e1a 20%,
+    #e5e7eb 20%, 
+    #e5e7eb 80%,
+    #ef44441a 80%,
+    #ef444433 100%
+  );
+  border-radius: 9999px;
+}
+
+.bb-position-indicator {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 1rem;
+  height: 1rem;
+  background: var(--color-accent);
+  border-radius: 50%;
+  border: 2px solid var(--bg-primary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.bb-position-zones {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.bb-zone {
+  color: var(--text-muted);
+}
+
+.bb-zone.lower {
+  align-items: flex-start;
+  color: var(--color-positive);
+}
+
+.bb-zone.middle {
+  color: var(--text-secondary);
+}
+
+.bb-zone.upper {
+  align-items: flex-end;
+  color: var(--color-negative);
+}
+
+.bollinger-signal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.bollinger-signal.oversold {
+  background: rgba(var(--color-positive-rgb), 0.1);
+  color: var(--color-positive);
+}
+
+.bollinger-signal.overbought {
+  background: rgba(var(--color-negative-rgb), 0.1);
+  color: var(--color-negative);
+}
+
+.bollinger-signal.neutral {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+/* No Data Message */
+.no-data-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  margin-top: 1rem;
+}
+
+/* Mobile adjustments for MACD and Bollinger */
+@media (max-width: 600px) {
+  .macd-values {
+    grid-template-columns: 1fr;
+  }
+  
+  .bollinger-values {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .bb-position-zones {
+    font-size: 0.625rem;
   }
 }
