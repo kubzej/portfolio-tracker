@@ -14,6 +14,7 @@ type SortKey =
   | 'plCzk'
   | 'plPercent'
   | 'portfolio'
+  | 'targetPrice'
   | 'distanceToTarget';
 
 type SortDirection = 'asc' | 'desc';
@@ -135,6 +136,10 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
             totalValue && b.current_value_czk
               ? b.current_value_czk / totalValue
               : -Infinity;
+          break;
+        case 'targetPrice':
+          aVal = a.target_price ?? -Infinity;
+          bVal = b.target_price ?? -Infinity;
           break;
         case 'distanceToTarget':
           aVal = a.distance_to_target_pct ?? -Infinity;
@@ -304,6 +309,14 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                         </span>
                       </div>
                       <div className="holding-card-stat">
+                        <span className="label">Target Price</span>
+                        <span className="value">
+                          {holding.target_price !== null
+                            ? `$${holding.target_price.toFixed(2)}`
+                            : '—'}
+                        </span>
+                      </div>
+                      <div className="holding-card-stat">
                         <span className="label">To Target</span>
                         <span
                           className={`value ${
@@ -376,6 +389,11 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                       className="right"
                     />
                     <SortHeader
+                      label="Target Price"
+                      sortKeyName="targetPrice"
+                      className="right"
+                    />
+                    <SortHeader
                       label="To Target"
                       sortKeyName="distanceToTarget"
                       className="right"
@@ -440,6 +458,11 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                         <td className="right">
                           {portfolioPercentage !== null
                             ? `${portfolioPercentage.toFixed(1)}%`
+                            : '—'}
+                        </td>
+                        <td className="right">
+                          {holding.target_price !== null
+                            ? `$${holding.target_price.toFixed(2)}`
                             : '—'}
                         </td>
                         <td

@@ -1201,7 +1201,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 >
                   <span className="insight-label">Avg EV/EBITDA ⓘ</span>
                   <span className="insight-value">
-                    {getWeightedAverage('evToEbitda').toFixed(1)}x
+                    {getWeightedAverage('evEbitda').toFixed(1)}x
                   </span>
                 </div>
               </div>
