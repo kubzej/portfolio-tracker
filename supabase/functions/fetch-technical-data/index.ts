@@ -49,6 +49,10 @@ interface TechnicalData {
   atr14: number | null; // 14-day ATR
   atrPercent: number | null; // ATR as % of current price
   atrSignal: 'high' | 'low' | 'normal' | null; // Volatility level
+  // OBV (On-Balance Volume)
+  obv: number | null; // Current OBV value
+  obvTrend: 'bullish' | 'bearish' | 'neutral' | null; // OBV trend
+  obvDivergence: 'bullish' | 'bearish' | null; // Divergence with price
   // Historical data for charts
   historicalPrices: {
     date: string;
@@ -85,6 +89,11 @@ interface TechnicalData {
     date: string;
     atr: number;
     atrPercent: number;
+  }[];
+  obvHistory: {
+    date: string;
+    obv: number;
+    obvSma: number | null; // 20-day SMA of OBV for trend
   }[];
   // Error tracking
   error?: string;
@@ -381,6 +390,9 @@ async function fetchTechnicalData(
     atr14: null,
     atrPercent: null,
     atrSignal: null,
+    obv: null,
+    obvTrend: null,
+    obvDivergence: null,
     historicalPrices: [],
     sma50History: [],
     sma200History: [],
@@ -389,6 +401,7 @@ async function fetchTechnicalData(
     stochasticHistory: [],
     volumeHistory: [],
     atrHistory: [],
+    obvHistory: [],
   };
 
   try {
@@ -772,6 +785,88 @@ async function fetchTechnicalData(
       }
     }
 
+    // Calculate OBV (On-Balance Volume)
+    // OBV adds volume on up days, subtracts on down days
+    let obv: number | null = null;
+    let obvTrend: 'bullish' | 'bearish' | 'neutral' | null = null;
+    let obvDivergence: 'bullish' | 'bearish' | null = null;
+    const obvHistory: { date: string; obv: number; obvSma: number | null }[] =
+      [];
+
+    if (chronologicalCloses.length > 1 && chronologicalVolumes.length > 1) {
+      const obvValues: number[] = [];
+      let runningObv = 0;
+
+      // First day starts at 0
+      obvValues.push(runningObv);
+
+      // Calculate OBV for each subsequent day
+      for (let i = 1; i < chronologicalCloses.length; i++) {
+        const priceChange = chronologicalCloses[i] - chronologicalCloses[i - 1];
+        const volume = chronologicalVolumes[i] || 0;
+
+        if (priceChange > 0) {
+          runningObv += volume; // Price up = add volume
+        } else if (priceChange < 0) {
+          runningObv -= volume; // Price down = subtract volume
+        }
+        // If price unchanged, OBV stays the same
+        obvValues.push(runningObv);
+      }
+
+      // Current OBV
+      obv = obvValues[obvValues.length - 1];
+
+      // Build OBV history with 20-day SMA
+      for (let i = 0; i < obvValues.length; i++) {
+        let sma: number | null = null;
+        if (i >= 19) {
+          let sum = 0;
+          for (let j = i - 19; j <= i; j++) {
+            sum += obvValues[j];
+          }
+          sma = Math.round(sum / 20);
+        }
+        obvHistory.push({
+          date: chronologicalPrices[i].date,
+          obv: obvValues[i],
+          obvSma: sma,
+        });
+      }
+
+      // Determine OBV trend (compare current OBV to 20-day SMA)
+      const currentObvSma = obvHistory[obvHistory.length - 1]?.obvSma;
+      if (currentObvSma !== null) {
+        if (obv > currentObvSma * 1.05) {
+          obvTrend = 'bullish'; // OBV above SMA by 5%+
+        } else if (obv < currentObvSma * 0.95) {
+          obvTrend = 'bearish'; // OBV below SMA by 5%+
+        } else {
+          obvTrend = 'neutral';
+        }
+      }
+
+      // Detect divergence (OBV vs Price over last 20 days)
+      if (chronologicalCloses.length >= 20 && obvValues.length >= 20) {
+        const priceStart = chronologicalCloses[chronologicalCloses.length - 20];
+        const priceEnd = chronologicalCloses[chronologicalCloses.length - 1];
+        const obvStart = obvValues[obvValues.length - 20];
+        const obvEnd = obvValues[obvValues.length - 1];
+
+        const priceUp = priceEnd > priceStart;
+        const obvUp = obvEnd > obvStart;
+
+        // Bullish divergence: Price down but OBV up (accumulation)
+        if (!priceUp && obvUp) {
+          obvDivergence = 'bullish';
+        }
+        // Bearish divergence: Price up but OBV down (distribution)
+        else if (priceUp && !obvUp) {
+          obvDivergence = 'bearish';
+        }
+      }
+    }
+
     return {
       ticker,
       stockName,
@@ -803,6 +898,9 @@ async function fetchTechnicalData(
       atr14,
       atrPercent,
       atrSignal,
+      obv,
+      obvTrend,
+      obvDivergence,
       // All in chronological order (oldest to newest)
       historicalPrices: chronologicalPrices,
       sma50History,
@@ -812,6 +910,7 @@ async function fetchTechnicalData(
       stochasticHistory,
       volumeHistory,
       atrHistory,
+      obvHistory,
     };
   } catch (error) {
     console.error(`Error fetching technical data for ${ticker}:`, error);

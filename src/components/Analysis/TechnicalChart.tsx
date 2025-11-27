@@ -23,6 +23,7 @@ import type {
   StochasticPoint,
   VolumePoint,
   ATRPoint,
+  OBVPoint,
 } from '@/services/api/technical';
 import { InfoTooltip } from '@/components/shared/InfoTooltip';
 
@@ -76,6 +77,13 @@ interface ATRChartPoint {
   displayDate: string;
   atr: number;
   atrPercent: number;
+}
+
+interface OBVChartPoint {
+  date: string;
+  displayDate: string;
+  obv: number;
+  obvSma: number | null;
 }
 
 // Format date helper
@@ -157,6 +165,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
     useState<TimeRange>('2W');
   const [volumeTimeRange, setVolumeTimeRange] = useState<TimeRange>('1M');
   const [atrTimeRange, setAtrTimeRange] = useState<TimeRange>('1M');
+  const [obvTimeRange, setObvTimeRange] = useState<TimeRange>('3M');
 
   // Get days for each chart using helper
   const priceDays = getDaysForRange(priceTimeRange);
@@ -165,6 +174,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
   const stochasticDays = getDaysForRange(stochasticTimeRange);
   const volumeDays = getDaysForRange(volumeTimeRange);
   const atrDays = getDaysForRange(atrTimeRange);
+  const obvDays = getDaysForRange(obvTimeRange);
 
   // Merge price and SMA data for the chart
   // All data from API is now in chronological order (oldest to newest)
@@ -304,6 +314,24 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
 
     return filterByDateRange(fullData, atrDays);
   }, [data, atrDays]);
+
+  // Build OBV chart data
+  const obvData = useMemo((): OBVChartPoint[] => {
+    const obvArr = data.obvHistory || [];
+
+    if (obvArr.length === 0) {
+      return [];
+    }
+
+    const fullData = obvArr.map((o: OBVPoint) => ({
+      date: o.date,
+      displayDate: formatDateStr(o.date),
+      obv: o.obv,
+      obvSma: o.obvSma,
+    }));
+
+    return filterByDateRange(fullData, obvDays);
+  }, [data, obvDays]);
 
   // Format volume for display (e.g., 1.5M, 250K)
   const formatVolume = (value: number): string => {
@@ -1477,7 +1505,128 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
               )}
             </div>
 
-            {/* Section 10: What These Indicators Tell You */}
+            {/* Section 10: OBV - On-Balance Volume */}
+            <div className="tech-section obv-section">
+              <div className="section-header">
+                <h4>📊 On-Balance Volume (OBV)</h4>
+                <TimeRangeSelector
+                  value={obvTimeRange}
+                  onChange={setObvTimeRange}
+                />
+                <InfoTooltip text="OBV měří kumulativní tok objemu. Když cena roste, objem se přičítá; když klesá, odečítá se. Rostoucí OBV signalizuje akumulaci (nákup), klesající OBV signalizuje distribuci (prodej). Divergence mezi OBV a cenou může předpovídat obrat trendu." />
+              </div>
+
+              {obvData.length > 0 ? (
+                <>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <ComposedChart data={obvData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                      <XAxis
+                        dataKey="displayDate"
+                        tick={{ fontSize: 11 }}
+                        interval="preserveStartEnd"
+                      />
+                      <YAxis
+                        tick={{ fontSize: 11 }}
+                        tickFormatter={formatVolume}
+                        domain={['auto', 'auto']}
+                      />
+                      <Tooltip
+                        formatter={(value: number) => [
+                          formatVolume(value),
+                          value === obvData[0]?.obvSma ? 'SMA(20)' : 'OBV',
+                        ]}
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          border: '1px solid #e0e0e0',
+                          borderRadius: '8px',
+                        }}
+                      />
+                      <Legend />
+                      <Area
+                        type="monotone"
+                        dataKey="obv"
+                        fill="rgba(102, 126, 234, 0.2)"
+                        stroke="#667eea"
+                        strokeWidth={2}
+                        name="OBV"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="obvSma"
+                        stroke="#f093fb"
+                        strokeWidth={2}
+                        dot={false}
+                        name="SMA(20)"
+                        connectNulls
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+
+                  <div className="obv-values">
+                    <div className="obv-stat">
+                      <span className="label">Current OBV</span>
+                      <span className="value">
+                        {data.obv !== null ? formatVolume(data.obv) : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="obv-stat">
+                      <span className="label">OBV Trend</span>
+                      <span
+                        className={`value trend-${data.obvTrend ?? 'neutral'}`}
+                      >
+                        {data.obvTrend === 'bullish' &&
+                          '📈 Bullish (Accumulation)'}
+                        {data.obvTrend === 'bearish' &&
+                          '📉 Bearish (Distribution)'}
+                        {data.obvTrend === 'neutral' && '➡️ Neutral'}
+                        {!data.obvTrend && 'N/A'}
+                      </span>
+                    </div>
+                    <div className="obv-stat">
+                      <span className="label">Divergence</span>
+                      <span
+                        className={`value divergence-${
+                          data.obvDivergence ?? 'none'
+                        }`}
+                      >
+                        {data.obvDivergence === 'bullish' &&
+                          '🟢 Bullish Divergence'}
+                        {data.obvDivergence === 'bearish' &&
+                          '🔴 Bearish Divergence'}
+                        {!data.obvDivergence && '— None Detected'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="obv-signal-wrapper">
+                    <div className={`obv-signal ${data.obvTrend ?? 'neutral'}`}>
+                      {data.obvTrend === 'bullish' &&
+                        '📈 Akumulace — objem proudí do akcie, instituce nakupují. Silný signál, když cena také roste.'}
+                      {data.obvTrend === 'bearish' &&
+                        '📉 Distribuce — objem odchází z akcie, instituce prodávají. Silný signál, když cena také klesá.'}
+                      {data.obvTrend === 'neutral' &&
+                        '➡️ Neutrální — žádný jasný trend v objemu, trh vyčkává.'}
+                      {!data.obvTrend && 'Nedostatek dat'}
+                    </div>
+                    {data.obvDivergence && (
+                      <div className={`obv-divergence ${data.obvDivergence}`}>
+                        {data.obvDivergence === 'bullish' &&
+                          '⚡ Bullish divergence: Cena klesá, ale OBV roste — signál možného obratu nahoru!'}
+                        {data.obvDivergence === 'bearish' &&
+                          '⚠️ Bearish divergence: Cena roste, ale OBV klesá — signál možného obratu dolů!'}
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="no-data-message">
+                  Insufficient data to display OBV Analysis
+                </div>
+              )}
+            </div>
+
+            {/* Section 11: What These Indicators Tell You */}
             <div className="tech-section tech-summary-section">
               <div className="section-header">
                 <h4>How to Use This Analysis</h4>

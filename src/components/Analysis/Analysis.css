@@ -2948,3 +2948,123 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* OBV - On-Balance Volume Section */
+.obv-section {
+  margin-top: 2rem;
+}
+
+.obv-values {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.obv-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.obv-stat .label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.obv-stat .value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.obv-stat .value.trend-bullish {
+  color: #22c55e;
+}
+
+.obv-stat .value.trend-bearish {
+  color: #ef4444;
+}
+
+.obv-stat .value.trend-neutral {
+  color: var(--text-secondary);
+}
+
+.obv-stat .value.divergence-bullish {
+  color: #22c55e;
+}
+
+.obv-stat .value.divergence-bearish {
+  color: #ef4444;
+}
+
+.obv-stat .value.divergence-none {
+  color: var(--text-secondary);
+}
+
+.obv-signal-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.obv-signal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.obv-signal.bullish {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.obv-signal.bearish {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.obv-signal.neutral {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.obv-divergence {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.obv-divergence.bullish {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.obv-divergence.bearish {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+@media (max-width: 600px) {
+  .obv-values {
+    grid-template-columns: 1fr;
+  }
+}

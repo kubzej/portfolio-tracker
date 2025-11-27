@@ -52,6 +52,13 @@ export interface ATRPoint {
   atrPercent: number;
 }
 
+// OBV data point for charts
+export interface OBVPoint {
+  date: string;
+  obv: number;
+  obvSma: number | null;
+}
+
 // Technical data for a single stock
 export interface TechnicalData {
   ticker: string;
@@ -90,6 +97,10 @@ export interface TechnicalData {
   atr14: number | null;
   atrPercent: number | null;
   atrSignal: 'high' | 'low' | 'normal' | null;
+  // OBV (On-Balance Volume)
+  obv: number | null;
+  obvTrend: 'bullish' | 'bearish' | 'neutral' | null;
+  obvDivergence: 'bullish' | 'bearish' | null;
   // Historical data for charts
   historicalPrices: PricePoint[];
   sma50History: SMAPoint[];
@@ -99,6 +110,7 @@ export interface TechnicalData {
   stochasticHistory: StochasticPoint[];
   volumeHistory: VolumePoint[];
   atrHistory: ATRPoint[];
+  obvHistory: OBVPoint[];
   // Error tracking
   error?: string;
 }
