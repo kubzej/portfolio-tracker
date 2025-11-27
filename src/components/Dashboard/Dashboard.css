@@ -1,0 +1,423 @@
+.dashboard {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dashboard-loading,
+.dashboard-error {
+  text-align: center;
+  padding: 40px;
+  color: #a0a0a0;
+}
+
+.dashboard-error {
+  color: #ef4444;
+}
+
+/* Dashboard Header */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dashboard-header h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.25rem;
+}
+
+.refresh-btn {
+  background: #1a1a2e;
+  border: 1px solid #2a2a4a;
+  color: #a0a0a0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  border-color: #646cff;
+  color: #fff;
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Summary Cards */
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 768px) {
+  .summary-cards {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  
+  .dashboard-header h2 {
+    font-size: 1.5rem;
+  }
+}
+
+.summary-card {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.card-label {
+  color: #a0a0a0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card-value {
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 768px) {
+  .card-label {
+    font-size: 0.875rem;
+  }
+  
+  .card-value {
+    font-size: 1.5rem;
+  }
+  
+  .summary-card {
+    padding: 20px;
+  }
+}
+
+.card-value small {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.card-value.positive {
+  color: #22c55e;
+}
+
+.card-value.negative {
+  color: #ef4444;
+}
+
+/* Holdings Section */
+.holdings-section {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.holdings-section h2 {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+@media (min-width: 768px) {
+  .holdings-section {
+    padding: 24px;
+  }
+  
+  .holdings-section h2 {
+    font-size: 1.25rem;
+    margin-bottom: 20px;
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #a0a0a0;
+}
+
+/* Mobile holdings cards */
+.holdings-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.holding-card {
+  background: #16213e;
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.holding-card:hover {
+  border-color: #646cff;
+}
+
+.holding-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.holding-card-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.holding-card-title .ticker {
+  font-weight: 600;
+  color: #646cff;
+  font-size: 1.1rem;
+}
+
+.holding-card-title .name {
+  font-size: 0.8rem;
+  color: #a0a0a0;
+}
+
+.holding-card-pl {
+  text-align: right;
+}
+
+.holding-card-pl .value {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.holding-card-pl .percent {
+  font-size: 0.8rem;
+}
+
+.holding-card-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.holding-card-stat {
+  display: flex;
+  justify-content: space-between;
+}
+
+.holding-card-stat .label {
+  color: #666;
+}
+
+.holding-card-stat .value {
+  color: #fff;
+}
+
+/* Desktop table */
+.holdings-table-wrapper {
+  overflow-x: auto;
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .holdings-table-wrapper {
+    display: block;
+  }
+  
+  .holdings-cards {
+    display: none;
+  }
+}
+
+.holdings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.holdings-table th {
+  text-align: left;
+  padding: 12px 16px;
+  color: #a0a0a0;
+  font-weight: 500;
+  border-bottom: 1px solid #2a2a4a;
+  white-space: nowrap;
+}
+
+.holdings-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s;
+}
+
+.holdings-table th.sortable:hover {
+  color: #646cff;
+}
+
+.holdings-table th.sorted {
+  color: #646cff;
+}
+
+.sort-indicator {
+  font-size: 0.7rem;
+  margin-left: 4px;
+}
+
+.holdings-table th.right {
+  text-align: right;
+}
+
+.holdings-table td {
+  padding: 16px;
+  border-bottom: 1px solid #2a2a4a;
+  color: #fff;
+}
+
+.holdings-table td.right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.holdings-table tr:last-child td {
+  border-bottom: none;
+}
+
+.holdings-table tr:hover {
+  background: rgba(100, 108, 255, 0.05);
+}
+
+.holdings-table tr.clickable {
+  cursor: pointer;
+}
+
+.holdings-table tr.clickable:hover {
+  background: rgba(100, 108, 255, 0.1);
+}
+
+.stock-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stock-cell .ticker {
+  font-weight: 600;
+  color: #646cff;
+}
+
+.stock-cell .name {
+  font-size: 0.8rem;
+  color: #a0a0a0;
+}
+
+.positive {
+  color: #22c55e !important;
+}
+
+.negative {
+  color: #ef4444 !important;
+}
+
+/* Sector Distribution */
+.sector-section {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.sector-section h2 {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+@media (min-width: 768px) {
+  .sector-section {
+    padding: 24px;
+  }
+  
+  .sector-section h2 {
+    font-size: 1.25rem;
+    margin-bottom: 20px;
+  }
+}
+
+.sector-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sector-row {
+  display: grid;
+  grid-template-columns: 1fr 50px;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (min-width: 500px) {
+  .sector-row {
+    grid-template-columns: 120px 1fr 60px;
+    gap: 16px;
+  }
+}
+
+.sector-name {
+  color: #a0a0a0;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sector-bar-wrapper {
+  height: 20px;
+  background: #16213e;
+  border-radius: 4px;
+  overflow: hidden;
+  display: none;
+}
+
+@media (min-width: 500px) {
+  .sector-bar-wrapper {
+    display: block;
+    height: 24px;
+  }
+}
+
+.sector-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #646cff, #535bf2);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  min-width: 2px;
+}
+
+.sector-pct {
+  color: #fff;
+  font-size: 0.85rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

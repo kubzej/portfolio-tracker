@@ -1,0 +1,147 @@
+.stocks-list {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.stocks-list-loading,
+.stocks-list-error {
+  text-align: center;
+  padding: 40px;
+  color: #a0a0a0;
+}
+
+.stocks-list-error {
+  color: #ef4444;
+}
+
+.stocks-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.stocks-list-header h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .stocks-list-header {
+    margin-bottom: 24px;
+  }
+  
+  .stocks-list-header h2 {
+    font-size: 1.5rem;
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  background: #1a1a2e;
+  border-radius: 12px;
+  color: #a0a0a0;
+}
+
+.stocks-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 500px) {
+  .stocks-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+}
+
+.stock-card {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+@media (min-width: 768px) {
+  .stock-card {
+    padding: 20px;
+  }
+}
+
+.stock-card:hover {
+  border-color: #646cff;
+  transform: translateY(-2px);
+}
+
+.stock-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.stock-card-header .ticker {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #646cff;
+}
+
+@media (min-width: 768px) {
+  .stock-card-header .ticker {
+    font-size: 1.25rem;
+  }
+}
+
+.stock-card-header .exchange {
+  font-size: 0.75rem;
+  color: #666;
+  background: #16213e;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.stock-card-name {
+  color: #fff;
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+
+.stock-card-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #a0a0a0;
+}
+
+.stock-card-target {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #2a2a4a;
+  font-size: 0.85rem;
+  color: #22c55e;
+}
+
+.btn-primary {
+  background: #646cff;
+  border: none;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background: #535bf2;
+}
