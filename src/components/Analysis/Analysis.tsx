@@ -1052,19 +1052,19 @@ export function Analysis({ portfolioId }: AnalysisProps) {
           className={`tab-btn ${activeTab === 'analysts' ? 'active' : ''}`}
           onClick={() => setActiveTab('analysts')}
         >
-          📊 Analysts
+          Analysts
         </button>
         <button
           className={`tab-btn ${activeTab === 'fundamentals' ? 'active' : ''}`}
           onClick={() => setActiveTab('fundamentals')}
         >
-          💰 Fundamentals
+          Fundamentals
         </button>
         <button
           className={`tab-btn ${activeTab === 'technicals' ? 'active' : ''}`}
           onClick={() => setActiveTab('technicals')}
         >
-          📈 Technical
+          Technical
         </button>
         <button
           className={`tab-btn ${
@@ -1072,7 +1072,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
           }`}
           onClick={() => setActiveTab('recommendations')}
         >
-          🤖 Recommendations
+          Recommendations
         </button>
       </div>
 
@@ -1274,7 +1274,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
           {/* Analyst Summary */}
           <section className="analysis-section">
-            <h3>📈 Analyst Insights</h3>
+            <h3>Analyst Insights</h3>
             <div className="insights-grid">
               <div
                 className="insight-card"
@@ -1501,7 +1501,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
           <section className="analysis-section">
             <div className="insider-section-header">
               <div className="insider-title-row">
-                <h3>🕵️ Insider Sentiment</h3>
+                <h3>Insider Sentiment</h3>
                 <div className="tooltip-wrapper">
                   <span className="info-tooltip-trigger">ⓘ</span>
                   <div className="tooltip-content">
@@ -1670,7 +1670,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
           {/* Fundamental Summary */}
           <section className="analysis-section">
-            <h3>💹 Fundamental Insights</h3>
+            <h3>Fundamental Insights</h3>
             <p className="section-description">
               Portfolio-weighted averages and key metrics across your holdings.
             </p>
@@ -2004,35 +2004,31 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
           {/* Technical Premium Notice */}
           <section className="analysis-section premium-notice">
-            <h3>🔒 Premium Technical Indicators</h3>
+            <h3>Premium Technical Indicators</h3>
             <p className="section-description">
               The following technical analysis features require Finnhub Premium
               subscription:
             </p>
             <div className="premium-features">
               <div className="premium-feature">
-                <span className="feature-icon">📊</span>
                 <span className="feature-name">Technical Indicators</span>
                 <span className="feature-desc">
                   SMA, EMA, RSI, MACD, Bollinger Bands, etc.
                 </span>
               </div>
               <div className="premium-feature">
-                <span className="feature-icon">🎯</span>
                 <span className="feature-name">Support/Resistance</span>
                 <span className="feature-desc">
                   Key price levels for each stock
                 </span>
               </div>
               <div className="premium-feature">
-                <span className="feature-icon">📈</span>
                 <span className="feature-name">Pattern Recognition</span>
                 <span className="feature-desc">
                   Chart patterns (Head & Shoulders, Triangles, etc.)
                 </span>
               </div>
               <div className="premium-feature">
-                <span className="feature-icon">🔮</span>
                 <span className="feature-name">Aggregate Signals</span>
                 <span className="feature-desc">
                   Buy/Sell/Neutral signals based on multiple indicators
@@ -2043,7 +2039,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
           {/* Technical Summary */}
           <section className="analysis-section">
-            <h3>📉 Technical Insights</h3>
+            <h3>Technical Insights</h3>
             <div className="insights-grid">
               <div className="insight-card">
                 <span className="insight-label">Near 52W High (&gt;80%)</span>
@@ -2096,7 +2092,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
       {activeTab === 'recommendations' && (
         <>
           <section className="analysis-section recommendations-section">
-            <h3>🤖 Smart Recommendations</h3>
+            <h3>Smart Recommendations</h3>
             <p className="section-description">
               Algorithmic scoring based on valuation, profitability, growth,
               financial health, and market sentiment. Scores range from 0-100.
@@ -2211,7 +2207,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                   {/* Key Points */}
                   {rec.keyStrengths.length > 0 && (
                     <div className="rec-points strengths">
-                      <span className="points-label">✓ Strengths</span>
+                      <span className="points-label">Strengths</span>
                       <ul>
                         {rec.keyStrengths.map((s, i) => (
                           <li key={i}>{s}</li>
@@ -2222,7 +2218,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
                   {rec.keyWeaknesses.length > 0 && (
                     <div className="rec-points weaknesses">
-                      <span className="points-label">✗ Concerns</span>
+                      <span className="points-label">Concerns</span>
                       <ul>
                         {rec.keyWeaknesses.map((w, i) => (
                           <li key={i}>{w}</li>
@@ -2234,7 +2230,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                   {/* Action Items */}
                   {rec.actionItems.length > 0 && (
                     <div className="rec-actions">
-                      <span className="actions-label">→ Actions</span>
+                      <span className="actions-label">Actions</span>
                       <ul>
                         {rec.actionItems.map((a, i) => (
                           <li key={i}>{a}</li>
@@ -2249,11 +2245,11 @@ export function Analysis({ portfolioId }: AnalysisProps) {
             {/* Disclaimer */}
             <div className="recommendation-disclaimer">
               <p>
-                ⚠️ <strong>Disclaimer:</strong> These recommendations are
-                generated algorithmically based on publicly available financial
-                data. They are for informational purposes only and do not
-                constitute financial advice. Always do your own research and
-                consider consulting a financial advisor before making investment
+                <strong>Disclaimer:</strong> These recommendations are generated
+                algorithmically based on publicly available financial data. They
+                are for informational purposes only and do not constitute
+                financial advice. Always do your own research and consider
+                consulting a financial advisor before making investment
                 decisions.
               </p>
             </div>
