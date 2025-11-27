@@ -27,6 +27,7 @@ type SortKey =
   | 'currentPrice'
   | 'priceChangePercent'
   | 'numberOfAnalysts'
+  | 'consensusScore'
   | 'peRatio'
   | 'beta'
   | 'roe'
@@ -131,6 +132,8 @@ export function Analysis({ portfolioId }: AnalysisProps) {
         return item.priceChangePercent ?? 0;
       case 'numberOfAnalysts':
         return item.numberOfAnalysts ?? 0;
+      case 'consensusScore':
+        return item.consensusScore ?? 0;
       case 'peRatio':
         return item.fundamentals?.peRatio ?? 0;
       case 'beta':
@@ -361,14 +364,27 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                       Change <SortIcon column="priceChangePercent" />
                     </th>
                     <th className="center">Rating</th>
-                    <th className="center">Recommendations</th>
+                    <th
+                      className="center"
+                      onClick={() => handleSort('consensusScore')}
+                      title="Weighted consensus: -2 (Strong Sell) to +2 (Strong Buy). 0 = Hold."
+                    >
+                      Score ⓘ <SortIcon column="consensusScore" />
+                    </th>
+                    <th className="center">Breakdown</th>
                     <th
                       className="center"
                       onClick={() => handleSort('numberOfAnalysts')}
                     >
                       Analysts <SortIcon column="numberOfAnalysts" />
                     </th>
-                    <th className="center">Earnings (Last 4Q)</th>
+                    <th className="center">Earnings (4Q)</th>
+                    <th
+                      className="center"
+                      title="When Finnhub last updated consensus data for this stock (all analysts aggregated)."
+                    >
+                      Updated ⓘ
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -378,9 +394,6 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                         <div className="stock-cell">
                           <span className="ticker">{item.ticker}</span>
                           <span className="name">{item.stockName}</span>
-                          {item.industry && (
-                            <span className="industry">{item.industry}</span>
-                          )}
                         </div>
                       </td>
                       <td className="right">
@@ -415,6 +428,25 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                         >
                           {getRecommendationLabel(item.recommendationKey)}
                         </span>
+                      </td>
+                      <td className="center">
+                        {item.consensusScore !== null ? (
+                          <span
+                            className={`consensus-score ${
+                              item.consensusScore > 0.5
+                                ? 'positive'
+                                : item.consensusScore < -0.5
+                                ? 'negative'
+                                : 'neutral'
+                            }`}
+                            title="Score from -2 (Strong Sell) to +2 (Strong Buy)"
+                          >
+                            {item.consensusScore > 0 ? '+' : ''}
+                            {item.consensusScore.toFixed(2)}
+                          </span>
+                        ) : (
+                          <span className="muted">—</span>
+                        )}
                       </td>
                       <td className="center">
                         {item.numberOfAnalysts ? (
@@ -479,6 +511,16 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                           <span className="muted">—</span>
                         )}
                       </td>
+                      <td className="center muted">
+                        {item.recommendationPeriod
+                          ? new Date(
+                              item.recommendationPeriod
+                            ).toLocaleDateString('cs-CZ', {
+                              month: 'short',
+                              year: '2-digit',
+                            })
+                          : '—'}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -490,6 +532,49 @@ export function Analysis({ portfolioId }: AnalysisProps) {
           <section className="analysis-section">
             <h3>📈 Analyst Insights</h3>
             <div className="insights-grid">
+              <div
+                className="insight-card"
+                title="Weighted average across all stocks. Scale: -2 (Strong Sell) → 0 (Hold) → +2 (Strong Buy)"
+              >
+                <span className="insight-label">Avg Consensus Score ⓘ</span>
+                <span
+                  className={`insight-value ${
+                    analystData.filter((d) => d.consensusScore !== null)
+                      .length > 0
+                      ? analystData.reduce(
+                          (sum, d) => sum + (d.consensusScore ?? 0),
+                          0
+                        ) /
+                          analystData.filter((d) => d.consensusScore !== null)
+                            .length >
+                        0.5
+                        ? 'positive'
+                        : analystData.reduce(
+                            (sum, d) => sum + (d.consensusScore ?? 0),
+                            0
+                          ) /
+                            analystData.filter((d) => d.consensusScore !== null)
+                              .length <
+                          -0.5
+                        ? 'negative'
+                        : ''
+                      : ''
+                  }`}
+                >
+                  {analystData.filter((d) => d.consensusScore !== null).length >
+                  0
+                    ? (
+                        analystData.reduce(
+                          (sum, d) => sum + (d.consensusScore ?? 0),
+                          0
+                        ) /
+                        analystData.filter((d) => d.consensusScore !== null)
+                          .length
+                      ).toFixed(2)
+                    : '—'}
+                  <span className="insight-subtext"> / 2.00</span>
+                </span>
+              </div>
               <div className="insight-card">
                 <span className="insight-label">Stocks with Buy Rating</span>
                 <span className="insight-value positive">

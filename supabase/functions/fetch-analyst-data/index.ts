@@ -57,17 +57,15 @@ interface AnalystData {
   fiftyTwoWeekHigh: number | null;
   fiftyTwoWeekLow: number | null;
   // Analyst recommendations
-  targetPrice: number | null;
-  targetHigh: number | null;
-  targetLow: number | null;
-  targetUpside: number | null;
   recommendationKey: string | null;
+  consensusScore: number | null; // -2 (strong sell) to +2 (strong buy)
   strongBuy: number | null;
   buy: number | null;
   hold: number | null;
   sell: number | null;
   strongSell: number | null;
   numberOfAnalysts: number | null;
+  recommendationPeriod: string | null; // When recommendations were last updated
   // Earnings data (last 4 quarters)
   earnings: EarningsData[];
   // Fundamental metrics
@@ -117,17 +115,15 @@ async function fetchAnalystData(
     priceChangePercent: null,
     fiftyTwoWeekHigh: null,
     fiftyTwoWeekLow: null,
-    targetPrice: null,
-    targetHigh: null,
-    targetLow: null,
-    targetUpside: null,
     recommendationKey: null,
+    consensusScore: null,
     strongBuy: null,
     buy: null,
     hold: null,
     sell: null,
     strongSell: null,
     numberOfAnalysts: null,
+    recommendationPeriod: null,
     earnings: [],
     fundamentals: emptyFundamentals,
     insiderSentiment: null,
@@ -295,12 +291,14 @@ async function fetchAnalystData(
         : null;
 
     let recommendationKey = null;
+    let consensusScore: number | null = null;
     let strongBuy = null;
     let buy = null;
     let hold = null;
     let sell = null;
     let strongSell = null;
     let numberOfAnalysts = null;
+    let recommendationPeriod: string | null = null;
 
     if (latestRec) {
       strongBuy = latestRec.strongBuy ?? null;
@@ -308,6 +306,7 @@ async function fetchAnalystData(
       hold = latestRec.hold ?? null;
       sell = latestRec.sell ?? null;
       strongSell = latestRec.strongSell ?? null;
+      recommendationPeriod = latestRec.period ?? null;
 
       // Calculate total analysts
       numberOfAnalysts =
@@ -316,6 +315,19 @@ async function fetchAnalystData(
         (hold || 0) +
         (sell || 0) +
         (strongSell || 0);
+
+      // Calculate consensus score: weighted average from -2 to +2
+      // Strong Sell = -2, Sell = -1, Hold = 0, Buy = +1, Strong Buy = +2
+      if (numberOfAnalysts > 0) {
+        consensusScore =
+          ((strongBuy || 0) * 2 +
+            (buy || 0) * 1 +
+            (hold || 0) * 0 +
+            (sell || 0) * -1 +
+            (strongSell || 0) * -2) /
+          numberOfAnalysts;
+        consensusScore = Math.round(consensusScore * 100) / 100; // Round to 2 decimals
+      }
 
       // Determine recommendation key based on majority
       if (numberOfAnalysts > 0) {
@@ -420,17 +432,15 @@ async function fetchAnalystData(
       priceChangePercent,
       fiftyTwoWeekHigh,
       fiftyTwoWeekLow,
-      targetPrice: null, // Price target is PREMIUM
-      targetHigh: null,
-      targetLow: null,
-      targetUpside: null,
       recommendationKey,
+      consensusScore,
       strongBuy,
       buy,
       hold,
       sell,
       strongSell,
       numberOfAnalysts,
+      recommendationPeriod,
       earnings,
       fundamentals,
       insiderSentiment,

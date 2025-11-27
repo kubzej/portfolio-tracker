@@ -219,6 +219,24 @@
   text-overflow: ellipsis;
 }
 
+/* Consensus Score */
+.consensus-score {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.consensus-score.positive {
+  color: var(--success);
+}
+
+.consensus-score.negative {
+  color: var(--danger);
+}
+
+.consensus-score.neutral {
+  color: var(--text-muted);
+}
+
 /* Weight Bar */
 .weight-bar {
   display: inline-block;

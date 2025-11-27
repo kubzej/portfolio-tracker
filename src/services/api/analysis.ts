@@ -45,17 +45,15 @@ export interface AnalystData {
   fiftyTwoWeekHigh: number | null;
   fiftyTwoWeekLow: number | null;
   // Analyst recommendations
-  targetPrice: number | null;
-  targetHigh: number | null;
-  targetLow: number | null;
-  targetUpside: number | null;
   recommendationKey: string | null;
+  consensusScore: number | null; // -2 (strong sell) to +2 (strong buy)
   strongBuy: number | null;
   buy: number | null;
   hold: number | null;
   sell: number | null;
   strongSell: number | null;
   numberOfAnalysts: number | null;
+  recommendationPeriod: string | null; // When recommendations were last updated
   // Earnings data (last 4 quarters)
   earnings: EarningsData[];
   // Fundamental metrics
