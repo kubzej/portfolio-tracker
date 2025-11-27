@@ -36,8 +36,17 @@ interface TechnicalData {
   bollingerLower: number | null;
   bollingerPosition: number | null; // Where price is within bands (0-100%)
   bollingerSignal: 'overbought' | 'oversold' | 'neutral' | null;
+  // Stochastic Oscillator
+  stochasticK: number | null; // %K line (fast)
+  stochasticD: number | null; // %D line (slow, SMA of %K)
+  stochasticSignal: 'overbought' | 'oversold' | 'neutral' | null;
   // Historical data for charts
-  historicalPrices: { date: string; close: number }[];
+  historicalPrices: {
+    date: string;
+    close: number;
+    high: number;
+    low: number;
+  }[];
   sma50History: { date: string; value: number }[];
   sma200History: { date: string; value: number }[];
   macdHistory: {
@@ -51,6 +60,11 @@ interface TechnicalData {
     upper: number;
     middle: number;
     lower: number;
+  }[];
+  stochasticHistory: {
+    date: string;
+    k: number;
+    d: number;
   }[];
   // Error tracking
   error?: string;
@@ -131,6 +145,58 @@ function calculateMACD(prices: number[]): {
 
   // Start index in original prices: 25 (EMA26 start) + 8 (signal start) = 33
   return { macd: alignedMacd, signal: signalLine, histogram, startIndex: 33 };
+}
+
+// Calculate Stochastic Oscillator (14, 3, 3)
+// Returns %K and %D values
+// prices should be in chronological order (oldest first)
+function calculateStochastic(
+  closes: number[],
+  highs: number[],
+  lows: number[],
+  kPeriod: number = 14,
+  dPeriod: number = 3
+): {
+  k: number[];
+  d: number[];
+  startIndex: number;
+} {
+  if (closes.length < kPeriod + dPeriod - 1) {
+    return { k: [], d: [], startIndex: 0 };
+  }
+
+  const kValues: number[] = [];
+
+  // Calculate %K values
+  for (let i = kPeriod - 1; i < closes.length; i++) {
+    let highestHigh = -Infinity;
+    let lowestLow = Infinity;
+
+    for (let j = i - kPeriod + 1; j <= i; j++) {
+      if (highs[j] > highestHigh) highestHigh = highs[j];
+      if (lows[j] < lowestLow) lowestLow = lows[j];
+    }
+
+    const range = highestHigh - lowestLow;
+    const k = range === 0 ? 50 : ((closes[i] - lowestLow) / range) * 100;
+    kValues.push(k);
+  }
+
+  // Calculate %D (SMA of %K)
+  const dValues: number[] = [];
+  for (let i = dPeriod - 1; i < kValues.length; i++) {
+    let sum = 0;
+    for (let j = i - dPeriod + 1; j <= i; j++) {
+      sum += kValues[j];
+    }
+    dValues.push(sum / dPeriod);
+  }
+
+  // Align K values to match D values length
+  const alignedK = kValues.slice(dPeriod - 1);
+
+  // Start index: kPeriod - 1 (for K) + dPeriod - 1 (for D) = kPeriod + dPeriod - 2
+  return { k: alignedK, d: dValues, startIndex: kPeriod + dPeriod - 2 };
 }
 
 // Calculate Bollinger Bands (20, 2)
@@ -231,11 +297,15 @@ async function fetchTechnicalData(
     bollingerLower: null,
     bollingerPosition: null,
     bollingerSignal: null,
+    stochasticK: null,
+    stochasticD: null,
+    stochasticSignal: null,
     historicalPrices: [],
     sma50History: [],
     sma200History: [],
     macdHistory: [],
     bollingerHistory: [],
+    stochasticHistory: [],
   };
 
   try {
@@ -264,15 +334,31 @@ async function fetchTechnicalData(
     }
 
     // Build historical price array (most recent first)
-    const historicalPrices: { date: string; close: number }[] = [];
+    const historicalPrices: {
+      date: string;
+      close: number;
+      high: number;
+      low: number;
+    }[] = [];
     const closePrices: number[] = [];
+    const highPrices: number[] = [];
+    const lowPrices: number[] = [];
 
     for (let i = timestamps.length - 1; i >= 0; i--) {
       const close = quotes.close[i];
-      if (close !== null && close !== undefined) {
+      const high = quotes.high[i];
+      const low = quotes.low[i];
+      if (
+        close !== null &&
+        close !== undefined &&
+        high !== null &&
+        low !== null
+      ) {
         const date = new Date(timestamps[i] * 1000).toISOString().split('T')[0];
-        historicalPrices.push({ date, close });
+        historicalPrices.push({ date, close, high, low });
         closePrices.push(close);
+        highPrices.push(high);
+        lowPrices.push(low);
       }
     }
 
@@ -311,6 +397,8 @@ async function fetchTechnicalData(
     // Convert to chronological order for charts (oldest first)
     const chronologicalPrices = [...historicalPrices].reverse();
     const chronologicalCloses = chronologicalPrices.map((p) => p.close);
+    const chronologicalHighs = chronologicalPrices.map((p) => p.high);
+    const chronologicalLows = chronologicalPrices.map((p) => p.low);
 
     // Calculate SMA histories in chronological order
     const sma50History: { date: string; value: number }[] = [];
@@ -441,6 +529,48 @@ async function fetchTechnicalData(
       }
     }
 
+    // Calculate Stochastic Oscillator
+    const stochResult = calculateStochastic(
+      chronologicalCloses,
+      chronologicalHighs,
+      chronologicalLows,
+      14,
+      3
+    );
+    let stochasticK: number | null = null;
+    let stochasticD: number | null = null;
+    let stochasticSignal: 'overbought' | 'oversold' | 'neutral' | null = null;
+    const stochasticHistory: { date: string; k: number; d: number }[] = [];
+
+    if (stochResult.k.length > 0) {
+      // Get current values (most recent)
+      stochasticK =
+        Math.round(stochResult.k[stochResult.k.length - 1] * 100) / 100;
+      stochasticD =
+        Math.round(stochResult.d[stochResult.d.length - 1] * 100) / 100;
+
+      // Determine signal based on %K and %D
+      if (stochasticK > 80) {
+        stochasticSignal = 'overbought';
+      } else if (stochasticK < 20) {
+        stochasticSignal = 'oversold';
+      } else {
+        stochasticSignal = 'neutral';
+      }
+
+      // Build history
+      for (let i = 0; i < stochResult.k.length; i++) {
+        const dateIndex = stochResult.startIndex + i;
+        if (dateIndex < chronologicalPrices.length) {
+          stochasticHistory.push({
+            date: chronologicalPrices[dateIndex].date,
+            k: Math.round(stochResult.k[i] * 100) / 100,
+            d: Math.round(stochResult.d[i] * 100) / 100,
+          });
+        }
+      }
+    }
+
     return {
       ticker,
       stockName,
@@ -462,12 +592,16 @@ async function fetchTechnicalData(
       bollingerLower,
       bollingerPosition,
       bollingerSignal,
+      stochasticK,
+      stochasticD,
+      stochasticSignal,
       // All in chronological order (oldest to newest)
       historicalPrices: chronologicalPrices,
       sma50History,
       sma200History,
       macdHistory,
       bollingerHistory,
+      stochasticHistory,
     };
   } catch (error) {
     console.error(`Error fetching technical data for ${ticker}:`, error);

@@ -4,6 +4,8 @@ import { supabase } from '@/lib/supabase';
 export interface PricePoint {
   date: string;
   close: number;
+  high: number;
+  low: number;
 }
 
 // SMA data point for charts
@@ -26,6 +28,13 @@ export interface BollingerPoint {
   upper: number;
   middle: number;
   lower: number;
+}
+
+// Stochastic Oscillator data point for charts
+export interface StochasticPoint {
+  date: string;
+  k: number;
+  d: number;
 }
 
 // Technical data for a single stock
@@ -53,12 +62,17 @@ export interface TechnicalData {
   bollingerLower: number | null;
   bollingerPosition: number | null;
   bollingerSignal: 'overbought' | 'oversold' | 'neutral' | null;
+  // Stochastic Oscillator
+  stochasticK: number | null;
+  stochasticD: number | null;
+  stochasticSignal: 'overbought' | 'oversold' | 'neutral' | null;
   // Historical data for charts
   historicalPrices: PricePoint[];
   sma50History: SMAPoint[];
   sma200History: SMAPoint[];
   macdHistory: MACDPoint[];
   bollingerHistory: BollingerPoint[];
+  stochasticHistory: StochasticPoint[];
   // Error tracking
   error?: string;
 }

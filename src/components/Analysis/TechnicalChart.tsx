@@ -21,6 +21,7 @@ import type {
   SMAPoint,
   MACDPoint,
   BollingerPoint,
+  StochasticPoint,
 } from '@/services/api/technical';
 import { InfoTooltip } from '@/components/shared/InfoTooltip';
 
@@ -52,6 +53,13 @@ interface MACDChartPoint {
   macd: number | null;
   signal: number | null;
   histogram: number | null;
+}
+
+interface StochasticChartPoint {
+  date: string;
+  displayDate: string;
+  k: number | null;
+  d: number | null;
 }
 
 // Format date helper
@@ -136,6 +144,22 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
       macd: m.macd,
       signal: m.signal,
       histogram: m.histogram,
+    }));
+  }, [data]);
+
+  // Build Stochastic Oscillator chart data
+  const stochasticData = useMemo((): StochasticChartPoint[] => {
+    const stochArr = data.stochasticHistory || [];
+
+    if (stochArr.length === 0) {
+      return [];
+    }
+
+    return stochArr.map((s: StochasticPoint) => ({
+      date: s.date,
+      displayDate: formatDateStr(s.date),
+      k: s.k,
+      d: s.d,
     }));
   }, [data]);
 
@@ -831,7 +855,161 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
               )}
             </div>
 
-            {/* Section 7: What These Indicators Tell You */}
+            {/* Section 7: Stochastic Oscillator */}
+            <div className="tech-section">
+              <div className="section-header">
+                <h4>Stochastic Oscillator</h4>
+                <InfoTooltip text="CO TO JE: Stochastic Oscillator = momentum indikátor porovnávající zavírací cenu s cenovým rozsahem za určité období (14 dní). Má dvě linie: %K (rychlá, modrá) a %D (pomalá, oranžová = průměr %K). JAK ČÍST: Hodnoty 0-100. NAD 80 = Overbought (překoupená), může přijít pokles. POD 20 = Oversold (přeprodaná), může přijít růst. SIGNÁLY: %K kříží %D zespoda = nákupní signál. %K kříží %D shora = prodejní signál. IDEÁLNÍ PRO NÁKUP: %K a %D pod 20, %K kříží %D nahoru." />
+              </div>
+              {stochasticData.length > 0 ? (
+                <>
+                  <div className="chart-wrapper">
+                    <ResponsiveContainer width="100%" height={200}>
+                      <ComposedChart
+                        data={stochasticData}
+                        margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+                      >
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="var(--border-color)"
+                        />
+                        <XAxis
+                          dataKey="displayDate"
+                          tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                          tickLine={{ stroke: 'var(--border-color)' }}
+                          axisLine={{ stroke: 'var(--border-color)' }}
+                          interval="preserveStartEnd"
+                          minTickGap={50}
+                        />
+                        <YAxis
+                          domain={[0, 100]}
+                          ticks={[0, 20, 50, 80, 100]}
+                          tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                          tickLine={{ stroke: 'var(--border-color)' }}
+                          axisLine={{ stroke: 'var(--border-color)' }}
+                          width={35}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'var(--bg-secondary)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '8px',
+                            color: 'var(--text-primary)',
+                          }}
+                          formatter={(value: number, name: string) => [
+                            value.toFixed(1),
+                            name,
+                          ]}
+                        />
+                        {/* Overbought zone */}
+                        <ReferenceLine
+                          y={80}
+                          stroke="var(--color-negative)"
+                          strokeDasharray="3 3"
+                          strokeOpacity={0.5}
+                        />
+                        {/* Oversold zone */}
+                        <ReferenceLine
+                          y={20}
+                          stroke="var(--color-positive)"
+                          strokeDasharray="3 3"
+                          strokeOpacity={0.5}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="k"
+                          name="%K"
+                          stroke="#3b82f6"
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="d"
+                          name="%D"
+                          stroke="#f59e0b"
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="stochastic-summary">
+                    <div className="stochastic-values">
+                      <div className="stochastic-value-item">
+                        <span className="stoch-label">%K (Fast):</span>
+                        <span
+                          className={`stoch-val ${
+                            (data.stochasticK ?? 50) > 80
+                              ? 'overbought'
+                              : (data.stochasticK ?? 50) < 20
+                              ? 'oversold'
+                              : ''
+                          }`}
+                        >
+                          {data.stochasticK !== null
+                            ? data.stochasticK.toFixed(1)
+                            : '—'}
+                        </span>
+                      </div>
+                      <div className="stochastic-value-item">
+                        <span className="stoch-label">%D (Slow):</span>
+                        <span className="stoch-val">
+                          {data.stochasticD !== null
+                            ? data.stochasticD.toFixed(1)
+                            : '—'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="stochastic-info-cards">
+                      <div className="stoch-info-card">
+                        <span className="stoch-zone-label overbought">
+                          &gt;80 Overbought
+                        </span>
+                        <span className="stoch-zone-meaning">
+                          Possible reversal down
+                        </span>
+                      </div>
+                      <div className="stoch-info-card">
+                        <span className="stoch-zone-label neutral">
+                          20-80 Neutral
+                        </span>
+                        <span className="stoch-zone-meaning">
+                          Normal momentum
+                        </span>
+                      </div>
+                      <div className="stoch-info-card">
+                        <span className="stoch-zone-label oversold">
+                          &lt;20 Oversold
+                        </span>
+                        <span className="stoch-zone-meaning">
+                          Possible reversal up
+                        </span>
+                      </div>
+                    </div>
+                    <div
+                      className={`stochastic-signal ${
+                        data.stochasticSignal ?? 'neutral'
+                      }`}
+                    >
+                      {data.stochasticSignal === 'overbought' &&
+                        '⚠️ Stochastic above 80 — potentially overbought, watch for %K crossing below %D'}
+                      {data.stochasticSignal === 'oversold' &&
+                        '💡 Stochastic below 20 — potentially oversold, watch for %K crossing above %D'}
+                      {data.stochasticSignal === 'neutral' &&
+                        '✅ Stochastic in neutral zone — normal trading conditions'}
+                      {data.stochasticSignal === null && 'Insufficient data'}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="no-data-message">
+                  Insufficient data to calculate Stochastic Oscillator
+                </div>
+              )}
+            </div>
+
+            {/* Section 8: What These Indicators Tell You */}
             <div className="tech-section tech-summary-section">
               <div className="section-header">
                 <h4>How to Use This Analysis</h4>
@@ -843,7 +1021,8 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                   <span>
                     Golden Cross, cena nad klouzavými průměry, RSI stoupá z
                     oversold zóny, MACD kříží signal linii nahoru, cena se
-                    odráží od dolního Bollinger pásma
+                    odráží od dolního Bollinger pásma, Stochastic %K kříží %D
+                    zespoda v oversold zóně
                   </span>
                 </div>
                 <div className="usage-item">
@@ -851,7 +1030,8 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                   <span>
                     Death Cross, cena pod klouzavými průměry, RSI klesá z
                     overbought zóny, MACD kříží signal linii dolů, cena je
-                    odmítnuta u horního Bollinger pásma
+                    odmítnuta u horního Bollinger pásma, Stochastic %K kříží %D
+                    shora v overbought zóně
                   </span>
                 </div>
                 <div className="usage-item">
