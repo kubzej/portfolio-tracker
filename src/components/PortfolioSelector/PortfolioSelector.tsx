@@ -6,7 +6,10 @@ import './PortfolioSelector.css';
 
 interface PortfolioSelectorProps {
   selectedPortfolioId: string | null;
-  onPortfolioChange: (portfolioId: string | null, portfolio: Portfolio | null) => void;
+  onPortfolioChange: (
+    portfolioId: string | null,
+    portfolio: Portfolio | null
+  ) => void;
   showAllOption?: boolean;
 }
 
@@ -66,7 +69,9 @@ export function PortfolioSelector({
     }
   };
 
-  const selectedPortfolio = portfolios.find((p) => p.id === selectedPortfolioId);
+  const selectedPortfolio = portfolios.find(
+    (p) => p.id === selectedPortfolioId
+  );
 
   if (loading) {
     return <div className="portfolio-selector loading">Loading...</div>;

@@ -66,17 +66,19 @@ function App() {
   };
 
   const portfolioColor = selectedPortfolio?.color ?? '#94a3b8';
-  const headerTitle = selectedPortfolio 
-    ? selectedPortfolio.name 
+  const headerTitle = selectedPortfolio
+    ? selectedPortfolio.name
     : 'All Portfolios';
 
   return (
     <div className="app">
-      <header 
+      <header
         className="app-header"
-        style={{
-          '--portfolio-color': portfolioColor,
-        } as React.CSSProperties}
+        style={
+          {
+            '--portfolio-color': portfolioColor,
+          } as React.CSSProperties
+        }
       >
         <div className="portfolio-color-bar" />
         <div className="header-top">
@@ -126,13 +128,17 @@ function App() {
             Stocks
           </button>
           <button
-            className={`add-action ${currentView === 'add-stock' ? 'active' : ''}`}
+            className={`add-action ${
+              currentView === 'add-stock' ? 'active' : ''
+            }`}
             onClick={() => setCurrentView('add-stock')}
           >
             + Add Stock
           </button>
           <button
-            className={`add-action ${currentView === 'add-transaction' ? 'active' : ''}`}
+            className={`add-action ${
+              currentView === 'add-transaction' ? 'active' : ''
+            }`}
             onClick={() => setCurrentView('add-transaction')}
           >
             + Add Transaction
