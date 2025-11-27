@@ -1,0 +1,81 @@
+import { supabase } from '@/lib/supabase';
+
+// Historical price point for charts
+export interface PricePoint {
+  date: string;
+  close: number;
+}
+
+// SMA data point for charts
+export interface SMAPoint {
+  date: string;
+  value: number;
+}
+
+// Technical data for a single stock
+export interface TechnicalData {
+  ticker: string;
+  stockName: string;
+  currentPrice: number | null;
+  // Moving Averages
+  sma50: number | null;
+  sma200: number | null;
+  // Price vs MAs (percentage above/below)
+  priceVsSma50: number | null;
+  priceVsSma200: number | null;
+  // RSI
+  rsi14: number | null;
+  rsiSignal: 'overbought' | 'oversold' | 'neutral' | null;
+  // Historical data for charts
+  historicalPrices: PricePoint[];
+  sma50History: SMAPoint[];
+  sma200History: SMAPoint[];
+  // Error tracking
+  error?: string;
+}
+
+export interface TechnicalResult {
+  data: TechnicalData[];
+  errors: string[];
+}
+
+/**
+ * Fetch technical analysis data for portfolio holdings
+ */
+export async function fetchTechnicalData(
+  portfolioId?: string
+): Promise<TechnicalResult> {
+  const { data, error } = await supabase.functions.invoke(
+    'fetch-technical-data',
+    {
+      body: { portfolioId },
+    }
+  );
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data as TechnicalResult;
+}
+
+/**
+ * Fetch technical data for a single ticker
+ */
+export async function fetchSingleTechnicalData(
+  ticker: string
+): Promise<TechnicalData | null> {
+  const { data, error } = await supabase.functions.invoke(
+    'fetch-technical-data',
+    {
+      body: { ticker },
+    }
+  );
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const result = data as TechnicalResult;
+  return result.data.length > 0 ? result.data[0] : null;
+}

@@ -3,6 +3,12 @@ import {
   fetchAnalystData,
   type FundamentalMetrics,
 } from '@/services/api/analysis';
+import {
+  fetchTechnicalData,
+  type TechnicalData,
+} from '@/services/api/technical';
+import { TechnicalChart } from './TechnicalChart';
+import { InfoTooltip } from '@/components/shared/InfoTooltip';
 import { holdingsApi } from '@/services/api';
 import {
   getAllIndicators,
@@ -70,10 +76,50 @@ export function Analysis({ portfolioId }: AnalysisProps) {
   const [indicatorsLoading, setIndicatorsLoading] = useState(true);
   const [insiderTimeRange, setInsiderTimeRange] = useState<InsiderTimeRange>(3);
 
+  // Technical analysis state
+  const [technicalData, setTechnicalData] = useState<TechnicalData[]>([]);
+  const [technicalLoading, setTechnicalLoading] = useState(false);
+  const [selectedTechnicalStock, setSelectedTechnicalStock] = useState<
+    string | null
+  >(null);
+
   useEffect(() => {
     loadData();
     loadIndicators();
   }, [portfolioId]);
+
+  // Load technical data when switching to technicals tab
+  useEffect(() => {
+    if (
+      activeTab === 'technicals' &&
+      portfolioId &&
+      technicalData.length === 0 &&
+      !technicalLoading
+    ) {
+      loadTechnicalData();
+    }
+  }, [activeTab, portfolioId]);
+
+  const loadTechnicalData = async () => {
+    if (!portfolioId) return;
+
+    try {
+      setTechnicalLoading(true);
+      const result = await fetchTechnicalData(portfolioId);
+
+      if (result.data && result.data.length > 0) {
+        setTechnicalData(result.data);
+        // Select first stock by default
+        if (!selectedTechnicalStock) {
+          setSelectedTechnicalStock(result.data[0].ticker);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load technical data:', err);
+    } finally {
+      setTechnicalLoading(false);
+    }
+  };
 
   const loadIndicators = async () => {
     try {
@@ -546,9 +592,10 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     <th
                       className="center"
                       onClick={() => handleSort('consensusScore')}
-                      title="Weighted consensus: -2 (Strong Sell) to +2 (Strong Buy). 0 = Hold."
                     >
-                      Score ⓘ <SortIcon column="consensusScore" />
+                      Score{' '}
+                      <InfoTooltip text="Weighted consensus score from -2 (strong sell) to +2 (strong buy). 0 = hold." />{' '}
+                      <SortIcon column="consensusScore" />
                     </th>
                     <th className="center">Breakdown</th>
                     <th
@@ -558,11 +605,9 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                       Analysts <SortIcon column="numberOfAnalysts" />
                     </th>
                     <th className="center">Earnings (4Q)</th>
-                    <th
-                      className="center"
-                      title="When Finnhub last updated consensus data for this stock (all analysts aggregated)."
-                    >
-                      Updated ⓘ
+                    <th className="center">
+                      Updated{' '}
+                      <InfoTooltip text="When Finnhub last updated consensus data for this stock." />
                     </th>
                   </tr>
                 </thead>
@@ -711,11 +756,11 @@ export function Analysis({ portfolioId }: AnalysisProps) {
           <section className="analysis-section">
             <h3>Analyst Insights</h3>
             <div className="insights-grid">
-              <div
-                className="insight-card"
-                title="Weighted average across all stocks. Scale: -2 (Strong Sell) → 0 (Hold) → +2 (Strong Buy)"
-              >
-                <span className="insight-label">Avg Consensus Score ⓘ</span>
+              <div className="insight-card">
+                <span className="insight-label">
+                  Avg Consensus Score{' '}
+                  <InfoTooltip text="Weighted average across all stocks. Scale: -2 (strong sell) → 0 (hold) → +2 (strong buy)." />
+                </span>
                 <span
                   className={`insight-value ${
                     analystData.filter((d) => d.consensusScore !== null)
@@ -937,25 +982,23 @@ export function Analysis({ portfolioId }: AnalysisProps) {
             <div className="insider-section-header">
               <div className="insider-title-row">
                 <h3>Insider Sentiment</h3>
-                <div className="tooltip-wrapper">
-                  <span className="info-tooltip-trigger">ⓘ</span>
-                  <div className="tooltip-content">
+                <InfoTooltip>
+                  <p>
                     <strong>What is Insider Sentiment?</strong>
-                    <p>
-                      Tracks buying/selling by company executives and directors
-                      (Form 4 filings). High insider buying often signals
-                      confidence in the company's future.
-                    </p>
-                    <p>
-                      <strong>MSPR</strong>: Monthly Share Purchase Ratio (-100
-                      to +100)
-                    </p>
-                    <p>
-                      <strong>Net Shares</strong>: Total shares bought minus
-                      sold
-                    </p>
-                  </div>
-                </div>
+                  </p>
+                  <p>
+                    Tracks buying/selling by company executives and directors
+                    (Form 4 filings). High insider buying often signals
+                    confidence in the company's future.
+                  </p>
+                  <p>
+                    <strong>MSPR</strong>: Monthly Share Purchase Ratio (-100 to
+                    +100)
+                  </p>
+                  <p>
+                    <strong>Net Shares</strong>: Total shares bought minus sold
+                  </p>
+                </InfoTooltip>
               </div>
               <div className="insider-time-filter">
                 {INSIDER_TIME_RANGES.map((range) => (
@@ -1114,38 +1157,38 @@ export function Analysis({ portfolioId }: AnalysisProps) {
             <div className="insights-category">
               <span className="category-label">Valuation</span>
               <div className="insights-grid">
-                <div
-                  className="insight-card"
-                  title="Portfolio-weighted average P/E ratio. Lower may indicate undervaluation, higher may indicate growth expectations."
-                >
-                  <span className="insight-label">Avg P/E ⓘ</span>
+                <div className="insight-card">
+                  <span className="insight-label">
+                    Avg P/E{' '}
+                    <InfoTooltip text="Portfolio-weighted average P/E ratio. Lower may indicate undervaluation, higher may indicate growth expectations." />
+                  </span>
                   <span className="insight-value">
                     {getWeightedAverage('peRatio').toFixed(1)}x
                   </span>
                 </div>
-                <div
-                  className="insight-card"
-                  title="Portfolio-weighted average Forward P/E (based on estimated earnings). Compare with trailing P/E to gauge growth expectations."
-                >
-                  <span className="insight-label">Avg Fwd P/E ⓘ</span>
+                <div className="insight-card">
+                  <span className="insight-label">
+                    Avg Fwd P/E{' '}
+                    <InfoTooltip text="Portfolio-weighted average forward P/E based on estimated earnings. Compare with trailing P/E to gauge growth expectations." />
+                  </span>
                   <span className="insight-value">
                     {getWeightedAverage('forwardPe').toFixed(1)}x
                   </span>
                 </div>
-                <div
-                  className="insight-card"
-                  title="Portfolio-weighted average Price-to-Book ratio. <1 may indicate undervaluation, >3 may indicate overvaluation."
-                >
-                  <span className="insight-label">Avg P/B ⓘ</span>
+                <div className="insight-card">
+                  <span className="insight-label">
+                    Avg P/B{' '}
+                    <InfoTooltip text="Portfolio-weighted average price-to-book ratio. Below 1 may indicate undervaluation, above 3 may indicate overvaluation." />
+                  </span>
                   <span className="insight-value">
                     {getWeightedAverage('pbRatio').toFixed(2)}x
                   </span>
                 </div>
-                <div
-                  className="insight-card"
-                  title="Portfolio-weighted average EV/EBITDA. Lower values may indicate better value. Useful for comparing companies with different capital structures."
-                >
-                  <span className="insight-label">Avg EV/EBITDA ⓘ</span>
+                <div className="insight-card">
+                  <span className="insight-label">
+                    Avg EV/EBITDA{' '}
+                    <InfoTooltip text="Portfolio-weighted average EV/EBITDA. Lower values may indicate better value. Useful for comparing companies with different capital structures." />
+                  </span>
                   <span className="insight-value">
                     {getWeightedAverage('evEbitda').toFixed(1)}x
                   </span>
@@ -1157,11 +1200,11 @@ export function Analysis({ portfolioId }: AnalysisProps) {
             <div className="insights-category">
               <span className="category-label">Profitability</span>
               <div className="insights-grid">
-                <div
-                  className="insight-card"
-                  title="Portfolio-weighted average Return on Equity. Measures how effectively the company uses shareholder equity. >15% is generally good."
-                >
-                  <span className="insight-label">Avg ROE ⓘ</span>
+                <div className="insight-card">
+                  <span className="insight-label">
+                    Avg ROE{' '}
+                    <InfoTooltip text="Portfolio-weighted average return on equity. Measures how effectively the company uses shareholder equity. Above 15% is generally good." />
+                  </span>
                   <span
                     className={`insight-value ${
                       getWeightedAverage('roe') > 15 ? 'positive' : ''
@@ -1170,11 +1213,11 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     {getWeightedAverage('roe').toFixed(1)}%
                   </span>
                 </div>
-                <div
-                  className="insight-card"
-                  title="Portfolio-weighted average Net Profit Margin. The percentage of revenue that becomes profit. Higher is better."
-                >
-                  <span className="insight-label">Avg Net Margin ⓘ</span>
+                <div className="insight-card">
+                  <span className="insight-label">
+                    Avg Net Margin{' '}
+                    <InfoTooltip text="Portfolio-weighted average net profit margin. The percentage of revenue that becomes profit. Higher is better." />
+                  </span>
                   <span
                     className={`insight-value ${
                       getWeightedAverage('netMargin') > 10 ? 'positive' : ''
@@ -1183,20 +1226,20 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     {getWeightedAverage('netMargin').toFixed(1)}%
                   </span>
                 </div>
-                <div
-                  className="insight-card"
-                  title="Portfolio-weighted average Gross Margin. Revenue minus cost of goods sold. Higher indicates pricing power."
-                >
-                  <span className="insight-label">Avg Gross Margin ⓘ</span>
+                <div className="insight-card">
+                  <span className="insight-label">
+                    Avg Gross Margin{' '}
+                    <InfoTooltip text="Portfolio-weighted average gross margin. Revenue minus cost of goods sold. Higher indicates pricing power." />
+                  </span>
                   <span className="insight-value">
                     {getWeightedAverage('grossMargin').toFixed(1)}%
                   </span>
                 </div>
-                <div
-                  className="insight-card"
-                  title="Stocks with dividend yield > 0%"
-                >
-                  <span className="insight-label">Dividend Payers ⓘ</span>
+                <div className="insight-card">
+                  <span className="insight-label">
+                    Dividend Payers{' '}
+                    <InfoTooltip text="Number of stocks in your portfolio that pay dividends." />
+                  </span>
                   <span className="insight-value">
                     {
                       analystData.filter(
@@ -1215,11 +1258,11 @@ export function Analysis({ portfolioId }: AnalysisProps) {
             <div className="insights-category">
               <span className="category-label">Risk & Growth</span>
               <div className="insights-grid">
-                <div
-                  className="insight-card"
-                  title="Portfolio-weighted average Beta. >1 = more volatile than market, <1 = less volatile. 1 = moves with market."
-                >
-                  <span className="insight-label">Avg Beta ⓘ</span>
+                <div className="insight-card">
+                  <span className="insight-label">
+                    Avg Beta{' '}
+                    <InfoTooltip text="Portfolio-weighted average beta. Above 1 = more volatile than market, below 1 = less volatile, 1 = moves with market." />
+                  </span>
                   <span
                     className={`insight-value ${
                       getWeightedAverage('beta') > 1.3
@@ -1232,11 +1275,11 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     {getWeightedAverage('beta').toFixed(2)}
                   </span>
                 </div>
-                <div
-                  className="insight-card"
-                  title="Portfolio-weighted average Debt-to-Equity ratio. Lower is generally safer. >2 may indicate high leverage risk."
-                >
-                  <span className="insight-label">Avg D/E ⓘ</span>
+                <div className="insight-card">
+                  <span className="insight-label">
+                    Avg D/E{' '}
+                    <InfoTooltip text="Portfolio-weighted average debt-to-equity ratio. Lower is generally safer. Above 2 may indicate high leverage risk." />
+                  </span>
                   <span
                     className={`insight-value ${
                       getWeightedAverage('debtToEquity') > 2
@@ -1249,11 +1292,11 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     {getWeightedAverage('debtToEquity').toFixed(2)}
                   </span>
                 </div>
-                <div
-                  className="insight-card"
-                  title="Portfolio-weighted average revenue growth (TTM). Positive indicates growing companies."
-                >
-                  <span className="insight-label">Avg Revenue Growth ⓘ</span>
+                <div className="insight-card">
+                  <span className="insight-label">
+                    Avg Revenue Growth{' '}
+                    <InfoTooltip text="Portfolio-weighted average revenue growth (trailing 12 months). Positive indicates growing companies." />
+                  </span>
                   <span
                     className={`insight-value ${
                       getWeightedAverage('revenueGrowth') > 0
@@ -1267,12 +1310,10 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     {getWeightedAverage('revenueGrowth').toFixed(1)}%
                   </span>
                 </div>
-                <div
-                  className="insight-card"
-                  title="Stocks where insiders are net buyers in the selected time range"
-                >
+                <div className="insight-card">
                   <span className="insight-label">
-                    Insider Buying ({insiderTimeRange}M) ⓘ
+                    Insider Buying ({insiderTimeRange}M){' '}
+                    <InfoTooltip text="Number of stocks where insiders are net buyers in the selected time range." />
                   </span>
                   <span className="insight-value positive">
                     {
@@ -1308,8 +1349,8 @@ export function Analysis({ portfolioId }: AnalysisProps) {
           <section className="analysis-section">
             <h3>Price Analysis</h3>
             <p className="section-description">
-              52-week ranges and price position. Technical indicators require
-              Finnhub Premium.
+              52-week ranges and price position. Click on a stock row to view
+              detailed technical chart with moving averages and RSI.
             </p>
 
             <div className="analysis-table-wrapper">
@@ -1336,8 +1377,14 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     </th>
                     <th className="right">52W Low</th>
                     <th className="right">52W High</th>
-                    <th className="center">52W Range Position</th>
-                    <th className="left">Peers</th>
+                    <th className="center">
+                      52W Range Position{' '}
+                      <InfoTooltip text="Shows where the current price sits within the 52-week range. 0% = at yearly low, 100% = at yearly high. Above 80% = near highs (strong momentum or overbought), below 20% = near lows (weak momentum or oversold)." />
+                    </th>
+                    <th className="left">
+                      Peers{' '}
+                      <InfoTooltip text="Similar companies in the same industry/sector for comparison." />
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1350,8 +1397,26 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                             (item.fiftyTwoWeekHigh - item.fiftyTwoWeekLow)) *
                           100
                         : null;
+                    const hasTechnicalData = technicalData.some(
+                      (d) => d.ticker === item.ticker
+                    );
                     return (
-                      <tr key={item.ticker}>
+                      <tr
+                        key={item.ticker}
+                        className={`clickable-row ${
+                          hasTechnicalData ? '' : 'no-data'
+                        }`}
+                        onClick={() => {
+                          if (hasTechnicalData) {
+                            setSelectedTechnicalStock(item.ticker);
+                          }
+                        }}
+                        title={
+                          hasTechnicalData
+                            ? 'Click to view technical chart'
+                            : 'Loading technical data...'
+                        }
+                      >
                         <td>
                           <div className="stock-cell">
                             <span className="ticker">{item.ticker}</span>
@@ -1414,16 +1479,11 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                         <td className="left">
                           {item.peers && item.peers.length > 0 ? (
                             <div className="peers-list">
-                              {item.peers.slice(0, 3).map((peer, i) => (
+                              {item.peers.map((peer, i) => (
                                 <span key={i} className="peer-tag">
                                   {peer}
                                 </span>
                               ))}
-                              {item.peers.length > 3 && (
-                                <span className="peer-more">
-                                  +{item.peers.length - 3}
-                                </span>
-                              )}
                             </div>
                           ) : (
                             <span className="muted">—</span>
@@ -1435,41 +1495,28 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 </tbody>
               </table>
             </div>
-          </section>
 
-          {/* Technical Premium Notice */}
-          <section className="analysis-section premium-notice">
-            <h3>Premium Technical Indicators</h3>
-            <p className="section-description">
-              The following technical analysis features require Finnhub Premium
-              subscription:
-            </p>
-            <div className="premium-features">
-              <div className="premium-feature">
-                <span className="feature-name">Technical Indicators</span>
-                <span className="feature-desc">
-                  SMA, EMA, RSI, MACD, Bollinger Bands, etc.
-                </span>
+            {/* Technical Chart Modal */}
+            {selectedTechnicalStock &&
+              technicalData.find(
+                (d) => d.ticker === selectedTechnicalStock
+              ) && (
+                <TechnicalChart
+                  data={
+                    technicalData.find(
+                      (d) => d.ticker === selectedTechnicalStock
+                    )!
+                  }
+                  onClose={() => setSelectedTechnicalStock(null)}
+                />
+              )}
+
+            {technicalLoading && (
+              <div className="technical-loading-inline">
+                <div className="spinner" />
+                <span>Loading technical indicators...</span>
               </div>
-              <div className="premium-feature">
-                <span className="feature-name">Support/Resistance</span>
-                <span className="feature-desc">
-                  Key price levels for each stock
-                </span>
-              </div>
-              <div className="premium-feature">
-                <span className="feature-name">Pattern Recognition</span>
-                <span className="feature-desc">
-                  Chart patterns (Head & Shoulders, Triangles, etc.)
-                </span>
-              </div>
-              <div className="premium-feature">
-                <span className="feature-name">Aggregate Signals</span>
-                <span className="feature-desc">
-                  Buy/Sell/Neutral signals based on multiple indicators
-                </span>
-              </div>
-            </div>
+            )}
           </section>
 
           {/* Technical Summary */}
