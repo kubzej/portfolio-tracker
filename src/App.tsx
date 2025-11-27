@@ -5,6 +5,8 @@ import { TransactionForm } from './components/TransactionForm';
 import { StocksList } from './components/StocksList';
 import { StockDetail } from './components/StockDetail';
 import { PortfolioSelector } from './components/PortfolioSelector';
+import { Login } from './components/Login';
+import { useAuth } from './contexts/AuthContext';
 import { refreshAllPrices } from './services/api';
 import type { Portfolio } from './types/database';
 import './App.css';
@@ -17,6 +19,7 @@ type View =
   | 'add-transaction';
 
 function App() {
+  const { user, loading, signOut } = useAuth();
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [selectedStockId, setSelectedStockId] = useState<string | null>(null);
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | null>(
@@ -65,6 +68,21 @@ function App() {
     }
   };
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="app-loading">
+        <div className="loading-spinner" />
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  // Show login if not authenticated
+  if (!user) {
+    return <Login />;
+  }
+
   const portfolioColor = selectedPortfolio?.color ?? '#94a3b8';
   const headerTitle = selectedPortfolio
     ? selectedPortfolio.name
@@ -108,6 +126,9 @@ function App() {
                 currentView === 'dashboard' || currentView === 'stocks'
               }
             />
+            <button className="sign-out-btn" onClick={signOut} title="Sign out">
+              Sign Out
+            </button>
           </div>
         </div>
         <nav className="app-nav">
