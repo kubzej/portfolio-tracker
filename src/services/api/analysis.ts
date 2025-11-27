@@ -9,30 +9,59 @@ export interface EarningsData {
   surprisePercent: number | null;
 }
 
-// Fundamental metrics from Finnhub
+// Fundamental metrics from Finnhub - all available from FREE tier
 export interface FundamentalMetrics {
+  // Valuation
   peRatio: number | null;
   pbRatio: number | null;
   psRatio: number | null;
-  dividendYield: number | null;
-  beta: number | null;
-  roe: number | null; // Return on Equity
-  roa: number | null; // Return on Assets
+  pegRatio: number | null;
+  evEbitda: number | null;
+  forwardPe: number | null;
+  // Profitability
+  roe: number | null;
+  roa: number | null;
+  roi: number | null;
   grossMargin: number | null;
   operatingMargin: number | null;
   netMargin: number | null;
+  // Growth
+  revenueGrowth: number | null;
+  epsGrowth: number | null;
+  revenueGrowth3Y: number | null;
+  revenueGrowth5Y: number | null;
+  epsGrowth5Y: number | null;
+  // Risk
+  beta: number | null;
   debtToEquity: number | null;
   currentRatio: number | null;
   quickRatio: number | null;
-  revenueGrowth: number | null;
-  epsGrowth: number | null;
+  // Dividend
+  dividendYield: number | null;
+  payoutRatio: number | null;
+  dividendGrowth5Y: number | null;
+  // Performance
+  return52W: number | null;
+  return13W: number | null;
+  returnVsSP500: number | null;
+  // Size
   marketCap: number | null;
+  enterpriseValue: number | null;
 }
 
-// Insider sentiment data
+// Insider sentiment monthly data point
+export interface InsiderMonthlyData {
+  year: number;
+  month: number;
+  mspr: number;
+  change: number;
+}
+
+// Insider sentiment data with all monthly points for client-side filtering
 export interface InsiderSentiment {
-  mspr: number | null; // Monthly Share Purchase Ratio (-100 to 100)
-  change: number | null; // Net buying/selling
+  mspr: number | null; // Monthly Share Purchase Ratio (-100 to 100) - aggregated
+  change: number | null; // Net buying/selling - aggregated
+  monthlyData: InsiderMonthlyData[]; // All monthly data for time range filtering
 }
 
 export interface AnalystData {

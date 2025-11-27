@@ -5,6 +5,19 @@ import {
   type FundamentalMetrics,
 } from '@/services/api/analysis';
 import { holdingsApi } from '@/services/api';
+import {
+  getAllIndicators,
+  getUserViews,
+  createView,
+  updateViewColumns,
+  deleteView,
+  updateView,
+  DEFAULT_INDICATOR_KEYS,
+  formatLargeNumber,
+  type AnalysisIndicator,
+  type UserAnalysisView,
+} from '@/services/api/indicators';
+import { ColumnPicker } from './ColumnPicker';
 import './Analysis.css';
 
 interface AnalysisProps {
@@ -36,6 +49,18 @@ type SortKey =
 
 type TabType = 'analysts' | 'fundamentals' | 'technicals';
 
+// Insider sentiment time range options (in months)
+// Note: Finnhub provides monthly data, so minimum granularity is 1 month
+type InsiderTimeRange = 1 | 2 | 3 | 6 | 12;
+
+const INSIDER_TIME_RANGES: { value: InsiderTimeRange; label: string }[] = [
+  { value: 1, label: '1M' },
+  { value: 2, label: '2M' },
+  { value: 3, label: '3M' },
+  { value: 6, label: '6M' },
+  { value: 12, label: '1Y' },
+];
+
 export function Analysis({ portfolioId }: AnalysisProps) {
   const [analystData, setAnalystData] = useState<EnrichedAnalystData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,9 +69,43 @@ export function Analysis({ portfolioId }: AnalysisProps) {
   const [sortAsc, setSortAsc] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('analysts');
 
+  // Customizable indicators state
+  const [indicators, setIndicators] = useState<AnalysisIndicator[]>([]);
+  const [selectedColumns, setSelectedColumns] = useState<string[]>(
+    DEFAULT_INDICATOR_KEYS
+  );
+  const [userViews, setUserViews] = useState<UserAnalysisView[]>([]);
+  const [currentView, setCurrentView] = useState<UserAnalysisView | null>(null);
+  const [indicatorsLoading, setIndicatorsLoading] = useState(true);
+  const [insiderTimeRange, setInsiderTimeRange] = useState<InsiderTimeRange>(3);
+
   useEffect(() => {
     loadData();
+    loadIndicators();
   }, [portfolioId]);
+
+  const loadIndicators = async () => {
+    try {
+      setIndicatorsLoading(true);
+      const [allIndicators, views] = await Promise.all([
+        getAllIndicators(),
+        getUserViews(),
+      ]);
+      setIndicators(allIndicators);
+      setUserViews(views);
+
+      // Find default view or use defaults
+      const defaultView = views.find((v) => v.is_default);
+      if (defaultView) {
+        setCurrentView(defaultView);
+        setSelectedColumns(defaultView.indicator_keys);
+      }
+    } catch (err) {
+      console.error('Failed to load indicators:', err);
+    } finally {
+      setIndicatorsLoading(false);
+    }
+  };
 
   const loadData = async () => {
     if (!portfolioId) {
@@ -196,11 +255,131 @@ export function Analysis({ portfolioId }: AnalysisProps) {
     return `${prefix}${value.toFixed(2)}%`;
   };
 
-  const formatMarketCap = (value: number | null | undefined): string => {
+  // Column customization handlers
+  const handleColumnChange = async (keys: string[]) => {
+    setSelectedColumns(keys);
+    // If there's a current view, update it automatically
+    if (currentView) {
+      try {
+        await updateViewColumns(currentView.id, keys);
+      } catch (err) {
+        console.error('Failed to save column order:', err);
+      }
+    }
+  };
+
+  const handleSaveView = async (name: string) => {
+    try {
+      const newView = await createView(
+        name,
+        selectedColumns,
+        userViews.length === 0
+      );
+      setUserViews([...userViews, newView]);
+      setCurrentView(newView);
+    } catch (err) {
+      console.error('Failed to save view:', err);
+    }
+  };
+
+  const handleDeleteView = async (viewId: string) => {
+    try {
+      await deleteView(viewId);
+      const updatedViews = userViews.filter((v) => v.id !== viewId);
+      setUserViews(updatedViews);
+
+      // If we deleted the current view, switch to default or first view
+      if (currentView?.id === viewId) {
+        const newCurrent =
+          updatedViews.find((v) => v.is_default) || updatedViews[0] || null;
+        setCurrentView(newCurrent);
+        if (newCurrent) {
+          setSelectedColumns(newCurrent.indicator_keys);
+        } else {
+          setSelectedColumns(DEFAULT_INDICATOR_KEYS);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to delete view:', err);
+    }
+  };
+
+  const handleSelectView = (view: UserAnalysisView) => {
+    setCurrentView(view);
+    setSelectedColumns(view.indicator_keys);
+  };
+
+  const handleSetDefaultView = async (viewId: string) => {
+    try {
+      await updateView(viewId, { is_default: true });
+      // Update local state - set this view as default, unset others
+      setUserViews(
+        userViews.map((v) => ({
+          ...v,
+          is_default: v.id === viewId,
+        }))
+      );
+    } catch (err) {
+      console.error('Failed to set default view:', err);
+    }
+  };
+
+  // Get indicator by key helper
+  const getIndicatorByKey = (key: string): AnalysisIndicator | undefined => {
+    return indicators.find((i) => i.key === key);
+  };
+
+  // Get metric value from fundamentals by indicator key
+  const getMetricValue = (
+    fundamentals: FundamentalMetrics | null | undefined,
+    key: string
+  ): number | null => {
+    if (!fundamentals) return null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const value = (fundamentals as any)[key];
+    return typeof value === 'number' ? value : null;
+  };
+
+  // Format value based on indicator definition
+  const formatIndicatorValue = (
+    value: number | null | undefined,
+    indicator: AnalysisIndicator
+  ): string => {
     if (value === null || value === undefined) return '—';
-    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}T`;
-    if (value >= 1000) return `${(value / 1000).toFixed(1)}B`;
-    return `${value.toFixed(0)}M`;
+
+    // Special handling for market cap and enterprise value
+    if (indicator.key === 'marketCap' || indicator.key === 'enterpriseValue') {
+      return formatLargeNumber(value);
+    }
+
+    const formatted = value.toLocaleString('cs-CZ', {
+      minimumFractionDigits: indicator.format_decimals,
+      maximumFractionDigits: indicator.format_decimals,
+    });
+
+    return `${indicator.format_prefix}${formatted}${indicator.format_suffix}`;
+  };
+
+  // Get CSS class based on indicator thresholds
+  const getValueClass = (
+    value: number | null | undefined,
+    indicator: AnalysisIndicator
+  ): string => {
+    if (value === null || value === undefined) return '';
+    if (indicator.good_threshold === null && indicator.bad_threshold === null)
+      return '';
+
+    const { good_threshold, bad_threshold, higher_is_better } = indicator;
+
+    if (higher_is_better) {
+      if (good_threshold !== null && value >= good_threshold) return 'positive';
+      if (bad_threshold !== null && value <= bad_threshold) return 'negative';
+    } else {
+      if (good_threshold !== null && value <= good_threshold) return 'positive';
+      if (bad_threshold !== null && value >= bad_threshold) return 'negative';
+    }
+
+    return '';
   };
 
   const SortIcon = ({ column }: { column: SortKey }) => {
@@ -216,6 +395,60 @@ export function Analysis({ portfolioId }: AnalysisProps) {
     if (mspr > 0) return { label: 'Buying', class: 'positive' };
     if (mspr > -25) return { label: 'Selling', class: 'negative' };
     return { label: 'Strong Selling', class: 'negative' };
+  };
+
+  // Filter insider sentiment by time range (client-side - no API call needed)
+  const getFilteredInsiderSentiment = (
+    item: EnrichedAnalystData,
+    months: InsiderTimeRange
+  ): { mspr: number | null; change: number | null } => {
+    // Check for monthlyData array first
+    const monthlyData = item.insiderSentiment?.monthlyData;
+
+    // If no monthlyData but we have aggregated values, use those (backward compatibility)
+    if (!monthlyData || monthlyData.length === 0) {
+      // Fall back to pre-aggregated values if available
+      if (
+        item.insiderSentiment?.mspr !== null &&
+        item.insiderSentiment?.mspr !== undefined
+      ) {
+        return {
+          mspr: item.insiderSentiment.mspr,
+          change: item.insiderSentiment.change ?? null,
+        };
+      }
+      return { mspr: null, change: null };
+    }
+
+    // Calculate the cutoff date
+    const now = new Date();
+    const cutoffYear = now.getFullYear();
+    const cutoffMonth = now.getMonth() + 1; // 1-indexed
+
+    // Filter to only include months within the range
+    // Include data from the last N months (e.g., for 3M: current month and 2 previous)
+    const filtered = monthlyData.filter((d) => {
+      const monthsDiff = (cutoffYear - d.year) * 12 + (cutoffMonth - d.month);
+      return monthsDiff >= 0 && monthsDiff < months;
+    });
+
+    // If no data in selected range, try using all available data
+    const dataToUse =
+      filtered.length > 0 ? filtered : monthlyData.slice(0, months);
+
+    if (dataToUse.length === 0) {
+      return { mspr: null, change: null };
+    }
+
+    // Calculate aggregates
+    const avgMspr =
+      dataToUse.reduce((sum, d) => sum + d.mspr, 0) / dataToUse.length;
+    const totalChange = dataToUse.reduce((sum, d) => sum + d.change, 0);
+
+    return {
+      mspr: Math.round(avgMspr * 100) / 100,
+      change: totalChange,
+    };
   };
 
   // Helper functions - must be defined before any returns that use them
@@ -651,14 +884,36 @@ export function Analysis({ portfolioId }: AnalysisProps) {
       {activeTab === 'fundamentals' && (
         <>
           <section className="analysis-section">
-            <h3>Fundamental Metrics</h3>
-            <p className="section-description">
-              Key financial ratios and metrics. Data from Finnhub Basic
-              Financials (FREE).
-            </p>
+            <div className="section-header-row">
+              <div>
+                <h3>Fundamental Metrics</h3>
+                <p className="section-description">
+                  Customize columns to show the metrics you care about. Data
+                  from Finnhub (FREE tier).
+                </p>
+              </div>
+              {currentView && (
+                <div className="current-view-badge">📋 {currentView.name}</div>
+              )}
+            </div>
+
+            {/* Column Picker */}
+            {!indicatorsLoading && (
+              <ColumnPicker
+                indicators={indicators}
+                selectedKeys={selectedColumns}
+                onSelectionChange={handleColumnChange}
+                onSaveView={handleSaveView}
+                views={userViews}
+                currentViewId={currentView?.id}
+                onSelectView={handleSelectView}
+                onDeleteView={handleDeleteView}
+                onSetDefaultView={handleSetDefaultView}
+              />
+            )}
 
             <div className="analysis-table-wrapper">
-              <table className="analysis-table fundamentals-table">
+              <table className="analysis-table fundamentals-table dynamic-columns">
                 <thead>
                   <tr>
                     <th onClick={() => handleSort('ticker')}>
@@ -667,25 +922,20 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     <th className="right" onClick={() => handleSort('weight')}>
                       Weight <SortIcon column="weight" />
                     </th>
-                    <th className="right" onClick={() => handleSort('peRatio')}>
-                      P/E <SortIcon column="peRatio" />
-                    </th>
-                    <th className="right">P/B</th>
-                    <th className="right" onClick={() => handleSort('roe')}>
-                      ROE <SortIcon column="roe" />
-                    </th>
-                    <th className="right">Net Margin</th>
-                    <th className="right" onClick={() => handleSort('beta')}>
-                      Beta <SortIcon column="beta" />
-                    </th>
-                    <th
-                      className="right"
-                      onClick={() => handleSort('dividendYield')}
-                    >
-                      Div Yield <SortIcon column="dividendYield" />
-                    </th>
-                    <th className="right">Debt/Equity</th>
-                    <th className="right">Mkt Cap</th>
+                    {selectedColumns.map((key) => {
+                      const indicator = getIndicatorByKey(key);
+                      if (!indicator) return null;
+                      return (
+                        <th
+                          key={key}
+                          className="right"
+                          title={indicator.description}
+                        >
+                          {indicator.short_name}
+                          <span className="tooltip-icon">ⓘ</span>
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody>
@@ -711,91 +961,23 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                             {item.weight.toFixed(1)}%
                           </span>
                         </td>
-                        <td
-                          className={`right ${
-                            f?.peRatio !== null &&
-                            f?.peRatio !== undefined &&
-                            f.peRatio < 15
-                              ? 'positive'
-                              : f?.peRatio !== null && f.peRatio > 30
-                              ? 'negative'
-                              : ''
-                          }`}
-                        >
-                          {formatNumber(f?.peRatio, 1)}
-                        </td>
-                        <td className="right">{formatNumber(f?.pbRatio, 1)}</td>
-                        <td
-                          className={`right ${
-                            f?.roe !== null &&
-                            f?.roe !== undefined &&
-                            f.roe > 15
-                              ? 'positive'
-                              : f?.roe !== null && f.roe < 5
-                              ? 'negative'
-                              : ''
-                          }`}
-                        >
-                          {f?.roe !== null && f?.roe !== undefined
-                            ? `${f.roe.toFixed(1)}%`
-                            : '—'}
-                        </td>
-                        <td
-                          className={`right ${
-                            f?.netMargin !== null &&
-                            f?.netMargin !== undefined &&
-                            f.netMargin > 15
-                              ? 'positive'
-                              : f?.netMargin !== null && f.netMargin < 5
-                              ? 'negative'
-                              : ''
-                          }`}
-                        >
-                          {f?.netMargin !== null && f?.netMargin !== undefined
-                            ? `${f.netMargin.toFixed(1)}%`
-                            : '—'}
-                        </td>
-                        <td
-                          className={`right ${
-                            f?.beta !== null &&
-                            f?.beta !== undefined &&
-                            f.beta > 1.3
-                              ? 'negative'
-                              : f?.beta !== null && f.beta < 0.8
-                              ? 'positive'
-                              : ''
-                          }`}
-                        >
-                          {formatNumber(f?.beta, 2)}
-                        </td>
-                        <td
-                          className={`right ${
-                            f?.dividendYield !== null &&
-                            f?.dividendYield !== undefined &&
-                            f.dividendYield > 2
-                              ? 'positive'
-                              : ''
-                          }`}
-                        >
-                          {f?.dividendYield !== null &&
-                          f?.dividendYield !== undefined
-                            ? `${f.dividendYield.toFixed(2)}%`
-                            : '—'}
-                        </td>
-                        <td
-                          className={`right ${
-                            f?.debtToEquity !== null &&
-                            f?.debtToEquity !== undefined &&
-                            f.debtToEquity > 100
-                              ? 'negative'
-                              : ''
-                          }`}
-                        >
-                          {formatNumber(f?.debtToEquity, 1)}
-                        </td>
-                        <td className="right">
-                          {formatMarketCap(f?.marketCap)}
-                        </td>
+                        {selectedColumns.map((key) => {
+                          const indicator = getIndicatorByKey(key);
+                          if (!indicator) return null;
+                          const value = getMetricValue(f, key);
+                          return (
+                            <td
+                              key={key}
+                              className={`right ${getValueClass(
+                                value,
+                                indicator
+                              )}`}
+                              title={indicator.description}
+                            >
+                              {formatIndicatorValue(value, indicator)}
+                            </td>
+                          );
+                        })}
                       </tr>
                     );
                   })}
@@ -806,60 +988,169 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
           {/* Insider Sentiment Section */}
           <section className="analysis-section">
-            <h3>🕵️ Insider Sentiment</h3>
+            <div className="insider-section-header">
+              <div className="insider-title-row">
+                <h3>🕵️ Insider Sentiment</h3>
+                <div className="tooltip-wrapper">
+                  <span className="info-tooltip-trigger">ⓘ</span>
+                  <div className="tooltip-content">
+                    <strong>What is Insider Sentiment?</strong>
+                    <p>
+                      Tracks buying/selling by company executives and directors
+                      (Form 4 filings). High insider buying often signals
+                      confidence in the company's future.
+                    </p>
+                    <p>
+                      <strong>MSPR</strong>: Monthly Share Purchase Ratio (-100
+                      to +100)
+                    </p>
+                    <p>
+                      <strong>Net Shares</strong>: Total shares bought minus
+                      sold
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="insider-time-filter">
+                {INSIDER_TIME_RANGES.map((range) => (
+                  <button
+                    key={range.value}
+                    className={`time-range-btn ${
+                      insiderTimeRange === range.value ? 'active' : ''
+                    }`}
+                    onClick={() => setInsiderTimeRange(range.value)}
+                  >
+                    {range.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <p className="section-description">
-              Monthly Share Purchase Ratio (MSPR) - measures insider buying vs
-              selling activity. Range: -100 (heavy selling) to +100 (heavy
-              buying).
+              Bars show monthly MSPR trend.{' '}
+              <span className="positive-text">Green</span> = buying,{' '}
+              <span className="negative-text">Red</span> = selling.
             </p>
 
             <div className="insider-grid">
               {sortedData.map((item) => {
-                const sentiment = getInsiderSentimentLabel(
-                  item.insiderSentiment?.mspr ?? null
+                const filteredSentiment = getFilteredInsiderSentiment(
+                  item,
+                  insiderTimeRange
                 );
+                const sentiment = getInsiderSentimentLabel(
+                  filteredSentiment.mspr
+                );
+                const hasData = filteredSentiment.mspr !== null;
+                const monthlyData = item.insiderSentiment?.monthlyData ?? [];
+
+                // Get the last N months of data for the mini chart (reversed for left-to-right display)
+                const chartData = [...monthlyData]
+                  .slice(0, insiderTimeRange)
+                  .reverse();
+
                 return (
-                  <div key={item.ticker} className="insider-card">
+                  <div
+                    key={item.ticker}
+                    className={`insider-card ${!hasData ? 'no-data' : ''}`}
+                  >
                     <div className="insider-header">
                       <span className="ticker">{item.ticker}</span>
                       <span className={`insider-badge ${sentiment.class}`}>
                         {sentiment.label}
                       </span>
                     </div>
-                    <div className="insider-details">
-                      <div className="insider-stat">
-                        <span className="stat-label">MSPR</span>
-                        <span
-                          className={`stat-value ${
-                            (item.insiderSentiment?.mspr ?? 0) >= 0
-                              ? 'positive'
-                              : 'negative'
-                          }`}
-                        >
-                          {item.insiderSentiment?.mspr !== null &&
-                          item.insiderSentiment?.mspr !== undefined
-                            ? (item.insiderSentiment.mspr >= 0 ? '+' : '') +
-                              item.insiderSentiment.mspr.toFixed(1)
-                            : '—'}
-                        </span>
+                    {hasData ? (
+                      <>
+                        <div className="insider-details">
+                          <div className="insider-stat">
+                            <span className="stat-label">MSPR</span>
+                            <span
+                              className={`stat-value ${
+                                (filteredSentiment.mspr ?? 0) >= 0
+                                  ? 'positive'
+                                  : 'negative'
+                              }`}
+                            >
+                              {(filteredSentiment.mspr ?? 0) >= 0 ? '+' : ''}
+                              {filteredSentiment.mspr?.toFixed(1)}
+                            </span>
+                          </div>
+                          <div className="insider-stat">
+                            <span className="stat-label">Net Shares</span>
+                            <span
+                              className={`stat-value ${
+                                (filteredSentiment.change ?? 0) >= 0
+                                  ? 'positive'
+                                  : 'negative'
+                              }`}
+                            >
+                              {(filteredSentiment.change ?? 0) >= 0 ? '+' : ''}
+                              {filteredSentiment.change?.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                        {/* Mini MSPR Chart - Left=Oldest, Right=Newest */}
+                        {chartData.length > 1 && (
+                          <div className="insider-chart">
+                            <div className="chart-labels">
+                              <span className="chart-label-old">Older</span>
+                              <span className="chart-label-new">Recent</span>
+                            </div>
+                            <div className="chart-bars">
+                              {chartData.map((d, i) => {
+                                const maxAbsMspr = Math.max(
+                                  ...chartData.map((x) => Math.abs(x.mspr)),
+                                  1
+                                );
+                                const height = Math.abs(d.mspr) / maxAbsMspr;
+                                const isPositive = d.mspr >= 0;
+                                const monthNames = [
+                                  'Jan',
+                                  'Feb',
+                                  'Mar',
+                                  'Apr',
+                                  'May',
+                                  'Jun',
+                                  'Jul',
+                                  'Aug',
+                                  'Sep',
+                                  'Oct',
+                                  'Nov',
+                                  'Dec',
+                                ];
+                                const monthLabel =
+                                  monthNames[d.month - 1] || d.month;
+                                return (
+                                  <div
+                                    key={i}
+                                    className="chart-bar-wrapper"
+                                    title={`${monthLabel} ${d.year}: MSPR ${
+                                      d.mspr >= 0 ? '+' : ''
+                                    }${d.mspr.toFixed(1)}, Shares ${
+                                      d.change >= 0 ? '+' : ''
+                                    }${d.change.toLocaleString()}`}
+                                  >
+                                    <div
+                                      className={`chart-bar ${
+                                        isPositive ? 'positive' : 'negative'
+                                      }`}
+                                      style={{
+                                        height: `${Math.max(height * 100, 5)}%`,
+                                      }}
+                                    />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            <div className="chart-zero-line" />
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="insider-no-data">
+                        <span>No insider data</span>
                       </div>
-                      <div className="insider-stat">
-                        <span className="stat-label">Net Shares</span>
-                        <span
-                          className={`stat-value ${
-                            (item.insiderSentiment?.change ?? 0) >= 0
-                              ? 'positive'
-                              : 'negative'
-                          }`}
-                        >
-                          {item.insiderSentiment?.change !== null &&
-                          item.insiderSentiment?.change !== undefined
-                            ? (item.insiderSentiment.change >= 0 ? '+' : '') +
-                              item.insiderSentiment.change.toLocaleString()
-                            : '—'}
-                        </span>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 );
               })}
@@ -869,54 +1160,196 @@ export function Analysis({ portfolioId }: AnalysisProps) {
           {/* Fundamental Summary */}
           <section className="analysis-section">
             <h3>💹 Fundamental Insights</h3>
-            <div className="insights-grid">
-              <div className="insight-card">
-                <span className="insight-label">Avg Portfolio P/E</span>
-                <span className="insight-value">
-                  {getWeightedAverage('peRatio').toFixed(1)}
-                </span>
-              </div>
-              <div className="insight-card">
-                <span className="insight-label">Avg Portfolio Beta</span>
-                <span
-                  className={`insight-value ${
-                    getWeightedAverage('beta') > 1.2
-                      ? 'negative'
-                      : getWeightedAverage('beta') < 0.9
-                      ? 'positive'
-                      : ''
-                  }`}
+            <p className="section-description">
+              Portfolio-weighted averages and key metrics across your holdings.
+            </p>
+
+            {/* Valuation Row */}
+            <div className="insights-category">
+              <span className="category-label">Valuation</span>
+              <div className="insights-grid">
+                <div
+                  className="insight-card"
+                  title="Portfolio-weighted average P/E ratio. Lower may indicate undervaluation, higher may indicate growth expectations."
                 >
-                  {getWeightedAverage('beta').toFixed(2)}
-                </span>
-              </div>
-              <div className="insight-card">
-                <span className="insight-label">Avg ROE</span>
-                <span
-                  className={`insight-value ${
-                    getWeightedAverage('roe') > 15 ? 'positive' : ''
-                  }`}
+                  <span className="insight-label">Avg P/E ⓘ</span>
+                  <span className="insight-value">
+                    {getWeightedAverage('peRatio').toFixed(1)}x
+                  </span>
+                </div>
+                <div
+                  className="insight-card"
+                  title="Portfolio-weighted average Forward P/E (based on estimated earnings). Compare with trailing P/E to gauge growth expectations."
                 >
-                  {getWeightedAverage('roe').toFixed(1)}%
-                </span>
+                  <span className="insight-label">Avg Fwd P/E ⓘ</span>
+                  <span className="insight-value">
+                    {getWeightedAverage('forwardPe').toFixed(1)}x
+                  </span>
+                </div>
+                <div
+                  className="insight-card"
+                  title="Portfolio-weighted average Price-to-Book ratio. <1 may indicate undervaluation, >3 may indicate overvaluation."
+                >
+                  <span className="insight-label">Avg P/B ⓘ</span>
+                  <span className="insight-value">
+                    {getWeightedAverage('pbRatio').toFixed(2)}x
+                  </span>
+                </div>
+                <div
+                  className="insight-card"
+                  title="Portfolio-weighted average EV/EBITDA. Lower values may indicate better value. Useful for comparing companies with different capital structures."
+                >
+                  <span className="insight-label">Avg EV/EBITDA ⓘ</span>
+                  <span className="insight-value">
+                    {getWeightedAverage('evToEbitda').toFixed(1)}x
+                  </span>
+                </div>
               </div>
-              <div className="insight-card">
-                <span className="insight-label">Insider Buying</span>
-                <span className="insight-value positive">
-                  {
-                    analystData.filter(
-                      (d) => (d.insiderSentiment?.mspr ?? 0) > 0
-                    ).length
-                  }
-                  <span className="insight-subtext">
-                    /{' '}
+            </div>
+
+            {/* Profitability Row */}
+            <div className="insights-category">
+              <span className="category-label">Profitability</span>
+              <div className="insights-grid">
+                <div
+                  className="insight-card"
+                  title="Portfolio-weighted average Return on Equity. Measures how effectively the company uses shareholder equity. >15% is generally good."
+                >
+                  <span className="insight-label">Avg ROE ⓘ</span>
+                  <span
+                    className={`insight-value ${
+                      getWeightedAverage('roe') > 15 ? 'positive' : ''
+                    }`}
+                  >
+                    {getWeightedAverage('roe').toFixed(1)}%
+                  </span>
+                </div>
+                <div
+                  className="insight-card"
+                  title="Portfolio-weighted average Net Profit Margin. The percentage of revenue that becomes profit. Higher is better."
+                >
+                  <span className="insight-label">Avg Net Margin ⓘ</span>
+                  <span
+                    className={`insight-value ${
+                      getWeightedAverage('netMargin') > 10 ? 'positive' : ''
+                    }`}
+                  >
+                    {getWeightedAverage('netMargin').toFixed(1)}%
+                  </span>
+                </div>
+                <div
+                  className="insight-card"
+                  title="Portfolio-weighted average Gross Margin. Revenue minus cost of goods sold. Higher indicates pricing power."
+                >
+                  <span className="insight-label">Avg Gross Margin ⓘ</span>
+                  <span className="insight-value">
+                    {getWeightedAverage('grossMargin').toFixed(1)}%
+                  </span>
+                </div>
+                <div
+                  className="insight-card"
+                  title="Stocks with dividend yield > 0%"
+                >
+                  <span className="insight-label">Dividend Payers ⓘ</span>
+                  <span className="insight-value">
                     {
                       analystData.filter(
-                        (d) => d.insiderSentiment?.mspr !== null
+                        (d) => (d.fundamentals?.dividendYield ?? 0) > 0
                       ).length
                     }
+                    <span className="insight-subtext">
+                      / {analystData.length}
+                    </span>
                   </span>
-                </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Risk & Growth Row */}
+            <div className="insights-category">
+              <span className="category-label">Risk & Growth</span>
+              <div className="insights-grid">
+                <div
+                  className="insight-card"
+                  title="Portfolio-weighted average Beta. >1 = more volatile than market, <1 = less volatile. 1 = moves with market."
+                >
+                  <span className="insight-label">Avg Beta ⓘ</span>
+                  <span
+                    className={`insight-value ${
+                      getWeightedAverage('beta') > 1.3
+                        ? 'negative'
+                        : getWeightedAverage('beta') < 0.8
+                        ? 'positive'
+                        : ''
+                    }`}
+                  >
+                    {getWeightedAverage('beta').toFixed(2)}
+                  </span>
+                </div>
+                <div
+                  className="insight-card"
+                  title="Portfolio-weighted average Debt-to-Equity ratio. Lower is generally safer. >2 may indicate high leverage risk."
+                >
+                  <span className="insight-label">Avg D/E ⓘ</span>
+                  <span
+                    className={`insight-value ${
+                      getWeightedAverage('debtToEquity') > 2
+                        ? 'negative'
+                        : getWeightedAverage('debtToEquity') < 0.5
+                        ? 'positive'
+                        : ''
+                    }`}
+                  >
+                    {getWeightedAverage('debtToEquity').toFixed(2)}
+                  </span>
+                </div>
+                <div
+                  className="insight-card"
+                  title="Portfolio-weighted average revenue growth (TTM). Positive indicates growing companies."
+                >
+                  <span className="insight-label">Avg Revenue Growth ⓘ</span>
+                  <span
+                    className={`insight-value ${
+                      getWeightedAverage('revenueGrowth') > 0
+                        ? 'positive'
+                        : getWeightedAverage('revenueGrowth') < 0
+                        ? 'negative'
+                        : ''
+                    }`}
+                  >
+                    {getWeightedAverage('revenueGrowth') >= 0 ? '+' : ''}
+                    {getWeightedAverage('revenueGrowth').toFixed(1)}%
+                  </span>
+                </div>
+                <div
+                  className="insight-card"
+                  title="Stocks where insiders are net buyers in the selected time range"
+                >
+                  <span className="insight-label">
+                    Insider Buying ({insiderTimeRange}M) ⓘ
+                  </span>
+                  <span className="insight-value positive">
+                    {
+                      analystData.filter(
+                        (d) =>
+                          getFilteredInsiderSentiment(d, insiderTimeRange)
+                            .mspr !== null &&
+                          (getFilteredInsiderSentiment(d, insiderTimeRange)
+                            .mspr ?? 0) > 0
+                      ).length
+                    }
+                    <span className="insight-subtext">
+                      /{' '}
+                      {
+                        analystData.filter(
+                          (d) =>
+                            getFilteredInsiderSentiment(d, insiderTimeRange)
+                              .mspr !== null
+                        ).length
+                      }
+                    </span>
+                  </span>
+                </div>
               </div>
             </div>
           </section>

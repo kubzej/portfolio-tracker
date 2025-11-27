@@ -5,3 +5,4 @@ export * from './transactions';
 export * from './holdings';
 export * from './priceRefresh';
 export * from './analysis';
+export * from './indicators';

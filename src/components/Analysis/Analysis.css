@@ -506,33 +506,113 @@
 /* Insider Grid */
 .insider-grid {
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
 }
 
 @media (min-width: 640px) {
   .insider-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
 @media (min-width: 1024px) {
   .insider-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
 @media (min-width: 1280px) {
   .insider-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
+}
+
+/* Insider Section Header */
+.insider-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.insider-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.insider-title-row h3 {
+  margin: 0;
+}
+
+.info-tooltip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: help;
+  transition: all var(--transition-fast);
+}
+
+.info-tooltip:hover {
+  background: var(--accent-primary);
+  color: white;
+}
+
+/* Time Range Filter */
+.insider-time-filter {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--bg-tertiary);
+  padding: 0.25rem;
+  border-radius: var(--radius-md);
+}
+
+.time-range-btn {
+  padding: 0.375rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.time-range-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+}
+
+.time-range-btn.active {
+  background: var(--accent-primary);
+  color: white;
 }
 
 .insider-card {
   background: var(--bg-tertiary);
   border-radius: var(--radius-md);
-  padding: 1rem;
+  padding: 0.875rem;
   border: 1px solid var(--border-light);
+  transition: all var(--transition-fast);
+}
+
+.insider-card:hover {
+  border-color: var(--border-medium);
+  box-shadow: var(--shadow-sm);
+}
+
+.insider-card.no-data {
+  opacity: 0.6;
 }
 
 .insider-header {
@@ -599,6 +679,176 @@
 
 .insider-stat .stat-value.negative {
   color: var(--danger);
+}
+
+/* Insider No Data State */
+.insider-no-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+/* Insider Mini Chart */
+.insider-chart {
+  position: relative;
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.chart-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.chart-label-old,
+.chart-label-new {
+  font-size: 0.5625rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 32px;
+  gap: 2px;
+}
+
+.chart-bar-wrapper {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  cursor: help;
+}
+
+.chart-bar {
+  width: 100%;
+  max-width: 12px;
+  border-radius: 2px 2px 0 0;
+  transition: opacity var(--transition-fast);
+}
+
+.chart-bar.positive {
+  background: var(--success);
+}
+
+.chart-bar.negative {
+  background: var(--danger);
+}
+
+.chart-bar-wrapper:hover .chart-bar {
+  opacity: 0.7;
+}
+
+.chart-zero-line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--border-medium);
+}
+
+/* Custom Tooltip */
+.tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.info-tooltip-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: help;
+  transition: all var(--transition-fast);
+}
+
+.info-tooltip-trigger:hover {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.tooltip-content {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  width: 280px;
+  padding: 0.875rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-fast);
+}
+
+.tooltip-content::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--border-medium);
+}
+
+.tooltip-wrapper:hover .tooltip-content {
+  opacity: 1;
+  visibility: visible;
+}
+
+.tooltip-content strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.tooltip-content p {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.tooltip-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Colored text helpers */
+.positive-text {
+  color: var(--success);
+  font-weight: 500;
+}
+
+.negative-text {
+  color: var(--danger);
+  font-weight: 500;
+}
+
+/* Stat Label Tooltip */
+.insider-stat .stat-label {
+  cursor: default;
 }
 
 /* Range Bar for 52W Position */
@@ -716,4 +966,136 @@
 .technicals-table th.left,
 .technicals-table td.left {
   text-align: left;
+}
+
+/* Section Header Row */
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.section-header-row h3 {
+  margin-bottom: 0.25rem;
+}
+
+.current-view-badge {
+  background: var(--accent-primary);
+  color: white;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Views Selector */
+.views-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.views-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.view-btn {
+  padding: 0.375rem 0.75rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.view-btn:hover {
+  background: var(--bg-primary);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.view-btn.active {
+  background: var(--accent-primary-light);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+
+.view-btn .default-badge {
+  color: var(--warning);
+  font-size: 0.75rem;
+}
+
+/* Dynamic Columns Table */
+.dynamic-columns th,
+.dynamic-columns td {
+  min-width: 70px;
+}
+
+.dynamic-columns th:first-child,
+.dynamic-columns td:first-child {
+  min-width: 140px;
+}
+
+.dynamic-columns th:nth-child(2),
+.dynamic-columns td:nth-child(2) {
+  min-width: 80px;
+}
+
+/* Tooltip Icon in Headers */
+.tooltip-icon {
+  font-size: 0.625rem;
+  margin-left: 0.25rem;
+  opacity: 0.5;
+  vertical-align: super;
+}
+
+.analysis-table th:hover .tooltip-icon {
+  opacity: 1;
+}
+
+/* Insight Card Tooltip Cursor */
+.insight-card[title] {
+  cursor: help;
+}
+
+.insight-label::after {
+  content: '';
+}
+
+/* Loading State for Indicators */
+.indicators-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.indicators-loading .spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-light);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

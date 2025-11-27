@@ -21,30 +21,59 @@ interface EarningsData {
   surprisePercent: number | null;
 }
 
-// Fundamental metrics
+// Fundamental metrics - all available from Finnhub FREE tier
 interface FundamentalMetrics {
+  // Valuation
   peRatio: number | null;
   pbRatio: number | null;
   psRatio: number | null;
-  dividendYield: number | null;
-  beta: number | null;
-  roe: number | null; // Return on Equity
-  roa: number | null; // Return on Assets
+  pegRatio: number | null;
+  evEbitda: number | null;
+  forwardPe: number | null;
+  // Profitability
+  roe: number | null;
+  roa: number | null;
+  roi: number | null;
   grossMargin: number | null;
   operatingMargin: number | null;
   netMargin: number | null;
+  // Growth
+  revenueGrowth: number | null;
+  epsGrowth: number | null;
+  revenueGrowth3Y: number | null;
+  revenueGrowth5Y: number | null;
+  epsGrowth5Y: number | null;
+  // Risk
+  beta: number | null;
   debtToEquity: number | null;
   currentRatio: number | null;
   quickRatio: number | null;
-  revenueGrowth: number | null;
-  epsGrowth: number | null;
+  // Dividend
+  dividendYield: number | null;
+  payoutRatio: number | null;
+  dividendGrowth5Y: number | null;
+  // Performance
+  return52W: number | null;
+  return13W: number | null;
+  returnVsSP500: number | null;
+  // Size
   marketCap: number | null;
+  enterpriseValue: number | null;
 }
 
-// Insider sentiment data
+// Insider sentiment monthly data point
+interface InsiderMonthlyData {
+  year: number;
+  month: number;
+  mspr: number;
+  change: number;
+}
+
+// Insider sentiment data with all monthly points for client-side filtering
 interface InsiderSentiment {
-  mspr: number | null; // Monthly Share Purchase Ratio (-100 to 100)
-  change: number | null; // Net buying/selling
+  mspr: number | null; // Monthly Share Purchase Ratio (-100 to 100) - aggregated
+  change: number | null; // Net buying/selling - aggregated
+  monthlyData: InsiderMonthlyData[]; // All monthly data for time range filtering
 }
 
 interface AnalystData {
@@ -89,22 +118,42 @@ async function fetchAnalystData(
   const finnhubSymbol = finnhubTicker || ticker;
 
   const emptyFundamentals: FundamentalMetrics = {
+    // Valuation
     peRatio: null,
     pbRatio: null,
     psRatio: null,
-    dividendYield: null,
-    beta: null,
+    pegRatio: null,
+    evEbitda: null,
+    forwardPe: null,
+    // Profitability
     roe: null,
     roa: null,
+    roi: null,
     grossMargin: null,
     operatingMargin: null,
     netMargin: null,
+    // Growth
+    revenueGrowth: null,
+    epsGrowth: null,
+    revenueGrowth3Y: null,
+    revenueGrowth5Y: null,
+    epsGrowth5Y: null,
+    // Risk
+    beta: null,
     debtToEquity: null,
     currentRatio: null,
     quickRatio: null,
-    revenueGrowth: null,
-    epsGrowth: null,
+    // Dividend
+    dividendYield: null,
+    payoutRatio: null,
+    dividendGrowth5Y: null,
+    // Performance
+    return52W: null,
+    return13W: null,
+    returnVsSP500: null,
+    // Size
     marketCap: null,
+    enterpriseValue: null,
   };
 
   const baseData: AnalystData = {
@@ -179,12 +228,12 @@ async function fetchAnalystData(
           finnhubSymbol
         )}&token=${FINNHUB_API_KEY}`
       ),
-      // Insider sentiment (FREE) - get last 3 months
+      // Insider sentiment (FREE) - get last 12 months for better coverage
       fetch(
         `https://finnhub.io/api/v1/stock/insider-sentiment?symbol=${encodeURIComponent(
           finnhubSymbol
         )}&from=${getDateMonthsAgo(
-          3
+          12
         )}&to=${getTodayDate()}&token=${FINNHUB_API_KEY}`
       ),
     ]);
@@ -361,22 +410,33 @@ async function fetchAnalystData(
       }
     }
 
-    // Parse fundamental metrics
+    // Parse fundamental metrics - all available from Finnhub FREE tier
     const metrics = metricsData?.metric ?? {};
     const fundamentals: FundamentalMetrics = {
+      // Valuation
       peRatio: metrics.peBasicExclExtraTTM ?? metrics.peTTM ?? null,
       pbRatio: metrics.pbQuarterly ?? metrics.pbAnnual ?? null,
       psRatio: metrics.psTTM ?? null,
-      dividendYield:
-        metrics.dividendYieldIndicatedAnnual ?? metrics.dividendYield5Y ?? null,
-      beta: metrics.beta ?? null,
-      roe: metrics.roeRfy ?? metrics.roeTTM ?? null,
-      roa: metrics.roaRfy ?? metrics.roaTTM ?? null,
+      pegRatio: metrics.pegTTM ?? null,
+      evEbitda: metrics.evEbitdaTTM ?? null,
+      forwardPe: metrics.forwardPE ?? null,
+      // Profitability
+      roe: metrics.roeTTM ?? metrics.roeRfy ?? null,
+      roa: metrics.roaTTM ?? metrics.roaRfy ?? null,
+      roi: metrics.roiTTM ?? metrics.roiAnnual ?? null,
       grossMargin: metrics.grossMarginTTM ?? metrics.grossMargin5Y ?? null,
       operatingMargin:
         metrics.operatingMarginTTM ?? metrics.operatingMargin5Y ?? null,
       netMargin:
         metrics.netProfitMarginTTM ?? metrics.netProfitMargin5Y ?? null,
+      // Growth
+      revenueGrowth: metrics.revenueGrowthQuarterlyYoy ?? null,
+      epsGrowth: metrics.epsGrowthQuarterlyYoy ?? null,
+      revenueGrowth3Y: metrics.revenueGrowth3Y ?? null,
+      revenueGrowth5Y: metrics.revenueGrowth5Y ?? null,
+      epsGrowth5Y: metrics.epsGrowth5Y ?? null,
+      // Risk
+      beta: metrics.beta ?? null,
       debtToEquity:
         metrics['totalDebt/totalEquityQuarterly'] ??
         metrics['totalDebt/totalEquityAnnual'] ??
@@ -385,20 +445,54 @@ async function fetchAnalystData(
         metrics.currentRatioQuarterly ?? metrics.currentRatioAnnual ?? null,
       quickRatio:
         metrics.quickRatioQuarterly ?? metrics.quickRatioAnnual ?? null,
-      revenueGrowth:
-        metrics.revenueGrowthQuarterlyYoy ?? metrics.revenueGrowth3Y ?? null,
-      epsGrowth: metrics.epsGrowthQuarterlyYoy ?? metrics.epsGrowth3Y ?? null,
+      // Dividend
+      dividendYield: metrics.dividendYieldIndicatedAnnual ?? null,
+      payoutRatio: metrics.payoutRatioTTM ?? null,
+      dividendGrowth5Y: metrics.dividendGrowthRate5Y ?? null,
+      // Performance
+      return52W: metrics['52WeekPriceReturnDaily'] ?? null,
+      return13W: metrics['13WeekPriceReturnDaily'] ?? null,
+      returnVsSP500: metrics['priceRelativeToS&P50052Week'] ?? null,
+      // Size
       marketCap: metrics.marketCapitalization ?? null,
+      enterpriseValue: metrics.enterpriseValue ?? null,
     };
 
-    // Parse insider sentiment (average of last 3 months)
+    // Parse insider sentiment - store all monthly data for client-side filtering
     let insiderSentiment: InsiderSentiment | null = null;
     if (
       insiderData?.data &&
       Array.isArray(insiderData.data) &&
       insiderData.data.length > 0
     ) {
-      const recentData = insiderData.data.slice(-3);
+      // Sort by year and month descending to get most recent first
+      const sortedData = [...insiderData.data].sort(
+        (
+          a: { year: number; month: number },
+          b: { year: number; month: number }
+        ) => {
+          if (a.year !== b.year) return b.year - a.year;
+          return b.month - a.month;
+        }
+      );
+
+      // Store all monthly data for client-side filtering
+      const monthlyData: InsiderMonthlyData[] = sortedData.map(
+        (d: {
+          year: number;
+          month: number;
+          mspr?: number;
+          change?: number;
+        }) => ({
+          year: d.year,
+          month: d.month,
+          mspr: d.mspr ?? 0,
+          change: d.change ?? 0,
+        })
+      );
+
+      // Calculate default aggregates (last 3 months)
+      const recentData = sortedData.slice(0, 3);
       const avgMspr =
         recentData.reduce(
           (sum: number, d: { mspr?: number }) => sum + (d.mspr ?? 0),
@@ -411,6 +505,7 @@ async function fetchAnalystData(
       insiderSentiment = {
         mspr: Math.round(avgMspr * 100) / 100,
         change: totalChange,
+        monthlyData,
       };
     }
 
