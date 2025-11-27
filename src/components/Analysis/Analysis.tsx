@@ -154,10 +154,6 @@ export function Analysis({ portfolioId }: AnalysisProps) {
         .filter((item): item is EnrichedAnalystData => item !== null);
 
       setAnalystData(enriched);
-
-      if (analysisResult.errors.length > 0) {
-        console.warn('Analysis errors:', analysisResult.errors);
-      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Failed to load analysis data'

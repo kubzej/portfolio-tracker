@@ -57,11 +57,7 @@ function App() {
   const handleRefreshPrices = async () => {
     setRefreshingPrices(true);
     try {
-      const result = await refreshAllPrices();
-      console.log(`Updated ${result.updated} prices, ${result.failed} failed`);
-      if (result.errors.length > 0) {
-        console.warn('Price update errors:', result.errors);
-      }
+      await refreshAllPrices();
       setRefreshKey((k) => k + 1);
     } catch (err) {
       console.error('Failed to refresh prices:', err);

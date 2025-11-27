@@ -51,17 +51,6 @@ export const DEFAULT_INDICATOR_KEYS = [
   'marketCap',
 ];
 
-// Category display info
-export const INDICATOR_CATEGORIES = {
-  valuation: { name: 'Valuation', icon: '💰', color: '#3b82f6' },
-  profitability: { name: 'Profitability', icon: '📈', color: '#10b981' },
-  growth: { name: 'Growth', icon: '🚀', color: '#8b5cf6' },
-  risk: { name: 'Risk', icon: '⚠️', color: '#f59e0b' },
-  dividend: { name: 'Dividend', icon: '💵', color: '#06b6d4' },
-  performance: { name: 'Performance', icon: '📊', color: '#ec4899' },
-  size: { name: 'Size', icon: '🏢', color: '#6b7280' },
-} as const;
-
 /**
  * Get all available indicators from the catalog
  */
@@ -81,23 +70,6 @@ export async function getAllIndicators(): Promise<AnalysisIndicator[]> {
 }
 
 /**
- * Get indicators grouped by category
- */
-export async function getIndicatorsByCategory(): Promise<
-  Record<string, AnalysisIndicator[]>
-> {
-  const indicators = await getAllIndicators();
-
-  return indicators.reduce((acc, indicator) => {
-    if (!acc[indicator.category]) {
-      acc[indicator.category] = [];
-    }
-    acc[indicator.category].push(indicator);
-    return acc;
-  }, {} as Record<string, AnalysisIndicator[]>);
-}
-
-/**
  * Get user's saved analysis views
  */
 export async function getUserViews(): Promise<UserAnalysisView[]> {
@@ -112,24 +84,6 @@ export async function getUserViews(): Promise<UserAnalysisView[]> {
   }
 
   return data || [];
-}
-
-/**
- * Get user's default view or create one if none exists
- */
-export async function getDefaultView(): Promise<UserAnalysisView | null> {
-  const { data, error } = await supabase
-    .from('user_analysis_views')
-    .select('*')
-    .eq('is_default', true)
-    .single();
-
-  if (error && error.code !== 'PGRST116') {
-    // PGRST116 = no rows returned
-    console.error('Failed to fetch default view:', error);
-  }
-
-  return data;
 }
 
 /**
@@ -247,47 +201,6 @@ export async function updateViewColumns(
   if (error) {
     throw new Error(error.message);
   }
-}
-
-/**
- * Format a metric value based on indicator definition
- */
-export function formatMetricValue(
-  value: number | null | undefined,
-  indicator: AnalysisIndicator
-): string {
-  if (value === null || value === undefined) return '—';
-
-  const formatted = value.toLocaleString('cs-CZ', {
-    minimumFractionDigits: indicator.format_decimals,
-    maximumFractionDigits: indicator.format_decimals,
-  });
-
-  return `${indicator.format_prefix}${formatted}${indicator.format_suffix}`;
-}
-
-/**
- * Get CSS class for metric value based on thresholds
- */
-export function getMetricClass(
-  value: number | null | undefined,
-  indicator: AnalysisIndicator
-): string {
-  if (value === null || value === undefined) return '';
-  if (indicator.good_threshold === null && indicator.bad_threshold === null)
-    return '';
-
-  const { good_threshold, bad_threshold, higher_is_better } = indicator;
-
-  if (higher_is_better) {
-    if (good_threshold !== null && value >= good_threshold) return 'positive';
-    if (bad_threshold !== null && value <= bad_threshold) return 'negative';
-  } else {
-    if (good_threshold !== null && value <= good_threshold) return 'positive';
-    if (bad_threshold !== null && value >= bad_threshold) return 'negative';
-  }
-
-  return '';
 }
 
 /**
