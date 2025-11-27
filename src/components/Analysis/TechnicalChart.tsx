@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   LineChart,
   Line,
@@ -8,7 +8,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  BarChart,
   Bar,
   Cell,
   ReferenceLine,
@@ -77,7 +76,72 @@ const formatDateStr = (dateStr: string): string => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
+// Time range options for charts
+type TimeRange = '1M' | '3M' | '6M' | '1Y';
+
+const TIME_RANGES: { value: TimeRange; label: string; days: number }[] = [
+  { value: '1M', label: '1M', days: 21 },
+  { value: '3M', label: '3M', days: 63 },
+  { value: '6M', label: '6M', days: 126 },
+  { value: '1Y', label: '1Y', days: 252 },
+];
+
+// Filter data by date range
+const filterByDateRange = <T extends { date: string }>(
+  data: T[],
+  days: number
+): T[] => {
+  if (data.length === 0) return data;
+  // Data is in chronological order (oldest first), so we take the last N items
+  return data.slice(-days);
+};
+
+// Mini component for time range selector in each chart section
+function TimeRangeSelector({
+  value,
+  onChange,
+}: {
+  value: TimeRange;
+  onChange: (range: TimeRange) => void;
+}) {
+  return (
+    <div className="time-range-selector-mini">
+      {TIME_RANGES.map((range) => (
+        <button
+          key={range.value}
+          className={`time-range-btn-mini ${
+            value === range.value ? 'active' : ''
+          }`}
+          onClick={() => onChange(range.value)}
+        >
+          {range.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
+  // Separate time range state for each chart
+  const [priceTimeRange, setPriceTimeRange] = useState<TimeRange>('1Y');
+  const [bollingerTimeRange, setBollingerTimeRange] = useState<TimeRange>('6M');
+  const [macdTimeRange, setMacdTimeRange] = useState<TimeRange>('3M');
+  const [stochasticTimeRange, setStochasticTimeRange] =
+    useState<TimeRange>('3M');
+  const [volumeTimeRange, setVolumeTimeRange] = useState<TimeRange>('3M');
+
+  // Get days for each chart
+  const priceDays =
+    TIME_RANGES.find((r) => r.value === priceTimeRange)?.days || 252;
+  const bollingerDays =
+    TIME_RANGES.find((r) => r.value === bollingerTimeRange)?.days || 126;
+  const macdDays =
+    TIME_RANGES.find((r) => r.value === macdTimeRange)?.days || 63;
+  const stochasticDays =
+    TIME_RANGES.find((r) => r.value === stochasticTimeRange)?.days || 63;
+  const volumeDays =
+    TIME_RANGES.find((r) => r.value === volumeTimeRange)?.days || 63;
+
   // Merge price and SMA data for the chart
   // All data from API is now in chronological order (oldest to newest)
   const chartData = useMemo((): ChartDataPoint[] => {
@@ -102,14 +166,16 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
     });
 
     // Build chart data from price history (already chronological)
-    return prices.map((p: PricePoint) => ({
+    const fullData = prices.map((p: PricePoint) => ({
       date: p.date,
       displayDate: formatDateStr(p.date),
       price: p.close,
       sma50: sma50Map.get(p.date) ?? null,
       sma200: sma200Map.get(p.date) ?? null,
     }));
-  }, [data]);
+
+    return filterByDateRange(fullData, priceDays);
+  }, [data, priceDays]);
 
   // Build Bollinger Bands chart data
   const bollingerData = useMemo((): BollingerChartPoint[] => {
@@ -126,7 +192,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
       bbMap.set(b.date, b);
     });
 
-    return prices.map((p: PricePoint) => {
+    const fullData = prices.map((p: PricePoint) => {
       const bb = bbMap.get(p.date);
       return {
         date: p.date,
@@ -137,7 +203,9 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
         lower: bb?.lower ?? null,
       };
     });
-  }, [data]);
+
+    return filterByDateRange(fullData, bollingerDays);
+  }, [data, bollingerDays]);
 
   // Build MACD chart data
   const macdData = useMemo((): MACDChartPoint[] => {
@@ -147,14 +215,16 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
       return [];
     }
 
-    return macdArr.map((m: MACDPoint) => ({
+    const fullData = macdArr.map((m: MACDPoint) => ({
       date: m.date,
       displayDate: formatDateStr(m.date),
       macd: m.macd,
       signal: m.signal,
       histogram: m.histogram,
     }));
-  }, [data]);
+
+    return filterByDateRange(fullData, macdDays);
+  }, [data, macdDays]);
 
   // Build Stochastic Oscillator chart data
   const stochasticData = useMemo((): StochasticChartPoint[] => {
@@ -164,13 +234,15 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
       return [];
     }
 
-    return stochArr.map((s: StochasticPoint) => ({
+    const fullData = stochArr.map((s: StochasticPoint) => ({
       date: s.date,
       displayDate: formatDateStr(s.date),
       k: s.k,
       d: s.d,
     }));
-  }, [data]);
+
+    return filterByDateRange(fullData, stochasticDays);
+  }, [data, stochasticDays]);
 
   // Build Volume chart data
   const volumeData = useMemo((): VolumeChartPoint[] => {
@@ -180,14 +252,16 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
       return [];
     }
 
-    return volArr.map((v: VolumePoint) => ({
+    const fullData = volArr.map((v: VolumePoint) => ({
       date: v.date,
       displayDate: formatDateStr(v.date),
       volume: v.volume,
       avgVolume: v.avgVolume,
       isAboveAvg: v.avgVolume !== null && v.volume > v.avgVolume,
     }));
-  }, [data]);
+
+    return filterByDateRange(fullData, volumeDays);
+  }, [data, volumeDays]);
 
   // Format volume for display (e.g., 1.5M, 250K)
   const formatVolume = (value: number): string => {
@@ -352,6 +426,10 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             <div className="tech-section">
               <div className="section-header">
                 <h4>Price & Moving Averages</h4>
+                <TimeRangeSelector
+                  value={priceTimeRange}
+                  onChange={setPriceTimeRange}
+                />
                 <InfoTooltip text="CO TO JE: Graf ceny za poslední rok s klouzavými průměry (Moving Averages). Klouzavý průměr vyhlazuje denní výkyvy a ukazuje skutečný trend. JAK ČÍST: Když je CENA NAD průměry = akcie roste (bullish). Když je CENA POD průměry = akcie klesá (bearish). IDEÁLNÍ STAV PRO NÁKUP: Cena nad oběma čárami (50 DMA i 200 DMA)." />
               </div>
               <div className="chart-wrapper">
@@ -604,6 +682,10 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             <div className="tech-section">
               <div className="section-header">
                 <h4>MACD (Moving Average Convergence Divergence)</h4>
+                <TimeRangeSelector
+                  value={macdTimeRange}
+                  onChange={setMacdTimeRange}
+                />
                 <InfoTooltip text="CO TO JE: Moving Average Convergence Divergence = ukazatel směru trendu a síly momentum (hybnosti). Skládá se z: MACD linie (modrá), Signal linie (oranžová) a Histogramu (sloupce). JAK ČÍST: Modrá PŘEKŘÍŽÍ oranžovou NAHORU = nákupní signál (bullish). Modrá PŘEKŘÍŽÍ oranžovou DOLŮ = prodejní signál (bearish). HISTOGRAM zelený = momentum roste. HISTOGRAM červený = momentum klesá. IDEÁLNÍ: MACD nad Signal linií + zelený histogram." />
               </div>
               {macdData.length > 0 ? (
@@ -740,6 +822,10 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             <div className="tech-section">
               <div className="section-header">
                 <h4>Bollinger Bands</h4>
+                <TimeRangeSelector
+                  value={bollingerTimeRange}
+                  onChange={setBollingerTimeRange}
+                />
                 <InfoTooltip text="CO TO JE: Bollingerova pásma = ukazatel volatility (kolísavosti) ceny. Tři linie: Upper Band (horní), Middle (střední = 20denní průměr), Lower Band (dolní). JAK ČÍST: Cena u HORNÍHO pásma = možná překoupená (overbought), může klesnout. Cena u DOLNÍHO pásma = možná přeprodaná (oversold), může vzrůst. Cena u STŘEDU = normální stav. ŠIROKÁ pásma = vysoká volatilita. ÚZKÁ pásma = nízká volatilita, možná přijde velký pohyb. IDEÁLNÍ PRO NÁKUP: Cena blízko dolního pásma (20-30%)." />
               </div>
               {bollingerData.length > 0 && data.bollingerUpper !== null ? (
@@ -899,6 +985,10 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             <div className="tech-section">
               <div className="section-header">
                 <h4>Stochastic Oscillator</h4>
+                <TimeRangeSelector
+                  value={stochasticTimeRange}
+                  onChange={setStochasticTimeRange}
+                />
                 <InfoTooltip text="CO TO JE: Stochastic Oscillator = momentum indikátor porovnávající zavírací cenu s cenovým rozsahem za určité období (14 dní). Má dvě linie: %K (rychlá, modrá) a %D (pomalá, oranžová = průměr %K). JAK ČÍST: Hodnoty 0-100. NAD 80 = Overbought (překoupená), může přijít pokles. POD 20 = Oversold (přeprodaná), může přijít růst. SIGNÁLY: %K kříží %D zespoda = nákupní signál. %K kříží %D shora = prodejní signál. IDEÁLNÍ PRO NÁKUP: %K a %D pod 20, %K kříží %D nahoru." />
               </div>
               {stochasticData.length > 0 ? (
@@ -1053,6 +1143,10 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             <div className="tech-section">
               <div className="section-header">
                 <h4>Volume Analysis</h4>
+                <TimeRangeSelector
+                  value={volumeTimeRange}
+                  onChange={setVolumeTimeRange}
+                />
                 <InfoTooltip text="CO TO JE: Volume (objem) = počet akcií zobchodovaných za den. Je klíčový pro potvrzení cenových pohybů. JAK ČÍST: VYSOKÝ objem při růstu ceny = silný nákupní zájem, růst je pravděpodobně udržitelný. VYSOKÝ objem při poklesu = silný prodejní tlak, pokles může pokračovat. NÍZKÝ objem = slabý pohyb, může se rychle obrátit. IDEÁLNÍ: Růst ceny s rostoucím objemem. Oranžová čára = 20denní průměr objemu." />
               </div>
               {volumeData.length > 0 ? (
