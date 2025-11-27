@@ -45,6 +45,13 @@ export interface VolumePoint {
   avgVolume: number | null;
 }
 
+// ATR data point for charts
+export interface ATRPoint {
+  date: string;
+  atr: number;
+  atrPercent: number;
+}
+
 // Technical data for a single stock
 export interface TechnicalData {
   ticker: string;
@@ -79,6 +86,10 @@ export interface TechnicalData {
   avgVolume20: number | null;
   volumeChange: number | null;
   volumeSignal: 'high' | 'low' | 'normal' | null;
+  // ATR (Average True Range)
+  atr14: number | null;
+  atrPercent: number | null;
+  atrSignal: 'high' | 'low' | 'normal' | null;
   // Historical data for charts
   historicalPrices: PricePoint[];
   sma50History: SMAPoint[];
@@ -87,6 +98,7 @@ export interface TechnicalData {
   bollingerHistory: BollingerPoint[];
   stochasticHistory: StochasticPoint[];
   volumeHistory: VolumePoint[];
+  atrHistory: ATRPoint[];
   // Error tracking
   error?: string;
 }

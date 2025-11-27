@@ -22,6 +22,7 @@ import type {
   BollingerPoint,
   StochasticPoint,
   VolumePoint,
+  ATRPoint,
 } from '@/services/api/technical';
 import { InfoTooltip } from '@/components/shared/InfoTooltip';
 
@@ -70,6 +71,13 @@ interface VolumeChartPoint {
   isAboveAvg: boolean;
 }
 
+interface ATRChartPoint {
+  date: string;
+  displayDate: string;
+  atr: number;
+  atrPercent: number;
+}
+
 // Format date helper
 const formatDateStr = (dateStr: string): string => {
   const date = new Date(dateStr);
@@ -77,14 +85,31 @@ const formatDateStr = (dateStr: string): string => {
 };
 
 // Time range options for charts
-type TimeRange = '1M' | '3M' | '6M' | '1Y';
+type TimeRange = '1W' | '2W' | '1M' | '3M' | '6M' | '1Y';
 
-const TIME_RANGES: { value: TimeRange; label: string; days: number }[] = [
+// Standard ranges (for price charts, Bollinger - need longer history)
+const TIME_RANGES_LONG: { value: TimeRange; label: string; days: number }[] = [
   { value: '1M', label: '1M', days: 21 },
   { value: '3M', label: '3M', days: 63 },
   { value: '6M', label: '6M', days: 126 },
   { value: '1Y', label: '1Y', days: 252 },
 ];
+
+// Extended ranges with short intervals (for momentum indicators)
+const TIME_RANGES_SHORT: { value: TimeRange; label: string; days: number }[] = [
+  { value: '1W', label: '1W', days: 5 },
+  { value: '2W', label: '2W', days: 10 },
+  { value: '1M', label: '1M', days: 21 },
+  { value: '3M', label: '3M', days: 63 },
+  { value: '6M', label: '6M', days: 126 },
+  { value: '1Y', label: '1Y', days: 252 },
+];
+
+// Helper to get days from any range
+const getDaysForRange = (range: TimeRange): number => {
+  const found = TIME_RANGES_SHORT.find((r) => r.value === range);
+  return found?.days || 21;
+};
 
 // Filter data by date range
 const filterByDateRange = <T extends { date: string }>(
@@ -100,13 +125,15 @@ const filterByDateRange = <T extends { date: string }>(
 function TimeRangeSelector({
   value,
   onChange,
+  ranges = TIME_RANGES_SHORT,
 }: {
   value: TimeRange;
   onChange: (range: TimeRange) => void;
+  ranges?: { value: TimeRange; label: string; days: number }[];
 }) {
   return (
     <div className="time-range-selector-mini">
-      {TIME_RANGES.map((range) => (
+      {ranges.map((range) => (
         <button
           key={range.value}
           className={`time-range-btn-mini ${
@@ -125,22 +152,19 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
   // Separate time range state for each chart
   const [priceTimeRange, setPriceTimeRange] = useState<TimeRange>('1Y');
   const [bollingerTimeRange, setBollingerTimeRange] = useState<TimeRange>('6M');
-  const [macdTimeRange, setMacdTimeRange] = useState<TimeRange>('3M');
+  const [macdTimeRange, setMacdTimeRange] = useState<TimeRange>('1M');
   const [stochasticTimeRange, setStochasticTimeRange] =
-    useState<TimeRange>('3M');
-  const [volumeTimeRange, setVolumeTimeRange] = useState<TimeRange>('3M');
+    useState<TimeRange>('2W');
+  const [volumeTimeRange, setVolumeTimeRange] = useState<TimeRange>('1M');
+  const [atrTimeRange, setAtrTimeRange] = useState<TimeRange>('1M');
 
-  // Get days for each chart
-  const priceDays =
-    TIME_RANGES.find((r) => r.value === priceTimeRange)?.days || 252;
-  const bollingerDays =
-    TIME_RANGES.find((r) => r.value === bollingerTimeRange)?.days || 126;
-  const macdDays =
-    TIME_RANGES.find((r) => r.value === macdTimeRange)?.days || 63;
-  const stochasticDays =
-    TIME_RANGES.find((r) => r.value === stochasticTimeRange)?.days || 63;
-  const volumeDays =
-    TIME_RANGES.find((r) => r.value === volumeTimeRange)?.days || 63;
+  // Get days for each chart using helper
+  const priceDays = getDaysForRange(priceTimeRange);
+  const bollingerDays = getDaysForRange(bollingerTimeRange);
+  const macdDays = getDaysForRange(macdTimeRange);
+  const stochasticDays = getDaysForRange(stochasticTimeRange);
+  const volumeDays = getDaysForRange(volumeTimeRange);
+  const atrDays = getDaysForRange(atrTimeRange);
 
   // Merge price and SMA data for the chart
   // All data from API is now in chronological order (oldest to newest)
@@ -262,6 +286,24 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
 
     return filterByDateRange(fullData, volumeDays);
   }, [data, volumeDays]);
+
+  // Build ATR chart data
+  const atrData = useMemo((): ATRChartPoint[] => {
+    const atrArr = data.atrHistory || [];
+
+    if (atrArr.length === 0) {
+      return [];
+    }
+
+    const fullData = atrArr.map((a: ATRPoint) => ({
+      date: a.date,
+      displayDate: formatDateStr(a.date),
+      atr: a.atr,
+      atrPercent: a.atrPercent,
+    }));
+
+    return filterByDateRange(fullData, atrDays);
+  }, [data, atrDays]);
 
   // Format volume for display (e.g., 1.5M, 250K)
   const formatVolume = (value: number): string => {
@@ -429,6 +471,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                 <TimeRangeSelector
                   value={priceTimeRange}
                   onChange={setPriceTimeRange}
+                  ranges={TIME_RANGES_LONG}
                 />
                 <InfoTooltip text="CO TO JE: Graf ceny za poslední rok s klouzavými průměry (Moving Averages). Klouzavý průměr vyhlazuje denní výkyvy a ukazuje skutečný trend. JAK ČÍST: Když je CENA NAD průměry = akcie roste (bullish). Když je CENA POD průměry = akcie klesá (bearish). IDEÁLNÍ STAV PRO NÁKUP: Cena nad oběma čárami (50 DMA i 200 DMA)." />
               </div>
@@ -825,6 +868,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                 <TimeRangeSelector
                   value={bollingerTimeRange}
                   onChange={setBollingerTimeRange}
+                  ranges={TIME_RANGES_LONG}
                 />
                 <InfoTooltip text="CO TO JE: Bollingerova pásma = ukazatel volatility (kolísavosti) ceny. Tři linie: Upper Band (horní), Middle (střední = 20denní průměr), Lower Band (dolní). JAK ČÍST: Cena u HORNÍHO pásma = možná překoupená (overbought), může klesnout. Cena u DOLNÍHO pásma = možná přeprodaná (oversold), může vzrůst. Cena u STŘEDU = normální stav. ŠIROKÁ pásma = vysoká volatilita. ÚZKÁ pásma = nízká volatilita, možná přijde velký pohyb. IDEÁLNÍ PRO NÁKUP: Cena blízko dolního pásma (20-30%)." />
               </div>
@@ -1293,7 +1337,147 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
               )}
             </div>
 
-            {/* Section 9: What These Indicators Tell You */}
+            {/* Section 9: ATR (Average True Range) */}
+            <div className="tech-section">
+              <div className="section-header">
+                <h4>ATR (Average True Range)</h4>
+                <TimeRangeSelector
+                  value={atrTimeRange}
+                  onChange={setAtrTimeRange}
+                />
+                <InfoTooltip text="CO TO JE: Average True Range (ATR) = měří volatilitu (kolísavost) akcie za posledních 14 dní. Ukazuje průměrný denní rozsah pohybu ceny. JAK ČÍST: VYSOKÝ ATR = vysoká volatilita, větší cenové výkyvy, vyšší riziko i potenciální zisk. NÍZKÝ ATR = nízká volatilita, stabilnější cena, menší riziko. ATR% = ATR jako procento ceny. Pod 2% = nízká volatilita. 2-5% = normální. Nad 5% = vysoká volatilita. VYUŽITÍ: Nastavení stop-loss (např. 2× ATR pod vstupní cenou)." />
+              </div>
+              {atrData.length > 0 && data.atr14 !== null ? (
+                <>
+                  <div className="chart-wrapper">
+                    <ResponsiveContainer width="100%" height={200}>
+                      <ComposedChart
+                        data={atrData}
+                        margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+                      >
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="var(--border-color)"
+                        />
+                        <XAxis
+                          dataKey="displayDate"
+                          tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                          tickLine={{ stroke: 'var(--border-color)' }}
+                          axisLine={{ stroke: 'var(--border-color)' }}
+                          interval="preserveStartEnd"
+                          minTickGap={50}
+                        />
+                        <YAxis
+                          yAxisId="left"
+                          tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                          tickLine={{ stroke: 'var(--border-color)' }}
+                          axisLine={{ stroke: 'var(--border-color)' }}
+                          tickFormatter={(value: number) =>
+                            `$${value.toFixed(1)}`
+                          }
+                          width={55}
+                        />
+                        <YAxis
+                          yAxisId="right"
+                          orientation="right"
+                          tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                          tickLine={{ stroke: 'var(--border-color)' }}
+                          axisLine={{ stroke: 'var(--border-color)' }}
+                          tickFormatter={(value: number) =>
+                            `${value.toFixed(1)}%`
+                          }
+                          width={50}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'var(--bg-secondary)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '8px',
+                            color: 'var(--text-primary)',
+                          }}
+                          labelStyle={{ color: 'var(--text-secondary)' }}
+                          formatter={(value: number, name: string) => {
+                            if (name === 'ATR')
+                              return [`$${value.toFixed(2)}`, name];
+                            if (name === 'ATR %')
+                              return [`${value.toFixed(2)}%`, name];
+                            return [value, name];
+                          }}
+                        />
+                        <Legend />
+                        <Area
+                          yAxisId="left"
+                          type="monotone"
+                          dataKey="atr"
+                          name="ATR"
+                          fill="rgba(168, 85, 247, 0.2)"
+                          stroke="#a855f7"
+                          strokeWidth={2}
+                        />
+                        <Line
+                          yAxisId="right"
+                          type="monotone"
+                          dataKey="atrPercent"
+                          name="ATR %"
+                          stroke="#f59e0b"
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="atr-info">
+                    <div className="atr-info-cards">
+                      <div className="atr-card">
+                        <span className="atr-label">ATR (14)</span>
+                        <span className="atr-value">
+                          ${data.atr14?.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="atr-card">
+                        <span className="atr-label">ATR %</span>
+                        <span className="atr-value">
+                          {data.atrPercent?.toFixed(2)}%
+                        </span>
+                      </div>
+                      <div className="atr-card">
+                        <span className="atr-label">Volatilita</span>
+                        <span className={`atr-value atr-${data.atrSignal}`}>
+                          {data.atrSignal === 'high' && 'Vysoká'}
+                          {data.atrSignal === 'low' && 'Nízká'}
+                          {data.atrSignal === 'normal' && 'Normální'}
+                        </span>
+                      </div>
+                      <div className="atr-card">
+                        <span className="atr-label">Stop-Loss Tip</span>
+                        <span className="atr-value">
+                          $
+                          {(
+                            (data.currentPrice ?? 0) -
+                            (data.atr14 ?? 0) * 2
+                          ).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className={`atr-signal ${data.atrSignal ?? 'normal'}`}>
+                      {data.atrSignal === 'high' &&
+                        '⚡ High volatility — larger price swings, consider wider stop-losses and smaller position sizes'}
+                      {data.atrSignal === 'low' &&
+                        '😴 Low volatility — smaller price movements, good for stability but limited profit potential'}
+                      {data.atrSignal === 'normal' &&
+                        '✅ Normal volatility — typical price movement for this stock'}
+                      {data.atrSignal === null && 'Insufficient data'}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="no-data-message">
+                  Insufficient data to display ATR Analysis
+                </div>
+              )}
+            </div>
+
+            {/* Section 10: What These Indicators Tell You */}
             <div className="tech-section tech-summary-section">
               <div className="section-header">
                 <h4>How to Use This Analysis</h4>

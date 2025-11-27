@@ -45,6 +45,10 @@ interface TechnicalData {
   avgVolume20: number | null; // 20-day average volume
   volumeChange: number | null; // % change vs average
   volumeSignal: 'high' | 'low' | 'normal' | null;
+  // ATR (Average True Range)
+  atr14: number | null; // 14-day ATR
+  atrPercent: number | null; // ATR as % of current price
+  atrSignal: 'high' | 'low' | 'normal' | null; // Volatility level
   // Historical data for charts
   historicalPrices: {
     date: string;
@@ -76,6 +80,11 @@ interface TechnicalData {
     date: string;
     volume: number;
     avgVolume: number | null;
+  }[];
+  atrHistory: {
+    date: string;
+    atr: number;
+    atrPercent: number;
   }[];
   // Error tracking
   error?: string;
@@ -249,6 +258,60 @@ function calculateBollingerBands(
   return { upper, middle, lower };
 }
 
+// Calculate ATR (Average True Range)
+// Measures volatility - higher ATR = more volatile
+// prices should be in chronological order (oldest first)
+function calculateATR(
+  closes: number[],
+  highs: number[],
+  lows: number[],
+  period: number = 14
+): {
+  atr: number[];
+  startIndex: number;
+} {
+  if (closes.length < period + 1) {
+    return { atr: [], startIndex: 0 };
+  }
+
+  // Calculate True Range for each day
+  // TR = max(high - low, |high - prevClose|, |low - prevClose|)
+  const trueRanges: number[] = [];
+
+  for (let i = 1; i < closes.length; i++) {
+    const high = highs[i];
+    const low = lows[i];
+    const prevClose = closes[i - 1];
+
+    const tr = Math.max(
+      high - low,
+      Math.abs(high - prevClose),
+      Math.abs(low - prevClose)
+    );
+    trueRanges.push(tr);
+  }
+
+  // Calculate ATR using Wilder's smoothing method (like RSI)
+  const atrValues: number[] = [];
+
+  // First ATR is simple average of first 'period' TRs
+  let sum = 0;
+  for (let i = 0; i < period; i++) {
+    sum += trueRanges[i];
+  }
+  let atr = sum / period;
+  atrValues.push(atr);
+
+  // Subsequent ATRs use smoothing: ATR = ((prevATR * (period-1)) + currentTR) / period
+  for (let i = period; i < trueRanges.length; i++) {
+    atr = (atr * (period - 1) + trueRanges[i]) / period;
+    atrValues.push(atr);
+  }
+
+  // Start index in original prices: period (need period+1 prices for period TRs, then period TRs for first ATR)
+  return { atr: atrValues, startIndex: period };
+}
+
 // Calculate RSI (Relative Strength Index)
 function calculateRSI(prices: number[], period: number = 14): number | null {
   if (prices.length < period + 1) return null;
@@ -315,6 +378,9 @@ async function fetchTechnicalData(
     avgVolume20: null,
     volumeChange: null,
     volumeSignal: null,
+    atr14: null,
+    atrPercent: null,
+    atrSignal: null,
     historicalPrices: [],
     sma50History: [],
     sma200History: [],
@@ -322,6 +388,7 @@ async function fetchTechnicalData(
     bollingerHistory: [],
     stochasticHistory: [],
     volumeHistory: [],
+    atrHistory: [],
   };
 
   try {
@@ -655,6 +722,56 @@ async function fetchTechnicalData(
       }
     }
 
+    // Calculate ATR (Average True Range)
+    let atr14: number | null = null;
+    let atrPercent: number | null = null;
+    let atrSignal: 'high' | 'low' | 'normal' | null = null;
+    const atrHistory: { date: string; atr: number; atrPercent: number }[] = [];
+
+    const atrResult = calculateATR(
+      chronologicalCloses,
+      chronologicalHighs,
+      chronologicalLows,
+      14
+    );
+
+    if (atrResult.atr.length > 0) {
+      // Current ATR (most recent)
+      atr14 = Math.round(atrResult.atr[atrResult.atr.length - 1] * 100) / 100;
+
+      // ATR as percentage of current price
+      if (currentPrice > 0) {
+        atrPercent = Math.round((atr14 / currentPrice) * 10000) / 100;
+
+        // Signal based on ATR%: <2% low, 2-5% normal, >5% high volatility
+        if (atrPercent < 2) {
+          atrSignal = 'low';
+        } else if (atrPercent > 5) {
+          atrSignal = 'high';
+        } else {
+          atrSignal = 'normal';
+        }
+      }
+
+      // Build ATR history
+      for (let i = 0; i < atrResult.atr.length; i++) {
+        const dateIndex = atrResult.startIndex + i;
+        if (dateIndex < chronologicalPrices.length) {
+          const atrValue = Math.round(atrResult.atr[i] * 100) / 100;
+          const priceAtDate = chronologicalCloses[dateIndex];
+          const atrPct =
+            priceAtDate > 0
+              ? Math.round((atrValue / priceAtDate) * 10000) / 100
+              : 0;
+          atrHistory.push({
+            date: chronologicalPrices[dateIndex].date,
+            atr: atrValue,
+            atrPercent: atrPct,
+          });
+        }
+      }
+    }
+
     return {
       ticker,
       stockName,
@@ -683,6 +800,9 @@ async function fetchTechnicalData(
       avgVolume20,
       volumeChange,
       volumeSignal,
+      atr14,
+      atrPercent,
+      atrSignal,
       // All in chronological order (oldest to newest)
       historicalPrices: chronologicalPrices,
       sma50History,
@@ -691,6 +811,7 @@ async function fetchTechnicalData(
       bollingerHistory,
       stochasticHistory,
       volumeHistory,
+      atrHistory,
     };
   } catch (error) {
     console.error(`Error fetching technical data for ${ticker}:`, error);
