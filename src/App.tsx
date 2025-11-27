@@ -6,6 +6,7 @@ import { StocksList } from './components/StocksList';
 import { StockDetail } from './components/StockDetail';
 import { PortfolioSelector } from './components/PortfolioSelector';
 import { Analysis } from './components/Analysis';
+import { News } from './components/News';
 import { Login } from './components/Login';
 import { useAuth } from './contexts/AuthContext';
 import { refreshAllPrices } from './services/api';
@@ -17,6 +18,7 @@ type View =
   | 'stocks'
   | 'stock-detail'
   | 'analysis'
+  | 'news'
   | 'add-stock'
   | 'add-transaction';
 
@@ -153,6 +155,12 @@ function App() {
             Analysis
           </button>
           <button
+            className={currentView === 'news' ? 'active' : ''}
+            onClick={() => setCurrentView('news')}
+          >
+            News
+          </button>
+          <button
             className={`add-action ${
               currentView === 'add-stock' ? 'active' : ''
             }`}
@@ -190,6 +198,12 @@ function App() {
           <Analysis
             key={`analysis-${refreshKey}-${selectedPortfolioId}`}
             portfolioId={selectedPortfolioId}
+          />
+        )}
+        {currentView === 'news' && (
+          <News
+            key={`news-${refreshKey}-${selectedPortfolioId}`}
+            portfolioId={selectedPortfolioId ?? undefined}
           />
         )}
         {currentView === 'stock-detail' && selectedStockId && (
