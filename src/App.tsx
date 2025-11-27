@@ -5,6 +5,7 @@ import { TransactionForm } from './components/TransactionForm';
 import { StocksList } from './components/StocksList';
 import { StockDetail } from './components/StockDetail';
 import { PortfolioSelector } from './components/PortfolioSelector';
+import { refreshAllPrices } from './services/api';
 import './App.css';
 
 type View =
@@ -21,6 +22,7 @@ function App() {
     null
   );
   const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshingPrices, setRefreshingPrices] = useState(false);
 
   const handleSuccess = () => {
     setCurrentView('dashboard');
@@ -43,21 +45,47 @@ function App() {
     setRefreshKey((k) => k + 1);
   };
 
+  const handleRefreshPrices = async () => {
+    setRefreshingPrices(true);
+    try {
+      const result = await refreshAllPrices();
+      console.log(`Updated ${result.updated} prices, ${result.failed} failed`);
+      if (result.errors.length > 0) {
+        console.warn('Price update errors:', result.errors);
+      }
+      setRefreshKey((k) => k + 1);
+    } catch (err) {
+      console.error('Failed to refresh prices:', err);
+    } finally {
+      setRefreshingPrices(false);
+    }
+  };
+
   return (
     <div className="app">
       <header className="app-header">
         <div className="header-top">
           <h1>Portfolio Tracker</h1>
-          <PortfolioSelector
-            selectedPortfolioId={selectedPortfolioId}
-            onPortfolioChange={(id) => {
-              setSelectedPortfolioId(id);
-              setRefreshKey((k) => k + 1);
-            }}
-            showAllOption={
-              currentView === 'dashboard' || currentView === 'stocks'
-            }
-          />
+          <div className="header-actions">
+            <button
+              className="refresh-prices-btn"
+              onClick={handleRefreshPrices}
+              disabled={refreshingPrices}
+              title="Refresh all stock prices"
+            >
+              {refreshingPrices ? 'Refreshing...' : 'Refresh Prices'}
+            </button>
+            <PortfolioSelector
+              selectedPortfolioId={selectedPortfolioId}
+              onPortfolioChange={(id) => {
+                setSelectedPortfolioId(id);
+                setRefreshKey((k) => k + 1);
+              }}
+              showAllOption={
+                currentView === 'dashboard' || currentView === 'stocks'
+              }
+            />
+          </div>
         </div>
         <nav className="app-nav">
           <button

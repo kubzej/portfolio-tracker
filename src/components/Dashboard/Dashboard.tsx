@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { holdingsApi, refreshAllPrices } from '@/services/api';
+import { holdingsApi } from '@/services/api';
 import type { PortfolioSummary, PortfolioTotals } from '@/types/database';
 import './Dashboard.css';
 
@@ -27,7 +27,6 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
   const [holdings, setHoldings] = useState<PortfolioSummary[]>([]);
   const [totals, setTotals] = useState<PortfolioTotals | null>(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('ticker');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
@@ -49,23 +48,6 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
       setError(err instanceof Error ? err.message : 'Failed to load portfolio');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleRefreshPrices = async () => {
-    setRefreshing(true);
-    try {
-      const result = await refreshAllPrices();
-      console.log(`Updated ${result.updated} prices, ${result.failed} failed`);
-      if (result.errors.length > 0) {
-        console.warn('Price update errors:', result.errors);
-      }
-      await loadData();
-    } catch (err) {
-      console.error('Failed to refresh prices:', err);
-      setError(err instanceof Error ? err.message : 'Failed to refresh prices');
-    } finally {
-      setRefreshing(false);
     }
   };
 
@@ -204,13 +186,6 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
       {/* Dashboard Header */}
       <div className="dashboard-header">
         <h2>Portfolio Overview</h2>
-        <button
-          className="refresh-btn"
-          onClick={handleRefreshPrices}
-          disabled={refreshing}
-        >
-          {refreshing ? '⟳ Refreshing...' : '⟳ Refresh Prices'}
-        </button>
       </div>
 
       {/* Portfolio Summary Cards */}

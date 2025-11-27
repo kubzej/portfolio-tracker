@@ -115,6 +115,15 @@
   cursor: pointer;
 }
 
+.form-group select:disabled {
+  cursor: not-allowed;
+  background: #12192e;
+  color: #666;
+  border-color: #1f2847;
+  appearance: none;
+  background-image: none;
+}
+
 .calculated-value {
   background: #16213e;
   border: 1px solid #2a2a4a;
