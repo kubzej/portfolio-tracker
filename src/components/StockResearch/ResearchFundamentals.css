@@ -47,12 +47,6 @@
   }
 }
 
-@media (max-width: 640px) {
-  .metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 .fundamental-metric-label {
   display: flex;
   align-items: center;
@@ -147,12 +141,6 @@
   color: var(--text-secondary);
 }
 
-@media (max-width: 640px) {
-  .earnings-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 /* Earnings Summary */
 .earnings-summary {
   margin-top: 0.75rem;
@@ -180,11 +168,28 @@
 /* Mobile */
 @media (max-width: 640px) {
   .fundamentals-section {
-    padding: 1rem;
+    padding: 0;
   }
 
   .metrics-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .fundamental-metric {
+    padding: 0.75rem;
+  }
+
+  .fundamental-metric-label {
+    font-size: 0.625rem;
+  }
+
+  .fundamental-metric-value {
+    font-size: 0.875rem;
+  }
+
+  .earnings-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .earnings-table {

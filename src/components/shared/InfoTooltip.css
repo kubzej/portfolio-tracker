@@ -57,7 +57,7 @@
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   z-index: 1000;
-  animation: slideUp 0.2s ease-out;
+  animation: fadeIn 0.15s ease-out;
   overflow: hidden;
   /* Reset any inherited text transforms */
   text-transform: none;
@@ -127,17 +127,6 @@
   to { opacity: 1; }
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -45%);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%);
-  }
-}
-
 /* Desktop styles - use fixed position to avoid overflow clipping */
 @media (min-width: 768px) {
   .info-tooltip__backdrop {
@@ -151,7 +140,7 @@
     transform: translate(-50%, -50%);
     width: calc(100% - 64px);
     max-width: 480px;
-    animation: popIn 0.15s ease-out;
+    animation: fadeIn 0.15s ease-out;
   }
 
   .info-tooltip__popup--top {
@@ -166,16 +155,5 @@
 
   .info-tooltip__popup::after {
     display: none;
-  }
-
-  @keyframes popIn {
-    from {
-      opacity: 0;
-      transform: translate(-50%, -48%);
-    }
-    to {
-      opacity: 1;
-      transform: translate(-50%, -50%);
-    }
   }
 }

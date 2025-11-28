@@ -97,112 +97,120 @@ export function ResearchTechnical({
       {/* Momentum Indicators */}
       <section className="technical-section">
         <h3 className="section-title">Momentum Indicators</h3>
-        <div className="indicators-grid">
+        <div className="momentum-grid">
           {/* RSI */}
-          <div className="indicator-card">
-            <div className="indicator-header">
-              <span className="indicator-name">
+          <div className="momentum-card">
+            <div className="momentum-header">
+              <span className="momentum-name">
                 RSI (14)
                 <InfoTooltip text="Index relativní síly. Měří rychlost a změnu cenových pohybů. Pod 30 = přeprodáno (nákupní příležitost), nad 70 = překoupeno (možná korekce)." />
               </span>
               <span
-                className={cn(
-                  'indicator-signal',
-                  getRSISignalClass(tech.rsi14)
-                )}
+                className={cn('momentum-signal', getRSISignalClass(tech.rsi14))}
               >
                 {getRSISignal(tech.rsi14)}
               </span>
             </div>
-            <div className="indicator-value">
-              {tech.rsi14 !== null ? tech.rsi14.toFixed(1) : '—'}
-            </div>
-            <div className="indicator-bar">
-              <div className="indicator-bar-track">
-                <div className="indicator-bar-zones">
-                  <div className="zone oversold" />
-                  <div className="zone neutral" />
-                  <div className="zone overbought" />
+            <div className="momentum-value-row">
+              <span className="momentum-value">
+                {tech.rsi14 !== null ? tech.rsi14.toFixed(1) : '—'}
+              </span>
+              <div className="rsi-bar">
+                <div className="rsi-bar-track">
+                  <div className="rsi-zone oversold" />
+                  <div className="rsi-zone neutral" />
+                  <div className="rsi-zone overbought" />
+                  {tech.rsi14 !== null && (
+                    <div
+                      className="rsi-marker"
+                      style={{
+                        left: `${Math.min(Math.max(tech.rsi14, 0), 100)}%`,
+                      }}
+                    />
+                  )}
                 </div>
-                {tech.rsi14 !== null && (
-                  <div
-                    className="indicator-bar-marker"
-                    style={{
-                      left: `${Math.min(Math.max(tech.rsi14, 0), 100)}%`,
-                    }}
-                  />
-                )}
-              </div>
-              <div className="indicator-bar-labels">
-                <span>0</span>
-                <span>30</span>
-                <span>70</span>
-                <span>100</span>
               </div>
             </div>
           </div>
 
           {/* Stochastic */}
-          <div className="indicator-card">
-            <div className="indicator-header">
-              <span className="indicator-name">
+          <div className="momentum-card">
+            <div className="momentum-header">
+              <span className="momentum-name">
                 Stochastic
                 <InfoTooltip text="Stochastický oscilátor. Porovnává zavírací cenu s cenovým rozpětím. %K je rychlá linie, %D je pomalá. Pod 20 = přeprodáno, nad 80 = překoupeno." />
               </span>
               <span
                 className={cn(
-                  'indicator-signal',
+                  'momentum-signal',
                   getStochSignalClass(tech.stochasticK)
                 )}
               >
                 {tech.stochasticSignal ?? '—'}
               </span>
             </div>
-            <div className="indicator-values">
-              <span>%K: {tech.stochasticK?.toFixed(1) ?? '—'}</span>
-              <span>%D: {tech.stochasticD?.toFixed(1) ?? '—'}</span>
+            <div className="momentum-value-row">
+              <div className="stoch-values">
+                <span className="stoch-item">
+                  <span className="stoch-label">%K</span>
+                  <span className="stoch-value">
+                    {tech.stochasticK?.toFixed(1) ?? '—'}
+                  </span>
+                </span>
+                <span className="stoch-item">
+                  <span className="stoch-label">%D</span>
+                  <span className="stoch-value">
+                    {tech.stochasticD?.toFixed(1) ?? '—'}
+                  </span>
+                </span>
+              </div>
             </div>
           </div>
 
           {/* MACD */}
-          <div className="indicator-card">
-            <div className="indicator-header">
-              <span className="indicator-name">
+          <div className="momentum-card">
+            <div className="momentum-header">
+              <span className="momentum-name">
                 MACD
                 <InfoTooltip text="Klouzavý průměr konvergence/divergence. MACD nad signální linií = býčí, pod = medvědí. Histogram ukazuje sílu trendu." />
               </span>
               <span
                 className={cn(
-                  'indicator-signal',
+                  'momentum-signal',
                   getMACDSignalClass(tech.macdHistogram)
                 )}
               >
                 {tech.macdTrend ?? '—'}
               </span>
             </div>
-            <div className="macd-values">
-              <TechnicalMetric
-                label="MACD"
-                value={tech.macd?.toFixed(3) ?? null}
-                tooltip="Rozdíl mezi 12 a 26denním EMA. Kladný = býčí momentum."
-              />
-              <TechnicalMetric
-                label="Signal"
-                value={tech.macdSignal?.toFixed(3) ?? null}
-                tooltip="9denní EMA z MACD. Křížení MACD přes signal = obchodní signál."
-              />
-              <TechnicalMetric
-                label="Histogram"
-                value={tech.macdHistogram?.toFixed(3) ?? null}
-                tooltip="Rozdíl MACD a signálu. Rostoucí = sílící trend, klesající = slabne."
-                sentiment={
-                  tech.macdHistogram !== null
-                    ? tech.macdHistogram > 0
-                      ? 'positive'
-                      : 'negative'
-                    : undefined
-                }
-              />
+            <div className="macd-row">
+              <div className="macd-item">
+                <span className="macd-label">MACD</span>
+                <span className="macd-value">
+                  {tech.macd?.toFixed(3) ?? '—'}
+                </span>
+              </div>
+              <div className="macd-item">
+                <span className="macd-label">Signal</span>
+                <span className="macd-value">
+                  {tech.macdSignal?.toFixed(3) ?? '—'}
+                </span>
+              </div>
+              <div className="macd-item">
+                <span className="macd-label">Hist</span>
+                <span
+                  className={cn(
+                    'macd-value',
+                    tech.macdHistogram !== null
+                      ? tech.macdHistogram > 0
+                        ? 'positive'
+                        : 'negative'
+                      : undefined
+                  )}
+                >
+                  {tech.macdHistogram?.toFixed(3) ?? '—'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -247,13 +255,15 @@ export function ResearchTechnical({
           />
         </div>
         {tech.bollingerSignal && (
-          <div
-            className={cn(
-              'bollinger-signal',
-              getBollingerSignalClass(tech.bollingerSignal)
-            )}
-          >
-            {tech.bollingerSignal.toUpperCase()}
+          <div className="bollinger-signal-row">
+            <span
+              className={cn(
+                'bollinger-badge',
+                getBollingerSignalClass(tech.bollingerSignal)
+              )}
+            >
+              {tech.bollingerSignal}
+            </span>
           </div>
         )}
       </section>

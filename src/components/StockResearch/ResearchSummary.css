@@ -432,6 +432,39 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .strategy-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .strategy-card {
+    padding: 0.625rem 0.75rem;
+  }
+
+  .strategy-label {
+    font-size: 0.625rem;
+  }
+
+  .strategy-value {
+    font-size: 0.875rem;
+  }
+
+  .strategy-percent {
+    font-size: 0.75rem;
+  }
+
+  .dual-scores {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .score-item {
+    padding: 0.75rem;
+  }
+
+  .score-value {
+    font-size: 1.5rem;
+  }
+
   .strategy-grid {
     grid-template-columns: 1fr;
   }
