@@ -3,6 +3,7 @@
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
+  overflow-x: hidden;
 }
 
 /* Loading State */
@@ -43,6 +44,7 @@
   top: 0;
   z-index: 100;
   box-shadow: var(--shadow-md);
+  overflow-x: hidden;
 }
 
 @media (max-width: 768px) {
@@ -210,9 +212,11 @@
 .app-main {
   flex: 1;
   padding: 1.5rem;
+  padding-bottom: 3rem;
   max-width: 1280px;
   margin: 0 auto;
   width: 100%;
+  overflow-x: hidden;
 }
 
 @media (min-width: 768px) {
@@ -314,6 +318,7 @@
 
   .app-main {
     padding: 1rem;
+    padding-bottom: 3rem;
   }
 }
 
@@ -368,6 +373,7 @@
 
   .app-main {
     padding: 0.75rem;
+    padding-bottom: 3rem;
   }
 }
 
@@ -413,5 +419,6 @@
 
   .app-main {
     padding: 0.5rem;
+    padding-bottom: 3rem;
   }
 }

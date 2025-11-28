@@ -1787,6 +1787,112 @@ export function Analysis({ portfolioId }: AnalysisProps) {
               </table>
             </div>
 
+            {/* Mobile Technical Cards */}
+            <div className="technicals-mobile">
+              <div className="technicals-cards">
+                {sortedData.map((item) => {
+                  const rangePosition =
+                    item.fiftyTwoWeekLow !== null &&
+                    item.fiftyTwoWeekHigh !== null &&
+                    item.currentPrice !== null
+                      ? ((item.currentPrice - item.fiftyTwoWeekLow) /
+                          (item.fiftyTwoWeekHigh - item.fiftyTwoWeekLow)) *
+                        100
+                      : null;
+                  const hasTechnicalData = technicalData.some(
+                    (d) => d.ticker === item.ticker
+                  );
+                  return (
+                    <div
+                      key={item.ticker}
+                      className={`technicals-card ${
+                        hasTechnicalData ? 'clickable' : 'no-data'
+                      }`}
+                      onClick={() => {
+                        if (hasTechnicalData) {
+                          setSelectedTechnicalStock(item.ticker);
+                        }
+                      }}
+                    >
+                      <div className="technicals-card-header">
+                        <div className="technicals-card-title">
+                          <span className="ticker">{item.ticker}</span>
+                          <span className="name">{item.stockName}</span>
+                        </div>
+                        <span className="technicals-card-weight">
+                          {item.weight.toFixed(1)}%
+                        </span>
+                      </div>
+
+                      {/* 52W Range Visualization */}
+                      {rangePosition !== null && (
+                        <div className="technicals-range-section">
+                          <div className="range-labels">
+                            <span className="range-low">
+                              {formatNumber(item.fiftyTwoWeekLow)}
+                            </span>
+                            <span className="range-current">
+                              {formatNumber(item.currentPrice)}
+                              <span
+                                className={`range-change ${
+                                  (item.priceChangePercent ?? 0) >= 0
+                                    ? 'positive'
+                                    : 'negative'
+                                }`}
+                              >
+                                {formatPercent(item.priceChangePercent)}
+                              </span>
+                            </span>
+                            <span className="range-high">
+                              {formatNumber(item.fiftyTwoWeekHigh)}
+                            </span>
+                          </div>
+                          <div className="range-bar-mobile">
+                            <div
+                              className={`range-indicator ${
+                                rangePosition > 80
+                                  ? 'high'
+                                  : rangePosition < 20
+                                  ? 'low'
+                                  : ''
+                              }`}
+                              style={{ left: `${rangePosition}%` }}
+                            />
+                          </div>
+                          <div className="range-position-label">
+                            52W Position:{' '}
+                            <strong>{rangePosition.toFixed(0)}%</strong>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Peers */}
+                      {item.peers && item.peers.length > 0 && (
+                        <div className="technicals-peers">
+                          <span className="peers-label">Peers:</span>
+                          <div className="peers-list">
+                            {item.peers
+                              .slice(0, 5)
+                              .map((peer: string, i: number) => (
+                                <span key={i} className="peer-tag">
+                                  {peer}
+                                </span>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {hasTechnicalData && (
+                        <div className="technicals-card-hint">
+                          Tap for chart →
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Technical Chart Modal */}
             {selectedTechnicalStock &&
               technicalData.find(

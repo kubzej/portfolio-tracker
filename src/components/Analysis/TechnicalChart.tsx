@@ -864,30 +864,30 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="macd-summary">
-                    <div className="macd-values">
-                      <div className="macd-value-item">
-                        <span className="macd-label">MACD:</span>
+                  <div className="indicator-summary">
+                    <div className="indicator-values-row">
+                      <div className="indicator-value">
+                        <span className="indicator-label">MACD:</span>
                         <span
-                          className={`macd-val ${
+                          className={`indicator-num ${
                             (data.macd ?? 0) >= 0 ? 'positive' : 'negative'
                           }`}
                         >
                           {data.macd !== null ? data.macd.toFixed(3) : '—'}
                         </span>
                       </div>
-                      <div className="macd-value-item">
-                        <span className="macd-label">Signal:</span>
-                        <span className="macd-val">
+                      <div className="indicator-value">
+                        <span className="indicator-label">Signal:</span>
+                        <span className="indicator-num">
                           {data.macdSignal !== null
                             ? data.macdSignal.toFixed(3)
                             : '—'}
                         </span>
                       </div>
-                      <div className="macd-value-item">
-                        <span className="macd-label">Histogram:</span>
+                      <div className="indicator-value">
+                        <span className="indicator-label">Histogram:</span>
                         <span
-                          className={`macd-val ${
+                          className={`indicator-num ${
                             (data.macdHistogram ?? 0) >= 0
                               ? 'positive'
                               : 'negative'
@@ -900,7 +900,9 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       </div>
                     </div>
                     <div
-                      className={`macd-signal ${data.macdTrend ?? 'neutral'}`}
+                      className={`indicator-signal ${
+                        data.macdTrend ?? 'neutral'
+                      }`}
                     >
                       {data.macdTrend === 'bullish' &&
                         '📈 Bullish momentum — MACD above signal line'}
@@ -1019,50 +1021,56 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="bollinger-summary">
-                    <div className="bollinger-values">
-                      <div className="bollinger-value-item">
-                        <span className="bb-label">Upper Band:</span>
-                        <span className="bb-val">
+                  <div className="indicator-summary">
+                    <div className="indicator-values-row">
+                      <div className="indicator-value">
+                        <span className="indicator-label">Upper Band:</span>
+                        <span className="indicator-num">
                           {data.bollingerUpper?.toFixed(2) ?? '—'}
                         </span>
                       </div>
-                      <div className="bollinger-value-item">
-                        <span className="bb-label">Middle (20 SMA):</span>
-                        <span className="bb-val">
+                      <div className="indicator-value">
+                        <span className="indicator-label">
+                          Middle (20 SMA):
+                        </span>
+                        <span className="indicator-num">
                           {data.bollingerMiddle?.toFixed(2) ?? '—'}
                         </span>
                       </div>
-                      <div className="bollinger-value-item">
-                        <span className="bb-label">Lower Band:</span>
-                        <span className="bb-val">
+                      <div className="indicator-value">
+                        <span className="indicator-label">Lower Band:</span>
+                        <span className="indicator-num">
                           {data.bollingerLower?.toFixed(2) ?? '—'}
                         </span>
                       </div>
                     </div>
-                    <div className="bollinger-position">
-                      <div className="bb-pos-header">
-                        <span className="bb-pos-label">
+                    <div className="indicator-position-block">
+                      <div className="position-header">
+                        <span className="position-label">
                           Position within bands:
                         </span>
-                        <span className="bb-position-value">
+                        <span className="position-value">
                           {data.bollingerPosition ?? 0}%
                         </span>
                       </div>
-                      <div className="bb-position-bar">
+                      <div className="position-bar">
                         <div
-                          className="bb-position-indicator"
+                          className="position-indicator"
                           style={{ left: `${data.bollingerPosition ?? 50}%` }}
                         />
                       </div>
-                      <div className="bb-position-zones">
-                        <span className="bb-zone lower">Lower Band</span>
-                        <span className="bb-zone middle">Middle</span>
-                        <span className="bb-zone upper">Upper Band</span>
+                      <div className="position-zones">
+                        <span className="zone-label zone-lower">
+                          Lower Band
+                        </span>
+                        <span className="zone-label zone-middle">Middle</span>
+                        <span className="zone-label zone-upper">
+                          Upper Band
+                        </span>
                       </div>
                     </div>
                     <div
-                      className={`bollinger-signal ${
+                      className={`indicator-signal ${
                         data.bollingerSignal ?? 'neutral'
                       }`}
                     >
@@ -1166,12 +1174,12 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="stochastic-summary">
-                    <div className="stochastic-values">
-                      <div className="stochastic-value-item">
-                        <span className="stoch-label">%K (Fast):</span>
+                  <div className="indicator-summary">
+                    <div className="indicator-values-row">
+                      <div className="indicator-value">
+                        <span className="indicator-label">%K (Fast):</span>
                         <span
-                          className={`stoch-val ${
+                          className={`indicator-num ${
                             (data.stochasticK ?? 50) > 80
                               ? 'overbought'
                               : (data.stochasticK ?? 50) < 20
@@ -1184,52 +1192,35 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                             : '—'}
                         </span>
                       </div>
-                      <div className="stochastic-value-item">
-                        <span className="stoch-label">%D (Slow):</span>
-                        <span className="stoch-val">
+                      <div className="indicator-value">
+                        <span className="indicator-label">%D (Slow):</span>
+                        <span className="indicator-num">
                           {data.stochasticD !== null
                             ? data.stochasticD.toFixed(1)
                             : '—'}
                         </span>
                       </div>
                     </div>
-                    <div className="stochastic-info-cards">
-                      <div className="stoch-info-card">
-                        <span className="stoch-zone-label overbought">
-                          &gt;80 Overbought
-                        </span>
-                        <span className="stoch-zone-meaning">
-                          Possible reversal down
-                        </span>
-                      </div>
-                      <div className="stoch-info-card">
-                        <span className="stoch-zone-label neutral">
-                          20-80 Neutral
-                        </span>
-                        <span className="stoch-zone-meaning">
-                          Normal momentum
-                        </span>
-                      </div>
-                      <div className="stoch-info-card">
-                        <span className="stoch-zone-label oversold">
-                          &lt;20 Oversold
-                        </span>
-                        <span className="stoch-zone-meaning">
-                          Possible reversal up
-                        </span>
-                      </div>
+                    <div className="indicator-zones-row">
+                      <span className="zone-badge overbought">
+                        &gt;80 Overbought
+                      </span>
+                      <span className="zone-badge neutral">20-80 Neutral</span>
+                      <span className="zone-badge oversold">
+                        &lt;20 Oversold
+                      </span>
                     </div>
                     <div
-                      className={`stochastic-signal ${
+                      className={`indicator-signal ${
                         data.stochasticSignal ?? 'neutral'
                       }`}
                     >
                       {data.stochasticSignal === 'overbought' &&
-                        '⚠️ Stochastic above 80 — potentially overbought, watch for %K crossing below %D'}
+                        '⚠️ Stochastic above 80 — potentially overbought'}
                       {data.stochasticSignal === 'oversold' &&
-                        '💡 Stochastic below 20 — potentially oversold, watch for %K crossing above %D'}
+                        '💡 Stochastic below 20 — potentially oversold'}
                       {data.stochasticSignal === 'neutral' &&
-                        '✅ Stochastic in neutral zone — normal trading conditions'}
+                        '✅ Stochastic in neutral zone — normal trading'}
                       {data.stochasticSignal === null && 'Insufficient data'}
                     </div>
                   </div>
@@ -1314,32 +1305,32 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="volume-summary">
-                    <div className="volume-values">
-                      <div className="volume-value-item">
-                        <span className="vol-label">Current Volume:</span>
-                        <span className="vol-val">
+                  <div className="indicator-summary">
+                    <div className="indicator-values-row">
+                      <div className="indicator-value">
+                        <span className="indicator-label">Current Volume:</span>
+                        <span className="indicator-num">
                           {data.currentVolume !== null
                             ? formatVolume(data.currentVolume)
                             : '—'}
                         </span>
                       </div>
-                      <div className="volume-value-item">
-                        <span className="vol-label">20-Day Average:</span>
-                        <span className="vol-val">
+                      <div className="indicator-value">
+                        <span className="indicator-label">20-Day Average:</span>
+                        <span className="indicator-num">
                           {data.avgVolume20 !== null
                             ? formatVolume(data.avgVolume20)
                             : '—'}
                         </span>
                       </div>
-                      <div className="volume-value-item">
-                        <span className="vol-label">vs Average:</span>
+                      <div className="indicator-value">
+                        <span className="indicator-label">vs Average:</span>
                         <span
-                          className={`vol-val ${
+                          className={`indicator-num ${
                             (data.volumeChange ?? 0) > 0
-                              ? 'high'
+                              ? 'positive'
                               : (data.volumeChange ?? 0) < 0
-                              ? 'low'
+                              ? 'negative'
                               : ''
                           }`}
                         >
@@ -1351,39 +1342,17 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                         </span>
                       </div>
                     </div>
-                    <div className="volume-info-cards">
-                      <div className="vol-info-card">
-                        <span className="vol-zone-label high">High Volume</span>
-                        <span className="vol-zone-meaning">
-                          Strong conviction in price move
-                        </span>
-                      </div>
-                      <div className="vol-info-card">
-                        <span className="vol-zone-label normal">
-                          Normal Volume
-                        </span>
-                        <span className="vol-zone-meaning">
-                          Typical trading activity
-                        </span>
-                      </div>
-                      <div className="vol-info-card">
-                        <span className="vol-zone-label low">Low Volume</span>
-                        <span className="vol-zone-meaning">
-                          Weak conviction, potential reversal
-                        </span>
-                      </div>
-                    </div>
                     <div
-                      className={`volume-signal ${
+                      className={`indicator-signal ${
                         data.volumeSignal ?? 'normal'
                       }`}
                     >
                       {data.volumeSignal === 'high' &&
-                        '📊 Volume significantly above average — strong interest, confirms price movement'}
+                        '📊 Volume above average — strong interest'}
                       {data.volumeSignal === 'low' &&
-                        '📉 Volume significantly below average — weak interest, price move may not be sustainable'}
+                        '📉 Volume below average — weak interest'}
                       {data.volumeSignal === 'normal' &&
-                        '✅ Volume near average — normal trading activity'}
+                        '✅ Volume near average — normal activity'}
                       {data.volumeSignal === null && 'Insufficient data'}
                     </div>
                   </div>
@@ -1484,31 +1453,39 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="atr-info">
-                    <div className="atr-info-cards">
-                      <div className="atr-card">
-                        <span className="atr-label">ATR (14)</span>
-                        <span className="atr-value">
+                  <div className="indicator-summary">
+                    <div className="indicator-values-row">
+                      <div className="indicator-value">
+                        <span className="indicator-label">ATR (14):</span>
+                        <span className="indicator-num">
                           ${data.atr14?.toFixed(2)}
                         </span>
                       </div>
-                      <div className="atr-card">
-                        <span className="atr-label">ATR %</span>
-                        <span className="atr-value">
+                      <div className="indicator-value">
+                        <span className="indicator-label">ATR %:</span>
+                        <span className="indicator-num">
                           {data.atrPercent?.toFixed(2)}%
                         </span>
                       </div>
-                      <div className="atr-card">
-                        <span className="atr-label">Volatilita</span>
-                        <span className={`atr-value atr-${data.atrSignal}`}>
+                      <div className="indicator-value">
+                        <span className="indicator-label">Volatilita:</span>
+                        <span
+                          className={`indicator-num ${
+                            data.atrSignal === 'high'
+                              ? 'warning'
+                              : data.atrSignal === 'low'
+                              ? 'muted'
+                              : ''
+                          }`}
+                        >
                           {data.atrSignal === 'high' && 'Vysoká'}
                           {data.atrSignal === 'low' && 'Nízká'}
                           {data.atrSignal === 'normal' && 'Normální'}
                         </span>
                       </div>
-                      <div className="atr-card">
-                        <span className="atr-label">Stop-Loss Tip</span>
-                        <span className="atr-value">
+                      <div className="indicator-value">
+                        <span className="indicator-label">Stop-Loss Tip:</span>
+                        <span className="indicator-num">
                           $
                           {(
                             (data.currentPrice ?? 0) -
@@ -1517,13 +1494,17 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                         </span>
                       </div>
                     </div>
-                    <div className={`atr-signal ${data.atrSignal ?? 'normal'}`}>
+                    <div
+                      className={`indicator-signal ${
+                        data.atrSignal ?? 'normal'
+                      }`}
+                    >
                       {data.atrSignal === 'high' &&
-                        '⚡ High volatility — larger price swings, consider wider stop-losses and smaller position sizes'}
+                        '⚡ High volatility — consider wider stop-losses'}
                       {data.atrSignal === 'low' &&
-                        '😴 Low volatility — smaller price movements, good for stability but limited profit potential'}
+                        '😴 Low volatility — stable but limited upside'}
                       {data.atrSignal === 'normal' &&
-                        '✅ Normal volatility — typical price movement for this stock'}
+                        '✅ Normal volatility — typical price movement'}
                       {data.atrSignal === null && 'Insufficient data'}
                     </div>
                   </div>
@@ -1593,58 +1574,69 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                     </ComposedChart>
                   </ResponsiveContainer>
 
-                  <div className="obv-values">
-                    <div className="obv-stat">
-                      <span className="label">Current OBV</span>
-                      <span className="value">
-                        {data.obv !== null ? formatVolume(data.obv) : 'N/A'}
-                      </span>
+                  <div className="indicator-summary">
+                    <div className="indicator-values-row">
+                      <div className="indicator-value">
+                        <span className="indicator-label">Current OBV:</span>
+                        <span className="indicator-num">
+                          {data.obv !== null ? formatVolume(data.obv) : 'N/A'}
+                        </span>
+                      </div>
+                      <div className="indicator-value">
+                        <span className="indicator-label">OBV Trend:</span>
+                        <span
+                          className={`indicator-num ${
+                            data.obvTrend === 'bullish'
+                              ? 'positive'
+                              : data.obvTrend === 'bearish'
+                              ? 'negative'
+                              : ''
+                          }`}
+                        >
+                          {data.obvTrend === 'bullish' && '📈 Accumulation'}
+                          {data.obvTrend === 'bearish' && '📉 Distribution'}
+                          {data.obvTrend === 'neutral' && '➡️ Neutral'}
+                          {!data.obvTrend && 'N/A'}
+                        </span>
+                      </div>
+                      <div className="indicator-value">
+                        <span className="indicator-label">Divergence:</span>
+                        <span
+                          className={`indicator-num ${
+                            data.obvDivergence === 'bullish'
+                              ? 'positive'
+                              : data.obvDivergence === 'bearish'
+                              ? 'negative'
+                              : 'muted'
+                          }`}
+                        >
+                          {data.obvDivergence === 'bullish' && '🟢 Bullish'}
+                          {data.obvDivergence === 'bearish' && '🔴 Bearish'}
+                          {!data.obvDivergence && '— None'}
+                        </span>
+                      </div>
                     </div>
-                    <div className="obv-stat">
-                      <span className="label">OBV Trend</span>
-                      <span
-                        className={`value trend-${data.obvTrend ?? 'neutral'}`}
-                      >
-                        {data.obvTrend === 'bullish' &&
-                          '📈 Bullish (Accumulation)'}
-                        {data.obvTrend === 'bearish' &&
-                          '📉 Bearish (Distribution)'}
-                        {data.obvTrend === 'neutral' && '➡️ Neutral'}
-                        {!data.obvTrend && 'N/A'}
-                      </span>
-                    </div>
-                    <div className="obv-stat">
-                      <span className="label">Divergence</span>
-                      <span
-                        className={`value divergence-${
-                          data.obvDivergence ?? 'none'
-                        }`}
-                      >
-                        {data.obvDivergence === 'bullish' &&
-                          '🟢 Bullish Divergence'}
-                        {data.obvDivergence === 'bearish' &&
-                          '🔴 Bearish Divergence'}
-                        {!data.obvDivergence && '— None Detected'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="obv-signal-wrapper">
-                    <div className={`obv-signal ${data.obvTrend ?? 'neutral'}`}>
+                    <div
+                      className={`indicator-signal ${
+                        data.obvTrend ?? 'neutral'
+                      }`}
+                    >
                       {data.obvTrend === 'bullish' &&
-                        '📈 Akumulace — objem proudí do akcie, instituce nakupují. Silný signál, když cena také roste.'}
+                        '📈 Accumulation — volume flowing into stock'}
                       {data.obvTrend === 'bearish' &&
-                        '📉 Distribuce — objem odchází z akcie, instituce prodávají. Silný signál, když cena také klesá.'}
+                        '📉 Distribution — volume leaving stock'}
                       {data.obvTrend === 'neutral' &&
-                        '➡️ Neutrální — žádný jasný trend v objemu, trh vyčkává.'}
-                      {!data.obvTrend && 'Nedostatek dat'}
+                        '➡️ Neutral — no clear volume trend'}
+                      {!data.obvTrend && 'Insufficient data'}
                     </div>
                     {data.obvDivergence && (
-                      <div className={`obv-divergence ${data.obvDivergence}`}>
+                      <div
+                        className={`indicator-signal divergence ${data.obvDivergence}`}
+                      >
                         {data.obvDivergence === 'bullish' &&
-                          '⚡ Bullish divergence: Cena klesá, ale OBV roste — signál možného obratu nahoru!'}
+                          '⚡ Bullish divergence: Price down, OBV up — possible reversal!'}
                         {data.obvDivergence === 'bearish' &&
-                          '⚠️ Bearish divergence: Cena roste, ale OBV klesá — signál možného obratu dolů!'}
+                          '⚠️ Bearish divergence: Price up, OBV down — caution!'}
                       </div>
                     )}
                   </div>
@@ -1725,65 +1717,70 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                     </ComposedChart>
                   </ResponsiveContainer>
 
-                  <div className="adx-values">
-                    <div className="adx-stat">
-                      <span className="label">ADX</span>
-                      <span
-                        className={`value adx-${data.adxSignal ?? 'no-trend'}`}
-                      >
-                        {data.adx?.toFixed(1) ?? 'N/A'}
-                      </span>
+                  <div className="indicator-summary">
+                    <div className="indicator-values-row">
+                      <div className="indicator-value">
+                        <span className="indicator-label">ADX:</span>
+                        <span className="indicator-num">
+                          {data.adx?.toFixed(1) ?? 'N/A'}
+                        </span>
+                      </div>
+                      <div className="indicator-value">
+                        <span className="indicator-label">+DI:</span>
+                        <span className="indicator-num positive">
+                          {data.plusDI?.toFixed(1) ?? 'N/A'}
+                        </span>
+                      </div>
+                      <div className="indicator-value">
+                        <span className="indicator-label">-DI:</span>
+                        <span className="indicator-num negative">
+                          {data.minusDI?.toFixed(1) ?? 'N/A'}
+                        </span>
+                      </div>
+                      <div className="indicator-value">
+                        <span className="indicator-label">Strength:</span>
+                        <span
+                          className={`indicator-num ${
+                            data.adxSignal === 'strong'
+                              ? 'positive'
+                              : data.adxSignal === 'weak'
+                              ? 'warning'
+                              : ''
+                          }`}
+                        >
+                          {data.adxSignal === 'strong' && '💪 Very Strong'}
+                          {data.adxSignal === 'moderate' && '📈 Strong'}
+                          {data.adxSignal === 'weak' && '〰️ Weak'}
+                          {data.adxSignal === 'no-trend' && '😴 No Trend'}
+                          {!data.adxSignal && 'N/A'}
+                        </span>
+                      </div>
                     </div>
-                    <div className="adx-stat">
-                      <span className="label">+DI</span>
-                      <span className="value plus-di">
-                        {data.plusDI?.toFixed(1) ?? 'N/A'}
-                      </span>
-                    </div>
-                    <div className="adx-stat">
-                      <span className="label">-DI</span>
-                      <span className="value minus-di">
-                        {data.minusDI?.toFixed(1) ?? 'N/A'}
-                      </span>
-                    </div>
-                    <div className="adx-stat">
-                      <span className="label">Trend Strength</span>
-                      <span
-                        className={`value strength-${
-                          data.adxSignal ?? 'no-trend'
-                        }`}
-                      >
-                        {data.adxSignal === 'strong' && '💪 Very Strong'}
-                        {data.adxSignal === 'moderate' && '📈 Strong'}
-                        {data.adxSignal === 'weak' && '〰️ Weak'}
-                        {data.adxSignal === 'no-trend' && '😴 No Trend'}
-                        {!data.adxSignal && 'N/A'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="adx-signal-wrapper">
                     <div
-                      className={`adx-signal ${data.adxSignal ?? 'no-trend'}`}
+                      className={`indicator-signal ${
+                        data.adxSignal ?? 'neutral'
+                      }`}
                     >
                       {data.adxSignal === 'strong' &&
-                        '💪 Velmi silný trend — momentum strategie fungují skvěle, následujte trend!'}
+                        '💪 Very strong trend — follow the momentum'}
                       {data.adxSignal === 'moderate' &&
-                        '📈 Silný trend — dobré podmínky pro trendové obchody.'}
+                        '📈 Strong trend — good for trend trades'}
                       {data.adxSignal === 'weak' &&
-                        '〰️ Slabý trend — buďte opatrní, trend může brzy skončit.'}
+                        '〰️ Weak trend — be cautious'}
                       {data.adxSignal === 'no-trend' &&
-                        '😴 Žádný trend — trh je v range, vyhněte se trendovým strategiím.'}
-                      {!data.adxSignal && 'Nedostatek dat'}
+                        '😴 No trend — avoid trend strategies'}
+                      {!data.adxSignal && 'Insufficient data'}
                     </div>
                     {data.adxTrend && data.adxSignal !== 'no-trend' && (
-                      <div className={`adx-direction ${data.adxTrend}`}>
+                      <div
+                        className={`indicator-signal direction ${data.adxTrend}`}
+                      >
                         {data.adxTrend === 'bullish' &&
-                          '🟢 +DI > -DI → Býci mají kontrolu, trend je rostoucí'}
+                          '🟢 +DI > -DI → Bulls in control'}
                         {data.adxTrend === 'bearish' &&
-                          '🔴 -DI > +DI → Medvědi mají kontrolu, trend je klesající'}
+                          '🔴 -DI > +DI → Bears in control'}
                         {data.adxTrend === 'neutral' &&
-                          '➡️ +DI ≈ -DI → Nerozhodný boj mezi býky a medvědy'}
+                          '➡️ +DI ≈ -DI → Undecided'}
                       </div>
                     )}
                   </div>
@@ -1868,56 +1865,58 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                     </div>
                   </div>
 
-                  <div className="fibonacci-info">
-                    <div className="fib-stat">
-                      <span className="label">Period High</span>
-                      <span className="value">
-                        ${data.fibonacciLevels.high.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="fib-stat">
-                      <span className="label">Period Low</span>
-                      <span className="value">
-                        ${data.fibonacciLevels.low.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="fib-stat">
-                      <span className="label">Trend</span>
-                      <span
-                        className={`value trend-${data.fibonacciLevels.trend}`}
-                      >
-                        {data.fibonacciLevels.trend === 'uptrend'
-                          ? '📈 Uptrend'
-                          : '📉 Downtrend'}
-                      </span>
-                    </div>
-                    <div className="fib-stat">
-                      <span className="label">Near Level</span>
-                      <span className="value highlight">
-                        {data.fibonacciLevels.currentLevel || 'Between levels'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="fibonacci-signal">
-                    {data.fibonacciLevels.trend === 'uptrend' ? (
-                      <div className="fib-tip bullish">
-                        📈 <strong>Uptrend:</strong> Hledejte nákupní
-                        příležitosti při poklesech k 38.2% nebo 61.8% úrovním.
-                        Tyto úrovně často fungují jako support.
+                  <div className="indicator-summary">
+                    <div className="indicator-values-row">
+                      <div className="indicator-value">
+                        <span className="indicator-label">Period High:</span>
+                        <span className="indicator-num">
+                          ${data.fibonacciLevels.high.toFixed(2)}
+                        </span>
                       </div>
-                    ) : (
-                      <div className="fib-tip bearish">
-                        📉 <strong>Downtrend:</strong> Úrovně mohou fungovat
-                        jako resistance při rally. Proražení 61.8% úrovně může
-                        signalizovat pokračování downtrendu.
+                      <div className="indicator-value">
+                        <span className="indicator-label">Period Low:</span>
+                        <span className="indicator-num">
+                          ${data.fibonacciLevels.low.toFixed(2)}
+                        </span>
                       </div>
-                    )}
+                      <div className="indicator-value">
+                        <span className="indicator-label">Trend:</span>
+                        <span
+                          className={`indicator-num ${
+                            data.fibonacciLevels.trend === 'uptrend'
+                              ? 'positive'
+                              : 'negative'
+                          }`}
+                        >
+                          {data.fibonacciLevels.trend === 'uptrend'
+                            ? '📈 Uptrend'
+                            : '📉 Downtrend'}
+                        </span>
+                      </div>
+                      <div className="indicator-value">
+                        <span className="indicator-label">Near Level:</span>
+                        <span className="indicator-num accent">
+                          {data.fibonacciLevels.currentLevel ||
+                            'Between levels'}
+                        </span>
+                      </div>
+                    </div>
+                    <div
+                      className={`indicator-signal ${
+                        data.fibonacciLevels.trend === 'uptrend'
+                          ? 'bullish'
+                          : 'bearish'
+                      }`}
+                    >
+                      {data.fibonacciLevels.trend === 'uptrend'
+                        ? '📈 Uptrend — look for buy opportunities at 38.2% or 61.8% levels'
+                        : '📉 Downtrend — levels may act as resistance during rallies'}
+                    </div>
                     {data.fibonacciLevels.currentLevel && (
-                      <div className="fib-current-level-tip">
-                        ⚡ Cena je blízko{' '}
-                        <strong>{data.fibonacciLevels.currentLevel}</strong>{' '}
-                        úrovně — sledujte reakci ceny na této úrovni!
+                      <div className="indicator-signal highlight">
+                        ⚡ Price near{' '}
+                        <strong>{data.fibonacciLevels.currentLevel}</strong> —
+                        watch for reaction!
                       </div>
                     )}
                   </div>

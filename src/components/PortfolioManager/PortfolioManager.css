@@ -22,6 +22,7 @@
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: var(--shadow-xl);
+  padding-bottom: 2rem;
 }
 
 .pm-header {
