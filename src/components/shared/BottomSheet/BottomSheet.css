@@ -1,0 +1,77 @@
+.bottom-sheet-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: overlayFadeIn 0.3s ease forwards;
+}
+
+@keyframes overlayFadeIn {
+  to { 
+    background: rgba(0, 0, 0, 0.5); 
+  }
+}
+
+.bottom-sheet {
+  position: relative;
+  background: var(--bg-secondary);
+  border-radius: 1rem 1rem 0 0;
+  width: 100%;
+  max-width: 500px;
+  max-height: 70vh;
+  overflow: hidden;
+  transform: translateY(100%);
+  animation: sheetSlideUp 0.3s ease forwards;
+}
+
+@keyframes sheetSlideUp {
+  to { 
+    transform: translateY(0); 
+  }
+}
+
+.bottom-sheet-header {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.bottom-sheet-title {
+  flex: 1;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.bottom-sheet-close {
+  background: var(--bg-tertiary);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.bottom-sheet-close:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.bottom-sheet-content {
+  overflow-y: auto;
+  max-height: calc(70vh - 65px);
+  -webkit-overflow-scrolling: touch;
+}

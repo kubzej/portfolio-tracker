@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { stocksApi, transactionsApi, portfoliosApi } from '@/services/api';
 import type {
   Stock,
@@ -6,7 +6,19 @@ import type {
   CreateTransactionInput,
   TransactionType,
 } from '@/types/database';
+import {
+  BottomSheetSelect,
+  type SelectOption,
+} from '@/components/shared/BottomSheet';
 import './TransactionForm.css';
+
+const CURRENCY_OPTIONS: SelectOption[] = [
+  { value: 'USD', label: 'USD' },
+  { value: 'EUR', label: 'EUR' },
+  { value: 'GBP', label: 'GBP' },
+  { value: 'CZK', label: 'CZK' },
+  { value: 'CAD', label: 'CAD' },
+];
 
 interface TransactionFormProps {
   portfolioId?: string | null;
@@ -194,42 +206,42 @@ export function TransactionForm({
       </div>
 
       <div className="form-row">
-        <div className="form-group">
-          <label htmlFor="portfolio_id">Portfolio *</label>
-          <select
-            id="portfolio_id"
-            name="portfolio_id"
-            value={formData.portfolio_id}
-            onChange={handleChange}
-            required
-            disabled={!!portfolioId}
-          >
-            <option value="">Select portfolio...</option>
-            {portfolios.map((portfolio) => (
-              <option key={portfolio.id} value={portfolio.id}>
-                {portfolio.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <BottomSheetSelect
+          label="Portfolio *"
+          options={[
+            { value: '', label: 'Select portfolio...' },
+            ...portfolios.map((p) => ({ value: p.id, label: p.name })),
+          ]}
+          value={formData.portfolio_id}
+          onChange={(value) =>
+            setFormData((prev) => ({ ...prev, portfolio_id: value }))
+          }
+          placeholder="Select portfolio..."
+          required
+          disabled={!!portfolioId}
+        />
 
-        <div className="form-group">
-          <label htmlFor="stock_id">Stock *</label>
-          <select
-            id="stock_id"
-            name="stock_id"
-            value={formData.stock_id}
-            onChange={handleStockChange}
-            required
-          >
-            <option value="">Select stock...</option>
-            {stocks.map((stock) => (
-              <option key={stock.id} value={stock.id}>
-                {stock.ticker} - {stock.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <BottomSheetSelect
+          label="Stock *"
+          options={[
+            { value: '', label: 'Select stock...' },
+            ...stocks.map((s) => ({
+              value: s.id,
+              label: `${s.ticker} - ${s.name}`,
+            })),
+          ]}
+          value={formData.stock_id}
+          onChange={(value) => {
+            const selectedStock = stocks.find((s) => s.id === value);
+            setFormData((prev) => ({
+              ...prev,
+              stock_id: value,
+              currency: selectedStock?.currency || prev.currency,
+            }));
+          }}
+          placeholder="Select stock..."
+          required
+        />
       </div>
 
       <div className="form-row">
@@ -279,21 +291,15 @@ export function TransactionForm({
       </div>
 
       <div className="form-row">
-        <div className="form-group">
-          <label htmlFor="currency">Currency</label>
-          <select
-            id="currency"
-            name="currency"
-            value={formData.currency || 'USD'}
-            onChange={handleChange}
-          >
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-            <option value="GBP">GBP</option>
-            <option value="CZK">CZK</option>
-            <option value="CAD">CAD</option>
-          </select>
-        </div>
+        <BottomSheetSelect
+          label="Currency"
+          options={CURRENCY_OPTIONS}
+          value={formData.currency || 'USD'}
+          onChange={(value) =>
+            setFormData((prev) => ({ ...prev, currency: value || 'USD' }))
+          }
+          placeholder="USD"
+        />
 
         <div className="form-group">
           <label htmlFor="exchange_rate_to_czk">Exchange Rate to CZK</label>

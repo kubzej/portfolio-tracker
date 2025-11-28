@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { stocksApi } from '@/services/api';
 import type { StockWithSector } from '@/types/database';
+import { formatPrice } from '@/utils/format';
 import './StocksList.css';
 
 interface StocksListProps {
@@ -71,7 +72,7 @@ export function StocksList({ onStockClick, onAddStock }: StocksListProps) {
               </div>
               {stock.target_price && (
                 <div className="stock-card-target">
-                  Target: {stock.target_price.toFixed(2)} {stock.currency}
+                  Target: {formatPrice(stock.target_price, stock.currency)}
                 </div>
               )}
             </div>

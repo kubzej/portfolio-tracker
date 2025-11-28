@@ -1,6 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { holdingsApi } from '@/services/api';
 import type { PortfolioSummary, PortfolioTotals } from '@/types/database';
+import {
+  formatCurrency,
+  formatPercent,
+  formatNumber,
+  formatPrice,
+} from '@/utils/format';
 import './Dashboard.css';
 
 type SortKey =
@@ -50,22 +56,6 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatCurrency = (value: number | null, currency = 'CZK') => {
-    if (value === null) return '—';
-    return new Intl.NumberFormat('cs-CZ', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
-
-  const formatPercent = (value: number | null) => {
-    if (value === null) return '—';
-    const sign = value >= 0 ? '+' : '';
-    return `${sign}${value.toFixed(2)}%`;
   };
 
   const handleSort = (key: SortKey) => {
@@ -304,7 +294,7 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                         <span className="label">Weight</span>
                         <span className="value">
                           {portfolioPercentage !== null
-                            ? `${portfolioPercentage.toFixed(1)}%`
+                            ? formatPercent(portfolioPercentage, 1)
                             : '—'}
                         </span>
                       </div>
@@ -312,7 +302,11 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                         <span className="label">Target Price</span>
                         <span className="value">
                           {holding.target_price !== null
-                            ? `$${holding.target_price.toFixed(2)}`
+                            ? `$${formatPrice(
+                                holding.target_price,
+                                undefined,
+                                false
+                              )}`
                             : '—'}
                         </span>
                       </div>
@@ -328,11 +322,11 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                           }`}
                         >
                           {holding.distance_to_target_pct !== null
-                            ? `${
-                                holding.distance_to_target_pct <= 0 ? '+' : '-'
-                              }${Math.abs(
-                                holding.distance_to_target_pct
-                              ).toFixed(1)}%`
+                            ? formatPercent(
+                                holding.distance_to_target_pct,
+                                1,
+                                true
+                              )
                             : '—'}
                         </span>
                       </div>
@@ -411,12 +405,14 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                             <span className="name">{holding.stock_name}</span>
                           </div>
                         </td>
-                        <td className="right">{holding.total_shares}</td>
                         <td className="right">
-                          {holding.avg_buy_price?.toFixed(2) || '—'}
+                          {formatNumber(holding.total_shares, 4)}
                         </td>
                         <td className="right">
-                          {holding.current_price?.toFixed(2) || '—'}
+                          {formatPrice(holding.avg_buy_price)}
+                        </td>
+                        <td className="right">
+                          {formatPrice(holding.current_price)}
                         </td>
                         <td className="right">
                           <div className="dual-value">
@@ -446,14 +442,18 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                         </td>
                         <td className="right">
                           {portfolioPercentage !== null
-                            ? `${portfolioPercentage.toFixed(1)}%`
+                            ? formatPercent(portfolioPercentage, 1)
                             : '—'}
                         </td>
                         <td className="right">
                           <div className="dual-value">
                             <span className="primary">
                               {holding.target_price !== null
-                                ? `$${holding.target_price.toFixed(2)}`
+                                ? `$${formatPrice(
+                                    holding.target_price,
+                                    undefined,
+                                    false
+                                  )}`
                                 : '—'}
                             </span>
                             <span
@@ -466,13 +466,11 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                               }`}
                             >
                               {holding.distance_to_target_pct !== null
-                                ? `${
-                                    holding.distance_to_target_pct <= 0
-                                      ? '+'
-                                      : '-'
-                                  }${Math.abs(
-                                    holding.distance_to_target_pct
-                                  ).toFixed(1)}%`
+                                ? formatPercent(
+                                    holding.distance_to_target_pct,
+                                    1,
+                                    true
+                                  )
                                 : ''}
                             </span>
                           </div>
@@ -503,7 +501,7 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                   />
                 </div>
                 <span className="sector-pct">
-                  {sector.percentage.toFixed(1)}%
+                  {formatPercent(sector.percentage, 1)}
                 </span>
               </div>
             ))}

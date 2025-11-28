@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { stocksApi, transactionsApi, sectorsApi } from '@/services/api';
 import type {
   StockWithSector,
@@ -8,7 +8,31 @@ import type {
   UpdateTransactionInput,
   CreateTransactionInput,
 } from '@/types/database';
+import {
+  formatCurrency,
+  formatNumber,
+  formatPrice,
+  formatShares,
+  formatDate,
+} from '@/utils/format';
+import {
+  BottomSheetSelect,
+  type SelectOption,
+} from '@/components/shared/BottomSheet';
 import './StockDetail.css';
+
+const CURRENCY_OPTIONS: SelectOption[] = [
+  { value: 'USD', label: 'USD' },
+  { value: 'EUR', label: 'EUR' },
+  { value: 'GBP', label: 'GBP' },
+  { value: 'CZK', label: 'CZK' },
+  { value: 'CAD', label: 'CAD' },
+];
+
+const TRANSACTION_TYPE_OPTIONS: SelectOption[] = [
+  { value: 'BUY', label: 'BUY' },
+  { value: 'SELL', label: 'SELL' },
+];
 
 interface StockDetailProps {
   stockId: string;
@@ -76,6 +100,15 @@ export function StockDetail({
       setLoading(false);
     }
   };
+
+  // Sector options for BottomSheetSelect
+  const sectorOptions: SelectOption[] = useMemo(
+    () => [
+      { value: '', label: 'No sector' },
+      ...sectors.map((s) => ({ value: s.id, label: s.name })),
+    ],
+    [sectors]
+  );
 
   const handleSaveStock = async () => {
     try {
@@ -179,18 +212,6 @@ export function StockDetail({
     } as CreateTransactionInput);
   };
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('cs-CZ');
-  };
-
-  const formatCurrency = (value: number, currency: string) => {
-    return new Intl.NumberFormat('cs-CZ', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 2,
-    }).format(value);
-  };
-
   if (loading) {
     return <div className="stock-detail-loading">Loading...</div>;
   }
@@ -276,25 +297,18 @@ export function StockDetail({
               </div>
             </div>
             <div className="form-row">
-              <div className="form-group">
-                <label>Sector</label>
-                <select
-                  value={stockForm.sector_id || ''}
-                  onChange={(e) =>
-                    setStockForm({
-                      ...stockForm,
-                      sector_id: e.target.value || null,
-                    })
-                  }
-                >
-                  <option value="">No sector</option>
-                  {sectors.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <BottomSheetSelect
+                label="Sector"
+                options={sectorOptions}
+                value={stockForm.sector_id || ''}
+                onChange={(value) =>
+                  setStockForm({
+                    ...stockForm,
+                    sector_id: value || null,
+                  })
+                }
+                placeholder="No sector"
+              />
               <div className="form-group">
                 <label>Exchange</label>
                 <input
@@ -307,20 +321,15 @@ export function StockDetail({
               </div>
             </div>
             <div className="form-row">
-              <div className="form-group">
-                <label>Currency</label>
-                <select
-                  value={stockForm.currency || 'USD'}
-                  onChange={(e) =>
-                    setStockForm({ ...stockForm, currency: e.target.value })
-                  }
-                >
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                  <option value="GBP">GBP</option>
-                  <option value="CZK">CZK</option>
-                </select>
-              </div>
+              <BottomSheetSelect
+                label="Currency"
+                options={CURRENCY_OPTIONS}
+                value={stockForm.currency || 'USD'}
+                onChange={(value) =>
+                  setStockForm({ ...stockForm, currency: value || 'USD' })
+                }
+                placeholder="USD"
+              />
               <div className="form-group">
                 <label>Target Price</label>
                 <input
@@ -400,7 +409,7 @@ export function StockDetail({
                 <span className="label">Target Price</span>
                 <span className="value">
                   {stock.target_price
-                    ? `${stock.target_price.toFixed(2)} ${stock.currency}`
+                    ? formatPrice(stock.target_price, stock.currency)
                     : '—'}
                 </span>
               </div>
@@ -419,13 +428,11 @@ export function StockDetail({
       <div className="summary-cards">
         <div className="summary-card">
           <span className="label">Total Shares</span>
-          <span className="value">{totalShares.toFixed(4)}</span>
+          <span className="value">{formatShares(totalShares)}</span>
         </div>
         <div className="summary-card">
           <span className="label">Avg. Buy Price</span>
-          <span className="value">
-            {avgPrice.toFixed(2)} {stock.currency}
-          </span>
+          <span className="value">{formatPrice(avgPrice, stock.currency)}</span>
         </div>
         <div className="summary-card">
           <span className="label">Total Invested</span>
@@ -450,23 +457,20 @@ export function StockDetail({
           <div className="transaction-form-card">
             <h4>New Transaction</h4>
             <div className="form-row">
-              <div className="form-group">
-                <label>Type</label>
-                <select
-                  value={
-                    (transactionForm as CreateTransactionInput).type || 'BUY'
-                  }
-                  onChange={(e) =>
-                    setTransactionForm({
-                      ...transactionForm,
-                      type: e.target.value as 'BUY' | 'SELL',
-                    })
-                  }
-                >
-                  <option value="BUY">BUY</option>
-                  <option value="SELL">SELL</option>
-                </select>
-              </div>
+              <BottomSheetSelect
+                label="Type"
+                options={TRANSACTION_TYPE_OPTIONS}
+                value={
+                  (transactionForm as CreateTransactionInput).type || 'BUY'
+                }
+                onChange={(value) =>
+                  setTransactionForm({
+                    ...transactionForm,
+                    type: value as 'BUY' | 'SELL',
+                  })
+                }
+                placeholder="BUY"
+              />
               <div className="form-group">
                 <label>Date</label>
                 <input
@@ -597,18 +601,18 @@ export function StockDetail({
                   <div className="transaction-card-body">
                     <div className="transaction-card-stat">
                       <span className="label">Quantity</span>
-                      <span className="value">{tx.quantity}</span>
+                      <span className="value">{formatShares(tx.quantity)}</span>
                     </div>
                     <div className="transaction-card-stat">
                       <span className="label">Price</span>
                       <span className="value">
-                        {tx.price_per_share.toFixed(2)}
+                        {formatPrice(tx.price_per_share)}
                       </span>
                     </div>
                     <div className="transaction-card-stat">
                       <span className="label">Total</span>
                       <span className="value">
-                        {tx.total_amount.toFixed(2)}
+                        {formatNumber(tx.total_amount, 2)}
                       </span>
                     </div>
                     <div className="transaction-card-stat">
@@ -750,14 +754,14 @@ export function StockDetail({
                               {tx.type}
                             </span>
                           </td>
-                          <td className="right">{tx.quantity}</td>
+                          <td className="right">{formatShares(tx.quantity)}</td>
                           <td className="right">
-                            {tx.price_per_share.toFixed(4)}
+                            {formatPrice(tx.price_per_share)}
                           </td>
                           <td className="right">
-                            {tx.total_amount.toFixed(2)}
+                            {formatNumber(tx.total_amount, 2)}
                           </td>
-                          <td className="right">{tx.fees.toFixed(2)}</td>
+                          <td className="right">{formatNumber(tx.fees, 2)}</td>
                           <td className="right">
                             {formatCurrency(tx.total_amount_czk, 'CZK')}
                           </td>

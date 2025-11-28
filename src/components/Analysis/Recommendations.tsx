@@ -2,6 +2,10 @@ import { useState, useMemo, useEffect } from 'react';
 import type { StockRecommendation, SignalType } from '@/utils/recommendations';
 import { InfoTooltip } from '@/components/shared/InfoTooltip';
 import {
+  BottomSheetSelect,
+  type SelectOption,
+} from '@/components/shared/BottomSheet';
+import {
   logMultipleSignals,
   getRecentSignals,
   getSignalPerformance,
@@ -9,6 +13,13 @@ import {
   type SignalPerformance,
 } from '@/services/api/signals';
 import './Recommendations.css';
+
+const GROUPING_OPTIONS: SelectOption[] = [
+  { value: 'none', label: 'No Grouping' },
+  { value: 'signal', label: 'By Signal' },
+  { value: 'score', label: 'By Score' },
+  { value: 'conviction', label: 'By Conviction' },
+];
 
 interface RecommendationsProps {
   recommendations: StockRecommendation[];
@@ -344,16 +355,12 @@ export function Recommendations({
           </div>
 
           <div className="filter-options">
-            <select
+            <BottomSheetSelect
+              options={GROUPING_OPTIONS}
               value={groupBy}
-              onChange={(e) => setGroupBy(e.target.value as GroupBy)}
-              className="group-select"
-            >
-              <option value="none">No Grouping</option>
-              <option value="signal">By Signal</option>
-              <option value="score">By Score</option>
-              <option value="conviction">By Conviction</option>
-            </select>
+              onChange={(value) => setGroupBy(value as GroupBy)}
+              title="Group By"
+            />
           </div>
         </div>
       )}

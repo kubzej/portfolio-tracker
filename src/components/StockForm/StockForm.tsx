@@ -1,7 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { sectorsApi, stocksApi } from '@/services/api';
 import type { Sector, CreateStockInput } from '@/types';
+import {
+  BottomSheetSelect,
+  type SelectOption,
+} from '@/components/shared/BottomSheet';
 import './StockForm.css';
+
+const EXCHANGE_OPTIONS: SelectOption[] = [
+  { value: '', label: 'Select exchange...' },
+  { value: 'NYSE', label: 'NYSE' },
+  { value: 'NASDAQ', label: 'NASDAQ' },
+  { value: 'XETRA', label: 'XETRA' },
+  { value: 'LSE', label: 'LSE' },
+  { value: 'TSX', label: 'TSX' },
+  { value: 'Other', label: 'Other' },
+];
+
+const CURRENCY_OPTIONS: SelectOption[] = [
+  { value: 'USD', label: 'USD - US Dollar' },
+  { value: 'EUR', label: 'EUR - Euro' },
+  { value: 'GBP', label: 'GBP - British Pound' },
+  { value: 'CZK', label: 'CZK - Czech Koruna' },
+  { value: 'CAD', label: 'CAD - Canadian Dollar' },
+];
 
 interface StockFormProps {
   onSuccess?: () => void;
@@ -36,6 +58,14 @@ export function StockForm({ onSuccess, onCancel }: StockFormProps) {
       console.error('Failed to load sectors:', err);
     }
   };
+
+  const sectorOptions: SelectOption[] = useMemo(
+    () => [
+      { value: '', label: 'Select sector...' },
+      ...sectors.map((s) => ({ value: s.id, label: s.name })),
+    ],
+    [sectors]
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,58 +154,37 @@ export function StockForm({ onSuccess, onCancel }: StockFormProps) {
       </div>
 
       <div className="form-row">
-        <div className="form-group">
-          <label htmlFor="sector_id">Sector</label>
-          <select
-            id="sector_id"
-            name="sector_id"
-            value={formData.sector_id || ''}
-            onChange={handleChange}
-          >
-            <option value="">Select sector...</option>
-            {sectors.map((sector) => (
-              <option key={sector.id} value={sector.id}>
-                {sector.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <BottomSheetSelect
+          label="Sector"
+          options={sectorOptions}
+          value={formData.sector_id || ''}
+          onChange={(value) =>
+            setFormData((prev) => ({ ...prev, sector_id: value || undefined }))
+          }
+          placeholder="Select sector..."
+        />
 
-        <div className="form-group">
-          <label htmlFor="exchange">Exchange</label>
-          <select
-            id="exchange"
-            name="exchange"
-            value={formData.exchange || ''}
-            onChange={handleChange}
-          >
-            <option value="">Select exchange...</option>
-            <option value="NYSE">NYSE</option>
-            <option value="NASDAQ">NASDAQ</option>
-            <option value="XETRA">XETRA</option>
-            <option value="LSE">LSE</option>
-            <option value="TSX">TSX</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
+        <BottomSheetSelect
+          label="Exchange"
+          options={EXCHANGE_OPTIONS}
+          value={formData.exchange || ''}
+          onChange={(value) =>
+            setFormData((prev) => ({ ...prev, exchange: value || undefined }))
+          }
+          placeholder="Select exchange..."
+        />
       </div>
 
       <div className="form-row">
-        <div className="form-group">
-          <label htmlFor="currency">Currency</label>
-          <select
-            id="currency"
-            name="currency"
-            value={formData.currency || 'USD'}
-            onChange={handleChange}
-          >
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-            <option value="GBP">GBP</option>
-            <option value="CZK">CZK</option>
-            <option value="CAD">CAD</option>
-          </select>
-        </div>
+        <BottomSheetSelect
+          label="Currency"
+          options={CURRENCY_OPTIONS}
+          value={formData.currency || 'USD'}
+          onChange={(value) =>
+            setFormData((prev) => ({ ...prev, currency: value || 'USD' }))
+          }
+          placeholder="Select currency..."
+        />
 
         <div className="form-group">
           <label htmlFor="target_price">Target Price</label>

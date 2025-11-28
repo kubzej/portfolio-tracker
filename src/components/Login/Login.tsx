@@ -26,7 +26,6 @@ export function Login() {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <div className="login-icon">📊</div>
           <h1>Portfolio Tracker</h1>
           <p>Sign in to continue</p>
         </div>
