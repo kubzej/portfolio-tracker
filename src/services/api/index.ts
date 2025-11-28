@@ -7,3 +7,5 @@ export * from './priceRefresh';
 export * from './analysis';
 export * from './indicators';
 export * from './signals';
+export * from './watchlists';
+export * from './watchlistItems';

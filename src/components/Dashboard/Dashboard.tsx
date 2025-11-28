@@ -7,6 +7,10 @@ import {
   formatNumber,
   formatPrice,
 } from '@/utils/format';
+import {
+  BottomSheetSelect,
+  type SelectOption,
+} from '@/components/shared/BottomSheet';
 import './Dashboard.css';
 
 type SortKey =
@@ -24,6 +28,22 @@ type SortKey =
   | 'distanceToTarget';
 
 type SortDirection = 'asc' | 'desc';
+
+const SORT_OPTIONS: SelectOption[] = [
+  { value: 'ticker-asc', label: 'Ticker (A-Z)' },
+  { value: 'ticker-desc', label: 'Ticker (Z-A)' },
+  { value: 'plPercent-desc', label: 'P&L % (Best)' },
+  { value: 'plPercent-asc', label: 'P&L % (Worst)' },
+  { value: 'plCzk-desc', label: 'P&L CZK (Best)' },
+  { value: 'plCzk-asc', label: 'P&L CZK (Worst)' },
+  { value: 'current-desc', label: 'Value (High-Low)' },
+  { value: 'current-asc', label: 'Value (Low-High)' },
+  { value: 'portfolio-desc', label: 'Weight (High-Low)' },
+  { value: 'portfolio-asc', label: 'Weight (Low-High)' },
+  { value: 'distanceToTarget-asc', label: 'Target (Closest)' },
+  { value: 'distanceToTarget-desc', label: 'Target (Farthest)' },
+  { value: 'sector-asc', label: 'Sector (A-Z)' },
+];
 
 interface DashboardProps {
   portfolioId?: string | null;
@@ -229,6 +249,23 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
           </div>
         ) : (
           <>
+            {/* Mobile Sort Controls */}
+            <div className="mobile-sort-controls">
+              <BottomSheetSelect
+                label="Sort by"
+                options={SORT_OPTIONS}
+                value={`${sortKey}-${sortDirection}`}
+                onChange={(value) => {
+                  const [key, dir] = value.split('-') as [
+                    SortKey,
+                    SortDirection
+                  ];
+                  setSortKey(key);
+                  setSortDirection(dir);
+                }}
+              />
+            </div>
+
             {/* Mobile Cards View */}
             <div className="holdings-cards">
               {sortedHoldings.map((holding) => {
