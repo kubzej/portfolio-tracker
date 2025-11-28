@@ -1,5 +1,5 @@
 // Supabase Edge Function for fetching news articles
-// Fetches news from Yahoo Finance for portfolio stocks
+// Fetches news from Finnhub API
 // Deploy with: supabase functions deploy fetch-news
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
@@ -11,6 +11,9 @@ const corsHeaders = {
     'authorization, x-client-info, apikey, content-type',
 };
 
+// Finnhub API key from environment
+const FINNHUB_API_KEY = Deno.env.get('FINNHUB_API_KEY') || '';
+
 // News article interface
 interface NewsArticle {
   id: string;
@@ -21,6 +24,7 @@ interface NewsArticle {
   publishedAt: string;
   relatedTickers: string[];
   thumbnail: string | null;
+  matchedTopics?: string[];
   // Prepared for future sentiment analysis
   sentiment?: {
     score: number | null; // -1 to 1
@@ -37,43 +41,64 @@ interface TickerNews {
   error?: string;
 }
 
-// Fetch news for a single ticker from Yahoo Finance
+// Finnhub article interface
+interface FinnhubArticle {
+  id: number;
+  headline: string;
+  summary: string;
+  source: string;
+  url: string;
+  datetime: number;
+  related: string;
+  image: string;
+  category: string;
+}
+
+// Get date string in YYYY-MM-DD format
+function getDateString(daysAgo: number = 0): string {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  return date.toISOString().split('T')[0];
+}
+
+// Fetch news for a single ticker from Finnhub
 async function fetchTickerNews(
   ticker: string,
-  stockName: string
+  stockName: string,
+  finnhubTicker?: string
 ): Promise<TickerNews> {
   try {
-    // Yahoo Finance news endpoint
-    const yahooUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(
-      ticker
-    )}&newsCount=10&quotesCount=0`;
+    const fromDate = getDateString(7); // 7 days ago
+    const toDate = getDateString(0); // Today
 
-    const response = await fetch(yahooUrl, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      },
-    });
+    // Use finnhub_ticker if available, otherwise use original ticker
+    const searchTicker = finnhubTicker || ticker;
+
+    const url = `https://finnhub.io/api/v1/company-news?symbol=${encodeURIComponent(
+      searchTicker
+    )}&from=${fromDate}&to=${toDate}&token=${FINNHUB_API_KEY}`;
+
+    const response = await fetch(url);
 
     if (!response.ok) {
-      throw new Error(`Yahoo Finance API error: ${response.status}`);
+      throw new Error(`Finnhub API error: ${response.status}`);
     }
 
-    const data = await response.json();
-    const news = data?.news || [];
+    const data: FinnhubArticle[] = await response.json();
 
-    const articles: NewsArticle[] = news.map((item: any, index: number) => ({
-      id: `${ticker}-${index}-${Date.now()}`,
-      title: item.title || 'No title',
+    const articles: NewsArticle[] = data.slice(0, 15).map((item, index) => ({
+      id: `${ticker}-${item.id || index}-${Date.now()}`,
+      title: item.headline || 'No title',
       summary: item.summary || '',
-      source: item.publisher || 'Unknown',
-      url: item.link || '',
-      publishedAt: item.providerPublishTime
-        ? new Date(item.providerPublishTime * 1000).toISOString()
+      source: item.source || 'Unknown',
+      url: item.url || '',
+      publishedAt: item.datetime
+        ? new Date(item.datetime * 1000).toISOString()
         : new Date().toISOString(),
-      relatedTickers: item.relatedTickers || [ticker],
-      thumbnail: item.thumbnail?.resolutions?.[0]?.url || null,
-      // Placeholder for future sentiment analysis
+      relatedTickers: item.related
+        ? item.related.split(',').map((t) => t.trim())
+        : [ticker],
+      thumbnail: item.image || null,
       sentiment: {
         score: null,
         label: null,
@@ -220,170 +245,255 @@ function analyzeBasicSentiment(
   };
 }
 
-// Fetch general market news
+// Fetch general market news from Finnhub
 async function fetchMarketNews(): Promise<NewsArticle[]> {
-  // Market topics with search queries and labels for tagging
-  const marketTopics = [
-    // Main Indexes - priority
-    { query: 'S&P 500 index stock market', label: 'S&P 500', priority: 1 },
-    { query: 'nasdaq composite tech stocks', label: 'NASDAQ', priority: 1 },
-    { query: 'dow jones industrial average', label: 'Dow Jones', priority: 1 },
-    { query: 'russell 2000 small cap', label: 'Russell 2000', priority: 2 },
-
-    // Macro - high priority
-    {
-      query: 'federal reserve interest rate decision',
-      label: 'Fed',
-      priority: 1,
-    },
-    { query: 'interest rate hike cut fed', label: 'Rates', priority: 1 },
-    { query: 'inflation CPI consumer prices', label: 'Inflation', priority: 1 },
-    { query: 'jobs unemployment nonfarm payroll', label: 'Jobs', priority: 1 },
-    { query: 'GDP economic growth recession', label: 'GDP', priority: 2 },
-    { query: 'treasury bond yield 10 year', label: 'Treasury', priority: 2 },
-
-    // Markets events
-    {
-      query: 'earnings report quarterly results',
-      label: 'Earnings',
-      priority: 1,
-    },
-    { query: 'IPO initial public offering', label: 'IPO', priority: 2 },
-    { query: 'merger acquisition deal buyout', label: 'M&A', priority: 2 },
-    {
-      query: 'dividend yield payout increase',
-      label: 'Dividends',
-      priority: 2,
-    },
-    { query: 'stock buyback share repurchase', label: 'Buybacks', priority: 2 },
-
-    // Sectors - hot topics
-    { query: 'artificial intelligence AI stocks', label: 'AI', priority: 1 },
-    { query: 'technology sector software cloud', label: 'Tech', priority: 1 },
-    {
-      query: 'semiconductor chip nvidia amd intel',
-      label: 'Semis',
-      priority: 1,
-    },
-    { query: 'oil crude energy prices opec', label: 'Energy', priority: 2 },
-    { query: 'bank financial sector earnings', label: 'Banks', priority: 2 },
-    {
-      query: 'healthcare pharma biotech stocks',
-      label: 'Healthcare',
-      priority: 2,
-    },
-    { query: 'electric vehicle EV tesla rivian', label: 'EV', priority: 2 },
-    {
-      query: 'retail consumer spending earnings',
-      label: 'Retail',
-      priority: 2,
-    },
-
-    // Global markets
-    { query: 'US stock market wall street', label: 'US', priority: 1 },
-    { query: 'China stocks market economy', label: 'China', priority: 2 },
-    { query: 'Europe stocks market economy', label: 'Europe', priority: 2 },
-    { query: 'Japan stocks nikkei yen', label: 'Japan', priority: 2 },
-    { query: 'emerging market stocks india', label: 'Emerging', priority: 2 },
-
-    // Assets
-    {
-      query: 'bitcoin crypto cryptocurrency ethereum',
-      label: 'Crypto',
-      priority: 2,
-    },
-    { query: 'gold price precious metals', label: 'Gold', priority: 2 },
-    { query: 'commodity prices copper oil', label: 'Commodities', priority: 2 },
-  ];
-
   const allArticles: NewsArticle[] = [];
   const seenUrls = new Set<string>();
-  const articleTopics = new Map<string, string[]>(); // URL -> topics
 
-  // Sort by priority - fetch priority 1 first with more articles
-  const sortedTopics = [...marketTopics].sort(
-    (a, b) => (a.priority || 2) - (b.priority || 2)
-  );
+  // Fetch from multiple categories for diverse coverage
+  const categories = ['general', 'forex', 'crypto', 'merger'];
 
-  for (const topic of sortedTopics) {
+  // Get timestamp for 24 hours ago
+  const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+
+  for (const category of categories) {
     try {
-      // Priority 1 topics get more articles
-      const newsCount = topic.priority === 1 ? 8 : 5;
-      const yahooUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(
-        topic.query
-      )}&newsCount=${newsCount}&quotesCount=0`;
+      const url = `https://finnhub.io/api/v1/news?category=${category}&token=${FINNHUB_API_KEY}`;
 
-      const response = await fetch(yahooUrl, {
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        },
-      });
+      const response = await fetch(url);
 
-      if (!response.ok) continue;
+      if (!response.ok) {
+        console.error(`Finnhub API error for ${category}: ${response.status}`);
+        continue;
+      }
 
-      const data = await response.json();
-      const news = data?.news || [];
+      const data: FinnhubArticle[] = await response.json();
 
-      for (const item of news) {
-        const url = item.link || '';
+      for (const item of data) {
+        // Skip if older than 24 hours
+        if (item.datetime * 1000 < oneDayAgo) continue;
 
-        // Track which topics this article matches
-        if (seenUrls.has(url)) {
-          // Article already exists - add this topic to its list
-          const existing = articleTopics.get(url);
-          if (existing && !existing.includes(topic.label)) {
-            existing.push(topic.label);
-          }
-          continue;
-        }
+        const articleUrl = item.url || '';
 
-        seenUrls.add(url);
-        articleTopics.set(url, [topic.label]);
+        // Skip duplicates
+        if (seenUrls.has(articleUrl)) continue;
+        seenUrls.add(articleUrl);
+
+        // Detect topic from content
+        const matchedTopics = detectTopics(
+          item.headline,
+          item.summary,
+          item.category,
+          item.related
+        );
 
         allArticles.push({
-          id: `market-${topic.label}-${allArticles.length}-${Date.now()}`,
-          title: item.title || 'No title',
+          id: `market-${category}-${
+            item.id || allArticles.length
+          }-${Date.now()}`,
+          title: item.headline || 'No title',
           summary: item.summary || '',
-          source: item.publisher || 'Unknown',
-          url,
-          publishedAt: item.providerPublishTime
-            ? new Date(item.providerPublishTime * 1000).toISOString()
+          source: item.source || 'Unknown',
+          url: articleUrl,
+          publishedAt: item.datetime
+            ? new Date(item.datetime * 1000).toISOString()
             : new Date().toISOString(),
-          relatedTickers: item.relatedTickers || [],
-          thumbnail: item.thumbnail?.resolutions?.[0]?.url || null,
+          relatedTickers: item.related
+            ? item.related
+                .split(',')
+                .map((t) => t.trim())
+                .filter(Boolean)
+            : [],
+          thumbnail: item.image || null,
           sentiment: {
             score: null,
             label: null,
             keywords: [],
           },
-          // Store matched topics from backend search
-          matchedTopics: [topic.label],
+          matchedTopics,
         });
       }
 
-      // Small delay between requests
+      // Small delay between requests to respect rate limits
       await new Promise((resolve) => setTimeout(resolve, 100));
     } catch (error) {
-      console.error(`Error fetching ${topic.label} news:`, error);
+      console.error(`Error fetching ${category} news:`, error);
     }
   }
 
-  // Update articles with all matched topics
-  for (const article of allArticles) {
-    const topics = articleTopics.get(article.url);
-    if (topics) {
-      (article as any).matchedTopics = topics;
-    }
-  }
-
-  // Sort by date
+  // Sort by date (newest first)
   allArticles.sort(
     (a, b) =>
       new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
   );
 
-  return allArticles.slice(0, 100); // Return top 100 for more coverage
+  return allArticles.slice(0, 100); // Return top 100
+}
+
+// Detect topics from article content
+function detectTopics(
+  headline: string,
+  summary: string,
+  category: string,
+  related: string
+): string[] {
+  const topics: string[] = [];
+  const text = `${headline} ${summary}`.toLowerCase();
+  const tickers = related ? related.toLowerCase() : '';
+
+  // Category-based topics
+  if (category === 'forex') topics.push('Forex');
+  if (category === 'crypto') topics.push('Crypto');
+  if (category === 'merger') topics.push('M&A');
+
+  // Index detection
+  if (text.includes('s&p 500') || text.includes('s&p500'))
+    topics.push('S&P 500');
+  if (text.includes('nasdaq') || text.includes('tech stocks'))
+    topics.push('NASDAQ');
+  if (text.includes('dow jones') || text.includes('dow '))
+    topics.push('Dow Jones');
+  if (text.includes('russell 2000') || text.includes('small cap'))
+    topics.push('Russell 2000');
+
+  // Macro
+  if (
+    text.includes('federal reserve') ||
+    text.includes(' fed ') ||
+    text.includes('jerome powell')
+  )
+    topics.push('Fed');
+  if (
+    text.includes('interest rate') ||
+    text.includes('rate hike') ||
+    text.includes('rate cut')
+  )
+    topics.push('Rates');
+  if (
+    text.includes('inflation') ||
+    text.includes(' cpi ') ||
+    text.includes('consumer price')
+  )
+    topics.push('Inflation');
+  if (
+    text.includes('unemployment') ||
+    text.includes('jobs report') ||
+    text.includes('nonfarm')
+  )
+    topics.push('Jobs');
+  if (
+    text.includes(' gdp ') ||
+    text.includes('economic growth') ||
+    text.includes('recession')
+  )
+    topics.push('GDP');
+  if (text.includes('treasury') || text.includes('bond yield'))
+    topics.push('Treasury');
+
+  // Market events
+  if (
+    text.includes('earnings') ||
+    text.includes('quarterly results') ||
+    text.includes('beat estimates')
+  )
+    topics.push('Earnings');
+  if (
+    text.includes(' ipo ') ||
+    text.includes('initial public offering') ||
+    text.includes('goes public')
+  )
+    topics.push('IPO');
+  if (
+    text.includes('merger') ||
+    text.includes('acquisition') ||
+    text.includes('buyout')
+  )
+    topics.push('M&A');
+  if (text.includes('dividend')) topics.push('Dividends');
+  if (text.includes('buyback') || text.includes('repurchase'))
+    topics.push('Buybacks');
+
+  // Sectors
+  if (
+    text.includes('artificial intelligence') ||
+    text.includes(' ai ') ||
+    text.includes('chatgpt') ||
+    text.includes('openai')
+  )
+    topics.push('AI');
+  if (
+    text.includes('technology') ||
+    text.includes('software') ||
+    text.includes('cloud computing')
+  )
+    topics.push('Tech');
+  if (
+    text.includes('semiconductor') ||
+    text.includes('chip') ||
+    tickers.includes('nvda') ||
+    tickers.includes('amd')
+  )
+    topics.push('Semis');
+  if (
+    text.includes('oil') ||
+    text.includes('crude') ||
+    text.includes('opec') ||
+    text.includes('energy')
+  )
+    topics.push('Energy');
+  if (text.includes('bank') || text.includes('financial')) topics.push('Banks');
+  if (
+    text.includes('healthcare') ||
+    text.includes('pharma') ||
+    text.includes('biotech')
+  )
+    topics.push('Healthcare');
+  if (
+    text.includes('electric vehicle') ||
+    text.includes(' ev ') ||
+    tickers.includes('tsla')
+  )
+    topics.push('EV');
+  if (text.includes('retail') || text.includes('consumer spending'))
+    topics.push('Retail');
+
+  // Global
+  if (
+    text.includes('wall street') ||
+    text.includes('u.s. market') ||
+    text.includes('american stocks')
+  )
+    topics.push('US');
+  if (text.includes('china') || text.includes('chinese')) topics.push('China');
+  if (text.includes('europe') || text.includes('european'))
+    topics.push('Europe');
+  if (
+    text.includes('japan') ||
+    text.includes('nikkei') ||
+    text.includes('japanese')
+  )
+    topics.push('Japan');
+  if (text.includes('emerging market') || text.includes('india'))
+    topics.push('Emerging');
+
+  // Assets
+  if (
+    text.includes('bitcoin') ||
+    text.includes('crypto') ||
+    text.includes('ethereum')
+  )
+    topics.push('Crypto');
+  if (text.includes('gold') || text.includes('precious metal'))
+    topics.push('Gold');
+  if (
+    text.includes('commodity') ||
+    text.includes('commodities') ||
+    text.includes('copper')
+  )
+    topics.push('Commodities');
+
+  // Deduplicate
+  return [...new Set(topics)];
 }
 
 serve(async (req) => {
@@ -465,10 +575,10 @@ serve(async (req) => {
       });
     }
 
-    // Get holdings for the portfolio
+    // Get holdings for the portfolio with finnhub_ticker from stocks table
     let holdingsQuery = supabase
       .from('holdings')
-      .select('stock_id, ticker, stock_name');
+      .select('stock_id, ticker, stock_name, stocks(finnhub_ticker)');
 
     if (portfolioId) {
       holdingsQuery = holdingsQuery.eq('portfolio_id', portfolioId);
@@ -487,10 +597,23 @@ serve(async (req) => {
       );
     }
 
-    // Deduplicate by ticker
+    // Deduplicate by ticker and extract finnhub_ticker
     const uniqueHoldings = [
-      ...new Map(holdings.map((h: any) => [h.ticker, h])).values(),
-    ] as { ticker: string; stock_name: string }[];
+      ...new Map(
+        holdings.map((h: any) => [
+          h.ticker,
+          {
+            ticker: h.ticker,
+            stock_name: h.stock_name,
+            finnhub_ticker: h.stocks?.finnhub_ticker || null,
+          },
+        ])
+      ).values(),
+    ] as {
+      ticker: string;
+      stock_name: string;
+      finnhub_ticker: string | null;
+    }[];
 
     // Fetch news for all tickers in parallel
     const results: TickerNews[] = [];
@@ -502,7 +625,11 @@ serve(async (req) => {
       const batch = uniqueHoldings.slice(i, i + batchSize);
       const batchResults = await Promise.all(
         batch.map((holding) =>
-          fetchTickerNews(holding.ticker, holding.stock_name)
+          fetchTickerNews(
+            holding.ticker,
+            holding.stock_name,
+            holding.finnhub_ticker || undefined
+          )
         )
       );
 

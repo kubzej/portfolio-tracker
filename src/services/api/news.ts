@@ -141,12 +141,12 @@ export function getSentimentLabel(
 ): string {
   switch (label) {
     case 'positive':
-      return '📈 Positive';
+      return 'Positive';
     case 'negative':
-      return '📉 Negative';
+      return 'Negative';
     case 'neutral':
-      return '➡️ Neutral';
+      return 'Neutral';
     default:
-      return '❓ Unknown';
+      return 'Unknown';
   }
 }

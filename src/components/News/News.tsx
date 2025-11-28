@@ -543,9 +543,9 @@ export function News({ portfolioId }: NewsProps) {
           onChange={setFilterSentiment}
           options={[
             { value: 'all', label: 'All Sentiment' },
-            { value: 'positive', label: '📈 Positive' },
-            { value: 'neutral', label: '➡️ Neutral' },
-            { value: 'negative', label: '📉 Negative' },
+            { value: 'positive', label: 'Positive' },
+            { value: 'neutral', label: 'Neutral' },
+            { value: 'negative', label: 'Negative' },
           ]}
           label="Sentiment"
           title="Filter by Sentiment"
