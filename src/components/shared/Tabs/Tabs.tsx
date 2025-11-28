@@ -1,3 +1,4 @@
+import { cn } from '@/utils/cn';
 import './Tabs.css';
 
 export interface TabOption {
@@ -18,15 +19,15 @@ export function Tabs({
   onChange,
   options,
   disabled,
-  className = '',
+  className,
 }: TabsProps) {
   return (
-    <div className={`tabs ${className}`}>
+    <div className={cn('tabs', className)}>
       {options.map((option) => (
         <button
           key={option.value}
           type="button"
-          className={`tab-btn ${value === option.value ? 'active' : ''}`}
+          className={cn('tab-btn', value === option.value && 'active')}
           onClick={() => onChange(option.value)}
           disabled={disabled}
         >

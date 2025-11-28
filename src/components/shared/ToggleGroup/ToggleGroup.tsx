@@ -1,3 +1,4 @@
+import { cn } from '@/utils/cn';
 import './ToggleGroup.css';
 
 export interface ToggleOption {
@@ -18,15 +19,15 @@ export function ToggleGroup({
   onChange,
   options,
   disabled,
-  className = '',
+  className,
 }: ToggleGroupProps) {
   return (
-    <div className={`toggle-group ${className}`}>
+    <div className={cn('toggle-group', className)}>
       {options.map((option) => (
         <button
           key={option.value}
           type="button"
-          className={`toggle-option ${value === option.value ? 'active' : ''}`}
+          className={cn('toggle-option', value === option.value && 'active')}
           onClick={() => onChange(option.value)}
           disabled={disabled}
         >

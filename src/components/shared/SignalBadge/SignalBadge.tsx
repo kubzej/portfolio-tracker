@@ -1,5 +1,6 @@
 import type { SignalType } from '@/utils/recommendations';
 import { SIGNAL_CONFIG } from '@/utils/signals';
+import { cn } from '@/utils/cn';
 import './SignalBadge.css';
 
 interface SignalBadgeProps {
@@ -17,7 +18,11 @@ export function SignalBadge({
 
   return (
     <span
-      className={`signal-badge signal-badge--${config.class} signal-badge--${size}`}
+      className={cn(
+        'signal-badge',
+        `signal-badge--${config.class}`,
+        `signal-badge--${size}`
+      )}
       title={showTooltip ? config.description : undefined}
     >
       {config.label}

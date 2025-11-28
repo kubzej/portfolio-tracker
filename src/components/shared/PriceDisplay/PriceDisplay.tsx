@@ -1,4 +1,5 @@
 import { formatCurrency, formatPercent } from '@/utils/format';
+import { cn } from '@/utils/cn';
 import './PriceDisplay.css';
 
 interface PriceDisplayProps {
@@ -33,17 +34,19 @@ export function PriceDisplay({
         : ''
       : '';
 
-  const containerClass = `price-display price-display--${size} ${
-    inline ? 'price-display--inline' : ''
-  }`;
-
   return (
-    <div className={containerClass}>
+    <div
+      className={cn(
+        'price-display',
+        `price-display--${size}`,
+        inline && 'price-display--inline'
+      )}
+    >
       <span className="price-display-value">
         {formatCurrency(price, currency)}
       </span>
       {showChange && changePercent !== null && changePercent !== undefined && (
-        <span className={`price-display-change ${changeClass}`}>
+        <span className={cn('price-display-change', changeClass)}>
           {change !== null && change !== undefined && (
             <span className="price-display-change-value">
               {change > 0 ? '+' : ''}

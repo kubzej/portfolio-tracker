@@ -1,3 +1,4 @@
+import { cn } from '@/utils/cn';
 import './ScoreCard.css';
 
 interface ScoreCardProps {
@@ -47,15 +48,15 @@ export function ScoreCard({
     value !== null ? Math.min((value / maxValue) * 100, 100) : 0;
 
   return (
-    <div className={`score-card score-card--${size}`}>
+    <div className={cn('score-card', `score-card--${size}`)}>
       <span className="score-card-label">{label}</span>
-      <span className={`score-card-value ${sentimentClass}`}>
+      <span className={cn('score-card-value', sentimentClass)}>
         {value !== null ? `${value.toFixed(0)}${suffix}` : '—'}
       </span>
       {showBar && value !== null && (
         <div className="score-card-bar">
           <div
-            className={`score-card-bar-fill ${sentimentClass}`}
+            className={cn('score-card-bar-fill', sentimentClass)}
             style={{ width: `${percentage}%` }}
           />
         </div>

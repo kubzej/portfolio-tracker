@@ -1,4 +1,5 @@
 import { InfoTooltip } from '../InfoTooltip';
+import { cn } from '@/utils/cn';
 import './MetricRow.css';
 
 interface MetricRowProps {
@@ -31,9 +32,7 @@ export function MetricRow({
         {label}
         {tooltip && <InfoTooltip text={tooltip} />}
       </span>
-      <span className={`metric-row-value ${sentiment || ''}`}>
-        {displayValue}
-      </span>
+      <span className={cn('metric-row-value', sentiment)}>{displayValue}</span>
     </div>
   );
 }

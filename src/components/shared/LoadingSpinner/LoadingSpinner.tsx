@@ -1,3 +1,4 @@
+import { cn } from '@/utils/cn';
 import './LoadingSpinner.css';
 
 interface LoadingSpinnerProps {
@@ -13,7 +14,7 @@ export function LoadingSpinner({
 }: LoadingSpinnerProps) {
   const content = (
     <>
-      <div className={`loading-spinner loading-spinner--${size}`} />
+      <div className={cn('loading-spinner', `loading-spinner--${size}`)} />
       {text && <p className="loading-spinner-text">{text}</p>}
     </>
   );

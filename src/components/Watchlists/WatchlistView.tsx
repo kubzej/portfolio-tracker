@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type {
   Watchlist,
   WatchlistItemWithCalculations,
@@ -14,8 +14,10 @@ import {
   BottomSheetSelect,
   type SelectOption,
 } from '@/components/shared/BottomSheet';
+import { useSortable } from '@/hooks';
 import { AddStockForm } from './AddStockForm';
 import { formatCurrency } from '@/utils/format';
+import { cn } from '@/utils/cn';
 import './Watchlists.css';
 
 type SortField =
@@ -24,7 +26,6 @@ type SortField =
   | 'last_price_change_percent'
   | 'target_buy_price'
   | 'target_sell_price';
-type SortDirection = 'asc' | 'desc';
 
 const SORT_OPTIONS: SelectOption[] = [
   { value: 'ticker-asc', label: 'Ticker (A-Z)' },
@@ -58,75 +59,43 @@ export function WatchlistView({
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingItem, setEditingItem] =
     useState<WatchlistItemWithCalculations | null>(null);
-  const [sortField, setSortField] = useState<SortField>('ticker');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
-  // Sort items
-  const sortedItems = useMemo(() => {
-    return [...items].sort((a, b) => {
-      let aVal: number | string | null;
-      let bVal: number | string | null;
-
-      switch (sortField) {
+  // Value extractor for sorting
+  const getItemValue = useCallback(
+    (item: WatchlistItemWithCalculations, field: SortField) => {
+      switch (field) {
         case 'ticker':
-          aVal = a.ticker;
-          bVal = b.ticker;
-          break;
+          return item.ticker;
         case 'last_price':
-          aVal = a.last_price;
-          bVal = b.last_price;
-          break;
+          return item.last_price;
         case 'last_price_change_percent':
-          aVal = a.last_price_change_percent;
-          bVal = b.last_price_change_percent;
-          break;
+          return item.last_price_change_percent;
         case 'target_buy_price':
-          aVal = a.target_buy_price;
-          bVal = b.target_buy_price;
-          break;
+          return item.target_buy_price;
         case 'target_sell_price':
-          aVal = a.target_sell_price;
-          bVal = b.target_sell_price;
-          break;
+          return item.target_sell_price;
         default:
-          return 0;
+          return null;
       }
+    },
+    []
+  );
 
-      // Handle nulls - push to end
-      if (aVal === null && bVal === null) return 0;
-      if (aVal === null) return 1;
-      if (bVal === null) return -1;
-
-      // Compare
-      if (typeof aVal === 'string' && typeof bVal === 'string') {
-        return sortDirection === 'asc'
-          ? aVal.localeCompare(bVal)
-          : bVal.localeCompare(aVal);
-      }
-
-      return sortDirection === 'asc'
-        ? (aVal as number) - (bVal as number)
-        : (bVal as number) - (aVal as number);
-    });
-  }, [items, sortField, sortDirection]);
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortField(field);
-      setSortDirection(field === 'ticker' ? 'asc' : 'desc');
+  const {
+    sortedData: sortedItems,
+    sortValue,
+    handleSort,
+    setSortFromValue,
+    getSortIndicator,
+    isSorted,
+  } = useSortable<WatchlistItemWithCalculations, SortField>(
+    items,
+    getItemValue,
+    {
+      defaultField: 'ticker',
+      ascendingFields: ['ticker'],
     }
-  };
-
-  const getSortIndicator = (field: SortField) => {
-    if (sortField !== field) return null;
-    return (
-      <span className="sort-indicator">
-        {sortDirection === 'asc' ? '▲' : '▼'}
-      </span>
-    );
-  };
+  );
 
   useEffect(() => {
     loadData();
@@ -292,15 +261,8 @@ export function WatchlistView({
             <BottomSheetSelect
               label="Sort by"
               options={SORT_OPTIONS}
-              value={`${sortField}-${sortDirection}`}
-              onChange={(value) => {
-                const [field, dir] = value.split('-') as [
-                  SortField,
-                  SortDirection
-                ];
-                setSortField(field);
-                setSortDirection(dir);
-              }}
+              value={sortValue}
+              onChange={setSortFromValue}
             />
           </div>
 
@@ -309,41 +271,47 @@ export function WatchlistView({
             <thead>
               <tr>
                 <th
-                  className={`sortable ${
-                    sortField === 'ticker' ? 'sorted' : ''
-                  }`}
+                  className={cn('sortable', isSorted('ticker') && 'sorted')}
                   onClick={() => handleSort('ticker')}
                 >
                   Ticker {getSortIndicator('ticker')}
                 </th>
                 <th
-                  className={`text-right sortable ${
-                    sortField === 'last_price' ? 'sorted' : ''
-                  }`}
+                  className={cn(
+                    'text-right',
+                    'sortable',
+                    isSorted('last_price') && 'sorted'
+                  )}
                   onClick={() => handleSort('last_price')}
                 >
                   Price {getSortIndicator('last_price')}
                 </th>
                 <th
-                  className={`text-right sortable ${
-                    sortField === 'last_price_change_percent' ? 'sorted' : ''
-                  }`}
+                  className={cn(
+                    'text-right',
+                    'sortable',
+                    isSorted('last_price_change_percent') && 'sorted'
+                  )}
                   onClick={() => handleSort('last_price_change_percent')}
                 >
                   Change {getSortIndicator('last_price_change_percent')}
                 </th>
                 <th
-                  className={`text-right sortable ${
-                    sortField === 'target_buy_price' ? 'sorted' : ''
-                  }`}
+                  className={cn(
+                    'text-right',
+                    'sortable',
+                    isSorted('target_buy_price') && 'sorted'
+                  )}
                   onClick={() => handleSort('target_buy_price')}
                 >
                   Buy Target {getSortIndicator('target_buy_price')}
                 </th>
                 <th
-                  className={`text-right sortable ${
-                    sortField === 'target_sell_price' ? 'sorted' : ''
-                  }`}
+                  className={cn(
+                    'text-right',
+                    'sortable',
+                    isSorted('target_sell_price') && 'sorted'
+                  )}
                   onClick={() => handleSort('target_sell_price')}
                 >
                   Sell Target {getSortIndicator('target_sell_price')}
@@ -371,9 +339,10 @@ export function WatchlistView({
                       : '—'}
                   </td>
                   <td
-                    className={`text-right ${getPriceClass(
-                      item.last_price_change_percent
-                    )}`}
+                    className={cn(
+                      'text-right',
+                      getPriceClass(item.last_price_change_percent)
+                    )}
                   >
                     {item.last_price_change_percent !== null ? (
                       <div className="dual-value">
@@ -500,9 +469,10 @@ export function WatchlistView({
                       : '—'}
                   </span>
                   <span
-                    className={`change ${getPriceClass(
-                      item.last_price_change_percent
-                    )}`}
+                    className={cn(
+                      'change',
+                      getPriceClass(item.last_price_change_percent)
+                    )}
                   >
                     {item.last_price_change_percent !== null
                       ? `${
@@ -515,9 +485,10 @@ export function WatchlistView({
                 <div className="item-card-targets">
                   {item.target_buy_price && (
                     <div
-                      className={`target-row ${
-                        item.at_buy_target ? 'target-hit' : ''
-                      }`}
+                      className={cn(
+                        'target-row',
+                        item.at_buy_target && 'target-hit'
+                      )}
                     >
                       <span className="target-label">Buy:</span>
                       <span className="target-value">
@@ -536,9 +507,10 @@ export function WatchlistView({
                   )}
                   {item.target_sell_price && (
                     <div
-                      className={`target-row ${
-                        item.at_sell_target ? 'target-hit' : ''
-                      }`}
+                      className={cn(
+                        'target-row',
+                        item.at_sell_target && 'target-hit'
+                      )}
                     >
                       <span className="target-label">Sell:</span>
                       <span className="target-value">
