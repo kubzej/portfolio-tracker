@@ -323,51 +323,23 @@ export function ResearchSummary({
 
       {/* Analyst Consensus - always show */}
       <section className="summary-section">
-        <h3 className="section-title">Analyst Consensus</h3>
+        <h3 className="section-title">
+          Analyst Consensus
+          {analystData.numberOfAnalysts && analystData.numberOfAnalysts > 0 && (
+            <span className="title-meta">
+              {analystData.numberOfAnalysts} analysts
+            </span>
+          )}
+        </h3>
         <div className="analyst-consensus">
           {analystData.numberOfAnalysts && analystData.numberOfAnalysts > 0 ? (
-            <>
-              <div className="consensus-header">
-                <span
-                  className={cn(
-                    'consensus-label',
-                    getConsensusClass(analystData.consensusScore)
-                  )}
-                >
-                  {analystData.recommendationKey ?? 'N/A'}
-                </span>
-                <span className="analyst-count">
-                  {analystData.numberOfAnalysts} analysts
-                </span>
-              </div>
-              <div className="ratings-bar">
-                <RatingSegment
-                  count={analystData.strongBuy ?? 0}
-                  label="Strong Buy"
-                  type="strong-buy"
-                />
-                <RatingSegment
-                  count={analystData.buy ?? 0}
-                  label="Buy"
-                  type="buy"
-                />
-                <RatingSegment
-                  count={analystData.hold ?? 0}
-                  label="Hold"
-                  type="hold"
-                />
-                <RatingSegment
-                  count={analystData.sell ?? 0}
-                  label="Sell"
-                  type="sell"
-                />
-                <RatingSegment
-                  count={analystData.strongSell ?? 0}
-                  label="Strong Sell"
-                  type="strong-sell"
-                />
-              </div>
-            </>
+            <AnalystRatings
+              strongBuy={analystData.strongBuy ?? 0}
+              buy={analystData.buy ?? 0}
+              hold={analystData.hold ?? 0}
+              sell={analystData.sell ?? 0}
+              strongSell={analystData.strongSell ?? 0}
+            />
           ) : (
             <div className="no-analyst-data">
               <span className="no-data-icon">—</span>
@@ -422,31 +394,56 @@ function getScoreClass(score: number): string {
   return 'score-low';
 }
 
-function getConsensusClass(score: number | null): string {
-  if (score === null) return '';
-  if (score > 1) return 'strong-buy';
-  if (score > 0.5) return 'buy';
-  if (score > -0.5) return 'hold';
-  if (score > -1) return 'sell';
-  return 'strong-sell';
+// Simple Analyst Ratings display
+interface AnalystRatingsProps {
+  strongBuy: number;
+  buy: number;
+  hold: number;
+  sell: number;
+  strongSell: number;
 }
 
-// Rating segment for the bar
-interface RatingSegmentProps {
-  count: number;
-  label: string;
-  type: string;
-}
-
-function RatingSegment({ count, label, type }: RatingSegmentProps) {
-  if (count === 0) return null;
+function AnalystRatings({
+  strongBuy,
+  buy,
+  hold,
+  sell,
+  strongSell,
+}: AnalystRatingsProps) {
+  const ratings = [
+    {
+      key: 'strong-buy',
+      label: 'Strong Buy',
+      count: strongBuy,
+      color: '#059669',
+    },
+    { key: 'buy', label: 'Buy', count: buy, color: '#10b981' },
+    { key: 'hold', label: 'Hold', count: hold, color: '#f59e0b' },
+    { key: 'sell', label: 'Sell', count: sell, color: '#f97316' },
+    {
+      key: 'strong-sell',
+      label: 'Strong Sell',
+      count: strongSell,
+      color: '#ef4444',
+    },
+  ];
 
   return (
-    <div
-      className={cn('rating-segment', `rating-segment--${type}`)}
-      title={`${label}: ${count}`}
-    >
-      <span className="rating-count">{count}</span>
+    <div className="ratings-labels">
+      {ratings.map((rating) => (
+        <div key={rating.key} className="rating-label-item">
+          <span
+            className="rating-dot"
+            style={{ backgroundColor: rating.color }}
+          />
+          <span className="rating-label-text">{rating.label}</span>
+          <span
+            className={cn('rating-label-count', rating.count === 0 && 'zero')}
+          >
+            {rating.count}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }

@@ -841,8 +841,7 @@
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1px;
-  background: var(--border-light);
+  gap: 6px;
   border-radius: var(--radius-md);
   overflow: hidden;
 }
@@ -1145,7 +1144,7 @@
   padding: 0.875rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-light);
+  border: 0px solid var(--border-light);
 }
 
 .points-header {

@@ -350,93 +350,47 @@
 .analyst-consensus {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
 }
 
-.consensus-header {
+.title-meta {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-left: 0.5rem;
+}
+
+/* Ratings Labels Row */
+.ratings-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+}
+
+.rating-label-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
 }
 
-.consensus-label {
-  font-size: 1.125rem;
-  font-weight: 600;
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.375rem;
+.rating-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
-.consensus-label.strong-buy {
-  background: rgba(16, 185, 129, 0.15);
-  color: #059669;
-}
-
-.consensus-label.buy {
-  background: rgba(52, 211, 153, 0.15);
-  color: #10b981;
-}
-
-.consensus-label.hold {
-  background: rgba(245, 158, 11, 0.15);
-  color: var(--warning-color);
-}
-
-.consensus-label.sell {
-  background: rgba(251, 146, 60, 0.15);
-  color: #f97316;
-}
-
-.consensus-label.strong-sell {
-  background: rgba(239, 68, 68, 0.15);
-  color: var(--danger-color);
-}
-
-.analyst-count {
-  font-size: 0.875rem;
+.rating-label-text {
   color: var(--text-secondary);
 }
 
-.ratings-bar {
-  display: flex;
-  height: 32px;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  background: var(--bg-secondary);
-}
-
-.rating-segment {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 30px;
-  padding: 0 0.5rem;
-  font-size: 0.75rem;
+.rating-label-count {
   font-weight: 600;
-  color: white;
+  color: var(--text-primary);
 }
 
-.rating-segment--strong-buy {
-  background: #059669;
-}
-
-.rating-segment--buy {
-  background: #10b981;
-}
-
-.rating-segment--hold {
-  background: var(--warning-color);
-}
-
-.rating-segment--sell {
-  background: #f97316;
-}
-
-.rating-segment--strong-sell {
-  background: var(--danger-color);
-}
-
-.rating-count {
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+.rating-label-count.zero {
+  color: var(--text-muted);
 }
 
 /* No Analyst Data */
