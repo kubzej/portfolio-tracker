@@ -218,9 +218,7 @@ export function StockDetail({
         </div>
 
         {transactions.length === 0 ? (
-          <EmptyState
-            title="No transactions yet"
-          />
+          <EmptyState title="No transactions yet" />
         ) : (
           <>
             {/* Mobile Cards View */}

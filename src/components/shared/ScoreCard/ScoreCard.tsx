@@ -43,7 +43,8 @@ export function ScoreCard({
   };
 
   const sentimentClass = getSentimentClass();
-  const percentage = value !== null ? Math.min((value / maxValue) * 100, 100) : 0;
+  const percentage =
+    value !== null ? Math.min((value / maxValue) * 100, 100) : 0;
 
   return (
     <div className={`score-card score-card--${size}`}>

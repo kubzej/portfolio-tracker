@@ -55,8 +55,8 @@ export function StocksList({ onStockClick }: StocksListProps) {
           title="No stocks yet"
           description="Add your first stock to get started!"
           action={{
-            label: "+ Add Stock",
-            onClick: () => setShowAddModal(true)
+            label: '+ Add Stock',
+            onClick: () => setShowAddModal(true),
           }}
         />
       ) : (

@@ -11,7 +11,13 @@ import {
 import { fetchPortfolioNews, type NewsArticle } from '@/services/api/news';
 import { TechnicalChart } from './TechnicalChart';
 import { Recommendations as RecommendationsComponent } from './Recommendations';
-import { InfoTooltip, Button, LoadingSpinner, EmptyState, ErrorState } from '@/components/shared';
+import {
+  InfoTooltip,
+  Button,
+  LoadingSpinner,
+  EmptyState,
+  ErrorState,
+} from '@/components/shared';
 import { Tabs } from '@/components/shared/Tabs';
 import { holdingsApi } from '@/services/api';
 import {

@@ -29,11 +29,13 @@ export function PriceDisplay({
       ? changePercent > 0
         ? 'positive'
         : changePercent < 0
-          ? 'negative'
-          : ''
+        ? 'negative'
+        : ''
       : '';
 
-  const containerClass = `price-display price-display--${size} ${inline ? 'price-display--inline' : ''}`;
+  const containerClass = `price-display price-display--${size} ${
+    inline ? 'price-display--inline' : ''
+  }`;
 
   return (
     <div className={containerClass}>

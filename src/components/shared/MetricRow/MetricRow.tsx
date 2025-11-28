@@ -21,7 +21,9 @@ export function MetricRow({
   const displayValue =
     value === null || value === undefined
       ? '—'
-      : `${prefix}${typeof value === 'number' ? value.toLocaleString('cs-CZ') : value}${suffix}`;
+      : `${prefix}${
+          typeof value === 'number' ? value.toLocaleString('cs-CZ') : value
+        }${suffix}`;
 
   return (
     <div className="metric-row">

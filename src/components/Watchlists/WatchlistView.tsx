@@ -4,7 +4,12 @@ import type {
   WatchlistItemWithCalculations,
 } from '@/types/database';
 import { watchlistsApi, watchlistItemsApi } from '@/services/api';
-import { Button, LoadingSpinner, EmptyState, ErrorState } from '@/components/shared';
+import {
+  Button,
+  LoadingSpinner,
+  EmptyState,
+  ErrorState,
+} from '@/components/shared';
 import {
   BottomSheetSelect,
   type SelectOption,
