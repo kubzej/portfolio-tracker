@@ -73,13 +73,13 @@ export function ColumnPicker({
     'size',
   ];
   const categoryLabels: Record<string, string> = {
-    valuation: '📊 Valuation',
-    profitability: '💰 Profitability',
-    growth: '📈 Growth',
-    risk: '⚠️ Risk',
-    dividend: '💵 Dividend',
-    performance: '🏆 Performance',
-    size: '📐 Size',
+    valuation: 'Valuation',
+    profitability: 'Profitability',
+    growth: 'Growth',
+    risk: 'Risk',
+    dividend: 'Dividend',
+    performance: 'Performance',
+    size: 'Size',
   };
 
   // Filter indicators by search
@@ -204,7 +204,7 @@ export function ColumnPicker({
     <div className="column-picker" ref={dropdownRef}>
       <div className="column-picker-header">
         <button className="picker-trigger" onClick={() => setIsOpen(!isOpen)}>
-          <span className="trigger-icon">⚙️</span>
+          <span className="trigger-icon">⚙</span>
           <span>Columns ({selectedKeys.length})</span>
           <span className={`dropdown-arrow ${isOpen ? 'open' : ''}`}>▼</span>
         </button>
@@ -549,7 +549,7 @@ export function ColumnPicker({
                           onClick={() => toggleCategory(cat)}
                         >
                           <span className="category-icon">
-                            {categoryLabels[cat]?.split(' ')[0] || '📊'}
+                            {categoryLabels[cat]?.split(' ')[0] || ''}
                           </span>
                           <span className="category-name">
                             {categoryLabels[cat]

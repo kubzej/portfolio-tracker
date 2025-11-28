@@ -9,6 +9,8 @@ import {
   LoadingSpinner,
   EmptyState,
   ErrorState,
+  EditIcon,
+  TrashIcon,
 } from '@/components/shared';
 import {
   BottomSheetSelect,
@@ -43,7 +45,11 @@ const SORT_OPTIONS: SelectOption[] = [
 interface WatchlistViewProps {
   watchlistId: string;
   onBack: () => void;
-  onOpenResearch?: (ticker: string) => void;
+  onOpenResearch?: (
+    ticker: string,
+    stockName?: string,
+    finnhubTicker?: string
+  ) => void;
 }
 
 export function WatchlistView({
@@ -327,7 +333,13 @@ export function WatchlistView({
                   <td className="ticker-cell">
                     <button
                       className="ticker-link"
-                      onClick={() => onOpenResearch?.(item.ticker)}
+                      onClick={() =>
+                        onOpenResearch?.(
+                          item.ticker,
+                          item.name ?? undefined,
+                          item.finnhub_ticker ?? undefined
+                        )
+                      }
                       title="Open research"
                     >
                       {item.ticker}
@@ -420,14 +432,14 @@ export function WatchlistView({
                       onClick={() => handleEditItem(item)}
                       title="Edit"
                     >
-                      ✏️
+                      <EditIcon size={14} />
                     </button>
                     <button
                       className="item-action-btn danger"
                       onClick={() => handleRemoveItem(item.id, item.ticker)}
                       title="Remove"
                     >
-                      🗑️
+                      <TrashIcon size={14} />
                     </button>
                   </td>
                 </tr>
@@ -442,7 +454,13 @@ export function WatchlistView({
                 <div className="item-card-header">
                   <button
                     className="ticker-link large"
-                    onClick={() => onOpenResearch?.(item.ticker)}
+                    onClick={() =>
+                      onOpenResearch?.(
+                        item.ticker,
+                        item.name ?? undefined,
+                        item.finnhub_ticker ?? undefined
+                      )
+                    }
                   >
                     {item.ticker}
                   </button>
@@ -451,13 +469,13 @@ export function WatchlistView({
                       className="item-action-btn"
                       onClick={() => handleEditItem(item)}
                     >
-                      ✏️
+                      <EditIcon size={14} />
                     </button>
                     <button
                       className="item-action-btn danger"
                       onClick={() => handleRemoveItem(item.id, item.ticker)}
                     >
-                      🗑️
+                      <TrashIcon size={14} />
                     </button>
                   </div>
                 </div>

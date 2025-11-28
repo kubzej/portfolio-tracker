@@ -1,0 +1,539 @@
+.research-technical {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.technical-section {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 1rem;
+}
+
+.no-data {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-muted);
+}
+
+/* Technical Outlook */
+.technical-outlook {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.bias-indicator {
+  font-size: 1.25rem;
+  font-weight: 700;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  text-transform: uppercase;
+}
+
+.bias-indicator.bullish {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success-color);
+}
+
+.bias-indicator.bearish {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger-color);
+}
+
+.bias-indicator.neutral {
+  background: rgba(107, 114, 128, 0.15);
+  color: var(--text-secondary);
+}
+
+.technical-score {
+  flex: 1;
+  min-width: 150px;
+}
+
+/* Metrics Grid - same as Fundamentals/Valuation */
+.research-technical .metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+/* Technical Metric Card */
+.technical-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 1rem 1.25rem;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.technical-metric-label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.technical-metric-value {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.technical-metric-value.positive {
+  color: var(--success-color);
+}
+
+.technical-metric-value.negative {
+  color: var(--danger-color);
+}
+
+.technical-metric-value.neutral {
+  color: var(--text-primary);
+}
+
+.sma-interpretation {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+/* Indicators Grid */
+.indicators-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.indicator-card {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 1rem 1.25rem;
+}
+
+.indicator-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.indicator-name {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.indicator-signal {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  text-transform: uppercase;
+}
+
+.indicator-signal.bullish {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success-color);
+}
+
+.indicator-signal.bearish {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger-color);
+}
+
+.indicator-signal.neutral {
+  background: rgba(107, 114, 128, 0.15);
+  color: var(--text-secondary);
+}
+
+.indicator-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.indicator-values {
+  display: flex;
+  gap: 1rem;
+  font-size: 1.125rem;
+  color: var(--text-primary);
+}
+
+.macd-values {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.macd-values .technical-metric {
+  padding: 0.5rem 0;
+  background: transparent;
+  box-shadow: none;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.macd-values .technical-metric-label {
+  font-size: 0.8125rem;
+}
+
+.macd-values .technical-metric-value {
+  font-size: 1rem;
+}
+
+/* NEW Momentum Grid - compact 3 columns */
+.momentum-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.momentum-card {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 1rem 1.25rem;
+}
+
+.momentum-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.momentum-name {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.momentum-signal {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  text-transform: uppercase;
+}
+
+.momentum-signal.bullish {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success-color);
+}
+
+.momentum-signal.bearish {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger-color);
+}
+
+.momentum-signal.neutral {
+  background: rgba(107, 114, 128, 0.15);
+  color: var(--text-secondary);
+}
+
+.momentum-value-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.momentum-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 50px;
+}
+
+/* RSI Bar - compact */
+.rsi-bar {
+  flex: 1;
+}
+
+.rsi-bar-track {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  overflow: visible;
+  display: flex;
+}
+
+.rsi-zone {
+  height: 100%;
+}
+
+.rsi-zone.oversold {
+  flex: 30;
+  background: rgba(16, 185, 129, 0.25);
+  border-radius: 3px 0 0 3px;
+}
+
+.rsi-zone.neutral {
+  flex: 40;
+  background: rgba(107, 114, 128, 0.15);
+}
+
+.rsi-zone.overbought {
+  flex: 30;
+  background: rgba(239, 68, 68, 0.25);
+  border-radius: 0 3px 3px 0;
+}
+
+.rsi-marker {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  background: var(--text-primary);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Stochastic compact */
+.stoch-values {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.stoch-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.stoch-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.stoch-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* MACD compact row */
+.macd-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.macd-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  flex: 1;
+}
+
+.macd-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.macd-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.macd-value.positive {
+  color: var(--success-color);
+}
+
+.macd-value.negative {
+  color: var(--danger-color);
+}
+
+/* RSI Bar */
+.indicator-bar {
+  margin-top: 0.5rem;
+}
+
+.indicator-bar-track {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.indicator-bar-zones {
+  display: flex;
+  height: 100%;
+}
+
+.indicator-bar-zones .zone {
+  flex: 1;
+}
+
+.indicator-bar-zones .zone.oversold {
+  background: rgba(16, 185, 129, 0.3);
+}
+
+.indicator-bar-zones .zone.neutral {
+  background: rgba(107, 114, 128, 0.2);
+}
+
+.indicator-bar-zones .zone.overbought {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+.indicator-bar-marker {
+  position: absolute;
+  top: -2px;
+  width: 12px;
+  height: 12px;
+  background: var(--primary-color);
+  border-radius: 50%;
+  transform: translateX(-50%);
+  border: 2px solid white;
+}
+
+.indicator-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+  font-size: 0.625rem;
+  color: var(--text-muted);
+}
+
+/* Bollinger Signal - compact badge */
+.bollinger-signal-row {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.bollinger-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.375rem 0.75rem;
+  border-radius: 1rem;
+  text-transform: uppercase;
+}
+
+.bollinger-badge.bullish {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--success-color);
+}
+
+.bollinger-badge.bearish {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--danger-color);
+}
+
+.bollinger-badge.neutral {
+  background: rgba(107, 114, 128, 0.12);
+  color: var(--text-secondary);
+}
+
+/* Fibonacci current level */
+.fib-current {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .research-technical .metrics-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .momentum-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .momentum-grid .momentum-card:last-child {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 640px) {
+  .technical-section {
+    padding: 1rem;
+  }
+
+  .technical-outlook {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .bias-indicator {
+    text-align: center;
+    width: 100%;
+  }
+
+  .indicators-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .momentum-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .momentum-grid .momentum-card:last-child {
+    grid-column: span 1;
+  }
+
+  .momentum-card {
+    padding: 0.875rem 1rem;
+  }
+
+  .momentum-value {
+    font-size: 1.25rem;
+  }
+
+  .stoch-value {
+    font-size: 1.125rem;
+  }
+
+  .research-technical .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .technical-metric {
+    padding: 0.875rem 1rem;
+  }
+}

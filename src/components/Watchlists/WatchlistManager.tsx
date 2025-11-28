@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react';
 import type { WatchlistSummary } from '@/types/database';
 import { watchlistsApi } from '@/services/api';
-import { Button, LoadingSpinner, EmptyState } from '@/components/shared';
+import {
+  Button,
+  LoadingSpinner,
+  EmptyState,
+  EditIcon,
+  TrashIcon,
+} from '@/components/shared';
 import { WatchlistForm } from './WatchlistForm';
 import './Watchlists.css';
 
@@ -122,14 +128,14 @@ export function WatchlistManager({ onSelectWatchlist }: WatchlistManagerProps) {
                       onClick={(e) => handleEdit(watchlist, e)}
                       title="Edit watchlist"
                     >
-                      ✏️
+                      <EditIcon size={14} />
                     </button>
                     <button
                       className="watchlist-action-btn danger"
                       onClick={(e) => handleDelete(watchlist.id, e)}
                       title="Delete watchlist"
                     >
-                      🗑️
+                      <TrashIcon size={14} />
                     </button>
                   </div>
                 </div>

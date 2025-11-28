@@ -1,0 +1,1 @@
+export { StockResearch } from './StockResearch';

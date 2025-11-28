@@ -905,11 +905,11 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       }`}
                     >
                       {data.macdTrend === 'bullish' &&
-                        '📈 Bullish momentum — MACD above signal line'}
+                        'Bullish momentum — MACD above signal line'}
                       {data.macdTrend === 'bearish' &&
-                        '📉 Bearish momentum — MACD below signal line'}
+                        'Bearish momentum — MACD below signal line'}
                       {data.macdTrend === 'neutral' &&
-                        '➡️ Neutral — Momentum transitioning'}
+                        'Neutral — Momentum transitioning'}
                       {data.macdTrend === null && 'Insufficient data'}
                     </div>
                   </div>
@@ -1075,9 +1075,9 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       }`}
                     >
                       {data.bollingerSignal === 'overbought' &&
-                        '⚠️ Price above upper band — potentially overbought'}
+                        'Price above upper band — potentially overbought'}
                       {data.bollingerSignal === 'oversold' &&
-                        '💡 Price below lower band — potentially oversold'}
+                        'Price below lower band — potentially oversold'}
                       {data.bollingerSignal === 'neutral' &&
                         '✅ Price within bands — normal trading range'}
                       {data.bollingerSignal === null && 'Insufficient data'}
@@ -1216,9 +1216,9 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       }`}
                     >
                       {data.stochasticSignal === 'overbought' &&
-                        '⚠️ Stochastic above 80 — potentially overbought'}
+                        'Stochastic above 80 — potentially overbought'}
                       {data.stochasticSignal === 'oversold' &&
-                        '💡 Stochastic below 20 — potentially oversold'}
+                        'Stochastic below 20 — potentially oversold'}
                       {data.stochasticSignal === 'neutral' &&
                         '✅ Stochastic in neutral zone — normal trading'}
                       {data.stochasticSignal === null && 'Insufficient data'}
@@ -1348,9 +1348,9 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       }`}
                     >
                       {data.volumeSignal === 'high' &&
-                        '📊 Volume above average — strong interest'}
+                        'Volume above average — strong interest'}
                       {data.volumeSignal === 'low' &&
-                        '📉 Volume below average — weak interest'}
+                        'Volume below average — weak interest'}
                       {data.volumeSignal === 'normal' &&
                         '✅ Volume near average — normal activity'}
                       {data.volumeSignal === null && 'Insufficient data'}
@@ -1500,7 +1500,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       }`}
                     >
                       {data.atrSignal === 'high' &&
-                        '⚡ High volatility — consider wider stop-losses'}
+                        'High volatility — consider wider stop-losses'}
                       {data.atrSignal === 'low' &&
                         '😴 Low volatility — stable but limited upside'}
                       {data.atrSignal === 'normal' &&
@@ -1519,7 +1519,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             {/* Section 10: OBV - On-Balance Volume */}
             <div className="tech-section obv-section">
               <div className="section-header">
-                <h4>📊 On-Balance Volume (OBV)</h4>
+                <h4>On-Balance Volume (OBV)</h4>
                 <TimeRangeSelector
                   value={obvTimeRange}
                   onChange={setObvTimeRange}
@@ -1593,9 +1593,9 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                               : ''
                           }`}
                         >
-                          {data.obvTrend === 'bullish' && '📈 Accumulation'}
-                          {data.obvTrend === 'bearish' && '📉 Distribution'}
-                          {data.obvTrend === 'neutral' && '➡️ Neutral'}
+                          {data.obvTrend === 'bullish' && 'Accumulation'}
+                          {data.obvTrend === 'bearish' && 'Distribution'}
+                          {data.obvTrend === 'neutral' && 'Neutral'}
                           {!data.obvTrend && 'N/A'}
                         </span>
                       </div>
@@ -1622,11 +1622,11 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       }`}
                     >
                       {data.obvTrend === 'bullish' &&
-                        '📈 Accumulation — volume flowing into stock'}
+                        'Accumulation — volume flowing into stock'}
                       {data.obvTrend === 'bearish' &&
-                        '📉 Distribution — volume leaving stock'}
+                        'Distribution — volume leaving stock'}
                       {data.obvTrend === 'neutral' &&
-                        '➡️ Neutral — no clear volume trend'}
+                        'Neutral — no clear volume trend'}
                       {!data.obvTrend && 'Insufficient data'}
                     </div>
                     {data.obvDivergence && (
@@ -1634,9 +1634,9 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                         className={`indicator-signal divergence ${data.obvDivergence}`}
                       >
                         {data.obvDivergence === 'bullish' &&
-                          '⚡ Bullish divergence: Price down, OBV up — possible reversal!'}
+                          'Bullish divergence: Price down, OBV up — possible reversal!'}
                         {data.obvDivergence === 'bearish' &&
-                          '⚠️ Bearish divergence: Price up, OBV down — caution!'}
+                          'Bearish divergence: Price up, OBV down — caution!'}
                       </div>
                     )}
                   </div>
@@ -1651,7 +1651,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             {/* Section 11: ADX - Average Directional Index */}
             <div className="tech-section adx-section">
               <div className="section-header">
-                <h4>📈 ADX (Average Directional Index)</h4>
+                <h4>ADX (Average Directional Index)</h4>
                 <TimeRangeSelector
                   value={adxTimeRange}
                   onChange={setAdxTimeRange}
@@ -1749,8 +1749,8 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                           }`}
                         >
                           {data.adxSignal === 'strong' && '💪 Very Strong'}
-                          {data.adxSignal === 'moderate' && '📈 Strong'}
-                          {data.adxSignal === 'weak' && '〰️ Weak'}
+                          {data.adxSignal === 'moderate' && 'Strong'}
+                          {data.adxSignal === 'weak' && 'Weak'}
                           {data.adxSignal === 'no-trend' && '😴 No Trend'}
                           {!data.adxSignal && 'N/A'}
                         </span>
@@ -1764,9 +1764,9 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       {data.adxSignal === 'strong' &&
                         '💪 Very strong trend — follow the momentum'}
                       {data.adxSignal === 'moderate' &&
-                        '📈 Strong trend — good for trend trades'}
+                        'Strong trend — good for trend trades'}
                       {data.adxSignal === 'weak' &&
-                        '〰️ Weak trend — be cautious'}
+                        'Weak trend — be cautious'}
                       {data.adxSignal === 'no-trend' &&
                         '😴 No trend — avoid trend strategies'}
                       {!data.adxSignal && 'Insufficient data'}
@@ -1780,7 +1780,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                         {data.adxTrend === 'bearish' &&
                           '🔴 -DI > +DI → Bears in control'}
                         {data.adxTrend === 'neutral' &&
-                          '➡️ +DI ≈ -DI → Undecided'}
+                          '+DI ≈ -DI → Undecided'}
                       </div>
                     )}
                   </div>
@@ -1795,7 +1795,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             {/* Section 12: Fibonacci Retracement */}
             <div className="tech-section fibonacci-section">
               <div className="section-header">
-                <h4>📐 Fibonacci Retracement</h4>
+                <h4>Fibonacci Retracement</h4>
                 <InfoTooltip text="Fibonacci retracementy identifikují klíčové úrovně podpory/odporu na základě poměrů (23.6%, 38.2%, 50%, 61.8%, 78.6%). Tyto úrovně často fungují jako body obratu při korekcích. 38.2% a 61.8% jsou nejdůležitější úrovně. Pokud cena prorazí 61.8%, je pravděpodobný pokračující trend." />
               </div>
 
@@ -1889,8 +1889,8 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                           }`}
                         >
                           {data.fibonacciLevels.trend === 'uptrend'
-                            ? '📈 Uptrend'
-                            : '📉 Downtrend'}
+                            ? 'Uptrend'
+                            : 'Downtrend'}
                         </span>
                       </div>
                       <div className="indicator-value">
@@ -1909,12 +1909,12 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       }`}
                     >
                       {data.fibonacciLevels.trend === 'uptrend'
-                        ? '📈 Uptrend — look for buy opportunities at 38.2% or 61.8% levels'
-                        : '📉 Downtrend — levels may act as resistance during rallies'}
+                        ? 'Uptrend — look for buy opportunities at 38.2% or 61.8% levels'
+                        : 'Downtrend — levels may act as resistance during rallies'}
                     </div>
                     {data.fibonacciLevels.currentLevel && (
                       <div className="indicator-signal highlight">
-                        ⚡ Price near{' '}
+                        Price near{' '}
                         <strong>{data.fibonacciLevels.currentLevel}</strong> —
                         watch for reaction!
                       </div>
@@ -1954,7 +1954,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                   </span>
                 </div>
                 <div className="usage-item">
-                  <strong>📊 Volume tip:</strong>
+                  <strong>Volume tip:</strong>
                   <span>
                     Objem potvrzuje cenové pohyby. Růst s vysokým objemem je
                     silnější než růst s nízkým objemem. Pokles s nízkým objemem
@@ -1962,7 +1962,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                   </span>
                 </div>
                 <div className="usage-item">
-                  <strong>⚠️ Důležité upozornění:</strong>
+                  <strong>Důležité upozornění:</strong>
                   <span>
                     Technická analýza funguje nejlépe v kombinaci s
                     fundamentální analýzou. Žádný indikátor není 100%

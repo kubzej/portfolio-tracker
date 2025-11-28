@@ -16,8 +16,13 @@ const CURRENCY_OPTIONS: SelectOption[] = [
   { value: 'USD', label: 'USD' },
   { value: 'EUR', label: 'EUR' },
   { value: 'GBP', label: 'GBP' },
-  { value: 'CZK', label: 'CZK' },
+  { value: 'JPY', label: 'JPY' },
+  { value: 'CHF', label: 'CHF' },
   { value: 'CAD', label: 'CAD' },
+  { value: 'AUD', label: 'AUD' },
+  { value: 'CNY', label: 'CNY' },
+  { value: 'CZK', label: 'CZK' },
+  { value: 'HKD', label: 'HKD' },
 ];
 
 interface AddTransactionModalProps {

@@ -83,6 +83,8 @@ export interface AnalystData {
   strongSell: number | null;
   numberOfAnalysts: number | null;
   recommendationPeriod: string | null; // When recommendations were last updated
+  // Analyst target price (from Yahoo Finance)
+  analystTargetPrice: number | null;
   // Earnings data (last 4 quarters)
   earnings: EarningsData[];
   // Fundamental metrics
@@ -133,7 +135,7 @@ export async function fetchSingleAnalystData(
   const { data, error } = await supabase.functions.invoke(
     'fetch-analyst-data',
     {
-      body: { ticker, stockName, finnhubTicker },
+      body: { ticker, stockName, finnhubTicker, _t: Date.now() },
     }
   );
 

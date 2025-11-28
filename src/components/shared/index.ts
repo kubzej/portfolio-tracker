@@ -8,3 +8,5 @@ export { PriceDisplay } from './PriceDisplay';
 export { ScoreCard } from './ScoreCard';
 export { MetricRow } from './MetricRow';
 export { SignalBadge } from './SignalBadge';
+export { Tabs } from './Tabs';
+export * from './Icons';

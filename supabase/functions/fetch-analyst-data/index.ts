@@ -95,6 +95,8 @@ interface AnalystData {
   strongSell: number | null;
   numberOfAnalysts: number | null;
   recommendationPeriod: string | null; // When recommendations were last updated
+  // Analyst target price (from Yahoo Finance)
+  analystTargetPrice: number | null;
   // Earnings data (last 4 quarters)
   earnings: EarningsData[];
   // Fundamental metrics
@@ -173,6 +175,7 @@ async function fetchAnalystData(
     strongSell: null,
     numberOfAnalysts: null,
     recommendationPeriod: null,
+    analystTargetPrice: null,
     earnings: [],
     fundamentals: emptyFundamentals,
     insiderSentiment: null,
@@ -331,6 +334,31 @@ async function fetchAnalystData(
       } catch (yahooError) {
         console.error(`Yahoo fallback failed for ${ticker}:`, yahooError);
       }
+    }
+
+    // Fetch analyst target price from Yahoo Finance (FREE)
+    let analystTargetPrice: number | null = null;
+    try {
+      const yahooSummaryUrl = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(
+        ticker
+      )}?modules=financialData`;
+      const yahooSummaryRes = await fetch(yahooSummaryUrl);
+
+      if (yahooSummaryRes.ok) {
+        const summaryData = await yahooSummaryRes.json();
+        const financialData =
+          summaryData?.quoteSummary?.result?.[0]?.financialData;
+
+        if (financialData) {
+          // Use targetMeanPrice (average of all analyst targets)
+          analystTargetPrice =
+            financialData.targetMeanPrice?.raw ??
+            financialData.targetMedianPrice?.raw ??
+            null;
+        }
+      }
+    } catch (targetError) {
+      console.error(`Yahoo target price failed for ${ticker}:`, targetError);
     }
 
     // Get latest recommendation (first item in array is most recent)
@@ -536,6 +564,7 @@ async function fetchAnalystData(
       strongSell,
       numberOfAnalysts,
       recommendationPeriod,
+      analystTargetPrice,
       earnings,
       fundamentals,
       insiderSentiment,

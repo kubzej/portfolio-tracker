@@ -9,7 +9,13 @@ import {
   formatDate,
 } from '@/utils/format';
 import { Button } from '@/components/shared/Button';
-import { LoadingSpinner, ErrorState, EmptyState } from '@/components/shared';
+import {
+  LoadingSpinner,
+  ErrorState,
+  EmptyState,
+  EditIcon,
+  TrashIcon,
+} from '@/components/shared';
 import { EditTransactionModal } from './EditTransactionModal';
 import { EditStockModal } from './EditStockModal';
 import { AddTransactionModal } from '../StocksList/AddTransactionModal';
@@ -239,7 +245,7 @@ export function StockDetail({
                         icon
                         onClick={() => startEditTransaction(tx)}
                       >
-                        ✏️
+                        <EditIcon size={14} />
                       </Button>
                       <Button
                         variant="ghost"
@@ -248,7 +254,7 @@ export function StockDetail({
                         className="danger"
                         onClick={() => handleDeleteTransaction(tx.id)}
                       >
-                        🗑️
+                        <TrashIcon size={14} />
                       </Button>
                     </div>
                   </div>
@@ -323,7 +329,7 @@ export function StockDetail({
                             icon
                             onClick={() => startEditTransaction(tx)}
                           >
-                            ✏️
+                            <EditIcon size={14} />
                           </Button>
                           <Button
                             variant="ghost"
@@ -332,7 +338,7 @@ export function StockDetail({
                             className="danger"
                             onClick={() => handleDeleteTransaction(tx.id)}
                           >
-                            🗑️
+                            <TrashIcon size={14} />
                           </Button>
                         </div>
                       </td>

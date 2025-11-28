@@ -61,7 +61,6 @@ export interface StockSignal {
   strength: number; // 0-100
   title: string;
   description: string;
-  icon: string;
   priority: number; // For sorting (lower = higher priority)
 }
 
@@ -131,6 +130,18 @@ export interface StockRecommendation {
     supportPrice: number | null;
   };
 
+  // Exit Strategy
+  exitStrategy: {
+    takeProfit1: number | null; // First partial exit (e.g., 25% at this level)
+    takeProfit2: number | null; // Second exit level
+    takeProfit3: number | null; // Final target
+    stopLoss: number | null;
+    trailingStopPercent: number | null;
+    holdingPeriod: 'SWING' | 'MEDIUM' | 'LONG'; // Recommended holding period
+    holdingReason: string;
+    resistanceLevel: number | null;
+  };
+
   // For signal logging
   metadata: {
     rsiValue: number | null;
@@ -161,18 +172,6 @@ const SCORE_WEIGHTS = {
   news: 0.1,
   insider: 0.1,
   portfolio: 0.2,
-};
-
-/** Signal icons */
-const SIGNAL_ICONS: Record<SignalType, string> = {
-  DIP_OPPORTUNITY: '🔥',
-  MOMENTUM: '📈',
-  CONVICTION_HOLD: '💎',
-  NEAR_TARGET: '🎯',
-  WATCH_CLOSELY: '⚠️',
-  CONSIDER_TRIM: '📉',
-  ACCUMULATE: '🔄',
-  NEUTRAL: '➖',
 };
 
 /** Signal priorities (lower = higher priority) */
@@ -1207,6 +1206,176 @@ function calculateBuyStrategy(
 }
 
 // ============================================================================
+// EXIT STRATEGY
+// ============================================================================
+
+interface ExitStrategy {
+  takeProfit1: number | null;
+  takeProfit2: number | null;
+  takeProfit3: number | null;
+  stopLoss: number | null;
+  trailingStopPercent: number | null;
+  holdingPeriod: 'SWING' | 'MEDIUM' | 'LONG';
+  holdingReason: string;
+  resistanceLevel: number | null;
+}
+
+/**
+ * Calculate Exit Strategy
+ * Determines take-profit levels, stop-loss, and recommended holding period
+ */
+function calculateExitStrategy(
+  item: EnrichedAnalystData,
+  tech: TechnicalData | undefined,
+  convictionLevel: 'HIGH' | 'MEDIUM' | 'LOW',
+  technicalBias: 'BULLISH' | 'BEARISH' | 'NEUTRAL'
+): ExitStrategy {
+  const currentPrice = item.currentPrice ?? 0;
+  const avgBuyPrice = item.avgBuyPrice;
+  const targetPrice = item.targetPrice ?? item.analystTargetPrice ?? null;
+  const fib = tech?.fibonacciLevels;
+
+  // Calculate resistance level (highest of key levels)
+  let resistanceLevel: number | null = null;
+  const resistanceLevels: number[] = [];
+
+  // Bollinger upper band
+  if (tech?.bollingerUpper !== null && tech?.bollingerUpper !== undefined) {
+    resistanceLevels.push(tech.bollingerUpper);
+  }
+
+  // 52-week high
+  if (item.fiftyTwoWeekHigh !== null) {
+    resistanceLevels.push(item.fiftyTwoWeekHigh);
+  }
+
+  // Fibonacci levels (if in downtrend, retracement levels are resistance)
+  if (fib && fib.trend === 'downtrend') {
+    resistanceLevels.push(fib.level382, fib.level500, fib.level618);
+  }
+
+  if (resistanceLevels.length > 0) {
+    // Use lowest resistance above current price
+    const aboveCurrent = resistanceLevels.filter((r) => r > currentPrice);
+    if (aboveCurrent.length > 0) {
+      resistanceLevel = Math.min(...aboveCurrent);
+    }
+  }
+
+  // Calculate take-profit levels
+  let takeProfit1: number | null = null;
+  let takeProfit2: number | null = null;
+  let takeProfit3: number | null = null;
+
+  if (currentPrice > 0) {
+    // TP1: 8-12% gain or first resistance
+    const tp1Percent = technicalBias === 'BULLISH' ? 0.12 : 0.08;
+    takeProfit1 = Math.round(currentPrice * (1 + tp1Percent) * 100) / 100;
+
+    // If resistance is closer, use that
+    if (resistanceLevel && resistanceLevel < takeProfit1) {
+      takeProfit1 = resistanceLevel;
+    }
+
+    // TP2: 20-25% gain or target price
+    const tp2Percent = technicalBias === 'BULLISH' ? 0.25 : 0.18;
+    takeProfit2 = Math.round(currentPrice * (1 + tp2Percent) * 100) / 100;
+
+    // If we have target price, use it as TP2 or TP3
+    if (targetPrice && targetPrice > currentPrice) {
+      if (targetPrice <= takeProfit1 * 1.1) {
+        // Target is close to TP1, make it TP1
+        takeProfit1 = targetPrice;
+        takeProfit2 = Math.round(targetPrice * 1.15 * 100) / 100;
+      } else if (targetPrice <= takeProfit2 * 1.1) {
+        // Target is close to TP2
+        takeProfit2 = targetPrice;
+      }
+    }
+
+    // TP3: 35-50% gain or 52w high
+    const tp3Percent = convictionLevel === 'HIGH' ? 0.5 : 0.35;
+    takeProfit3 = Math.round(currentPrice * (1 + tp3Percent) * 100) / 100;
+
+    // If target price is higher, use it for TP3
+    if (targetPrice && targetPrice > takeProfit2) {
+      takeProfit3 = targetPrice;
+    }
+
+    // If 52w high is achievable and higher than TP3, consider it
+    if (item.fiftyTwoWeekHigh && item.fiftyTwoWeekHigh > takeProfit3) {
+      takeProfit3 = item.fiftyTwoWeekHigh;
+    }
+  }
+
+  // Calculate stop-loss
+  let stopLoss: number | null = null;
+  if (currentPrice > 0 && avgBuyPrice > 0) {
+    // Base stop-loss on avg buy price (don't want to lose money)
+    // Allow 8-15% drawdown from avg depending on conviction
+    const maxDrawdown =
+      convictionLevel === 'HIGH'
+        ? 0.15
+        : convictionLevel === 'MEDIUM'
+        ? 0.12
+        : 0.08;
+    stopLoss = Math.round(avgBuyPrice * (1 - maxDrawdown) * 100) / 100;
+
+    // If we're already at a loss, use technical support
+    if (currentPrice < avgBuyPrice && tech?.bollingerLower) {
+      const technicalStop = tech.bollingerLower * 0.97; // 3% below Bollinger
+      stopLoss = Math.max(stopLoss, technicalStop);
+    }
+  }
+
+  // Trailing stop percentage
+  let trailingStopPercent: number | null = null;
+  if (convictionLevel === 'HIGH') {
+    trailingStopPercent = 15; // Wide trailing for high conviction
+  } else if (convictionLevel === 'MEDIUM') {
+    trailingStopPercent = 10;
+  } else {
+    trailingStopPercent = 7; // Tight for low conviction
+  }
+
+  // Determine holding period
+  let holdingPeriod: 'SWING' | 'MEDIUM' | 'LONG';
+  let holdingReason: string;
+
+  if (convictionLevel === 'HIGH' && technicalBias !== 'BEARISH') {
+    holdingPeriod = 'LONG';
+    holdingReason = 'Strong fundamentals and positive outlook';
+  } else if (convictionLevel === 'LOW' || technicalBias === 'BEARISH') {
+    holdingPeriod = 'SWING';
+    if (technicalBias === 'BEARISH') {
+      holdingReason = 'Bearish technicals - consider quick exit';
+    } else {
+      holdingReason = 'Weak fundamentals - trade momentum only';
+    }
+  } else {
+    holdingPeriod = 'MEDIUM';
+    holdingReason = 'Hold for target, reassess quarterly';
+  }
+
+  // Override for extreme cases
+  if (item.gainPercentage > 50 && convictionLevel !== 'HIGH') {
+    holdingPeriod = 'SWING';
+    holdingReason = 'Large unrealized gain - consider taking profits';
+  }
+
+  return {
+    takeProfit1,
+    takeProfit2,
+    takeProfit3,
+    stopLoss,
+    trailingStopPercent,
+    holdingPeriod,
+    holdingReason,
+    resistanceLevel,
+  };
+}
+
+// ============================================================================
 // CONVICTION SCORE
 // ============================================================================
 
@@ -1283,19 +1452,58 @@ function calculateConvictionScore(
   }
 
   // Target price upside (0-10 points)
+  // Priority: 1) Personal target (holdings), 2) Analyst target (from Yahoo), 3) Consensus proxy
+  let targetUpside: number | null = null;
+  let targetSource: 'personal' | 'analyst' | 'estimated' | null = null;
+
   if (
     item.targetPrice !== null &&
     item.currentPrice !== null &&
     item.currentPrice > 0
   ) {
-    const upside =
+    // Personal target price available (holdings)
+    targetUpside =
       ((item.targetPrice - item.currentPrice) / item.currentPrice) * 100;
-    if (upside > 25) {
+    targetSource = 'personal';
+  } else if (
+    'analystTargetPrice' in item &&
+    (item as { analystTargetPrice?: number | null }).analystTargetPrice !==
+      null &&
+    item.currentPrice !== null &&
+    item.currentPrice > 0
+  ) {
+    // Analyst target price from Yahoo Finance (research)
+    const analystTarget = (item as { analystTargetPrice: number })
+      .analystTargetPrice;
+    targetUpside =
+      ((analystTarget - item.currentPrice) / item.currentPrice) * 100;
+    targetSource = 'analyst';
+  } else if (item.consensusScore !== null) {
+    // Fallback: estimate upside from analyst consensus
+    if (item.consensusScore >= 1.5) {
+      targetUpside = 25;
+    } else if (item.consensusScore >= 1.0) {
+      targetUpside = 15;
+    } else if (item.consensusScore >= 0.5) {
+      targetUpside = 8;
+    }
+    targetSource = 'estimated';
+  }
+
+  if (targetUpside !== null) {
+    if (targetUpside > 25) {
       score += 10;
-      details.push(`${upside.toFixed(0)}% upside to target`);
-    } else if (upside > 15) {
+      if (targetSource === 'personal') {
+        details.push(`${targetUpside.toFixed(0)}% upside to target`);
+      } else if (targetSource === 'analyst') {
+        details.push(`${targetUpside.toFixed(0)}% upside to analyst target`);
+      }
+    } else if (targetUpside > 15) {
       score += 7;
-    } else if (upside > 5) {
+      if (targetSource === 'analyst') {
+        details.push(`${targetUpside.toFixed(0)}% upside to analyst target`);
+      }
+    } else if (targetUpside > 5) {
       score += 3;
     }
   }
@@ -1397,7 +1605,6 @@ function generateSignals(
       strength: dipScore,
       title: 'DIP Opportunity',
       description: `Oversold conditions (DIP score: ${dipScore}). Fundamentals check out.`,
-      icon: SIGNAL_ICONS.DIP_OPPORTUNITY,
       priority: SIGNAL_PRIORITIES.DIP_OPPORTUNITY,
     });
   }
@@ -1415,7 +1622,6 @@ function generateSignals(
       strength: technicalScore,
       title: 'Momentum Play',
       description: 'Technical indicators are bullish with confirmed trend.',
-      icon: SIGNAL_ICONS.MOMENTUM,
       priority: SIGNAL_PRIORITIES.MOMENTUM,
     });
   }
@@ -1428,7 +1634,6 @@ function generateSignals(
       title: 'High Conviction Hold',
       description:
         'Strong long-term fundamentals. Hold through short-term noise.',
-      icon: SIGNAL_ICONS.CONVICTION_HOLD,
       priority: SIGNAL_PRIORITIES.CONVICTION_HOLD,
     });
   }
@@ -1442,7 +1647,6 @@ function generateSignals(
       description: `Within ${Math.abs(targetUpside).toFixed(
         1
       )}% of analyst target.`,
-      icon: SIGNAL_ICONS.NEAR_TARGET,
       priority: SIGNAL_PRIORITIES.NEAR_TARGET,
     });
   }
@@ -1461,7 +1665,6 @@ function generateSignals(
       title: 'Consider Trimming',
       description:
         'Overbought, high weight, and near target. Consider taking some profits.',
-      icon: SIGNAL_ICONS.CONSIDER_TRIM,
       priority: SIGNAL_PRIORITIES.CONSIDER_TRIM,
     });
   }
@@ -1477,7 +1680,6 @@ function generateSignals(
       strength: 50,
       title: 'Watch Closely',
       description: 'Some metrics are deteriorating. Monitor for changes.',
-      icon: SIGNAL_ICONS.WATCH_CLOSELY,
       priority: SIGNAL_PRIORITIES.WATCH_CLOSELY,
     });
   }
@@ -1494,7 +1696,6 @@ function generateSignals(
       strength: 60,
       title: 'Accumulate',
       description: 'Good quality stock. Wait for better entry or DCA slowly.',
-      icon: SIGNAL_ICONS.ACCUMULATE,
       priority: SIGNAL_PRIORITIES.ACCUMULATE,
     });
   }
@@ -1506,7 +1707,6 @@ function generateSignals(
       strength: 50,
       title: 'No Strong Signal',
       description: 'No actionable signals at this time.',
-      icon: SIGNAL_ICONS.NEUTRAL,
       priority: SIGNAL_PRIORITIES.NEUTRAL,
     });
   }
@@ -1661,6 +1861,14 @@ export function generateRecommendation(
     isPrimarySignalBuyable
   );
 
+  // Calculate exit strategy
+  const exitStrategy = calculateExitStrategy(
+    item,
+    tech,
+    conviction.level,
+    technicalBias
+  );
+
   return {
     ticker: item.ticker,
     stockName: item.stockName,
@@ -1717,6 +1925,8 @@ export function generateRecommendation(
     technicalBias,
 
     buyStrategy,
+
+    exitStrategy,
 
     metadata: {
       rsiValue: tech?.rsi14 ?? null,

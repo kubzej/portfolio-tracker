@@ -345,3 +345,115 @@ export function getReturnClass(
   if (priceNow === null) return '';
   return priceNow > priceAt ? 'positive' : 'negative';
 }
+
+// ============================================================================
+// EXCHANGE / DATA AVAILABILITY UTILITIES
+// ============================================================================
+
+/**
+ * Exchanges where Finnhub FREE tier doesn't provide data
+ * These exchanges will have limited data (only Yahoo price data available)
+ */
+const LIMITED_DATA_EXCHANGES = [
+  '.HK', // Hong Kong
+  '.SS', // Shanghai
+  '.SZ', // Shenzhen
+  '.T', // Tokyo
+  '.KS', // Korea
+  '.TW', // Taiwan
+  '.SI', // Singapore
+  '.AX', // Australia
+  '.NZ', // New Zealand
+  '.BO', // Bombay
+  '.NS', // India NSE
+  '.JK', // Jakarta
+  '.KL', // Kuala Lumpur
+  '.BK', // Bangkok
+];
+
+/**
+ * Exchange info with display names
+ */
+const EXCHANGE_INFO: Record<string, { name: string; country: string }> = {
+  '.HK': { name: 'Hong Kong Stock Exchange', country: 'Hong Kong' },
+  '.SS': { name: 'Shanghai Stock Exchange', country: 'China' },
+  '.SZ': { name: 'Shenzhen Stock Exchange', country: 'China' },
+  '.T': { name: 'Tokyo Stock Exchange', country: 'Japan' },
+  '.KS': { name: 'Korea Exchange', country: 'South Korea' },
+  '.TW': { name: 'Taiwan Stock Exchange', country: 'Taiwan' },
+  '.SI': { name: 'Singapore Exchange', country: 'Singapore' },
+  '.AX': { name: 'Australian Securities Exchange', country: 'Australia' },
+  '.NZ': { name: 'New Zealand Exchange', country: 'New Zealand' },
+  '.BO': { name: 'Bombay Stock Exchange', country: 'India' },
+  '.NS': { name: 'National Stock Exchange', country: 'India' },
+  '.JK': { name: 'Indonesia Stock Exchange', country: 'Indonesia' },
+  '.KL': { name: 'Bursa Malaysia', country: 'Malaysia' },
+  '.BK': { name: 'Stock Exchange of Thailand', country: 'Thailand' },
+  '.DE': { name: 'XETRA', country: 'Germany' },
+  '.L': { name: 'London Stock Exchange', country: 'UK' },
+  '.PA': { name: 'Euronext Paris', country: 'France' },
+  '.AS': { name: 'Euronext Amsterdam', country: 'Netherlands' },
+  '.SW': { name: 'SIX Swiss Exchange', country: 'Switzerland' },
+  '.MI': { name: 'Borsa Italiana', country: 'Italy' },
+  '.MC': { name: 'Bolsa de Madrid', country: 'Spain' },
+  '.TO': { name: 'Toronto Stock Exchange', country: 'Canada' },
+};
+
+export interface ExchangeDataInfo {
+  ticker: string;
+  exchangeSuffix: string | null;
+  exchangeName: string;
+  country: string;
+  hasLimitedData: boolean;
+  isUSStock: boolean;
+}
+
+/**
+ * Get exchange information and data availability for a ticker
+ * @param ticker - The stock ticker (e.g., "AAPL", "1211.HK", "SAP.DE")
+ */
+export function getExchangeInfo(ticker: string): ExchangeDataInfo {
+  // Find exchange suffix
+  const suffixMatch = ticker.match(/(\.[A-Z]{1,2})$/);
+  const exchangeSuffix = suffixMatch ? suffixMatch[1] : null;
+
+  // Check if it's a US stock (no suffix)
+  const isUSStock = !exchangeSuffix;
+
+  // Get exchange details
+  const exchangeDetails = exchangeSuffix ? EXCHANGE_INFO[exchangeSuffix] : null;
+
+  // Check if this exchange has limited data
+  const hasLimitedData = exchangeSuffix
+    ? LIMITED_DATA_EXCHANGES.includes(exchangeSuffix)
+    : false;
+
+  return {
+    ticker,
+    exchangeSuffix,
+    exchangeName:
+      exchangeDetails?.name ?? (isUSStock ? 'US Markets' : 'Unknown Exchange'),
+    country: exchangeDetails?.country ?? (isUSStock ? 'USA' : 'Unknown'),
+    hasLimitedData,
+    isUSStock,
+  };
+}
+
+/**
+ * Check if a ticker has limited data availability (non-supported exchange)
+ * @param ticker - The stock ticker
+ */
+export function hasLimitedData(ticker: string): boolean {
+  return getExchangeInfo(ticker).hasLimitedData;
+}
+
+/**
+ * Get a user-friendly message about data limitations for a ticker
+ * @param ticker - The stock ticker
+ */
+export function getLimitedDataMessage(ticker: string): string | null {
+  const info = getExchangeInfo(ticker);
+  if (!info.hasLimitedData) return null;
+
+  return `Data for ${info.exchangeName} (${info.country}) stocks is limited. Only price data is available – analyst ratings, fundamentals, and insider data are not supported.`;
+}
