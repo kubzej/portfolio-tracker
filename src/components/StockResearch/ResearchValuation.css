@@ -17,7 +17,7 @@
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin: 0 0 0.75rem;
+  margin: 0 0 1rem;
 }
 
 .no-data {
@@ -26,11 +26,51 @@
   color: var(--text-muted);
 }
 
-/* Metrics Grid */
-.metrics-grid {
+/* Metrics Grid - same as Fundamentals */
+.research-valuation .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.5rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+/* Valuation Metric Card */
+.valuation-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 1rem 1.25rem;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.valuation-metric-label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.valuation-metric-value {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.valuation-metric-value.positive {
+  color: var(--success-color);
+}
+
+.valuation-metric-value.negative {
+  color: var(--danger-color);
+}
+
+.valuation-metric-value.neutral {
+  color: var(--text-primary);
 }
 
 /* Valuation Analysis */
@@ -42,8 +82,9 @@
 
 .valuation-method {
   padding: 1rem;
-  background: var(--bg-secondary);
+  background: white;
   border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .method-header {
@@ -93,7 +134,6 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
-  text-align: center;
 }
 
 .target-price,
@@ -101,14 +141,17 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  padding: 1rem;
-  background: var(--bg-secondary);
+  padding: 1rem 1.25rem;
+  background: white;
   border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  text-align: center;
 }
 
 .target-price .label,
 .target-upside .label {
   font-size: 0.75rem;
+  font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
 }
@@ -128,21 +171,25 @@
   color: var(--danger-color);
 }
 
-/* Price Context */
-.price-context {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.5rem;
+/* Responsive */
+@media (max-width: 1024px) {
+  .research-valuation .metrics-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
-/* Mobile */
 @media (max-width: 640px) {
   .valuation-section {
     padding: 1rem;
   }
 
-  .metrics-grid {
-    grid-template-columns: 1fr;
+  .research-valuation .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .valuation-metric {
+    padding: 0.875rem 1rem;
   }
 
   .target-analysis {
