@@ -32,10 +32,14 @@ import {
   deleteView,
   updateView,
   DEFAULT_INDICATOR_KEYS,
-  formatLargeNumber,
   type AnalysisIndicator,
   type UserAnalysisView,
 } from '@/services/api/indicators';
+import {
+  formatIndicatorValue,
+  getIndicatorValueClass,
+  getInsiderSentimentLabel,
+} from '@/utils/format';
 import {
   generateAllRecommendations,
   getFilteredInsiderSentiment,
@@ -464,61 +468,9 @@ export function Analysis({ portfolioId }: AnalysisProps) {
     return typeof value === 'number' ? value : null;
   };
 
-  // Format value based on indicator definition
-  const formatIndicatorValue = (
-    value: number | null | undefined,
-    indicator: AnalysisIndicator
-  ): string => {
-    if (value === null || value === undefined) return '—';
-
-    // Special handling for market cap and enterprise value
-    if (indicator.key === 'marketCap' || indicator.key === 'enterpriseValue') {
-      return formatLargeNumber(value);
-    }
-
-    const formatted = value.toLocaleString('cs-CZ', {
-      minimumFractionDigits: indicator.format_decimals,
-      maximumFractionDigits: indicator.format_decimals,
-    });
-
-    return `${indicator.format_prefix}${formatted}${indicator.format_suffix}`;
-  };
-
-  // Get CSS class based on indicator thresholds
-  const getValueClass = (
-    value: number | null | undefined,
-    indicator: AnalysisIndicator
-  ): string => {
-    if (value === null || value === undefined) return '';
-    if (indicator.good_threshold === null && indicator.bad_threshold === null)
-      return '';
-
-    const { good_threshold, bad_threshold, higher_is_better } = indicator;
-
-    if (higher_is_better) {
-      if (good_threshold !== null && value >= good_threshold) return 'positive';
-      if (bad_threshold !== null && value <= bad_threshold) return 'negative';
-    } else {
-      if (good_threshold !== null && value <= good_threshold) return 'positive';
-      if (bad_threshold !== null && value >= bad_threshold) return 'negative';
-    }
-
-    return '';
-  };
-
   const SortIcon = ({ column }: { column: SortKey }) => {
     if (sortKey !== column) return <span className="sort-icon">↕</span>;
     return <span className="sort-icon active">{sortAsc ? '↑' : '↓'}</span>;
-  };
-
-  const getInsiderSentimentLabel = (
-    mspr: number | null
-  ): { label: string; class: string } => {
-    if (mspr === null) return { label: '—', class: '' };
-    if (mspr > 25) return { label: 'Strong Buying', class: 'positive' };
-    if (mspr > 0) return { label: 'Buying', class: 'positive' };
-    if (mspr > -25) return { label: 'Selling', class: 'negative' };
-    return { label: 'Strong Selling', class: 'negative' };
   };
 
   // Helper functions - must be defined before any returns that use them
@@ -1177,7 +1129,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                           return (
                             <td
                               key={key}
-                              className={`right ${getValueClass(
+                              className={`right ${getIndicatorValueClass(
                                 value,
                                 indicator
                               )}`}
@@ -1251,7 +1203,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                                 <span className="metric-info-icon">ⓘ</span>
                               </span>
                               <span
-                                className={`metric-value ${getValueClass(
+                                className={`metric-value ${getIndicatorValueClass(
                                   value,
                                   indicator
                                 )}`}

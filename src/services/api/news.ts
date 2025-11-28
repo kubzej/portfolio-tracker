@@ -101,52 +101,6 @@ export async function fetchTickerNews(
   return data?.data?.[0] || null;
 }
 
-/**
- * Helper to format relative time
- */
-export function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMins < 60) {
-    return `${diffMins}m ago`;
-  } else if (diffHours < 24) {
-    return `${diffHours}h ago`;
-  } else if (diffDays < 7) {
-    return `${diffDays}d ago`;
-  } else {
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  }
-}
-
-/**
- * Get sentiment color based on score
- */
-export function getSentimentColor(score: number | null): string {
-  if (score === null) return 'var(--text-secondary)';
-  if (score > 0.2) return '#22c55e'; // positive - green
-  if (score < -0.2) return '#ef4444'; // negative - red
-  return '#f59e0b'; // neutral - yellow
-}
-
-/**
- * Get sentiment label
- */
-export function getSentimentLabel(
-  label: 'positive' | 'negative' | 'neutral' | null
-): string {
-  switch (label) {
-    case 'positive':
-      return 'Positive';
-    case 'negative':
-      return 'Negative';
-    case 'neutral':
-      return 'Neutral';
-    default:
-      return 'Unknown';
-  }
-}
+// Re-export utilities from centralized locations for backward compatibility
+export { formatRelativeTime } from '@/utils/format';
+export { getSentimentColor, getSentimentLabel } from '@/utils/sentiment';

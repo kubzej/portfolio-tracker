@@ -1,9 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { StockRecommendation, SignalType } from '@/utils/recommendations';
+import { SIGNAL_CONFIG } from '@/utils/signals';
+import { formatDateShort, formatReturn, getReturnClass } from '@/utils/format';
 import { InfoTooltip } from '@/components/shared/InfoTooltip';
 import { Tabs } from '@/components/shared/Tabs';
 import { Button } from '@/components/shared/Button';
-import { LoadingSpinner, EmptyState } from '@/components/shared';
+import { LoadingSpinner, EmptyState, SignalBadge } from '@/components/shared';
 import {
   logMultipleSignals,
   getRecentSignals,
@@ -36,53 +38,6 @@ type FilterType =
   | 'watch'
   | 'trim';
 type GroupBy = 'signal' | 'score' | 'conviction' | 'none';
-
-const SIGNAL_CONFIG: Record<
-  SignalType,
-  { label: string; class: string; description: string }
-> = {
-  DIP_OPPORTUNITY: {
-    label: 'DIP',
-    class: 'dip',
-    description:
-      'Oversold with solid fundamentals - potential buying opportunity',
-  },
-  MOMENTUM: {
-    label: 'Momentum',
-    class: 'momentum',
-    description: 'Technical indicators show bullish momentum',
-  },
-  CONVICTION_HOLD: {
-    label: 'Conviction',
-    class: 'conviction',
-    description: 'Strong long-term fundamentals - hold through volatility',
-  },
-  NEAR_TARGET: {
-    label: 'Near Target',
-    class: 'target',
-    description: 'Approaching analyst price target',
-  },
-  CONSIDER_TRIM: {
-    label: 'Trim',
-    class: 'trim',
-    description: 'Overbought with high weight - consider taking profits',
-  },
-  WATCH_CLOSELY: {
-    label: 'Watch',
-    class: 'watch',
-    description: 'Some metrics are deteriorating - monitor',
-  },
-  ACCUMULATE: {
-    label: 'Accumulate',
-    class: 'accumulate',
-    description: 'Good quality stock - wait for better entry',
-  },
-  NEUTRAL: {
-    label: 'Neutral',
-    class: 'neutral',
-    description: 'No strong signals',
-  },
-};
 
 export function Recommendations({
   recommendations,
@@ -815,12 +770,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
             </div>
             <div className="other-signals">
               {rec.signals.slice(1).map((sig, i) => (
-                <span
-                  key={i}
-                  className={`signal-tag ${SIGNAL_CONFIG[sig.type].class}`}
-                >
-                  {SIGNAL_CONFIG[sig.type].label}
-                </span>
+                <SignalBadge key={i} type={sig.type} />
               ))}
             </div>
           </div>
@@ -904,25 +854,6 @@ function SignalHistoryPanel({
         : 0;
     return { total: filteredHistory.length, avgReturn1w, winRate };
   }, [filteredHistory]);
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('cs-CZ', {
-      day: 'numeric',
-      month: 'short',
-      year: '2-digit',
-    });
-  };
-
-  const formatReturn = (priceAt: number, priceNow: number | null): string => {
-    if (priceNow === null) return '—';
-    const ret = ((priceNow - priceAt) / priceAt) * 100;
-    return `${ret >= 0 ? '+' : ''}${ret.toFixed(1)}%`;
-  };
-
-  const getReturnClass = (priceAt: number, priceNow: number | null): string => {
-    if (priceNow === null) return '';
-    return priceNow > priceAt ? 'positive' : 'negative';
-  };
 
   if (loading) {
     return (
@@ -1023,17 +954,10 @@ function SignalHistoryPanel({
               <tbody>
                 {paginatedHistory.map((sig) => (
                   <tr key={sig.id}>
-                    <td>{formatDate(sig.created_at)}</td>
+                    <td>{formatDateShort(sig.created_at)}</td>
                     <td className="ticker">{sig.ticker}</td>
                     <td>
-                      <span
-                        className={`signal-tag mini ${
-                          SIGNAL_CONFIG[sig.signal_type]?.class || 'neutral'
-                        }`}
-                      >
-                        {SIGNAL_CONFIG[sig.signal_type]?.label ||
-                          sig.signal_type}
-                      </span>
+                      <SignalBadge type={sig.signal_type} size="sm" />
                     </td>
                     <td>${sig.price_at_signal.toFixed(2)}</td>
                     <td
