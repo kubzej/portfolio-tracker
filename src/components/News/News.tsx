@@ -10,6 +10,7 @@ import {
 } from '@/services/api/news';
 import { InfoTooltip } from '@/components/shared/InfoTooltip';
 import { Button } from '@/components/shared/Button';
+import { Tabs } from '@/components/shared/Tabs';
 import './News.css';
 
 // Market topics organized by category
@@ -254,20 +255,14 @@ export function News({ portfolioId }: NewsProps) {
           <InfoTooltip text="Aktuální zprávy o akciích. Portfolio News = zprávy o akciích ve vašem portfoliu. Market News = obecné zprávy z trhu (S&P 500, NASDAQ, Fed, earnings). Sentiment je analyzován pomocí klíčových slov." />
         </div>
         <div className="news-header-actions">
-          <div className="news-mode-toggle">
-            <button
-              className={`mode-btn ${newsMode === 'portfolio' ? 'active' : ''}`}
-              onClick={() => setNewsMode('portfolio')}
-            >
-              Portfolio
-            </button>
-            <button
-              className={`mode-btn ${newsMode === 'market' ? 'active' : ''}`}
-              onClick={() => setNewsMode('market')}
-            >
-              Market
-            </button>
-          </div>
+          <Tabs
+            value={newsMode}
+            onChange={(value) => setNewsMode(value as NewsMode)}
+            options={[
+              { value: 'portfolio', label: 'Portfolio' },
+              { value: 'market', label: 'Market' },
+            ]}
+          />
           <Button variant="outline" onClick={loadNews} disabled={loading}>
             Refresh
           </Button>

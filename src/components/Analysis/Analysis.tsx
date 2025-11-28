@@ -13,6 +13,7 @@ import { TechnicalChart } from './TechnicalChart';
 import { Recommendations as RecommendationsComponent } from './Recommendations';
 import { InfoTooltip } from '@/components/shared/InfoTooltip';
 import { Button } from '@/components/shared/Button';
+import { Tabs } from '@/components/shared/Tabs';
 import { holdingsApi } from '@/services/api';
 import {
   BottomSheetSelect,
@@ -623,34 +624,17 @@ export function Analysis({ portfolioId }: AnalysisProps) {
       </div>
 
       {/* Tab Navigation */}
-      <div className="analysis-tabs">
-        <button
-          className={`tab-btn ${activeTab === 'analysts' ? 'active' : ''}`}
-          onClick={() => setActiveTab('analysts')}
-        >
-          Analysts
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'fundamentals' ? 'active' : ''}`}
-          onClick={() => setActiveTab('fundamentals')}
-        >
-          Fundamentals
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'technicals' ? 'active' : ''}`}
-          onClick={() => setActiveTab('technicals')}
-        >
-          Technical
-        </button>
-        <button
-          className={`tab-btn ${
-            activeTab === 'recommendations' ? 'active' : ''
-          }`}
-          onClick={() => setActiveTab('recommendations')}
-        >
-          Recommendations
-        </button>
-      </div>
+      <Tabs
+        value={activeTab}
+        onChange={(value) => setActiveTab(value as TabType)}
+        options={[
+          { value: 'analysts', label: 'Analysts' },
+          { value: 'fundamentals', label: 'Fundamentals' },
+          { value: 'technicals', label: 'Technical' },
+          { value: 'recommendations', label: 'Recommendations' },
+        ]}
+        className="analysis-tabs"
+      />
 
       {/* Analysts Tab */}
       {activeTab === 'analysts' && (

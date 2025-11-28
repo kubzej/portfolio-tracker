@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { StockRecommendation, SignalType } from '@/utils/recommendations';
 import { InfoTooltip } from '@/components/shared/InfoTooltip';
-import { ToggleGroup } from '@/components/shared/ToggleGroup';
+import { Tabs } from '@/components/shared/Tabs';
 import { Button } from '@/components/shared/Button';
 import {
   logMultipleSignals,
@@ -355,7 +355,7 @@ export function Recommendations({
           </div>
 
           <div className="filter-options">
-            <ToggleGroup
+            <Tabs
               options={GROUPING_OPTIONS}
               value={groupBy}
               onChange={(value) => setGroupBy(value as GroupBy)}
