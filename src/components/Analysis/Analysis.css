@@ -3483,3 +3483,244 @@
     padding: 0.2rem 0.5rem;
   }
 }
+
+/* ============================================
+   MOBILE FUNDAMENTALS 
+   ============================================ */
+
+/* Hide mobile view on desktop */
+.fundamentals-mobile {
+  display: none;
+}
+
+/* Hide desktop table on mobile */
+@media (max-width: 900px) {
+  .fundamentals-table {
+    display: none;
+  }
+
+  .fundamentals-mobile {
+    display: block;
+  }
+}
+
+/* Mobile Sort Row */
+.mobile-sort-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.mobile-sort-row .form-group {
+  flex: 1;
+  margin: 0;
+}
+
+.mobile-sort-row .bottom-sheet-select-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.mobile-sort-row .bottom-sheet-select-trigger {
+  width: 100%;
+  height: 44px;
+}
+
+.mobile-sort-dir {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mobile-sort-dir:active {
+  background: var(--accent-primary);
+  color: white;
+  border-color: var(--accent-primary);
+}
+
+/* Fundamentals Cards */
+.fundamentals-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.fundamentals-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+}
+
+.fundamentals-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.fundamentals-card-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.fundamentals-card-title .ticker {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.fundamentals-card-title .name {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.fundamentals-card-weight {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+  background: rgba(99, 102, 241, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+/* Metrics Grid */
+.fundamentals-card-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem 1rem;
+}
+
+.fundamentals-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.fundamentals-metric:nth-last-child(-n+2) {
+  border-bottom: none;
+}
+
+.metric-label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.metric-label:active {
+  color: var(--accent-primary);
+}
+
+.metric-info-icon {
+  font-size: 0.625rem;
+  opacity: 0.5;
+}
+
+.metric-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: right;
+}
+
+.metric-value.positive {
+  color: var(--success);
+}
+
+.metric-value.negative {
+  color: var(--danger);
+}
+
+/* Mobile Tooltip Modal */
+.mobile-tooltip-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mobile-tooltip-modal {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  max-width: 90vw;
+  width: 320px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: scaleIn 0.2s ease;
+}
+
+@keyframes scaleIn {
+  from { 
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to { 
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.mobile-tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.mobile-tooltip-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mobile-tooltip-header button {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.mobile-tooltip-modal p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}

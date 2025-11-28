@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   fetchAnalystData,
   type FundamentalMetrics,
@@ -13,6 +13,10 @@ import { TechnicalChart } from './TechnicalChart';
 import { Recommendations as RecommendationsComponent } from './Recommendations';
 import { InfoTooltip } from '@/components/shared/InfoTooltip';
 import { holdingsApi } from '@/services/api';
+import {
+  BottomSheetSelect,
+  type SelectOption,
+} from '@/components/shared/BottomSheet';
 import {
   getAllIndicators,
   getUserViews,
@@ -90,6 +94,33 @@ export function Analysis({ portfolioId }: AnalysisProps) {
     []
   );
   const [recsLoading, setRecsLoading] = useState(false);
+
+  // Mobile tooltip state
+  const [mobileTooltip, setMobileTooltip] = useState<{
+    text: string;
+    title: string;
+  } | null>(null);
+
+  // Helper function to get indicator by key (defined early for useMemo)
+  const getIndicatorByKey = (key: string): AnalysisIndicator | undefined => {
+    return indicators.find((i) => i.key === key);
+  };
+
+  // Sort options for mobile BottomSheet
+  const sortOptions = useMemo((): SelectOption[] => {
+    const baseOptions: SelectOption[] = [
+      { value: 'ticker', label: 'Name' },
+      { value: 'weight', label: 'Weight' },
+    ];
+    const indicatorOptions: SelectOption[] = selectedColumns
+      .map((key) => {
+        const indicator = getIndicatorByKey(key);
+        if (!indicator) return null;
+        return { value: key, label: indicator.short_name };
+      })
+      .filter((opt): opt is SelectOption => opt !== null);
+    return [...baseOptions, ...indicatorOptions];
+  }, [selectedColumns, indicators]);
 
   useEffect(() => {
     loadData();
@@ -413,11 +444,6 @@ export function Analysis({ portfolioId }: AnalysisProps) {
     } catch (err) {
       console.error('Failed to set default view:', err);
     }
-  };
-
-  // Get indicator by key helper
-  const getIndicatorByKey = (key: string): AnalysisIndicator | undefined => {
-    return indicators.find((i) => i.key === key);
   };
 
   // Get metric value from fundamentals by indicator key
@@ -1185,6 +1211,80 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile Fundamentals Cards */}
+            <div className="fundamentals-mobile">
+              {/* Mobile Sort Selector */}
+              <div className="mobile-sort-row">
+                <BottomSheetSelect
+                  label="Sort by"
+                  value={sortKey}
+                  onChange={(value) => {
+                    setSortKey(value);
+                    setSortAsc(false);
+                  }}
+                  options={sortOptions}
+                />
+                <button
+                  className="mobile-sort-dir"
+                  onClick={() => setSortAsc(!sortAsc)}
+                  title={sortAsc ? 'Ascending' : 'Descending'}
+                >
+                  {sortAsc ? '↑' : '↓'}
+                </button>
+              </div>
+
+              {/* Mobile Cards */}
+              <div className="fundamentals-cards">
+                {sortedData.map((item) => {
+                  const f = item.fundamentals;
+                  return (
+                    <div key={item.ticker} className="fundamentals-card">
+                      <div className="fundamentals-card-header">
+                        <div className="fundamentals-card-title">
+                          <span className="ticker">{item.ticker}</span>
+                          <span className="name">{item.stockName}</span>
+                        </div>
+                        <span className="fundamentals-card-weight">
+                          {item.weight.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="fundamentals-card-metrics">
+                        {selectedColumns.map((key) => {
+                          const indicator = getIndicatorByKey(key);
+                          if (!indicator) return null;
+                          const value = getMetricValue(f, key);
+                          return (
+                            <div key={key} className="fundamentals-metric">
+                              <span
+                                className="metric-label"
+                                onClick={() =>
+                                  setMobileTooltip({
+                                    title: indicator.name,
+                                    text: indicator.description,
+                                  })
+                                }
+                              >
+                                {indicator.short_name}
+                                <span className="metric-info-icon">ⓘ</span>
+                              </span>
+                              <span
+                                className={`metric-value ${getValueClass(
+                                  value,
+                                  indicator
+                                )}`}
+                              >
+                                {formatIndicatorValue(value, indicator)}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </section>
 
           {/* Insider Sentiment Section */}
@@ -1772,6 +1872,25 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
       {analystData.length === 0 && (
         <div className="no-data">No holdings in this portfolio.</div>
+      )}
+
+      {/* Mobile Tooltip Modal */}
+      {mobileTooltip && (
+        <div
+          className="mobile-tooltip-overlay"
+          onClick={() => setMobileTooltip(null)}
+        >
+          <div
+            className="mobile-tooltip-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mobile-tooltip-header">
+              <h4>{mobileTooltip.title}</h4>
+              <button onClick={() => setMobileTooltip(null)}>×</button>
+            </div>
+            <p>{mobileTooltip.text}</p>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -17,6 +17,20 @@ interface ColumnPickerProps {
   onSetDefaultView?: (viewId: string) => void;
 }
 
+// Hook to detect mobile
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  return isMobile;
+}
+
 export function ColumnPicker({
   indicators,
   selectedKeys,
@@ -35,7 +49,11 @@ export function ColumnPicker({
   const [viewName, setViewName] = useState('');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    new Set()
+  );
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   // Group indicators by category
   const categories = indicators.reduce((acc, ind) => {
@@ -140,6 +158,46 @@ export function ColumnPicker({
 
   const getIndicatorByKey = (key: string) =>
     indicators.find((i) => i.key === key);
+
+  const toggleCategory = (cat: string) => {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) {
+        next.delete(cat);
+      } else {
+        next.add(cat);
+      }
+      return next;
+    });
+  };
+
+  const handleResetToDefault = () => {
+    onSelectionChange([
+      'peRatio',
+      'pbRatio',
+      'roe',
+      'netMargin',
+      'beta',
+      'dividendYield',
+      'debtToEquity',
+      'marketCap',
+    ]);
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+    setSearchTerm('');
+    setActiveCategory(null);
+  };
+
+  // Filter indicators for mobile search
+  const mobileFilteredIndicators = searchTerm
+    ? indicators.filter(
+        (ind) =>
+          ind.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          ind.short_name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : null;
 
   return (
     <div className="column-picker" ref={dropdownRef}>
@@ -247,37 +305,58 @@ export function ColumnPicker({
         </div>
       )}
 
-      {/* Selected Columns Preview - Drag & Drop */}
-      <div className="selected-columns">
-        <span className="columns-hint">Drag to reorder:</span>
-        {selectedKeys.map((key, index) => {
-          const indicator = getIndicatorByKey(key);
-          if (!indicator) return null;
-          return (
-            <div
-              key={key}
-              className={`selected-column-tag ${
-                draggedIndex === index ? 'dragging' : ''
-              } ${dragOverIndex === index ? 'drag-over' : ''}`}
-              draggable
-              onDragStart={() => handleDragStart(index)}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDragEnd={handleDragEnd}
-              onDragLeave={handleDragLeave}
-              title={indicator.description}
-            >
-              <span className="drag-handle">⠿</span>
-              <span className="tag-name">{indicator.short_name}</span>
-              <button className="remove-btn" onClick={() => toggleColumn(key)}>
-                ×
-              </button>
-            </div>
-          );
-        })}
-      </div>
+      {/* Selected Columns Preview - Drag & Drop (Desktop only) */}
+      {!isMobile && (
+        <div className="selected-columns">
+          <span className="columns-hint">Drag to reorder:</span>
+          {selectedKeys.map((key, index) => {
+            const indicator = getIndicatorByKey(key);
+            if (!indicator) return null;
+            return (
+              <div
+                key={key}
+                className={`selected-column-tag ${
+                  draggedIndex === index ? 'dragging' : ''
+                } ${dragOverIndex === index ? 'drag-over' : ''}`}
+                draggable
+                onDragStart={() => handleDragStart(index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragEnd={handleDragEnd}
+                onDragLeave={handleDragLeave}
+                title={indicator.description}
+              >
+                <span className="drag-handle">⠿</span>
+                <span className="tag-name">{indicator.short_name}</span>
+                <button
+                  className="remove-btn"
+                  onClick={() => toggleColumn(key)}
+                >
+                  ×
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
-      {/* Dropdown Panel */}
-      {isOpen && (
+      {/* Mobile Selected Columns - Horizontal scroll */}
+      {isMobile && selectedKeys.length > 0 && (
+        <div className="mobile-selected-columns">
+          {selectedKeys.map((key) => {
+            const indicator = getIndicatorByKey(key);
+            if (!indicator) return null;
+            return (
+              <span key={key} className="mobile-column-chip">
+                {indicator.short_name}
+                <button onClick={() => toggleColumn(key)}>×</button>
+              </span>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Desktop Dropdown Panel */}
+      {isOpen && !isMobile && (
         <div className="picker-dropdown">
           <div className="picker-search">
             <input
@@ -359,28 +438,193 @@ export function ColumnPicker({
           </div>
 
           <div className="picker-footer">
-            <button
-              className="reset-btn"
-              onClick={() => {
-                onSelectionChange([
-                  'peRatio',
-                  'pbRatio',
-                  'roe',
-                  'netMargin',
-                  'beta',
-                  'dividendYield',
-                  'debtToEquity',
-                  'marketCap',
-                ]);
-              }}
-            >
+            <button className="reset-btn" onClick={handleResetToDefault}>
               Reset to Default
             </button>
-            <button className="done-btn" onClick={() => setIsOpen(false)}>
+            <button className="done-btn" onClick={handleClose}>
               Done
             </button>
           </div>
         </div>
+      )}
+
+      {/* Mobile Full-screen Panel */}
+      {isOpen && isMobile && (
+        <>
+          <div className="mobile-picker-backdrop" onClick={handleClose} />
+          <div className="mobile-picker-sheet">
+            <div className="mobile-picker-header">
+              <h3>Select Columns</h3>
+              <button className="mobile-picker-close" onClick={handleClose}>
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mobile-picker-search">
+              <input
+                type="text"
+                placeholder="Search indicators..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <button
+                  className="search-clear"
+                  onClick={() => setSearchTerm('')}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            <div className="mobile-picker-content">
+              {/* Search Results */}
+              {mobileFilteredIndicators && (
+                <div className="mobile-search-results">
+                  {mobileFilteredIndicators.length === 0 ? (
+                    <div className="no-results">No indicators found</div>
+                  ) : (
+                    mobileFilteredIndicators.map((ind) => (
+                      <div
+                        key={ind.key}
+                        className={`mobile-indicator-row ${
+                          selectedKeys.includes(ind.key) ? 'selected' : ''
+                        }`}
+                        onClick={() => toggleColumn(ind.key)}
+                      >
+                        <div className="mobile-indicator-info">
+                          <span className="mobile-indicator-name">
+                            {ind.name}
+                          </span>
+                          <span className="mobile-indicator-short">
+                            {ind.short_name}
+                          </span>
+                        </div>
+                        <div
+                          className={`mobile-toggle ${
+                            selectedKeys.includes(ind.key) ? 'on' : ''
+                          }`}
+                        >
+                          <div className="toggle-track">
+                            <div className="toggle-thumb" />
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {/* Categories Accordion */}
+              {!searchTerm && (
+                <div className="mobile-categories">
+                  {categoryOrder.map((cat) => {
+                    const catIndicators = categories[cat] || [];
+                    const selectedCount = catIndicators.filter((i) =>
+                      selectedKeys.includes(i.key)
+                    ).length;
+                    const isExpanded = expandedCategories.has(cat);
+
+                    return (
+                      <div key={cat} className="mobile-category">
+                        <button
+                          className={`mobile-category-header ${
+                            isExpanded ? 'expanded' : ''
+                          }`}
+                          onClick={() => toggleCategory(cat)}
+                        >
+                          <span className="category-icon">
+                            {categoryLabels[cat]?.split(' ')[0] || '📊'}
+                          </span>
+                          <span className="category-name">
+                            {categoryLabels[cat]
+                              ?.split(' ')
+                              .slice(1)
+                              .join(' ') || cat}
+                          </span>
+                          <span className="category-count">
+                            {selectedCount}/{catIndicators.length}
+                          </span>
+                          <span
+                            className={`category-arrow ${
+                              isExpanded ? 'expanded' : ''
+                            }`}
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path d="M6 9l6 6 6-6" />
+                            </svg>
+                          </span>
+                        </button>
+
+                        {isExpanded && (
+                          <div className="mobile-category-items">
+                            {catIndicators.map((ind) => (
+                              <div
+                                key={ind.key}
+                                className={`mobile-indicator-row ${
+                                  selectedKeys.includes(ind.key)
+                                    ? 'selected'
+                                    : ''
+                                }`}
+                                onClick={() => toggleColumn(ind.key)}
+                              >
+                                <div className="mobile-indicator-info">
+                                  <span className="mobile-indicator-name">
+                                    {ind.name}
+                                  </span>
+                                  <span className="mobile-indicator-desc">
+                                    {ind.description}
+                                  </span>
+                                </div>
+                                <div
+                                  className={`mobile-toggle ${
+                                    selectedKeys.includes(ind.key) ? 'on' : ''
+                                  }`}
+                                >
+                                  <div className="toggle-track">
+                                    <div className="toggle-thumb" />
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="mobile-picker-footer">
+              <button
+                className="mobile-reset-btn"
+                onClick={handleResetToDefault}
+              >
+                Reset to Default
+              </button>
+              <button className="mobile-done-btn" onClick={handleClose}>
+                Done ({selectedKeys.length})
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
