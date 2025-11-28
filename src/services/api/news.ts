@@ -21,6 +21,8 @@ export interface NewsArticle {
   // Added when aggregating
   ticker?: string;
   stockName?: string;
+  // Backend-matched topics (for market news)
+  matchedTopics?: string[];
 }
 
 // News for a single ticker

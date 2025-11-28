@@ -97,7 +97,7 @@ async function fetchTickerNews(
   }
 }
 
-// Simple keyword-based sentiment (placeholder - can be enhanced with AI later)
+// Enhanced keyword-based sentiment with weighted scoring
 function analyzeBasicSentiment(
   title: string,
   summary: string
@@ -108,72 +108,110 @@ function analyzeBasicSentiment(
 } {
   const text = `${title} ${summary}`.toLowerCase();
 
-  const positiveWords = [
-    'surge',
-    'jump',
-    'soar',
-    'rally',
-    'gain',
-    'rise',
-    'profit',
-    'growth',
-    'beat',
-    'exceed',
-    'upgrade',
-    'buy',
-    'bullish',
-    'record',
-    'high',
-    'success',
-    'strong',
-    'boost',
-    'win',
-    'outperform',
-    'positive',
+  // Weighted positive words (weight: impact on score)
+  const positiveWords: { word: string; weight: number }[] = [
+    // Strong positive signals (weight 2)
+    { word: 'surge', weight: 2 },
+    { word: 'soar', weight: 2 },
+    { word: 'rally', weight: 2 },
+    { word: 'record high', weight: 2 },
+    { word: 'outperform', weight: 2 },
+    { word: 'beat expectations', weight: 2 },
+    { word: 'upgrade', weight: 2 },
+    { word: 'breakthrough', weight: 2 },
+    { word: 'all-time high', weight: 2 },
+    // Standard positive (weight 1)
+    { word: 'jump', weight: 1 },
+    { word: 'gain', weight: 1 },
+    { word: 'rise', weight: 1 },
+    { word: 'profit', weight: 1 },
+    { word: 'growth', weight: 1 },
+    { word: 'beat', weight: 1 },
+    { word: 'exceed', weight: 1 },
+    { word: 'buy', weight: 1 },
+    { word: 'bullish', weight: 1 },
+    { word: 'success', weight: 1 },
+    { word: 'strong', weight: 1 },
+    { word: 'boost', weight: 1 },
+    { word: 'win', weight: 1 },
+    { word: 'positive', weight: 1 },
+    { word: 'optimistic', weight: 1 },
+    { word: 'momentum', weight: 1 },
+    { word: 'recovery', weight: 1 },
+    { word: 'expand', weight: 1 },
+    { word: 'opportunity', weight: 1 },
   ];
 
-  const negativeWords = [
-    'fall',
-    'drop',
-    'plunge',
-    'crash',
-    'decline',
-    'loss',
-    'miss',
-    'cut',
-    'downgrade',
-    'sell',
-    'bearish',
-    'low',
-    'weak',
-    'fail',
-    'warning',
-    'concern',
-    'risk',
-    'trouble',
-    'layoff',
-    'lawsuit',
-    'negative',
+  // Weighted negative words
+  const negativeWords: { word: string; weight: number }[] = [
+    // Strong negative signals (weight 2)
+    { word: 'plunge', weight: 2 },
+    { word: 'crash', weight: 2 },
+    { word: 'collapse', weight: 2 },
+    { word: 'recession', weight: 2 },
+    { word: 'bankruptcy', weight: 2 },
+    { word: 'fraud', weight: 2 },
+    { word: 'investigation', weight: 2 },
+    { word: 'default', weight: 2 },
+    { word: 'layoffs', weight: 2 },
+    // Standard negative (weight 1)
+    { word: 'fall', weight: 1 },
+    { word: 'drop', weight: 1 },
+    { word: 'decline', weight: 1 },
+    { word: 'loss', weight: 1 },
+    { word: 'miss', weight: 1 },
+    { word: 'cut', weight: 1 },
+    { word: 'downgrade', weight: 1 },
+    { word: 'sell', weight: 1 },
+    { word: 'bearish', weight: 1 },
+    { word: 'weak', weight: 1 },
+    { word: 'fail', weight: 1 },
+    { word: 'warning', weight: 1 },
+    { word: 'concern', weight: 1 },
+    { word: 'risk', weight: 1 },
+    { word: 'trouble', weight: 1 },
+    { word: 'lawsuit', weight: 1 },
+    { word: 'negative', weight: 1 },
+    { word: 'slump', weight: 1 },
+    { word: 'volatility', weight: 1 },
+    { word: 'uncertainty', weight: 1 },
   ];
 
   const foundPositive: string[] = [];
   const foundNegative: string[] = [];
+  let positiveScore = 0;
+  let negativeScore = 0;
 
-  positiveWords.forEach((word) => {
-    if (text.includes(word)) foundPositive.push(word);
+  // Check title separately (title matches are more important)
+  const titleLower = title.toLowerCase();
+
+  positiveWords.forEach(({ word, weight }) => {
+    if (text.includes(word)) {
+      foundPositive.push(word);
+      // Double weight if in title
+      positiveScore += titleLower.includes(word) ? weight * 2 : weight;
+    }
   });
 
-  negativeWords.forEach((word) => {
-    if (text.includes(word)) foundNegative.push(word);
+  negativeWords.forEach(({ word, weight }) => {
+    if (text.includes(word)) {
+      foundNegative.push(word);
+      // Double weight if in title
+      negativeScore += titleLower.includes(word) ? weight * 2 : weight;
+    }
   });
 
-  const score =
-    (foundPositive.length - foundNegative.length) /
-    Math.max(foundPositive.length + foundNegative.length, 1);
+  // Calculate normalized score (-1 to 1)
+  const totalWeight = positiveScore + negativeScore;
+  let score = 0;
+  if (totalWeight > 0) {
+    score = (positiveScore - negativeScore) / totalWeight;
+  }
 
+  // Determine label with adjusted thresholds
   let label: 'positive' | 'negative' | 'neutral' = 'neutral';
-  if (score > 0.2) label = 'positive';
-  else if (score < -0.2) label = 'negative';
+  if (score > 0.15) label = 'positive';
+  else if (score < -0.15) label = 'negative';
 
   return {
     score: Math.round(score * 100) / 100,
@@ -184,40 +222,96 @@ function analyzeBasicSentiment(
 
 // Fetch general market news
 async function fetchMarketNews(): Promise<NewsArticle[]> {
+  // Market topics with search queries and labels for tagging
   const marketTopics = [
-    // Indexes
-    { query: 'S&P 500 stock market', label: 'S&P 500' },
-    { query: 'nasdaq composite', label: 'NASDAQ' },
-    { query: 'dow jones industrial', label: 'Dow Jones' },
-    // Macro
-    { query: 'federal reserve interest rates', label: 'Fed' },
-    { query: 'inflation CPI consumer prices', label: 'Inflation' },
-    { query: 'GDP economic growth', label: 'GDP' },
-    { query: 'jobs unemployment employment', label: 'Jobs' },
-    // Markets
-    { query: 'earnings report quarterly', label: 'Earnings' },
-    { query: 'IPO initial public offering', label: 'IPO' },
-    { query: 'merger acquisition M&A', label: 'M&A' },
-    { query: 'dividend yield payout', label: 'Dividends' },
-    // Sectors
-    { query: 'artificial intelligence AI tech stocks', label: 'AI & Tech' },
-    { query: 'oil crude energy prices', label: 'Oil & Energy' },
-    { query: 'bank financial sector', label: 'Banks' },
-    { query: 'electric vehicle EV clean energy', label: 'EV & Clean' },
-    // Global
-    { query: 'China market stocks', label: 'China' },
-    { query: 'Europe market stocks', label: 'Europe' },
-    { query: 'bitcoin crypto cryptocurrency', label: 'Crypto' },
+    // Main Indexes - priority
+    { query: 'S&P 500 index stock market', label: 'S&P 500', priority: 1 },
+    { query: 'nasdaq composite tech stocks', label: 'NASDAQ', priority: 1 },
+    { query: 'dow jones industrial average', label: 'Dow Jones', priority: 1 },
+    { query: 'russell 2000 small cap', label: 'Russell 2000', priority: 2 },
+
+    // Macro - high priority
+    {
+      query: 'federal reserve interest rate decision',
+      label: 'Fed',
+      priority: 1,
+    },
+    { query: 'interest rate hike cut fed', label: 'Rates', priority: 1 },
+    { query: 'inflation CPI consumer prices', label: 'Inflation', priority: 1 },
+    { query: 'jobs unemployment nonfarm payroll', label: 'Jobs', priority: 1 },
+    { query: 'GDP economic growth recession', label: 'GDP', priority: 2 },
+    { query: 'treasury bond yield 10 year', label: 'Treasury', priority: 2 },
+
+    // Markets events
+    {
+      query: 'earnings report quarterly results',
+      label: 'Earnings',
+      priority: 1,
+    },
+    { query: 'IPO initial public offering', label: 'IPO', priority: 2 },
+    { query: 'merger acquisition deal buyout', label: 'M&A', priority: 2 },
+    {
+      query: 'dividend yield payout increase',
+      label: 'Dividends',
+      priority: 2,
+    },
+    { query: 'stock buyback share repurchase', label: 'Buybacks', priority: 2 },
+
+    // Sectors - hot topics
+    { query: 'artificial intelligence AI stocks', label: 'AI', priority: 1 },
+    { query: 'technology sector software cloud', label: 'Tech', priority: 1 },
+    {
+      query: 'semiconductor chip nvidia amd intel',
+      label: 'Semis',
+      priority: 1,
+    },
+    { query: 'oil crude energy prices opec', label: 'Energy', priority: 2 },
+    { query: 'bank financial sector earnings', label: 'Banks', priority: 2 },
+    {
+      query: 'healthcare pharma biotech stocks',
+      label: 'Healthcare',
+      priority: 2,
+    },
+    { query: 'electric vehicle EV tesla rivian', label: 'EV', priority: 2 },
+    {
+      query: 'retail consumer spending earnings',
+      label: 'Retail',
+      priority: 2,
+    },
+
+    // Global markets
+    { query: 'US stock market wall street', label: 'US', priority: 1 },
+    { query: 'China stocks market economy', label: 'China', priority: 2 },
+    { query: 'Europe stocks market economy', label: 'Europe', priority: 2 },
+    { query: 'Japan stocks nikkei yen', label: 'Japan', priority: 2 },
+    { query: 'emerging market stocks india', label: 'Emerging', priority: 2 },
+
+    // Assets
+    {
+      query: 'bitcoin crypto cryptocurrency ethereum',
+      label: 'Crypto',
+      priority: 2,
+    },
+    { query: 'gold price precious metals', label: 'Gold', priority: 2 },
+    { query: 'commodity prices copper oil', label: 'Commodities', priority: 2 },
   ];
 
   const allArticles: NewsArticle[] = [];
   const seenUrls = new Set<string>();
+  const articleTopics = new Map<string, string[]>(); // URL -> topics
 
-  for (const topic of marketTopics) {
+  // Sort by priority - fetch priority 1 first with more articles
+  const sortedTopics = [...marketTopics].sort(
+    (a, b) => (a.priority || 2) - (b.priority || 2)
+  );
+
+  for (const topic of sortedTopics) {
     try {
+      // Priority 1 topics get more articles
+      const newsCount = topic.priority === 1 ? 8 : 5;
       const yahooUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(
         topic.query
-      )}&newsCount=5&quotesCount=0`;
+      )}&newsCount=${newsCount}&quotesCount=0`;
 
       const response = await fetch(yahooUrl, {
         headers: {
@@ -233,8 +327,19 @@ async function fetchMarketNews(): Promise<NewsArticle[]> {
 
       for (const item of news) {
         const url = item.link || '';
-        if (seenUrls.has(url)) continue;
+
+        // Track which topics this article matches
+        if (seenUrls.has(url)) {
+          // Article already exists - add this topic to its list
+          const existing = articleTopics.get(url);
+          if (existing && !existing.includes(topic.label)) {
+            existing.push(topic.label);
+          }
+          continue;
+        }
+
         seenUrls.add(url);
+        articleTopics.set(url, [topic.label]);
 
         allArticles.push({
           id: `market-${topic.label}-${allArticles.length}-${Date.now()}`,
@@ -252,6 +357,8 @@ async function fetchMarketNews(): Promise<NewsArticle[]> {
             label: null,
             keywords: [],
           },
+          // Store matched topics from backend search
+          matchedTopics: [topic.label],
         });
       }
 
@@ -262,13 +369,21 @@ async function fetchMarketNews(): Promise<NewsArticle[]> {
     }
   }
 
+  // Update articles with all matched topics
+  for (const article of allArticles) {
+    const topics = articleTopics.get(article.url);
+    if (topics) {
+      (article as any).matchedTopics = topics;
+    }
+  }
+
   // Sort by date
   allArticles.sort(
     (a, b) =>
       new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
   );
 
-  return allArticles.slice(0, 50); // Return top 50 (more topics = more articles)
+  return allArticles.slice(0, 100); // Return top 100 for more coverage
 }
 
 serve(async (req) => {

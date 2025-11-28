@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   fetchPortfolioNews,
   fetchMarketNews,
+  fetchTickerNews,
   formatRelativeTime,
   getSentimentColor,
   getSentimentLabel,
@@ -11,138 +12,230 @@ import {
 import { InfoTooltip } from '@/components/shared/InfoTooltip';
 import { Button } from '@/components/shared/Button';
 import { Tabs } from '@/components/shared/Tabs';
+import { BottomSheetSelect } from '@/components/shared/BottomSheet';
 import './News.css';
 
-// Market topics organized by category
+// Market topics - must match backend labels for proper filtering
+// label = must exactly match backend topic.label
+// keywords = fallback search terms when matchedTopics not available
 const MARKET_TOPICS = [
-  // Main Indexes
+  // Indexes
   {
     id: 'sp500',
     label: 'S&P 500',
-    keyword: 'S&P',
-    icon: '📊',
     category: 'Indexes',
+    keywords: ['s&p', 'sp500', 's&p 500'],
   },
   {
     id: 'nasdaq',
     label: 'NASDAQ',
-    keyword: 'NASDAQ',
-    icon: '💻',
     category: 'Indexes',
+    keywords: ['nasdaq', 'tech stocks'],
   },
   {
-    id: 'dowjones',
+    id: 'dow',
     label: 'Dow Jones',
-    keyword: 'Dow Jones',
-    icon: '📈',
     category: 'Indexes',
+    keywords: ['dow', 'dow jones', 'djia'],
+  },
+  {
+    id: 'russell',
+    label: 'Russell 2000',
+    category: 'Indexes',
+    keywords: ['russell', 'small cap'],
   },
 
   // Macro
   {
     id: 'fed',
-    label: 'Fed & Rates',
-    keyword: 'Fed',
-    icon: '🏛️',
+    label: 'Fed',
     category: 'Macro',
+    keywords: ['fed', 'federal reserve', 'powell', 'fomc'],
+  },
+  {
+    id: 'rates',
+    label: 'Rates',
+    category: 'Macro',
+    keywords: ['interest rate', 'rate hike', 'rate cut', 'basis point'],
   },
   {
     id: 'inflation',
     label: 'Inflation',
-    keyword: 'inflation CPI',
-    icon: '💹',
     category: 'Macro',
-  },
-  {
-    id: 'gdp',
-    label: 'GDP',
-    keyword: 'GDP growth',
-    icon: '📊',
-    category: 'Macro',
+    keywords: ['inflation', 'cpi', 'consumer price', 'pce'],
   },
   {
     id: 'jobs',
     label: 'Jobs',
-    keyword: 'jobs unemployment',
-    icon: '💼',
     category: 'Macro',
+    keywords: ['jobs', 'unemployment', 'payroll', 'labor', 'hiring'],
+  },
+  {
+    id: 'gdp',
+    label: 'GDP',
+    category: 'Macro',
+    keywords: ['gdp', 'economic growth', 'recession'],
+  },
+  {
+    id: 'treasury',
+    label: 'Treasury',
+    category: 'Macro',
+    keywords: ['treasury', 'bond yield', '10-year', 'yield'],
   },
 
   // Markets
   {
     id: 'earnings',
     label: 'Earnings',
-    keyword: 'earnings report',
-    icon: '📈',
     category: 'Markets',
+    keywords: ['earnings', 'quarterly', 'eps', 'revenue', 'results'],
   },
-  { id: 'ipo', label: 'IPO', keyword: 'IPO', icon: '📅', category: 'Markets' },
   {
-    id: 'mergers',
-    label: 'M&A',
-    keyword: 'merger acquisition',
-    icon: '🔀',
+    id: 'ipo',
+    label: 'IPO',
     category: 'Markets',
+    keywords: ['ipo', 'initial public offering', 'debut'],
+  },
+  {
+    id: 'ma',
+    label: 'M&A',
+    category: 'Markets',
+    keywords: ['merger', 'acquisition', 'deal', 'buyout', 'takeover'],
   },
   {
     id: 'dividends',
     label: 'Dividends',
-    keyword: 'dividend',
-    icon: '💰',
     category: 'Markets',
+    keywords: ['dividend', 'payout', 'yield'],
+  },
+  {
+    id: 'buyback',
+    label: 'Buybacks',
+    category: 'Markets',
+    keywords: ['buyback', 'repurchase', 'share repurchase'],
   },
 
   // Sectors
   {
-    id: 'tech',
-    label: 'AI & Tech',
-    keyword: 'artificial intelligence tech',
-    icon: '🤖',
+    id: 'ai',
+    label: 'AI',
     category: 'Sectors',
+    keywords: [
+      'artificial intelligence',
+      ' ai ',
+      'chatgpt',
+      'openai',
+      'machine learning',
+    ],
+  },
+  {
+    id: 'tech',
+    label: 'Tech',
+    category: 'Sectors',
+    keywords: ['technology', 'software', 'cloud', 'saas'],
+  },
+  {
+    id: 'semis',
+    label: 'Semis',
+    category: 'Sectors',
+    keywords: ['semiconductor', 'chip', 'nvidia', 'amd', 'intel', 'tsmc'],
   },
   {
     id: 'energy',
-    label: 'Oil & Energy',
-    keyword: 'oil energy',
-    icon: '🛢️',
+    label: 'Energy',
     category: 'Sectors',
+    keywords: ['oil', 'crude', 'energy', 'gas', 'opec', 'exxon'],
   },
   {
     id: 'banks',
     label: 'Banks',
-    keyword: 'bank financial',
-    icon: '🏦',
     category: 'Sectors',
+    keywords: ['bank', 'financial', 'jpmorgan', 'goldman', 'wells fargo'],
+  },
+  {
+    id: 'healthcare',
+    label: 'Healthcare',
+    category: 'Sectors',
+    keywords: ['healthcare', 'pharma', 'biotech', 'drug', 'fda'],
   },
   {
     id: 'ev',
-    label: 'EV & Clean',
-    keyword: 'electric vehicle clean energy',
-    icon: '🔋',
+    label: 'EV',
     category: 'Sectors',
+    keywords: [
+      'electric vehicle',
+      ' ev ',
+      'tesla',
+      'rivian',
+      'lucid',
+      'charging',
+    ],
+  },
+  {
+    id: 'retail',
+    label: 'Retail',
+    category: 'Sectors',
+    keywords: ['retail', 'consumer', 'walmart', 'amazon', 'target', 'shopping'],
   },
 
   // Global
   {
+    id: 'us',
+    label: 'US',
+    category: 'Global',
+    keywords: ['wall street', 'u.s.', 'united states', 'american'],
+  },
+  {
     id: 'china',
     label: 'China',
-    keyword: 'China market',
-    icon: '🇨🇳',
     category: 'Global',
+    keywords: ['china', 'chinese', 'beijing', 'shanghai', 'alibaba', 'tencent'],
   },
   {
     id: 'europe',
     label: 'Europe',
-    keyword: 'Europe market',
-    icon: '🇪🇺',
     category: 'Global',
+    keywords: ['europe', 'european', 'ecb', 'germany', 'france', 'uk'],
   },
+  {
+    id: 'japan',
+    label: 'Japan',
+    category: 'Global',
+    keywords: ['japan', 'japanese', 'nikkei', 'yen', 'tokyo'],
+  },
+  {
+    id: 'emerging',
+    label: 'Emerging',
+    category: 'Global',
+    keywords: ['emerging market', 'india', 'brazil', 'developing'],
+  },
+
+  // Assets
   {
     id: 'crypto',
     label: 'Crypto',
-    keyword: 'bitcoin crypto',
-    icon: '₿',
-    category: 'Global',
+    category: 'Assets',
+    keywords: [
+      'bitcoin',
+      'crypto',
+      'ethereum',
+      'btc',
+      'eth',
+      'blockchain',
+      'coinbase',
+    ],
+  },
+  {
+    id: 'gold',
+    label: 'Gold',
+    category: 'Assets',
+    keywords: ['gold', 'precious metal', 'silver', 'bullion'],
+  },
+  {
+    id: 'commodities',
+    label: 'Commodities',
+    category: 'Assets',
+    keywords: ['commodity', 'commodities', 'copper', 'wheat', 'corn'],
   },
 ];
 
@@ -153,7 +246,7 @@ interface NewsProps {
   portfolioId?: string;
 }
 
-type NewsMode = 'portfolio' | 'market';
+type NewsMode = 'portfolio' | 'market' | 'stock';
 
 export function News({ portfolioId }: NewsProps) {
   const [newsData, setNewsData] = useState<NewsResponse | null>(null);
@@ -163,28 +256,101 @@ export function News({ portfolioId }: NewsProps) {
   const [filterSentiment, setFilterSentiment] = useState<string>('all');
   const [filterTopic, setFilterTopic] = useState<string>('all');
   const [newsMode, setNewsMode] = useState<NewsMode>('portfolio');
+  const [showTopics, setShowTopics] = useState(false);
+  // Stock search state
+  const [searchTicker, setSearchTicker] = useState('');
+  const [searchedTicker, setSearchedTicker] = useState<string | null>(null);
 
   const loadNews = useCallback(async () => {
+    // For stock mode, don't auto-load - wait for user to search
+    if (newsMode === 'stock' && !searchedTicker) {
+      setLoading(false);
+      setNewsData(null);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-      const data =
-        newsMode === 'market'
-          ? await fetchMarketNews()
-          : await fetchPortfolioNews(portfolioId);
+
+      let data: NewsResponse;
+      if (newsMode === 'market') {
+        data = await fetchMarketNews();
+      } else if (newsMode === 'stock' && searchedTicker) {
+        // Fetch single ticker news
+        const tickerData = await fetchTickerNews(searchedTicker);
+        if (tickerData) {
+          data = {
+            articles: tickerData.articles.map((a) => ({
+              ...a,
+              ticker: tickerData.ticker,
+              stockName: tickerData.stockName,
+            })),
+            byTicker: [tickerData],
+            stats: {
+              totalArticles: tickerData.articles.length,
+              byTicker: [
+                {
+                  ticker: tickerData.ticker,
+                  count: tickerData.articles.length,
+                  avgSentiment:
+                    tickerData.articles.length > 0
+                      ? tickerData.articles.reduce(
+                          (sum, a) => sum + (a.sentiment?.score || 0),
+                          0
+                        ) / tickerData.articles.length
+                      : null,
+                },
+              ],
+              overallSentiment:
+                tickerData.articles.length > 0
+                  ? tickerData.articles.reduce(
+                      (sum, a) => sum + (a.sentiment?.score || 0),
+                      0
+                    ) / tickerData.articles.length
+                  : null,
+            },
+            errors: tickerData.error ? [tickerData.error] : [],
+          };
+        } else {
+          data = {
+            articles: [],
+            byTicker: [],
+            stats: { totalArticles: 0, byTicker: [], overallSentiment: null },
+            errors: ['No news found'],
+          };
+        }
+      } else {
+        data = await fetchPortfolioNews(portfolioId);
+      }
+
       setNewsData(data);
       setFilterTicker('all');
-      setFilterTopic('all'); // Reset filters when switching modes
+      setFilterTopic('all');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load news');
     } finally {
       setLoading(false);
     }
-  }, [portfolioId, newsMode]);
+  }, [portfolioId, newsMode, searchedTicker]);
 
   useEffect(() => {
     loadNews();
   }, [loadNews]);
+
+  // Handle stock ticker search
+  const handleTickerSearch = () => {
+    const ticker = searchTicker.trim().toUpperCase();
+    if (ticker) {
+      setSearchedTicker(ticker);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleTickerSearch();
+    }
+  };
 
   // Filter articles
   const filteredArticles =
@@ -198,15 +364,20 @@ export function News({ portfolioId }: NewsProps) {
           return false;
         }
       }
-      // Topic filter for market mode
+      // Topic filter for market mode - use backend matchedTopics + keyword fallback
       if (newsMode === 'market' && filterTopic !== 'all') {
         const topic = MARKET_TOPICS.find((t) => t.id === filterTopic);
         if (topic) {
-          const text = `${article.title} ${article.summary}`.toLowerCase();
-          const keywords = topic.keyword.toLowerCase().split(' ');
-          if (!keywords.some((kw) => text.includes(kw))) {
-            return false;
+          // Primary: check if backend matched this topic
+          if (article.matchedTopics?.includes(topic.label)) {
+            return true;
           }
+          // Fallback: keyword search in text using topic.keywords
+          const text = `${article.title} ${article.summary}`.toLowerCase();
+          if (topic.keywords.some((kw) => text.includes(kw.toLowerCase()))) {
+            return true;
+          }
+          return false;
         }
       }
       return true;
@@ -251,27 +422,73 @@ export function News({ portfolioId }: NewsProps) {
       {/* Header */}
       <div className="news-header">
         <div className="news-title-section">
-          <h2>{newsMode === 'market' ? 'Market News' : 'Portfolio News'}</h2>
-          <InfoTooltip text="Aktuální zprávy o akciích. Portfolio News = zprávy o akciích ve vašem portfoliu. Market News = obecné zprávy z trhu (S&P 500, NASDAQ, Fed, earnings). Sentiment je analyzován pomocí klíčových slov." />
+          <h2>
+            {newsMode === 'market'
+              ? 'Market News'
+              : newsMode === 'stock'
+              ? 'Stock News'
+              : 'Portfolio News'}
+            {newsMode === 'stock' && searchedTicker && ` - ${searchedTicker}`}
+          </h2>
+          <InfoTooltip text="Portfolio = zprávy o akciích ve vašem portfoliu. Market = obecné zprávy z trhu. Stock = vyhledej zprávy pro konkrétní ticker." />
         </div>
         <div className="news-header-actions">
           <Tabs
             value={newsMode}
-            onChange={(value) => setNewsMode(value as NewsMode)}
+            onChange={(value) => {
+              setNewsMode(value as NewsMode);
+              if (value !== 'stock') {
+                setSearchedTicker(null);
+                setSearchTicker('');
+              }
+            }}
             options={[
               { value: 'portfolio', label: 'Portfolio' },
               { value: 'market', label: 'Market' },
+              { value: 'stock', label: 'Stock' },
             ]}
           />
-          <Button variant="outline" onClick={loadNews} disabled={loading}>
-            Refresh
-          </Button>
+          {newsMode !== 'stock' && (
+            <Button variant="outline" onClick={loadNews} disabled={loading}>
+              Refresh
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Stats Overview */}
+      {/* Stock Search - only for stock mode */}
+      {newsMode === 'stock' && (
+        <div className="stock-search-section">
+          <div className="stock-search-input-group">
+            <input
+              type="text"
+              value={searchTicker}
+              onChange={(e) => setSearchTicker(e.target.value.toUpperCase())}
+              onKeyDown={handleKeyDown}
+              placeholder="Enter ticker (e.g. AAPL, MSFT, TSLA)"
+              className="stock-search-input"
+              maxLength={10}
+            />
+            <Button
+              variant="primary"
+              onClick={handleTickerSearch}
+              disabled={loading || !searchTicker.trim()}
+            >
+              {loading ? 'Loading...' : 'Search'}
+            </Button>
+          </div>
+          {searchedTicker && newsData && (
+            <div className="stock-search-result">
+              Found {newsData.stats.totalArticles} articles for{' '}
+              <strong>{searchedTicker}</strong>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Stats Overview - hidden on mobile */}
       {newsData && (
-        <div className="news-stats">
+        <div className="news-stats desktop-only">
           <div className="stat-card">
             <span className="stat-value">{newsData.stats.totalArticles}</span>
             <span className="stat-label">Total Articles</span>
@@ -304,138 +521,133 @@ export function News({ portfolioId }: NewsProps) {
         </div>
       )}
 
-      {/* Market Topics Overview - only for market mode */}
+      {/* Filters - shared between modes */}
+      <div className="news-filters">
+        {newsMode === 'portfolio' && uniqueTickers.length > 0 && (
+          <BottomSheetSelect
+            value={filterTicker}
+            onChange={setFilterTicker}
+            options={[
+              { value: 'all', label: 'All Stocks' },
+              ...uniqueTickers.map((ticker) => ({
+                value: ticker,
+                label: ticker,
+              })),
+            ]}
+            label="Stock"
+            title="Filter by Stock"
+          />
+        )}
+        <BottomSheetSelect
+          value={filterSentiment}
+          onChange={setFilterSentiment}
+          options={[
+            { value: 'all', label: 'All Sentiment' },
+            { value: 'positive', label: '📈 Positive' },
+            { value: 'neutral', label: '➡️ Neutral' },
+            { value: 'negative', label: '📉 Negative' },
+          ]}
+          label="Sentiment"
+          title="Filter by Sentiment"
+        />
+        <div className="filter-results">
+          {filteredArticles.length} / {newsData?.stats.totalArticles || 0}
+        </div>
+      </div>
+
+      {/* Market Topics - only for market mode */}
       {newsMode === 'market' && newsData && (
-        <div className="market-topics-section">
+        <div className="market-topics-compact">
           {TOPIC_CATEGORIES.map((category) => (
-            <div key={category} className="topic-category">
-              <h4 className="topic-category-title">{category}</h4>
-              <div className="market-topics-grid">
+            <div key={category} className="topic-row">
+              <span className="topic-row-label">{category}</span>
+              <div className="topic-chips">
                 {MARKET_TOPICS.filter((t) => t.category === category).map(
                   (topic) => {
-                    const keywords = topic.keyword.toLowerCase().split(' ');
-                    const topicArticles = newsData.articles.filter((a) => {
+                    // Count articles matching this topic (via backend matchedTopics + keyword fallback)
+                    const count = newsData.articles.filter((a) => {
+                      // Check backend matchedTopics first
+                      if (a.matchedTopics?.includes(topic.label)) {
+                        return true;
+                      }
+                      // Fallback: keyword search using topic.keywords
                       const text = `${a.title} ${a.summary}`.toLowerCase();
-                      return keywords.some((kw) => text.includes(kw));
-                    });
-                    const avgSentiment =
-                      topicArticles.length > 0
-                        ? topicArticles.reduce(
-                            (sum, a) => sum + (a.sentiment?.score || 0),
-                            0
-                          ) / topicArticles.length
-                        : null;
+                      return topic.keywords.some((kw) =>
+                        text.includes(kw.toLowerCase())
+                      );
+                    }).length;
                     const isActive = filterTopic === topic.id;
                     return (
-                      <div
+                      <button
                         key={topic.id}
-                        className={`market-topic-card ${
-                          isActive ? 'active' : ''
+                        className={`topic-chip ${isActive ? 'active' : ''} ${
+                          count === 0 ? 'empty' : ''
                         }`}
                         onClick={() =>
                           setFilterTopic(isActive ? 'all' : topic.id)
                         }
-                        style={{ cursor: 'pointer' }}
                       >
-                        <span className="topic-icon">{topic.icon}</span>
-                        <span className="topic-name">{topic.label}</span>
-                        <span
-                          className="topic-sentiment"
-                          style={{ color: getSentimentColor(avgSentiment) }}
-                        >
-                          {avgSentiment !== null
-                            ? (avgSentiment > 0 ? '+' : '') +
-                              (avgSentiment * 100).toFixed(0) +
-                              '%'
-                            : '—'}
-                        </span>
-                        <span className="topic-count">
-                          {topicArticles.length}
-                        </span>
-                      </div>
+                        {topic.label}
+                        {count > 0 && (
+                          <span className="chip-count">{count}</span>
+                        )}
+                      </button>
                     );
                   }
                 )}
               </div>
             </div>
           ))}
-          {filterTopic !== 'all' && (
-            <button
-              className="clear-filter-btn"
-              onClick={() => setFilterTopic('all')}
-            >
-              ✕ Clear filter:{' '}
-              {MARKET_TOPICS.find((t) => t.id === filterTopic)?.label}
-            </button>
-          )}
         </div>
       )}
-
-      {/* Filters */}
-      <div className="news-filters">
-        {newsMode === 'portfolio' && uniqueTickers.length > 0 && (
-          <div className="filter-group">
-            <label>Stock:</label>
-            <select
-              value={filterTicker}
-              onChange={(e) => setFilterTicker(e.target.value)}
-            >
-              <option value="all">All Stocks</option>
-              {uniqueTickers.map((ticker) => (
-                <option key={ticker} value={ticker}>
-                  {ticker}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-        <div className="filter-group">
-          <label>Sentiment:</label>
-          <select
-            value={filterSentiment}
-            onChange={(e) => setFilterSentiment(e.target.value)}
-          >
-            <option value="all">All</option>
-            <option value="positive">📈 Positive</option>
-            <option value="neutral">➡️ Neutral</option>
-            <option value="negative">📉 Negative</option>
-          </select>
-        </div>
-        <div className="filter-results">
-          Showing {filteredArticles.length} of{' '}
-          {newsData?.stats.totalArticles || 0} articles
-        </div>
-      </div>
 
       {/* Ticker Sentiment Summary - only for portfolio mode */}
       {newsMode === 'portfolio' &&
         newsData &&
         newsData.stats.byTicker.length > 0 && (
-          <div className="ticker-sentiment-grid">
-            {newsData.stats.byTicker
-              .filter((t) => t.count > 0)
-              .sort((a, b) => (b.avgSentiment || 0) - (a.avgSentiment || 0))
-              .map((ticker) => (
-                <div
-                  key={ticker.ticker}
-                  className="ticker-sentiment-card"
-                  onClick={() => setFilterTicker(ticker.ticker)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <span className="ticker-name">{ticker.ticker}</span>
-                  <span
-                    className="ticker-sentiment"
-                    style={{ color: getSentimentColor(ticker.avgSentiment) }}
+          <div className="ticker-sentiment-section">
+            <button
+              className="topics-toggle mobile-only"
+              onClick={() => setShowTopics(!showTopics)}
+            >
+              <span>
+                Stocks (
+                {newsData.stats.byTicker.filter((t) => t.count > 0).length})
+              </span>
+              <span className="toggle-icon">{showTopics ? '▲' : '▼'}</span>
+            </button>
+            <div
+              className={`ticker-sentiment-grid ${
+                showTopics ? 'expanded' : ''
+              }`}
+            >
+              {newsData.stats.byTicker
+                .filter((t) => t.count > 0)
+                .sort((a, b) => (b.avgSentiment || 0) - (a.avgSentiment || 0))
+                .map((ticker) => (
+                  <div
+                    key={ticker.ticker}
+                    className="ticker-sentiment-card"
+                    onClick={() => setFilterTicker(ticker.ticker)}
+                    style={{ cursor: 'pointer' }}
                   >
-                    {ticker.avgSentiment !== null
-                      ? (ticker.avgSentiment > 0 ? '+' : '') +
-                        (ticker.avgSentiment * 100).toFixed(0) +
-                        '%'
-                      : 'N/A'}
-                  </span>
-                  <span className="ticker-count">{ticker.count} articles</span>
-                </div>
-              ))}
+                    <span className="ticker-name">{ticker.ticker}</span>
+                    <span
+                      className="ticker-sentiment"
+                      style={{ color: getSentimentColor(ticker.avgSentiment) }}
+                    >
+                      {ticker.avgSentiment !== null
+                        ? (ticker.avgSentiment > 0 ? '+' : '') +
+                          (ticker.avgSentiment * 100).toFixed(0) +
+                          '%'
+                        : 'N/A'}
+                    </span>
+                    <span className="ticker-count">
+                      {ticker.count} articles
+                    </span>
+                  </div>
+                ))}
+            </div>
           </div>
         )}
 
