@@ -534,7 +534,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                 <InfoTooltip text="CO TO JE: Graf ceny za poslední rok s klouzavými průměry (Moving Averages). Klouzavý průměr vyhlazuje denní výkyvy a ukazuje skutečný trend. JAK ČÍST: Když je CENA NAD průměry = akcie roste (bullish). Když je CENA POD průměry = akcie klesá (bearish). IDEÁLNÍ STAV PRO NÁKUP: Cena nad oběma čárami (50 DMA i 200 DMA)." />
               </div>
               <div className="chart-wrapper">
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={380}>
                   <LineChart
                     data={chartData}
                     margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
@@ -935,7 +935,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
               {bollingerData.length > 0 && data.bollingerUpper !== null ? (
                 <>
                   <div className="chart-wrapper">
-                    <ResponsiveContainer width="100%" height={250}>
+                    <ResponsiveContainer width="100%" height={320}>
                       <ComposedChart
                         data={bollingerData}
                         margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
@@ -1529,7 +1529,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
 
               {obvData.length > 0 ? (
                 <>
-                  <ResponsiveContainer width="100%" height={280}>
+                  <ResponsiveContainer width="100%" height={300}>
                     <ComposedChart data={obvData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                       <XAxis
@@ -1661,7 +1661,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
 
               {adxData.length > 0 && data.adx !== null ? (
                 <>
-                  <ResponsiveContainer width="100%" height={280}>
+                  <ResponsiveContainer width="100%" height={300}>
                     <ComposedChart data={adxData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                       <XAxis
@@ -1765,8 +1765,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                         '💪 Very strong trend — follow the momentum'}
                       {data.adxSignal === 'moderate' &&
                         'Strong trend — good for trend trades'}
-                      {data.adxSignal === 'weak' &&
-                        'Weak trend — be cautious'}
+                      {data.adxSignal === 'weak' && 'Weak trend — be cautious'}
                       {data.adxSignal === 'no-trend' &&
                         '😴 No trend — avoid trend strategies'}
                       {!data.adxSignal && 'Insufficient data'}
@@ -1779,8 +1778,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                           '🟢 +DI > -DI → Bulls in control'}
                         {data.adxTrend === 'bearish' &&
                           '🔴 -DI > +DI → Bears in control'}
-                        {data.adxTrend === 'neutral' &&
-                          '+DI ≈ -DI → Undecided'}
+                        {data.adxTrend === 'neutral' && '+DI ≈ -DI → Undecided'}
                       </div>
                     )}
                   </div>
