@@ -6,6 +6,8 @@ import {
   AddTransactionModal,
 } from './components/StocksList';
 import { StockDetail } from './components/StockDetail';
+import { StockResearch } from './components/StockResearch';
+import { ResearchView } from './components/Research';
 import { PortfolioSelector } from './components/PortfolioSelector';
 import { Analysis } from './components/Analysis';
 import { News } from './components/News';
@@ -21,6 +23,8 @@ type View =
   | 'dashboard'
   | 'stocks'
   | 'stock-detail'
+  | 'stock-research'
+  | 'research'
   | 'analysis'
   | 'news'
   | 'watchlists'
@@ -32,6 +36,7 @@ const VALID_VIEWS: View[] = [
   'stocks',
   'analysis',
   'news',
+  'research',
   'watchlists',
 ];
 
@@ -57,6 +62,14 @@ function App() {
   const [selectedPortfolio, setSelectedPortfolio] = useState<Portfolio | null>(
     null
   );
+  // Stock Research state
+  const [researchTicker, setResearchTicker] = useState<string | null>(null);
+  const [researchStockName, setResearchStockName] = useState<
+    string | undefined
+  >(undefined);
+  const [researchFinnhubTicker, setResearchFinnhubTicker] = useState<
+    string | undefined
+  >(undefined);
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshingPrices, setRefreshingPrices] = useState(false);
   const [showAddStockModal, setShowAddStockModal] = useState(false);
@@ -105,6 +118,27 @@ function App() {
   const handleBackFromWatchlist = () => {
     setSelectedWatchlistId(null);
     setCurrentView('watchlists');
+  };
+
+  const handleOpenResearch = (
+    ticker: string,
+    stockName?: string,
+    finnhubTicker?: string
+  ) => {
+    setResearchTicker(ticker);
+    setResearchStockName(stockName);
+    setResearchFinnhubTicker(finnhubTicker);
+    setCurrentView('stock-research');
+  };
+
+  const handleBackFromResearch = () => {
+    // Go back to previous view (watchlist or dashboard)
+    if (selectedWatchlistId) {
+      setCurrentView('watchlist-detail');
+    } else {
+      setCurrentView('watchlists');
+    }
+    setResearchTicker(null);
   };
 
   const handleRefreshPrices = async () => {
@@ -222,6 +256,16 @@ function App() {
             Watchlists
           </button>
           <button
+            className={
+              currentView === 'research' || currentView === 'stock-research'
+                ? 'active'
+                : ''
+            }
+            onClick={() => setCurrentView('research')}
+          >
+            Research
+          </button>
+          <button
             className="add-action"
             onClick={() => setShowAddStockModal(true)}
           >
@@ -263,13 +307,28 @@ function App() {
           <WatchlistManager
             key={`watchlists-${refreshKey}`}
             onSelectWatchlist={handleSelectWatchlist}
+          //
+
           />
+        )}
+        {currentView === 'research' && (
+          <ResearchView key={`research-view-${refreshKey}`} />
         )}
         {currentView === 'watchlist-detail' && selectedWatchlistId && (
           <WatchlistView
             key={`watchlist-${selectedWatchlistId}-${refreshKey}`}
             watchlistId={selectedWatchlistId}
             onBack={handleBackFromWatchlist}
+
+          />
+        )}
+        {currentView === 'stock-research' && researchTicker && (
+          <StockResearch
+            key={`research-${researchTicker}`}
+            ticker={researchTicker}
+            stockName={researchStockName}
+            finnhubTicker={researchFinnhubTicker}
+            onBack={handleBackFromResearch}
           />
         )}
         {currentView === 'stock-detail' && selectedStockId && (

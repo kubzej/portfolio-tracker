@@ -1,0 +1,267 @@
+.research-technical {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.technical-section {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 1rem;
+}
+
+.no-data {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-muted);
+}
+
+/* Technical Outlook */
+.technical-outlook {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.bias-indicator {
+  font-size: 1.25rem;
+  font-weight: 700;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  text-transform: uppercase;
+}
+
+.bias-indicator.bullish {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success-color);
+}
+
+.bias-indicator.bearish {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger-color);
+}
+
+.bias-indicator.neutral {
+  background: rgba(107, 114, 128, 0.15);
+  color: var(--text-secondary);
+}
+
+.technical-score {
+  flex: 1;
+  min-width: 150px;
+}
+
+/* Metrics Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.5rem;
+}
+
+.sma-interpretation {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+/* Indicators Grid */
+.indicators-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.indicator-card {
+  background: var(--bg-secondary);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.indicator-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.indicator-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.indicator-signal {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  text-transform: uppercase;
+}
+
+.indicator-signal.bullish {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success-color);
+}
+
+.indicator-signal.bearish {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger-color);
+}
+
+.indicator-signal.neutral {
+  background: rgba(107, 114, 128, 0.15);
+  color: var(--text-secondary);
+}
+
+.indicator-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.indicator-values {
+  display: flex;
+  gap: 1rem;
+  font-size: 1.125rem;
+  color: var(--text-primary);
+}
+
+.macd-values {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* RSI Bar */
+.indicator-bar {
+  margin-top: 0.5rem;
+}
+
+.indicator-bar-track {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.indicator-bar-zones {
+  display: flex;
+  height: 100%;
+}
+
+.indicator-bar-zones .zone {
+  flex: 1;
+}
+
+.indicator-bar-zones .zone.oversold {
+  background: rgba(16, 185, 129, 0.3);
+}
+
+.indicator-bar-zones .zone.neutral {
+  background: rgba(107, 114, 128, 0.2);
+}
+
+.indicator-bar-zones .zone.overbought {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+.indicator-bar-marker {
+  position: absolute;
+  top: -2px;
+  width: 12px;
+  height: 12px;
+  background: var(--primary-color);
+  border-radius: 50%;
+  transform: translateX(-50%);
+  border: 2px solid var(--card-bg);
+}
+
+.indicator-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+  font-size: 0.625rem;
+  color: var(--text-muted);
+}
+
+/* Bollinger Signal */
+.bollinger-signal {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.bollinger-signal.bullish {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+}
+
+.bollinger-signal.bearish {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger-color);
+}
+
+.bollinger-signal.neutral {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+/* Fibonacci */
+.fibonacci-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
+
+.fib-current {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .technical-section {
+    padding: 1rem;
+  }
+
+  .technical-outlook {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .bias-indicator {
+    text-align: center;
+    width: 100%;
+  }
+
+  .indicators-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fibonacci-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

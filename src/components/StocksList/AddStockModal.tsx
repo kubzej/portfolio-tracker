@@ -8,21 +8,32 @@ import {
 } from '@/components/shared/BottomSheet';
 
 const EXCHANGE_OPTIONS: SelectOption[] = [
-  { value: '', label: 'Select exchange...' },
+  { value: '', label: 'No exchange' },
   { value: 'NYSE', label: 'NYSE' },
   { value: 'NASDAQ', label: 'NASDAQ' },
-  { value: 'XETRA', label: 'XETRA' },
   { value: 'LSE', label: 'LSE' },
+  { value: 'XETRA', label: 'XETRA' },
+  { value: 'SIX', label: 'SIX' },
   { value: 'TSX', label: 'TSX' },
+  { value: 'ASX', label: 'ASX' },
+  { value: 'JPX', label: 'JPX' },
+  { value: 'SSE', label: 'SSE' },
+  { value: 'HKEX', label: 'HKEX' },
+  { value: 'PSE', label: 'PSE' },
   { value: 'Other', label: 'Other' },
 ];
 
 const CURRENCY_OPTIONS: SelectOption[] = [
-  { value: 'USD', label: 'USD - US Dollar' },
-  { value: 'EUR', label: 'EUR - Euro' },
-  { value: 'GBP', label: 'GBP - British Pound' },
-  { value: 'CZK', label: 'CZK - Czech Koruna' },
-  { value: 'CAD', label: 'CAD - Canadian Dollar' },
+  { value: 'USD', label: 'USD' },
+  { value: 'EUR', label: 'EUR' },
+  { value: 'GBP', label: 'GBP' },
+  { value: 'JPY', label: 'JPY' },
+  { value: 'CHF', label: 'CHF' },
+  { value: 'CAD', label: 'CAD' },
+  { value: 'AUD', label: 'AUD' },
+  { value: 'CNY', label: 'CNY' },
+  { value: 'CZK', label: 'CZK' },
+  { value: 'HKD', label: 'HKD' },
 ];
 
 interface AddStockModalProps {
