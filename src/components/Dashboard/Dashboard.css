@@ -141,6 +141,18 @@
   color: var(--text-muted);
 }
 
+/* Mobile Sort Controls */
+.mobile-sort-controls {
+  display: none;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 899px) {
+  .mobile-sort-controls {
+    display: block;
+  }
+}
+
 /* Mobile holdings cards */
 .holdings-cards {
   display: flex;

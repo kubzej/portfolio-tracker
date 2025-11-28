@@ -5,6 +5,10 @@ import type {
 } from '@/types/database';
 import { watchlistsApi, watchlistItemsApi } from '@/services/api';
 import { Button } from '@/components/shared/Button';
+import {
+  BottomSheetSelect,
+  type SelectOption,
+} from '@/components/shared/BottomSheet';
 import { AddStockForm } from './AddStockForm';
 import { formatCurrency } from '@/utils/format';
 import './Watchlists.css';
@@ -16,6 +20,19 @@ type SortField =
   | 'target_buy_price'
   | 'target_sell_price';
 type SortDirection = 'asc' | 'desc';
+
+const SORT_OPTIONS: SelectOption[] = [
+  { value: 'ticker-asc', label: 'Ticker (A-Z)' },
+  { value: 'ticker-desc', label: 'Ticker (Z-A)' },
+  { value: 'last_price-desc', label: 'Price (High-Low)' },
+  { value: 'last_price-asc', label: 'Price (Low-High)' },
+  { value: 'last_price_change_percent-desc', label: 'Change (Best)' },
+  { value: 'last_price_change_percent-asc', label: 'Change (Worst)' },
+  { value: 'target_buy_price-asc', label: 'Buy Target (Low-High)' },
+  { value: 'target_buy_price-desc', label: 'Buy Target (High-Low)' },
+  { value: 'target_sell_price-desc', label: 'Sell Target (High-Low)' },
+  { value: 'target_sell_price-asc', label: 'Sell Target (Low-High)' },
+];
 
 interface WatchlistViewProps {
   watchlistId: string;
@@ -273,6 +290,23 @@ export function WatchlistView({
         </div>
       ) : (
         <div className="watchlist-items">
+          {/* Mobile sort controls */}
+          <div className="mobile-sort-controls">
+            <BottomSheetSelect
+              label="Sort by"
+              options={SORT_OPTIONS}
+              value={`${sortField}-${sortDirection}`}
+              onChange={(value) => {
+                const [field, dir] = value.split('-') as [
+                  SortField,
+                  SortDirection
+                ];
+                setSortField(field);
+                setSortDirection(dir);
+              }}
+            />
+          </div>
+
           {/* Desktop table view */}
           <table className="watchlist-table">
             <thead>
