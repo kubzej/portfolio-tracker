@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dashboard } from './components/Dashboard';
 import { StockForm } from './components/StockForm';
 import { TransactionForm } from './components/TransactionForm';
@@ -23,9 +23,21 @@ type View =
   | 'add-stock'
   | 'add-transaction';
 
+// Valid views for URL persistence
+const VALID_VIEWS: View[] = ['dashboard', 'stocks', 'analysis', 'news'];
+
+// Get initial view from URL hash
+function getInitialView(): View {
+  const hash = window.location.hash.slice(1); // Remove #
+  if (VALID_VIEWS.includes(hash as View)) {
+    return hash as View;
+  }
+  return 'dashboard';
+}
+
 function App() {
   const { user, loading, signOut } = useAuth();
-  const [currentView, setCurrentView] = useState<View>('dashboard');
+  const [currentView, setCurrentView] = useState<View>(getInitialView);
   const [selectedStockId, setSelectedStockId] = useState<string | null>(null);
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | null>(
     null
@@ -35,6 +47,25 @@ function App() {
   );
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshingPrices, setRefreshingPrices] = useState(false);
+
+  // Sync URL hash with current view
+  useEffect(() => {
+    if (VALID_VIEWS.includes(currentView)) {
+      window.history.replaceState(null, '', `#${currentView}`);
+    }
+  }, [currentView]);
+
+  // Handle browser back/forward buttons
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1);
+      if (VALID_VIEWS.includes(hash as View)) {
+        setCurrentView(hash as View);
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   const handleSuccess = () => {
     setCurrentView('dashboard');
