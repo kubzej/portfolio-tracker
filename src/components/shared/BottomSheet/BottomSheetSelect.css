@@ -1,25 +1,27 @@
 .bottom-sheet-select-label {
   display: block;
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 500;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 
 /* Native select for desktop - styled like other buttons */
 .native-select-trigger {
   display: inline-flex;
   align-items: center;
-  padding: 0.5rem 2.25rem 0.5rem 1rem;
-  background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 0.75rem center;
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  background: var(--bg-tertiary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 0.625rem center;
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
   color: var(--accent-primary);
   font-size: 0.875rem;
   font-weight: 500;
+  font-family: inherit;
   cursor: pointer;
   transition: all var(--transition-normal);
   appearance: none;
+  width: 100%;
 }
 
 .native-select-trigger:hover:not(:disabled) {
@@ -46,13 +48,14 @@
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.5rem 1rem;
-  background: var(--bg-secondary);
+  padding: 0.4375rem 0.625rem;
+  background: var(--bg-tertiary);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--transition-normal);
   text-align: left;
+  width: 100%;
 }
 
 .bottom-sheet-select-trigger:active {
@@ -76,15 +79,15 @@
 }
 
 .select-color-dot {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .select-text {
   flex: 1;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--accent-primary);
   white-space: nowrap;
@@ -95,6 +98,7 @@
 .select-chevron {
   color: var(--accent-primary);
   flex-shrink: 0;
+  font-size: 0.75rem;
 }
 
 /* Options in bottom sheet */
@@ -143,4 +147,28 @@
   color: var(--accent-primary);
   font-weight: 600;
   font-size: 1.125rem;
+}
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+  .bottom-sheet-select-label {
+    font-size: 0.6875rem;
+    margin-bottom: 0.1875rem;
+  }
+
+  .bottom-sheet-select-trigger {
+    padding: 0.4375rem 0.625rem;
+  }
+
+  .select-text {
+    font-size: 0.8125rem;
+  }
+
+  .bottom-sheet-option {
+    padding: 0.875rem 1rem;
+  }
+
+  .option-label {
+    font-size: 0.9375rem;
+  }
 }

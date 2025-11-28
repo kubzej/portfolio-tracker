@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Dashboard } from './components/Dashboard';
-import { StockForm } from './components/StockForm';
-import { TransactionForm } from './components/TransactionForm';
-import { StocksList } from './components/StocksList';
+import {
+  StocksList,
+  AddStockModal,
+  AddTransactionModal,
+} from './components/StocksList';
 import { StockDetail } from './components/StockDetail';
 import { PortfolioSelector } from './components/PortfolioSelector';
 import { Analysis } from './components/Analysis';
@@ -22,9 +24,7 @@ type View =
   | 'analysis'
   | 'news'
   | 'watchlists'
-  | 'watchlist-detail'
-  | 'add-stock'
-  | 'add-transaction';
+  | 'watchlist-detail';
 
 // Valid views for URL persistence
 const VALID_VIEWS: View[] = [
@@ -59,6 +59,8 @@ function App() {
   );
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshingPrices, setRefreshingPrices] = useState(false);
+  const [showAddStockModal, setShowAddStockModal] = useState(false);
+  const [showAddTransactionModal, setShowAddTransactionModal] = useState(false);
 
   // Sync URL hash with current view
   useEffect(() => {
@@ -78,11 +80,6 @@ function App() {
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
-
-  const handleSuccess = () => {
-    setCurrentView('dashboard');
-    setRefreshKey((k) => k + 1);
-  };
 
   const handleStockClick = (stockId: string) => {
     setSelectedStockId(stockId);
@@ -225,18 +222,14 @@ function App() {
             Watchlists
           </button>
           <button
-            className={`add-action ${
-              currentView === 'add-stock' ? 'active' : ''
-            }`}
-            onClick={() => setCurrentView('add-stock')}
+            className="add-action"
+            onClick={() => setShowAddStockModal(true)}
           >
             + Add Stock
           </button>
           <button
-            className={`add-action ${
-              currentView === 'add-transaction' ? 'active' : ''
-            }`}
-            onClick={() => setCurrentView('add-transaction')}
+            className="add-action"
+            onClick={() => setShowAddTransactionModal(true)}
           >
             + Add Transaction
           </button>
@@ -252,11 +245,7 @@ function App() {
           />
         )}
         {currentView === 'stocks' && (
-          <StocksList
-            key={refreshKey}
-            onStockClick={handleStockClick}
-            onAddStock={() => setCurrentView('add-stock')}
-          />
+          <StocksList key={refreshKey} onStockClick={handleStockClick} />
         )}
         {currentView === 'analysis' && (
           <Analysis
@@ -291,20 +280,20 @@ function App() {
             onDeleted={handleStockDeleted}
           />
         )}
-        {currentView === 'add-stock' && (
-          <StockForm
-            onSuccess={handleSuccess}
-            onCancel={() => setCurrentView('dashboard')}
-          />
-        )}
-        {currentView === 'add-transaction' && (
-          <TransactionForm
-            portfolioId={selectedPortfolioId}
-            onSuccess={handleSuccess}
-            onCancel={() => setCurrentView('dashboard')}
-          />
-        )}
       </main>
+
+      {/* Modals */}
+      <AddStockModal
+        isOpen={showAddStockModal}
+        onClose={() => setShowAddStockModal(false)}
+        onSuccess={() => setRefreshKey((k) => k + 1)}
+      />
+      <AddTransactionModal
+        isOpen={showAddTransactionModal}
+        onClose={() => setShowAddTransactionModal(false)}
+        onSuccess={() => setRefreshKey((k) => k + 1)}
+        portfolioId={selectedPortfolioId}
+      />
     </div>
   );
 }

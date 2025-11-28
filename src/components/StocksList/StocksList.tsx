@@ -3,14 +3,15 @@ import { stocksApi } from '@/services/api';
 import type { StockWithSector } from '@/types/database';
 import { formatPrice } from '@/utils/format';
 import { Button } from '@/components/shared/Button';
+import { AddStockModal } from './AddStockModal';
 import './StocksList.css';
 
 interface StocksListProps {
   onStockClick: (stockId: string) => void;
-  onAddStock: () => void;
 }
 
-export function StocksList({ onStockClick, onAddStock }: StocksListProps) {
+export function StocksList({ onStockClick }: StocksListProps) {
+  const [showAddModal, setShowAddModal] = useState(false);
   const [stocks, setStocks] = useState<StockWithSector[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +44,7 @@ export function StocksList({ onStockClick, onAddStock }: StocksListProps) {
     <div className="stocks-list">
       <div className="stocks-list-header">
         <h2>Stocks</h2>
-        <Button variant="primary" onClick={onAddStock}>
+        <Button variant="primary" onClick={() => setShowAddModal(true)}>
           + Add Stock
         </Button>
       </div>
@@ -80,6 +81,12 @@ export function StocksList({ onStockClick, onAddStock }: StocksListProps) {
           ))}
         </div>
       )}
+
+      <AddStockModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={loadStocks}
+      />
     </div>
   );
 }
