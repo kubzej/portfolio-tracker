@@ -5,7 +5,6 @@ import type {
   Transaction,
   Sector,
   UpdateStockInput,
-  UpdateTransactionInput,
   CreateTransactionInput,
 } from '@/types/database';
 import {
@@ -20,6 +19,7 @@ import {
   type SelectOption,
 } from '@/components/shared/BottomSheet';
 import { Button } from '@/components/shared/Button';
+import { EditTransactionModal } from './EditTransactionModal';
 import './StockDetail.css';
 
 const CURRENCY_OPTIONS: SelectOption[] = [
@@ -56,16 +56,14 @@ export function StockDetail({
 
   // Edit modes
   const [editingStock, setEditingStock] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<string | null>(
-    null
-  );
+  const [editingTransaction, setEditingTransaction] =
+    useState<Transaction | null>(null);
   const [addingTransaction, setAddingTransaction] = useState(false);
 
   // Form data
   const [stockForm, setStockForm] = useState<UpdateStockInput>({});
-  const [transactionForm, setTransactionForm] = useState<
-    UpdateTransactionInput | CreateTransactionInput
-  >({});
+  const [transactionForm, setTransactionForm] =
+    useState<CreateTransactionInput>({} as CreateTransactionInput);
 
   useEffect(() => {
     loadData();
@@ -137,21 +135,6 @@ export function StockDetail({
     }
   };
 
-  const handleSaveTransaction = async (transactionId: string) => {
-    try {
-      await transactionsApi.update(
-        transactionId,
-        transactionForm as UpdateTransactionInput
-      );
-      setEditingTransaction(null);
-      await loadData();
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to update transaction'
-      );
-    }
-  };
-
   const handleAddTransaction = async () => {
     if (!portfolioId) {
       setError('Please select a portfolio to add transactions');
@@ -188,17 +171,15 @@ export function StockDetail({
   };
 
   const startEditTransaction = (tx: Transaction) => {
-    setEditingTransaction(tx.id);
-    setTransactionForm({
-      date: tx.date,
-      type: tx.type,
-      quantity: tx.quantity,
-      price_per_share: tx.price_per_share,
-      currency: tx.currency,
-      exchange_rate_to_czk: tx.exchange_rate_to_czk,
-      fees: tx.fees,
-      notes: tx.notes,
-    });
+    setEditingTransaction(tx);
+  };
+
+  const handleEditModalClose = () => {
+    setEditingTransaction(null);
+  };
+
+  const handleEditModalSuccess = () => {
+    loadData();
   };
 
   const startAddTransaction = () => {
@@ -647,152 +628,44 @@ export function StockDetail({
                 <tbody>
                   {transactions.map((tx) => (
                     <tr key={tx.id}>
-                      {editingTransaction === tx.id ? (
-                        <>
-                          <td>
-                            <input
-                              type="date"
-                              value={
-                                (transactionForm as UpdateTransactionInput)
-                                  .date || ''
-                              }
-                              onChange={(e) =>
-                                setTransactionForm({
-                                  ...transactionForm,
-                                  date: e.target.value,
-                                })
-                              }
-                            />
-                          </td>
-                          <td>
-                            <select
-                              value={
-                                (transactionForm as UpdateTransactionInput)
-                                  .type || 'BUY'
-                              }
-                              onChange={(e) =>
-                                setTransactionForm({
-                                  ...transactionForm,
-                                  type: e.target.value as 'BUY' | 'SELL',
-                                })
-                              }
-                            >
-                              <option value="BUY">BUY</option>
-                              <option value="SELL">SELL</option>
-                            </select>
-                          </td>
-                          <td>
-                            <input
-                              type="number"
-                              step="0.000001"
-                              value={
-                                (transactionForm as UpdateTransactionInput)
-                                  .quantity || ''
-                              }
-                              onChange={(e) =>
-                                setTransactionForm({
-                                  ...transactionForm,
-                                  quantity: parseFloat(e.target.value),
-                                })
-                              }
-                            />
-                          </td>
-                          <td>
-                            <input
-                              type="number"
-                              step="0.0001"
-                              value={
-                                (transactionForm as UpdateTransactionInput)
-                                  .price_per_share || ''
-                              }
-                              onChange={(e) =>
-                                setTransactionForm({
-                                  ...transactionForm,
-                                  price_per_share: parseFloat(e.target.value),
-                                })
-                              }
-                            />
-                          </td>
-                          <td colSpan={2}>
-                            <input
-                              type="number"
-                              step="0.01"
-                              placeholder="Fees"
-                              value={
-                                (transactionForm as UpdateTransactionInput)
-                                  .fees || ''
-                              }
-                              onChange={(e) =>
-                                setTransactionForm({
-                                  ...transactionForm,
-                                  fees: parseFloat(e.target.value),
-                                })
-                              }
-                            />
-                          </td>
-                          <td colSpan={2}>
-                            <div className="inline-actions">
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => setEditingTransaction(null)}
-                              >
-                                Cancel
-                              </Button>
-                              <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={() => handleSaveTransaction(tx.id)}
-                              >
-                                Save
-                              </Button>
-                            </div>
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          <td>{formatDate(tx.date)}</td>
-                          <td>
-                            <span
-                              className={`type-badge ${tx.type.toLowerCase()}`}
-                            >
-                              {tx.type}
-                            </span>
-                          </td>
-                          <td className="right">{formatShares(tx.quantity)}</td>
-                          <td className="right">
-                            {formatPrice(tx.price_per_share)}
-                          </td>
-                          <td className="right">
-                            {formatNumber(tx.total_amount, 2)}
-                          </td>
-                          <td className="right">{formatNumber(tx.fees, 2)}</td>
-                          <td className="right">
-                            {formatCurrency(tx.total_amount_czk, 'CZK')}
-                          </td>
-                          <td>
-                            <div className="row-actions">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                icon
-                                onClick={() => startEditTransaction(tx)}
-                              >
-                                ✏️
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                icon
-                                className="danger"
-                                onClick={() => handleDeleteTransaction(tx.id)}
-                              >
-                                🗑️
-                              </Button>
-                            </div>
-                          </td>
-                        </>
-                      )}
+                      <td>{formatDate(tx.date)}</td>
+                      <td>
+                        <span className={`type-badge ${tx.type.toLowerCase()}`}>
+                          {tx.type}
+                        </span>
+                      </td>
+                      <td className="right">{formatShares(tx.quantity)}</td>
+                      <td className="right">
+                        {formatPrice(tx.price_per_share)}
+                      </td>
+                      <td className="right">
+                        {formatNumber(tx.total_amount, 2)}
+                      </td>
+                      <td className="right">{formatNumber(tx.fees, 2)}</td>
+                      <td className="right">
+                        {formatCurrency(tx.total_amount_czk, 'CZK')}
+                      </td>
+                      <td>
+                        <div className="row-actions">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon
+                            onClick={() => startEditTransaction(tx)}
+                          >
+                            ✏️
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon
+                            className="danger"
+                            onClick={() => handleDeleteTransaction(tx.id)}
+                          >
+                            🗑️
+                          </Button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -801,6 +674,14 @@ export function StockDetail({
           </>
         )}
       </div>
+
+      {/* Edit Transaction Modal */}
+      <EditTransactionModal
+        isOpen={editingTransaction !== null}
+        onClose={handleEditModalClose}
+        onSuccess={handleEditModalSuccess}
+        transaction={editingTransaction}
+      />
     </div>
   );
 }

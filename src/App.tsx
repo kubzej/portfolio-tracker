@@ -7,6 +7,7 @@ import { StockDetail } from './components/StockDetail';
 import { PortfolioSelector } from './components/PortfolioSelector';
 import { Analysis } from './components/Analysis';
 import { News } from './components/News';
+import { WatchlistManager, WatchlistView } from './components/Watchlists';
 import { Login } from './components/Login';
 import { Button } from './components/shared/Button';
 import { useAuth } from './contexts/AuthContext';
@@ -20,11 +21,19 @@ type View =
   | 'stock-detail'
   | 'analysis'
   | 'news'
+  | 'watchlists'
+  | 'watchlist-detail'
   | 'add-stock'
   | 'add-transaction';
 
 // Valid views for URL persistence
-const VALID_VIEWS: View[] = ['dashboard', 'stocks', 'analysis', 'news'];
+const VALID_VIEWS: View[] = [
+  'dashboard',
+  'stocks',
+  'analysis',
+  'news',
+  'watchlists',
+];
 
 // Get initial view from URL hash
 function getInitialView(): View {
@@ -39,6 +48,9 @@ function App() {
   const { user, loading, signOut } = useAuth();
   const [currentView, setCurrentView] = useState<View>(getInitialView);
   const [selectedStockId, setSelectedStockId] = useState<string | null>(null);
+  const [selectedWatchlistId, setSelectedWatchlistId] = useState<string | null>(
+    null
+  );
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | null>(
     null
   );
@@ -86,6 +98,16 @@ function App() {
   const handleBackFromStock = () => {
     setCurrentView('stocks');
     setRefreshKey((k) => k + 1);
+  };
+
+  const handleSelectWatchlist = (watchlistId: string) => {
+    setSelectedWatchlistId(watchlistId);
+    setCurrentView('watchlist-detail');
+  };
+
+  const handleBackFromWatchlist = () => {
+    setSelectedWatchlistId(null);
+    setCurrentView('watchlists');
   };
 
   const handleRefreshPrices = async () => {
@@ -193,6 +215,16 @@ function App() {
             News
           </button>
           <button
+            className={
+              currentView === 'watchlists' || currentView === 'watchlist-detail'
+                ? 'active'
+                : ''
+            }
+            onClick={() => setCurrentView('watchlists')}
+          >
+            Watchlists
+          </button>
+          <button
             className={`add-action ${
               currentView === 'add-stock' ? 'active' : ''
             }`}
@@ -236,6 +268,19 @@ function App() {
           <News
             key={`news-${refreshKey}-${selectedPortfolioId}`}
             portfolioId={selectedPortfolioId ?? undefined}
+          />
+        )}
+        {currentView === 'watchlists' && (
+          <WatchlistManager
+            key={`watchlists-${refreshKey}`}
+            onSelectWatchlist={handleSelectWatchlist}
+          />
+        )}
+        {currentView === 'watchlist-detail' && selectedWatchlistId && (
+          <WatchlistView
+            key={`watchlist-${selectedWatchlistId}-${refreshKey}`}
+            watchlistId={selectedWatchlistId}
+            onBack={handleBackFromWatchlist}
           />
         )}
         {currentView === 'stock-detail' && selectedStockId && (

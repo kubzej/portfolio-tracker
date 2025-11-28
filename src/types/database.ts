@@ -210,3 +210,97 @@ export interface PortfolioTotals {
     percentage: number;
   }[];
 }
+
+// ==========================================
+// Watchlists
+// ==========================================
+
+// Watchlist (similar to Portfolio but for tracking only)
+export interface Watchlist {
+  id: string;
+  name: string;
+  description: string | null;
+  color: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Watchlist item (stock in a watchlist)
+export interface WatchlistItem {
+  id: string;
+  watchlist_id: string;
+  ticker: string;
+  name: string | null;
+  finnhub_ticker: string | null;
+  target_buy_price: number | null;
+  target_sell_price: number | null;
+  notes: string | null;
+  // Cached price data
+  last_price: number | null;
+  last_price_change: number | null;
+  last_price_change_percent: number | null;
+  last_price_updated_at: string | null;
+  currency: string; // Currency of the price (USD, EUR, etc.)
+  // Timestamps
+  added_at: string;
+  updated_at: string;
+}
+
+// Watchlist with item count (from view)
+export interface WatchlistSummary extends Watchlist {
+  item_count: number;
+  items_at_buy_target: number;
+  items_at_sell_target: number;
+}
+
+// Watchlist item with calculated fields
+export interface WatchlistItemWithCalculations extends WatchlistItem {
+  // Distance to targets (calculated client-side)
+  distance_to_buy_target: number | null; // % difference from buy target
+  distance_to_sell_target: number | null; // % difference from sell target
+  // Flags for UI highlighting
+  at_buy_target: boolean;
+  at_sell_target: boolean;
+  // 52-week range (from price API)
+  week_52_low: number | null;
+  week_52_high: number | null;
+}
+
+// ==========================================
+// Watchlist Input types
+// ==========================================
+
+export interface CreateWatchlistInput {
+  name: string;
+  description?: string;
+  color?: string;
+}
+
+export interface UpdateWatchlistInput {
+  name?: string;
+  description?: string | null;
+  color?: string;
+}
+
+export interface AddWatchlistItemInput {
+  watchlist_id: string;
+  ticker: string;
+  name?: string;
+  finnhub_ticker?: string;
+  target_buy_price?: number;
+  target_sell_price?: number;
+  notes?: string;
+}
+
+export interface UpdateWatchlistItemInput {
+  name?: string;
+  finnhub_ticker?: string | null;
+  target_buy_price?: number | null;
+  target_sell_price?: number | null;
+  notes?: string | null;
+  // Price cache update (from API)
+  last_price?: number;
+  last_price_change?: number;
+  last_price_change_percent?: number;
+  last_price_updated_at?: string;
+}
