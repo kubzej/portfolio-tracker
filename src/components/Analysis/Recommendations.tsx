@@ -267,7 +267,7 @@ export function Recommendations({
             isActive={showHistory}
             onClick={() => setShowHistory(!showHistory)}
           >
-            History
+            Show signal history
           </Button>
         </div>
       </div>
