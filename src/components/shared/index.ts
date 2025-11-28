@@ -7,3 +7,4 @@ export { ErrorState } from './ErrorState';
 export { PriceDisplay } from './PriceDisplay';
 export { ScoreCard } from './ScoreCard';
 export { MetricRow } from './MetricRow';
+export { SignalBadge } from './SignalBadge';

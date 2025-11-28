@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { holdingsApi } from '@/services/api';
 import type { PortfolioSummary, PortfolioTotals } from '@/types/database';
 import {
@@ -7,6 +7,8 @@ import {
   formatNumber,
   formatPrice,
 } from '@/utils/format';
+import { cn } from '@/utils/cn';
+import { useSortable } from '@/hooks';
 import {
   BottomSheetSelect,
   type SelectOption,
@@ -27,8 +29,6 @@ type SortKey =
   | 'portfolio'
   | 'targetPrice'
   | 'distanceToTarget';
-
-type SortDirection = 'asc' | 'desc';
 
 const SORT_OPTIONS: SelectOption[] = [
   { value: 'ticker-asc', label: 'Ticker (A-Z)' },
@@ -56,8 +56,59 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
   const [totals, setTotals] = useState<PortfolioTotals | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sortKey, setSortKey] = useState<SortKey>('ticker');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  // Value extractor for sorting - needs totals for portfolio percentage calculation
+  const getHoldingValue = useCallback(
+    (item: PortfolioSummary, field: SortKey): string | number | null => {
+      const totalValue = totals?.totalCurrentValueCzk || 0;
+
+      switch (field) {
+        case 'ticker':
+          return item.ticker.toLowerCase();
+        case 'sector':
+          return (item.sector_name || '').toLowerCase();
+        case 'shares':
+          return item.total_shares;
+        case 'avgPrice':
+          return item.avg_buy_price;
+        case 'currentPrice':
+          return item.current_price ?? -Infinity;
+        case 'invested':
+          return item.total_invested_czk;
+        case 'current':
+          return item.current_value_czk ?? -Infinity;
+        case 'plCzk':
+          return item.current_value_czk !== null
+            ? item.current_value_czk - item.total_invested_czk
+            : -Infinity;
+        case 'plPercent':
+          return item.gain_percentage ?? -Infinity;
+        case 'portfolio':
+          return totalValue && item.current_value_czk
+            ? item.current_value_czk / totalValue
+            : -Infinity;
+        case 'targetPrice':
+          return item.target_price ?? -Infinity;
+        case 'distanceToTarget':
+          return item.distance_to_target_pct ?? -Infinity;
+        default:
+          return null;
+      }
+    },
+    [totals]
+  );
+
+  const {
+    sortedData: sortedHoldings,
+    sortValue,
+    handleSort,
+    setSortFromValue,
+    getSortIndicator,
+    isSorted,
+  } = useSortable<PortfolioSummary, SortKey>(holdings, getHoldingValue, {
+    defaultField: 'ticker',
+    ascendingFields: ['ticker', 'sector'],
+  });
 
   useEffect(() => {
     loadData();
@@ -79,92 +130,6 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
     }
   };
 
-  const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortKey(key);
-      setSortDirection('asc');
-    }
-  };
-
-  const sortedHoldings = useMemo(() => {
-    const totalValue = totals?.totalCurrentValueCzk || 0;
-
-    return [...holdings].sort((a, b) => {
-      let aVal: number | string | null = null;
-      let bVal: number | string | null = null;
-
-      switch (sortKey) {
-        case 'ticker':
-          aVal = a.ticker.toLowerCase();
-          bVal = b.ticker.toLowerCase();
-          break;
-        case 'sector':
-          aVal = (a.sector_name || '').toLowerCase();
-          bVal = (b.sector_name || '').toLowerCase();
-          break;
-        case 'shares':
-          aVal = a.total_shares;
-          bVal = b.total_shares;
-          break;
-        case 'avgPrice':
-          aVal = a.avg_buy_price;
-          bVal = b.avg_buy_price;
-          break;
-        case 'currentPrice':
-          aVal = a.current_price ?? -Infinity;
-          bVal = b.current_price ?? -Infinity;
-          break;
-        case 'invested':
-          aVal = a.total_invested_czk;
-          bVal = b.total_invested_czk;
-          break;
-        case 'current':
-          aVal = a.current_value_czk ?? -Infinity;
-          bVal = b.current_value_czk ?? -Infinity;
-          break;
-        case 'plCzk':
-          aVal =
-            a.current_value_czk !== null
-              ? a.current_value_czk - a.total_invested_czk
-              : -Infinity;
-          bVal =
-            b.current_value_czk !== null
-              ? b.current_value_czk - b.total_invested_czk
-              : -Infinity;
-          break;
-        case 'plPercent':
-          aVal = a.gain_percentage ?? -Infinity;
-          bVal = b.gain_percentage ?? -Infinity;
-          break;
-        case 'portfolio':
-          aVal =
-            totalValue && a.current_value_czk
-              ? a.current_value_czk / totalValue
-              : -Infinity;
-          bVal =
-            totalValue && b.current_value_czk
-              ? b.current_value_czk / totalValue
-              : -Infinity;
-          break;
-        case 'targetPrice':
-          aVal = a.target_price ?? -Infinity;
-          bVal = b.target_price ?? -Infinity;
-          break;
-        case 'distanceToTarget':
-          aVal = a.distance_to_target_pct ?? -Infinity;
-          bVal = b.distance_to_target_pct ?? -Infinity;
-          break;
-      }
-
-      if (aVal === null || bVal === null) return 0;
-      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }, [holdings, sortKey, sortDirection, totals]);
-
   const SortHeader = ({
     label,
     sortKeyName,
@@ -175,17 +140,11 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
     className?: string;
   }) => (
     <th
-      className={`sortable ${className || ''} ${
-        sortKey === sortKeyName ? 'sorted' : ''
-      }`}
+      className={cn('sortable', className, isSorted(sortKeyName) && 'sorted')}
       onClick={() => handleSort(sortKeyName)}
     >
       {label}
-      {sortKey === sortKeyName && (
-        <span className="sort-indicator">
-          {sortDirection === 'asc' ? ' ▲' : ' ▼'}
-        </span>
-      )}
+      {getSortIndicator(sortKeyName)}
     </th>
   );
 
@@ -223,9 +182,10 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
         <div className="summary-card">
           <span className="card-label">Unrealized P&L</span>
           <span
-            className={`card-value ${
+            className={cn(
+              'card-value',
               (totals?.totalUnrealizedGain || 0) >= 0 ? 'positive' : 'negative'
-            }`}
+            )}
           >
             {formatCurrency(totals?.totalUnrealizedGain || 0)}
             <small>
@@ -256,15 +216,8 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
               <BottomSheetSelect
                 label="Sort by"
                 options={SORT_OPTIONS}
-                value={`${sortKey}-${sortDirection}`}
-                onChange={(value) => {
-                  const [key, dir] = value.split('-') as [
-                    SortKey,
-                    SortDirection
-                  ];
-                  setSortKey(key);
-                  setSortDirection(dir);
-                }}
+                value={sortValue}
+                onChange={setSortFromValue}
               />
             </div>
 
@@ -295,18 +248,20 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                       </div>
                       <div className="holding-card-pl">
                         <div
-                          className={`value ${
+                          className={cn(
+                            'value',
                             (plCzk || 0) >= 0 ? 'positive' : 'negative'
-                          }`}
+                          )}
                         >
                           {plCzk !== null ? formatCurrency(plCzk) : '—'}
                         </div>
                         <div
-                          className={`percent ${
+                          className={cn(
+                            'percent',
                             (holding.gain_percentage || 0) >= 0
                               ? 'positive'
                               : 'negative'
-                          }`}
+                          )}
                         >
                           {formatPercent(holding.gain_percentage)}
                         </div>
@@ -366,13 +321,13 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                       <div className="holding-card-stat">
                         <span className="label">To Target</span>
                         <span
-                          className={`value ${
-                            holding.distance_to_target_pct !== null
-                              ? holding.distance_to_target_pct <= 0
+                          className={cn(
+                            'value',
+                            holding.distance_to_target_pct !== null &&
+                              (holding.distance_to_target_pct <= 0
                                 ? 'positive'
-                                : 'negative'
-                              : ''
-                          }`}
+                                : 'negative')
+                          )}
                         >
                           {holding.distance_to_target_pct !== null
                             ? formatPercent(
@@ -484,11 +439,12 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                           </div>
                         </td>
                         <td
-                          className={`right ${
+                          className={cn(
+                            'right',
                             (holding.gain_percentage || 0) >= 0
                               ? 'positive'
                               : 'negative'
-                          }`}
+                          )}
                         >
                           <div className="dual-value">
                             <span className="primary">
@@ -516,13 +472,13 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                                 : '—'}
                             </span>
                             <span
-                              className={`secondary ${
-                                holding.distance_to_target_pct !== null
-                                  ? holding.distance_to_target_pct <= 0
+                              className={cn(
+                                'secondary',
+                                holding.distance_to_target_pct !== null &&
+                                  (holding.distance_to_target_pct <= 0
                                     ? 'positive'
-                                    : 'negative'
-                                  : ''
-                              }`}
+                                    : 'negative')
+                              )}
                             >
                               {holding.distance_to_target_pct !== null
                                 ? formatPercent(

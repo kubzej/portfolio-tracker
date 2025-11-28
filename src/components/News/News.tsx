@@ -3,12 +3,11 @@ import {
   fetchPortfolioNews,
   fetchMarketNews,
   fetchTickerNews,
-  formatRelativeTime,
-  getSentimentColor,
-  getSentimentLabel,
   type NewsResponse,
   type NewsArticle,
 } from '@/services/api/news';
+import { formatRelativeTime } from '@/utils/format';
+import { getSentimentColor, getSentimentLabel } from '@/utils/sentiment';
 import { InfoTooltip } from '@/components/shared/InfoTooltip';
 import { Button } from '@/components/shared/Button';
 import { Tabs } from '@/components/shared/Tabs';

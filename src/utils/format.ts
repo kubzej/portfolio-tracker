@@ -151,3 +151,197 @@ export function formatDateTime(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date;
   return d.toLocaleString('cs-CZ');
 }
+
+// ============================================================================
+// LARGE NUMBER FORMATTING
+// ============================================================================
+
+/**
+ * Format large numbers (billions, millions, thousands) for display
+ * @param value - The number to format
+ */
+export function formatLargeNumber(value: number | null | undefined): string {
+  if (value === null || value === undefined) return '—';
+
+  const absValue = Math.abs(value);
+  const sign = value < 0 ? '-' : '';
+
+  if (absValue >= 1_000_000_000_000) {
+    return `${sign}${(absValue / 1_000_000_000_000).toFixed(1)}T`;
+  }
+  if (absValue >= 1_000_000_000) {
+    return `${sign}${(absValue / 1_000_000_000).toFixed(1)}B`;
+  }
+  if (absValue >= 1_000_000) {
+    return `${sign}${(absValue / 1_000_000).toFixed(1)}M`;
+  }
+  if (absValue >= 1_000) {
+    return `${sign}${(absValue / 1_000).toFixed(1)}K`;
+  }
+
+  return formatNumber(value, 0);
+}
+
+// ============================================================================
+// INDICATOR VALUE FORMATTING
+// ============================================================================
+
+/**
+ * Indicator definition interface for formatting
+ */
+export interface IndicatorFormatConfig {
+  key?: string;
+  format_decimals: number;
+  format_prefix: string;
+  format_suffix: string;
+  good_threshold: number | null;
+  bad_threshold: number | null;
+  higher_is_better: boolean;
+}
+
+/**
+ * Format an indicator value based on its configuration
+ * Handles special cases like market cap, and applies prefix/suffix
+ *
+ * @param value - The value to format
+ * @param config - The indicator configuration
+ */
+export function formatIndicatorValue(
+  value: number | null | undefined,
+  config: IndicatorFormatConfig
+): string {
+  if (value === null || value === undefined) return '—';
+
+  // Special handling for market cap and enterprise value
+  if (config.key === 'marketCap' || config.key === 'enterpriseValue') {
+    return formatLargeNumber(value);
+  }
+
+  const formatted = value.toLocaleString('cs-CZ', {
+    minimumFractionDigits: config.format_decimals,
+    maximumFractionDigits: config.format_decimals,
+  });
+
+  return `${config.format_prefix}${formatted}${config.format_suffix}`;
+}
+
+/**
+ * Get CSS class for indicator value based on thresholds
+ *
+ * @param value - The value to evaluate
+ * @param config - The indicator configuration with thresholds
+ * @returns 'positive' | 'negative' | '' (neutral)
+ */
+export function getIndicatorValueClass(
+  value: number | null | undefined,
+  config: IndicatorFormatConfig
+): 'positive' | 'negative' | '' {
+  if (value === null || value === undefined) return '';
+  if (config.good_threshold === null && config.bad_threshold === null)
+    return '';
+
+  const { good_threshold, bad_threshold, higher_is_better } = config;
+
+  if (higher_is_better) {
+    if (good_threshold !== null && value >= good_threshold) return 'positive';
+    if (bad_threshold !== null && value <= bad_threshold) return 'negative';
+  } else {
+    if (good_threshold !== null && value <= good_threshold) return 'positive';
+    if (bad_threshold !== null && value >= bad_threshold) return 'negative';
+  }
+
+  return '';
+}
+
+// ============================================================================
+// SENTIMENT FORMATTING
+// ============================================================================
+
+/**
+ * Get insider sentiment label and CSS class based on MSPR score
+ * MSPR (Market Sentiment Purchase Ratio) ranges from -100 to +100
+ *
+ * @param mspr - The MSPR value
+ */
+export function getInsiderSentimentLabel(mspr: number | null): {
+  label: string;
+  class: 'positive' | 'negative' | '';
+} {
+  if (mspr === null) return { label: '—', class: '' };
+  if (mspr > 25) return { label: 'Strong Buying', class: 'positive' };
+  if (mspr > 0) return { label: 'Buying', class: 'positive' };
+  if (mspr > -25) return { label: 'Selling', class: 'negative' };
+  return { label: 'Strong Selling', class: 'negative' };
+}
+
+// ============================================================================
+// DATE FORMATTING - EXTENDED
+// ============================================================================
+
+/**
+ * Format a date in short format (17. Nov 24)
+ * @param date - Date string or Date object
+ */
+export function formatDateShort(date: string | Date): string {
+  if (!date) return '—';
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleDateString('cs-CZ', {
+    day: 'numeric',
+    month: 'short',
+    year: '2-digit',
+  });
+}
+
+/**
+ * Format relative time (e.g., "2h ago", "3d ago")
+ * @param date - Date string or Date object
+ */
+export function formatRelativeTime(date: string | Date): string {
+  if (!date) return '—';
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 60) {
+    return `${diffMins}m ago`;
+  } else if (diffHours < 24) {
+    return `${diffHours}h ago`;
+  } else if (diffDays < 7) {
+    return `${diffDays}d ago`;
+  } else {
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+}
+
+// ============================================================================
+// RETURN/CHANGE FORMATTING
+// ============================================================================
+
+/**
+ * Format a return/change percentage
+ * @param priceAt - Original price
+ * @param priceNow - Current price (null = no data)
+ * @returns Formatted return string (e.g., "+5.2%", "-3.1%")
+ */
+export function formatReturn(priceAt: number, priceNow: number | null): string {
+  if (priceNow === null) return '—';
+  const ret = ((priceNow - priceAt) / priceAt) * 100;
+  return `${ret >= 0 ? '+' : ''}${ret.toFixed(1)}%`;
+}
+
+/**
+ * Get CSS class for return/change value
+ * @param priceAt - Original price
+ * @param priceNow - Current price (null = no data)
+ * @returns 'positive' | 'negative' | ''
+ */
+export function getReturnClass(
+  priceAt: number,
+  priceNow: number | null
+): 'positive' | 'negative' | '' {
+  if (priceNow === null) return '';
+  return priceNow > priceAt ? 'positive' : 'negative';
+}

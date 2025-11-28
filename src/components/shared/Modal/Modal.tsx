@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { cn } from '@/utils/cn';
 import './Modal.css';
 
 interface ModalProps {
@@ -52,7 +53,7 @@ export function Modal({
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div
         ref={modalRef}
-        className={`modal modal-${size}`}
+        className={cn('modal', `modal-${size}`)}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
