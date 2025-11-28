@@ -133,7 +133,7 @@ export async function fetchSingleAnalystData(
   const { data, error } = await supabase.functions.invoke(
     'fetch-analyst-data',
     {
-      body: { ticker, stockName, finnhubTicker },
+      body: { ticker, stockName, finnhubTicker, _t: Date.now() },
     }
   );
 

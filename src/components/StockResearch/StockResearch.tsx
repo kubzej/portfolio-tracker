@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { fetchSingleAnalystData } from '@/services/api/analysis';
 import { fetchSingleTechnicalData } from '@/services/api/technical';
 import type { AnalystData } from '@/services/api/analysis';
@@ -46,30 +46,63 @@ export function StockResearch({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('summary');
+  const [retryCount, setRetryCount] = useState(0);
+
+  // Track last fetched ticker to prevent duplicate fetches
+  const lastFetchedRef = useRef<string | null>(null);
 
   useEffect(() => {
-    loadData();
-  }, [ticker]);
+    // Create unique key for this fetch
+    const fetchKey = `${ticker}-${retryCount}`;
 
-  const loadData = async () => {
-    try {
+    // Skip if we already fetched this exact combination
+    if (lastFetchedRef.current === fetchKey && retryCount === 0) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadData = async () => {
+      // Reset state
+      setAnalystData(null);
+      setTechnicalData(null);
+      setActiveTab('summary');
       setLoading(true);
       setError(null);
 
-      const [analyst, technical] = await Promise.all([
-        fetchSingleAnalystData(ticker, stockName, finnhubTicker),
-        fetchSingleTechnicalData(ticker),
-      ]);
+      try {
+        const [analyst, technical] = await Promise.all([
+          fetchSingleAnalystData(ticker, stockName, finnhubTicker),
+          fetchSingleTechnicalData(ticker),
+        ]);
 
-      setAnalystData(analyst);
-      setTechnicalData(technical);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to load research data'
-      );
-    } finally {
-      setLoading(false);
-    }
+        if (!cancelled) {
+          setAnalystData(analyst);
+          setTechnicalData(technical);
+          lastFetchedRef.current = fetchKey;
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof Error ? err.message : 'Failed to load research data'
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [ticker, stockName, finnhubTicker, retryCount]);
+
+  const handleRetry = () => {
+    setRetryCount((c) => c + 1);
   };
 
   // Generate recommendation using existing scoring system
@@ -116,7 +149,7 @@ export function StockResearch({
         </div>
         <ErrorState
           message={error || 'Failed to load data'}
-          onRetry={loadData}
+          onRetry={handleRetry}
         />
       </div>
     );
@@ -134,6 +167,24 @@ export function StockResearch({
 
   return (
     <div className="stock-research">
+      {/* Debug */}
+      <div
+        style={{
+          fontSize: '9px',
+          fontFamily: 'monospace',
+          color: '#666',
+          padding: '2px 4px',
+          background: '#f5f5f5',
+        }}
+      >
+        req: {ticker} | analyst: {analystData.ticker} | tech:{' '}
+        {technicalData?.ticker ?? '?'}
+        {(ticker !== analystData.ticker ||
+          (technicalData && ticker !== technicalData.ticker)) && (
+          <span style={{ color: 'red' }}> ⚠</span>
+        )}
+      </div>
+
       {/* Header */}
       <div className="stock-research-header">
         <button className="back-btn" onClick={onBack}>

@@ -307,8 +307,6 @@ function App() {
           <WatchlistManager
             key={`watchlists-${refreshKey}`}
             onSelectWatchlist={handleSelectWatchlist}
-          //
-
           />
         )}
         {currentView === 'research' && (
@@ -319,7 +317,7 @@ function App() {
             key={`watchlist-${selectedWatchlistId}-${refreshKey}`}
             watchlistId={selectedWatchlistId}
             onBack={handleBackFromWatchlist}
-
+            onOpenResearch={handleOpenResearch}
           />
         )}
         {currentView === 'stock-research' && researchTicker && (
