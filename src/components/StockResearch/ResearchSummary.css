@@ -299,6 +299,23 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
+/* No Analyst Data */
+.no-analyst-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.no-analyst-data .no-data-icon {
+  font-size: 1.25rem;
+}
+
 /* Insider Sentiment */
 .insider-sentiment {
   display: grid;

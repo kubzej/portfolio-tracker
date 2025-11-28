@@ -1283,19 +1283,58 @@ function calculateConvictionScore(
   }
 
   // Target price upside (0-10 points)
+  // Priority: 1) Personal target (holdings), 2) Analyst target (from Yahoo), 3) Consensus proxy
+  let targetUpside: number | null = null;
+  let targetSource: 'personal' | 'analyst' | 'estimated' | null = null;
+
   if (
     item.targetPrice !== null &&
     item.currentPrice !== null &&
     item.currentPrice > 0
   ) {
-    const upside =
+    // Personal target price available (holdings)
+    targetUpside =
       ((item.targetPrice - item.currentPrice) / item.currentPrice) * 100;
-    if (upside > 25) {
+    targetSource = 'personal';
+  } else if (
+    'analystTargetPrice' in item &&
+    (item as { analystTargetPrice?: number | null }).analystTargetPrice !==
+      null &&
+    item.currentPrice !== null &&
+    item.currentPrice > 0
+  ) {
+    // Analyst target price from Yahoo Finance (research)
+    const analystTarget = (item as { analystTargetPrice: number })
+      .analystTargetPrice;
+    targetUpside =
+      ((analystTarget - item.currentPrice) / item.currentPrice) * 100;
+    targetSource = 'analyst';
+  } else if (item.consensusScore !== null) {
+    // Fallback: estimate upside from analyst consensus
+    if (item.consensusScore >= 1.5) {
+      targetUpside = 25;
+    } else if (item.consensusScore >= 1.0) {
+      targetUpside = 15;
+    } else if (item.consensusScore >= 0.5) {
+      targetUpside = 8;
+    }
+    targetSource = 'estimated';
+  }
+
+  if (targetUpside !== null) {
+    if (targetUpside > 25) {
       score += 10;
-      details.push(`${upside.toFixed(0)}% upside to target`);
-    } else if (upside > 15) {
+      if (targetSource === 'personal') {
+        details.push(`${targetUpside.toFixed(0)}% upside to target`);
+      } else if (targetSource === 'analyst') {
+        details.push(`${targetUpside.toFixed(0)}% upside to analyst target`);
+      }
+    } else if (targetUpside > 15) {
       score += 7;
-    } else if (upside > 5) {
+      if (targetSource === 'analyst') {
+        details.push(`${targetUpside.toFixed(0)}% upside to analyst target`);
+      }
+    } else if (targetUpside > 5) {
       score += 3;
     }
   }

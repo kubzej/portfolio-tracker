@@ -83,6 +83,8 @@ export interface AnalystData {
   strongSell: number | null;
   numberOfAnalysts: number | null;
   recommendationPeriod: string | null; // When recommendations were last updated
+  // Analyst target price (from Yahoo Finance)
+  analystTargetPrice: number | null;
   // Earnings data (last 4 quarters)
   earnings: EarningsData[];
   // Fundamental metrics

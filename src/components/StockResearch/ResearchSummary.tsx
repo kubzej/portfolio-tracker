@@ -17,7 +17,7 @@ export function ResearchSummary({
 
   return (
     <div className="research-summary">
-      {/* Score Overview */}
+      {/* Score Overview - using Conviction Score like holdings */}
       <section className="summary-section">
         <h3 className="section-title">Overall Rating</h3>
         <div className="score-overview">
@@ -25,13 +25,13 @@ export function ResearchSummary({
             <div
               className={cn(
                 'score-circle',
-                getScoreClass(recommendation.compositeScore)
+                getScoreClass(recommendation.convictionScore)
               )}
             >
               <span className="score-value">
-                {recommendation.compositeScore}
+                {recommendation.convictionScore}
               </span>
-              <span className="score-max">/100</span>
+              <span className="score-max">%</span>
             </div>
             <div className="score-meta">
               <span
@@ -166,54 +166,61 @@ export function ResearchSummary({
         </section>
       )}
 
-      {/* Analyst Consensus */}
-      {analystData.numberOfAnalysts && analystData.numberOfAnalysts > 0 && (
-        <section className="summary-section">
-          <h3 className="section-title">Analyst Consensus</h3>
-          <div className="analyst-consensus">
-            <div className="consensus-header">
-              <span
-                className={cn(
-                  'consensus-label',
-                  getConsensusClass(analystData.consensusScore)
-                )}
-              >
-                {analystData.recommendationKey}
-              </span>
-              <span className="analyst-count">
-                {analystData.numberOfAnalysts} analysts
-              </span>
+      {/* Analyst Consensus - always show */}
+      <section className="summary-section">
+        <h3 className="section-title">Analyst Consensus</h3>
+        <div className="analyst-consensus">
+          {analystData.numberOfAnalysts && analystData.numberOfAnalysts > 0 ? (
+            <>
+              <div className="consensus-header">
+                <span
+                  className={cn(
+                    'consensus-label',
+                    getConsensusClass(analystData.consensusScore)
+                  )}
+                >
+                  {analystData.recommendationKey ?? 'N/A'}
+                </span>
+                <span className="analyst-count">
+                  {analystData.numberOfAnalysts} analysts
+                </span>
+              </div>
+              <div className="ratings-bar">
+                <RatingSegment
+                  count={analystData.strongBuy ?? 0}
+                  label="Strong Buy"
+                  type="strong-buy"
+                />
+                <RatingSegment
+                  count={analystData.buy ?? 0}
+                  label="Buy"
+                  type="buy"
+                />
+                <RatingSegment
+                  count={analystData.hold ?? 0}
+                  label="Hold"
+                  type="hold"
+                />
+                <RatingSegment
+                  count={analystData.sell ?? 0}
+                  label="Sell"
+                  type="sell"
+                />
+                <RatingSegment
+                  count={analystData.strongSell ?? 0}
+                  label="Strong Sell"
+                  type="strong-sell"
+                />
+              </div>
+            </>
+          ) : (
+            <div className="no-analyst-data">
+              <span className="no-data-icon">📊</span>
+              <span>No analyst coverage available</span>
             </div>
-            <div className="ratings-bar">
-              <RatingSegment
-                count={analystData.strongBuy ?? 0}
-                label="Strong Buy"
-                type="strong-buy"
-              />
-              <RatingSegment
-                count={analystData.buy ?? 0}
-                label="Buy"
-                type="buy"
-              />
-              <RatingSegment
-                count={analystData.hold ?? 0}
-                label="Hold"
-                type="hold"
-              />
-              <RatingSegment
-                count={analystData.sell ?? 0}
-                label="Sell"
-                type="sell"
-              />
-              <RatingSegment
-                count={analystData.strongSell ?? 0}
-                label="Strong Sell"
-                type="strong-sell"
-              />
-            </div>
-          </div>
-        </section>
-      )}
+          )}
+        </div>
+      </section>
 
       {/* Insider Sentiment */}
       {analystData.insiderSentiment &&

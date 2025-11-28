@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { fetchSingleAnalystData } from '@/services/api/analysis';
 import { fetchSingleTechnicalData } from '@/services/api/technical';
+import { fetchTickerNews } from '@/services/api/news';
 import type { AnalystData } from '@/services/api/analysis';
 import type { TechnicalData } from '@/services/api/technical';
+import type { NewsArticle } from '@/services/api/news';
 import {
   generateRecommendation,
   type EnrichedAnalystData,
@@ -43,6 +45,7 @@ export function StockResearch({
   const [technicalData, setTechnicalData] = useState<TechnicalData | null>(
     null
   );
+  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('summary');
@@ -66,19 +69,26 @@ export function StockResearch({
       // Reset state
       setAnalystData(null);
       setTechnicalData(null);
+      setNewsArticles([]);
       setActiveTab('summary');
       setLoading(true);
       setError(null);
 
       try {
-        const [analyst, technical] = await Promise.all([
+        // Fetch analyst, technical, and news data in parallel
+        const [analyst, technical, tickerNews] = await Promise.all([
           fetchSingleAnalystData(ticker, stockName, finnhubTicker),
           fetchSingleTechnicalData(ticker),
+          fetchTickerNews(ticker).catch(() => null), // Don't fail if news fails
         ]);
 
         if (!cancelled) {
           setAnalystData(analyst);
           setTechnicalData(technical);
+          // Convert news to NewsArticle[] with ticker attached
+          if (tickerNews?.articles) {
+            setNewsArticles(tickerNews.articles.map((a) => ({ ...a, ticker })));
+          }
           lastFetchedRef.current = fetchKey;
         }
       } catch (err) {
@@ -126,10 +136,10 @@ export function StockResearch({
     return generateRecommendation({
       analystData: enrichedData,
       technicalData: technicalData ?? undefined,
-      newsArticles: [],
+      newsArticles: newsArticles,
       insiderTimeRange: 3,
     });
-  }, [analystData, technicalData]);
+  }, [analystData, technicalData, newsArticles]);
 
   if (loading) {
     return (
