@@ -276,7 +276,21 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                     <div className="holding-card-stats">
                       <div className="holding-card-stat">
                         <span className="label">Shares</span>
-                        <span className="value">{holding.total_shares}</span>
+                        <span className="value">
+                          {formatNumber(holding.total_shares, 4)}
+                        </span>
+                      </div>
+                      <div className="holding-card-stat">
+                        <span className="label">Avg Price</span>
+                        <span className="value">
+                          {formatPrice(holding.avg_buy_price)}
+                        </span>
+                      </div>
+                      <div className="holding-card-stat">
+                        <span className="label">Current Price</span>
+                        <span className="value">
+                          {formatPrice(holding.current_price)}
+                        </span>
                       </div>
                       <div className="holding-card-stat">
                         <span className="label">Invested</span>
@@ -299,7 +313,7 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                         </span>
                       </div>
                       <div className="holding-card-stat">
-                        <span className="label">Target Price</span>
+                        <span className="label">Target</span>
                         <span className="value">
                           {holding.target_price !== null
                             ? `$${formatPrice(
@@ -330,6 +344,12 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                             : '—'}
                         </span>
                       </div>
+                      {holding.sector_name && (
+                        <div className="holding-card-stat">
+                          <span className="label">Sector</span>
+                          <span className="value">{holding.sector_name}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

@@ -120,12 +120,125 @@
   overflow-x: auto;
   margin: 0 -1.5rem;
   padding: 0 1.5rem;
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .analysis-table-wrapper {
+    display: block;
+  }
 }
 
 .analysis-table {
   width: 100%;
   border-collapse: collapse;
   min-width: 900px;
+}
+
+/* Mobile Analyst Cards */
+.analyst-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (min-width: 900px) {
+  .analyst-cards {
+    display: none;
+  }
+}
+
+.analyst-card {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  border: 1px solid transparent;
+  transition: all var(--transition-normal);
+}
+
+.analyst-card:hover {
+  border-color: var(--accent-primary);
+  background: var(--accent-primary-light);
+}
+
+.analyst-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.analyst-card-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.analyst-card-title .ticker {
+  font-weight: 600;
+  color: var(--accent-primary);
+  font-size: 1rem;
+}
+
+.analyst-card-title .name {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.analyst-card-rating {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.analyst-card-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.375rem 1.5rem;
+  font-size: 0.8125rem;
+}
+
+.analyst-card-stat {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.analyst-card-stat .label {
+  color: var(--text-muted);
+}
+
+.analyst-card-stat .value {
+  color: var(--text-primary);
+  font-weight: 500;
+  text-align: right;
+}
+
+.analyst-card-stat .value.positive {
+  color: var(--success);
+}
+
+.analyst-card-stat .value.negative {
+  color: var(--danger);
+}
+
+.analyst-card-breakdown {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.analyst-card-breakdown .label {
+  color: var(--text-muted);
+  font-size: 0.75rem;
 }
 
 .analysis-table th,

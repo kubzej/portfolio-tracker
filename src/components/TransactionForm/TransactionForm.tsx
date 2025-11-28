@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { stocksApi, transactionsApi, portfoliosApi } from '@/services/api';
 import type {
   Stock,
@@ -108,17 +108,6 @@ export function TransactionForm({
     } catch (err) {
       console.error('Failed to load data:', err);
     }
-  };
-
-  const handleStockChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const stockId = e.target.value;
-    const selectedStock = stocks.find((s) => s.id === stockId);
-
-    setFormData((prev) => ({
-      ...prev,
-      stock_id: stockId,
-      currency: selectedStock?.currency || prev.currency,
-    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

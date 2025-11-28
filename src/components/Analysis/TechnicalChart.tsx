@@ -25,7 +25,6 @@ import type {
   ATRPoint,
   OBVPoint,
   ADXPoint,
-  FibonacciLevels,
 } from '@/services/api/technical';
 import { InfoTooltip } from '@/components/shared/InfoTooltip';
 

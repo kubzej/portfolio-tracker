@@ -820,6 +820,145 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile Cards */}
+            <div className="analyst-cards">
+              {sortedData.map((item) => (
+                <div key={item.ticker} className="analyst-card">
+                  <div className="analyst-card-header">
+                    <div className="analyst-card-title">
+                      <span className="ticker">{item.ticker}</span>
+                      <span className="name">{item.stockName}</span>
+                    </div>
+                    <div className="analyst-card-rating">
+                      <span
+                        className={`recommendation-badge ${getRecommendationClass(
+                          item.recommendationKey
+                        )}`}
+                      >
+                        {getRecommendationLabel(item.recommendationKey)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="analyst-card-stats">
+                    <div className="analyst-card-stat">
+                      <span className="label">Price</span>
+                      <span className="value">
+                        {formatNumber(item.currentPrice)}
+                      </span>
+                    </div>
+                    <div className="analyst-card-stat">
+                      <span className="label">Change</span>
+                      <span
+                        className={`value ${
+                          (item.priceChangePercent ?? 0) >= 0
+                            ? 'positive'
+                            : 'negative'
+                        }`}
+                      >
+                        {formatPercent(item.priceChangePercent)}
+                      </span>
+                    </div>
+                    <div className="analyst-card-stat">
+                      <span className="label">Weight</span>
+                      <span className="value">{item.weight.toFixed(1)}%</span>
+                    </div>
+                    <div className="analyst-card-stat">
+                      <span className="label">Score</span>
+                      <span
+                        className={`value ${
+                          item.consensusScore !== null
+                            ? item.consensusScore > 0.5
+                              ? 'positive'
+                              : item.consensusScore < -0.5
+                              ? 'negative'
+                              : ''
+                            : ''
+                        }`}
+                      >
+                        {item.consensusScore !== null
+                          ? `${
+                              item.consensusScore > 0 ? '+' : ''
+                            }${item.consensusScore.toFixed(2)}`
+                          : '—'}
+                      </span>
+                    </div>
+                    <div className="analyst-card-stat">
+                      <span className="label">Analysts</span>
+                      <span className="value">
+                        {item.numberOfAnalysts || '—'}
+                      </span>
+                    </div>
+                    <div className="analyst-card-stat">
+                      <span className="label">Earnings</span>
+                      <span className="value">
+                        {item.earnings && item.earnings.length > 0 ? (
+                          <span className="earnings-surprises">
+                            {item.earnings
+                              .slice(0, 4)
+                              .map((e: EarningsData, i: number) => (
+                                <span
+                                  key={i}
+                                  className={`earnings-dot ${
+                                    (e.surprisePercent ?? 0) >= 0
+                                      ? 'beat'
+                                      : 'miss'
+                                  }`}
+                                  title={
+                                    e.period
+                                      ? `${e.period}: ${
+                                          e.surprisePercent !== null
+                                            ? (e.surprisePercent >= 0
+                                                ? '+'
+                                                : '') +
+                                              e.surprisePercent.toFixed(1) +
+                                              '%'
+                                            : 'N/A'
+                                        }`
+                                      : 'N/A'
+                                  }
+                                >
+                                  {(e.surprisePercent ?? 0) >= 0 ? '✓' : '✗'}
+                                </span>
+                              ))}
+                          </span>
+                        ) : (
+                          '—'
+                        )}
+                      </span>
+                    </div>
+                    {item.numberOfAnalysts && (
+                      <div className="analyst-card-breakdown">
+                        <span className="label">Breakdown:</span>
+                        <div className="recommendations-breakdown">
+                          <span
+                            className="rec-item strong-buy"
+                            title="Strong Buy"
+                          >
+                            {item.strongBuy || 0}
+                          </span>
+                          <span className="rec-item buy" title="Buy">
+                            {item.buy || 0}
+                          </span>
+                          <span className="rec-item hold" title="Hold">
+                            {item.hold || 0}
+                          </span>
+                          <span className="rec-item sell" title="Sell">
+                            {item.sell || 0}
+                          </span>
+                          <span
+                            className="rec-item strong-sell"
+                            title="Strong Sell"
+                          >
+                            {item.strongSell || 0}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </section>
 
           {/* Analyst Summary */}
