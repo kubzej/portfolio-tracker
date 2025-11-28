@@ -1388,9 +1388,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
         <>
           <section className="analysis-section">
             <h3>Price Analysis</h3>
-            <p className="section-description hint-highlight">
-              👆 Click on a stock row to view detailed technical charts
-            </p>
+            <p className="section-hint">Click row for chart detail</p>
 
             <div className="analysis-table-wrapper">
               <table className="analysis-table technicals-table">

@@ -364,22 +364,12 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                       className="right"
                     />
                     <SortHeader
-                      label="Invested (CZK)"
-                      sortKeyName="invested"
-                      className="right"
-                    />
-                    <SortHeader
-                      label="Current (CZK)"
+                      label="Value (CZK)"
                       sortKeyName="current"
                       className="right"
                     />
                     <SortHeader
-                      label="P&L (CZK)"
-                      sortKeyName="plCzk"
-                      className="right"
-                    />
-                    <SortHeader
-                      label="P&L %"
+                      label="P&L"
                       sortKeyName="plPercent"
                       className="right"
                     />
@@ -389,12 +379,7 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                       className="right"
                     />
                     <SortHeader
-                      label="Target Price"
-                      sortKeyName="targetPrice"
-                      className="right"
-                    />
-                    <SortHeader
-                      label="To Target"
+                      label="Target"
                       sortKeyName="distanceToTarget"
                       className="right"
                     />
@@ -434,17 +419,14 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                           {holding.current_price?.toFixed(2) || '—'}
                         </td>
                         <td className="right">
-                          {formatCurrency(holding.total_invested_czk)}
-                        </td>
-                        <td className="right">
-                          {formatCurrency(holding.current_value_czk)}
-                        </td>
-                        <td
-                          className={`right ${
-                            (plCzk || 0) >= 0 ? 'positive' : 'negative'
-                          }`}
-                        >
-                          {plCzk !== null ? formatCurrency(plCzk) : '—'}
+                          <div className="dual-value">
+                            <span className="primary">
+                              {formatCurrency(holding.current_value_czk)}
+                            </span>
+                            <span className="secondary">
+                              inv: {formatCurrency(holding.total_invested_czk)}
+                            </span>
+                          </div>
                         </td>
                         <td
                           className={`right ${
@@ -453,7 +435,14 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                               : 'negative'
                           }`}
                         >
-                          {formatPercent(holding.gain_percentage)}
+                          <div className="dual-value">
+                            <span className="primary">
+                              {formatPercent(holding.gain_percentage)}
+                            </span>
+                            <span className="secondary">
+                              {plCzk !== null ? formatCurrency(plCzk) : '—'}
+                            </span>
+                          </div>
                         </td>
                         <td className="right">
                           {portfolioPercentage !== null
@@ -461,26 +450,32 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                             : '—'}
                         </td>
                         <td className="right">
-                          {holding.target_price !== null
-                            ? `$${holding.target_price.toFixed(2)}`
-                            : '—'}
-                        </td>
-                        <td
-                          className={`right ${
-                            holding.distance_to_target_pct !== null
-                              ? holding.distance_to_target_pct <= 0
-                                ? 'positive'
-                                : 'negative'
-                              : ''
-                          }`}
-                        >
-                          {holding.distance_to_target_pct !== null
-                            ? `${
-                                holding.distance_to_target_pct <= 0 ? '+' : '-'
-                              }${Math.abs(
-                                holding.distance_to_target_pct
-                              ).toFixed(1)}%`
-                            : '—'}
+                          <div className="dual-value">
+                            <span className="primary">
+                              {holding.target_price !== null
+                                ? `$${holding.target_price.toFixed(2)}`
+                                : '—'}
+                            </span>
+                            <span
+                              className={`secondary ${
+                                holding.distance_to_target_pct !== null
+                                  ? holding.distance_to_target_pct <= 0
+                                    ? 'positive'
+                                    : 'negative'
+                                  : ''
+                              }`}
+                            >
+                              {holding.distance_to_target_pct !== null
+                                ? `${
+                                    holding.distance_to_target_pct <= 0
+                                      ? '+'
+                                      : '-'
+                                  }${Math.abs(
+                                    holding.distance_to_target_pct
+                                  ).toFixed(1)}%`
+                                : ''}
+                            </span>
+                          </div>
                         </td>
                         <td>{holding.sector_name || '—'}</td>
                       </tr>
