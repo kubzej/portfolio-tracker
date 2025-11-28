@@ -615,8 +615,29 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get portfolio ID from request body
-    const { portfolioId } = await req.json().catch(() => ({}));
+    // Get parameters from request body
+    const { portfolioId, ticker, stockName, finnhubTicker } = await req
+      .json()
+      .catch(() => ({}));
+
+    // If single ticker is provided, fetch just that one
+    if (ticker) {
+      const data = await fetchAnalystData(
+        ticker,
+        stockName || ticker,
+        finnhubTicker || yahooToFinnhubTicker(ticker)
+      );
+
+      return new Response(
+        JSON.stringify({
+          data: [data],
+          errors: data.error ? [data.error] : [],
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
     // Get holdings for the portfolio
     let holdingsQuery = supabase

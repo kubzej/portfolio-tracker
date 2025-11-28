@@ -3,6 +3,7 @@ import type { StockRecommendation, SignalType } from '@/utils/recommendations';
 import { InfoTooltip } from '@/components/shared/InfoTooltip';
 import { Tabs } from '@/components/shared/Tabs';
 import { Button } from '@/components/shared/Button';
+import { LoadingSpinner, EmptyState } from '@/components/shared';
 import {
   logMultipleSignals,
   getRecentSignals,
@@ -232,21 +233,15 @@ export function Recommendations({
   }, [recommendations]);
 
   if (loading) {
-    return (
-      <div className="recommendations-loading">
-        <div className="loading-spinner" />
-        <p>Analyzing portfolio...</p>
-      </div>
-    );
+    return <LoadingSpinner text="Analyzing portfolio..." />;
   }
 
   if (recommendations.length === 0) {
     return (
-      <div className="recommendations-empty">
-        <p>
-          No recommendations available. Load analyst and technical data first.
-        </p>
-      </div>
+      <EmptyState
+        title="No recommendations"
+        description="Load analyst and technical data first."
+      />
     );
   }
 
@@ -932,8 +927,7 @@ function SignalHistoryPanel({
   if (loading) {
     return (
       <div className="history-fullscreen">
-        <div className="loading-spinner" />
-        <p>Loading history...</p>
+        <LoadingSpinner text="Loading history..." />
       </div>
     );
   }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { Portfolio, CreatePortfolioInput } from '@/types/database';
 import { portfoliosApi } from '@/services/api';
 import { Button } from '@/components/shared/Button';
+import { LoadingSpinner } from '@/components/shared';
 import './PortfolioManager.css';
 
 interface PortfolioManagerProps {
@@ -145,7 +146,7 @@ export function PortfolioManager({
         {error && <div className="pm-error">{error}</div>}
 
         {loading ? (
-          <div className="pm-loading">Loading...</div>
+          <LoadingSpinner text="Loading..." size="sm" />
         ) : (
           <>
             <div className="pm-list">

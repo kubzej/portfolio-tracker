@@ -3,6 +3,7 @@ import { stocksApi } from '@/services/api';
 import type { StockWithSector } from '@/types/database';
 import { formatPrice } from '@/utils/format';
 import { Button } from '@/components/shared/Button';
+import { LoadingSpinner, ErrorState, EmptyState } from '@/components/shared';
 import { AddStockModal } from './AddStockModal';
 import './StocksList.css';
 
@@ -33,11 +34,11 @@ export function StocksList({ onStockClick }: StocksListProps) {
   };
 
   if (loading) {
-    return <div className="stocks-list-loading">Loading stocks...</div>;
+    return <LoadingSpinner text="Loading stocks..." />;
   }
 
   if (error) {
-    return <div className="stocks-list-error">{error}</div>;
+    return <ErrorState message={error} />;
   }
 
   return (
@@ -50,9 +51,14 @@ export function StocksList({ onStockClick }: StocksListProps) {
       </div>
 
       {stocks.length === 0 ? (
-        <div className="empty-state">
-          <p>No stocks yet. Add your first stock to get started!</p>
-        </div>
+        <EmptyState
+          title="No stocks yet"
+          description="Add your first stock to get started!"
+          action={{
+            label: "+ Add Stock",
+            onClick: () => setShowAddModal(true)
+          }}
+        />
       ) : (
         <div className="stocks-grid">
           {stocks.map((stock) => (

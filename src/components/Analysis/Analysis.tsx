@@ -11,8 +11,7 @@ import {
 import { fetchPortfolioNews, type NewsArticle } from '@/services/api/news';
 import { TechnicalChart } from './TechnicalChart';
 import { Recommendations as RecommendationsComponent } from './Recommendations';
-import { InfoTooltip } from '@/components/shared/InfoTooltip';
-import { Button } from '@/components/shared/Button';
+import { InfoTooltip, Button, LoadingSpinner, EmptyState, ErrorState } from '@/components/shared';
 import { Tabs } from '@/components/shared/Tabs';
 import { holdingsApi } from '@/services/api';
 import {
@@ -567,12 +566,10 @@ export function Analysis({ portfolioId }: AnalysisProps) {
   if (!portfolioId) {
     return (
       <div className="analysis">
-        <div className="analysis-empty">
-          <p>Please select a specific portfolio to view analysis.</p>
-          <p className="hint">
-            Analysis is not available for "All Portfolios" view.
-          </p>
-        </div>
+        <EmptyState
+          title="Select a portfolio"
+          description="Analysis is not available for 'All Portfolios' view. Please select a specific portfolio."
+        />
       </div>
     );
   }
@@ -580,10 +577,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
   if (loading) {
     return (
       <div className="analysis">
-        <div className="analysis-loading">
-          <div className="loading-spinner" />
-          <p>Loading analyst data...</p>
-        </div>
+        <LoadingSpinner text="Loading analyst data..." fullPage />
       </div>
     );
   }
@@ -591,10 +585,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
   if (error) {
     return (
       <div className="analysis">
-        <div className="analysis-error">
-          <p>{error}</p>
-          <button onClick={loadData}>Retry</button>
-        </div>
+        <ErrorState message={error} onRetry={loadData} />
       </div>
     );
   }

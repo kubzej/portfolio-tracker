@@ -1,0 +1,19 @@
+.error-state {
+  text-align: center;
+  padding: 2rem;
+  background: var(--danger-light);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--danger);
+}
+
+.error-state-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.error-state-message {
+  color: var(--danger);
+  font-size: 0.9375rem;
+  margin: 0 0 1rem;
+}

@@ -4,7 +4,7 @@ import type {
   WatchlistItemWithCalculations,
 } from '@/types/database';
 import { watchlistsApi, watchlistItemsApi } from '@/services/api';
-import { Button } from '@/components/shared/Button';
+import { Button, LoadingSpinner, EmptyState, ErrorState } from '@/components/shared';
 import {
   BottomSheetSelect,
   type SelectOption,
@@ -229,10 +229,7 @@ export function WatchlistView({
   if (loading) {
     return (
       <div className="watchlist-view">
-        <div className="watchlists-loading">
-          <div className="loading-spinner" />
-          <p>Loading watchlist...</p>
-        </div>
+        <LoadingSpinner text="Loading watchlist..." fullPage />
       </div>
     );
   }
@@ -240,10 +237,7 @@ export function WatchlistView({
   if (!watchlist) {
     return (
       <div className="watchlist-view">
-        <div className="watchlists-error">Watchlist not found</div>
-        <Button variant="outline" onClick={onBack}>
-          ← Back to Watchlists
-        </Button>
+        <ErrorState message="Watchlist not found" onRetry={onBack} />
       </div>
     );
   }
@@ -281,13 +275,11 @@ export function WatchlistView({
       {error && <div className="watchlists-error">{error}</div>}
 
       {items.length === 0 ? (
-        <div className="watchlists-empty">
-          <h3>No stocks yet</h3>
-          <p>Add stocks to this watchlist to start tracking them.</p>
-          <Button variant="primary" onClick={handleAddStock}>
-            Add Stock
-          </Button>
-        </div>
+        <EmptyState
+          title="No stocks yet"
+          description="Add stocks to this watchlist to start tracking them."
+          action={{ label: 'Add Stock', onClick: handleAddStock }}
+        />
       ) : (
         <div className="watchlist-items">
           {/* Mobile sort controls */}

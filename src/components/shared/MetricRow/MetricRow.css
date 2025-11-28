@@ -1,0 +1,38 @@
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.metric-row:last-child {
+  border-bottom: none;
+}
+
+.metric-row-label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.metric-row-value {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-row-value.positive {
+  color: var(--success);
+}
+
+.metric-row-value.negative {
+  color: var(--danger);
+}
+
+.metric-row-value.neutral {
+  color: var(--text-secondary);
+}

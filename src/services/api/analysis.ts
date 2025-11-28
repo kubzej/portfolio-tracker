@@ -121,3 +121,26 @@ export async function fetchAnalystData(
 
   return data as AnalysisResult;
 }
+
+/**
+ * Fetch analyst data for a single ticker
+ */
+export async function fetchSingleAnalystData(
+  ticker: string,
+  stockName?: string,
+  finnhubTicker?: string
+): Promise<AnalystData | null> {
+  const { data, error } = await supabase.functions.invoke(
+    'fetch-analyst-data',
+    {
+      body: { ticker, stockName, finnhubTicker },
+    }
+  );
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const result = data as AnalysisResult;
+  return result.data.length > 0 ? result.data[0] : null;
+}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { WatchlistSummary } from '@/types/database';
 import { watchlistsApi } from '@/services/api';
-import { Button } from '@/components/shared/Button';
+import { Button, LoadingSpinner, EmptyState } from '@/components/shared';
 import { WatchlistForm } from './WatchlistForm';
 import './Watchlists.css';
 
@@ -77,10 +77,7 @@ export function WatchlistManager({ onSelectWatchlist }: WatchlistManagerProps) {
   if (loading) {
     return (
       <div className="watchlists">
-        <div className="watchlists-loading">
-          <div className="loading-spinner" />
-          <p>Loading watchlists...</p>
-        </div>
+        <LoadingSpinner text="Loading watchlists..." fullPage />
       </div>
     );
   }
@@ -97,16 +94,11 @@ export function WatchlistManager({ onSelectWatchlist }: WatchlistManagerProps) {
       {error && <div className="watchlists-error">{error}</div>}
 
       {watchlists.length === 0 ? (
-        <div className="watchlists-empty">
-          <h3>No watchlists yet</h3>
-          <p>
-            Create your first watchlist to start tracking stocks you're
-            interested in.
-          </p>
-          <Button variant="primary" onClick={handleCreate}>
-            Create Watchlist
-          </Button>
-        </div>
+        <EmptyState
+          title="No watchlists yet"
+          description="Create your first watchlist to start tracking stocks you're interested in."
+          action={{ label: 'Create Watchlist', onClick: handleCreate }}
+        />
       ) : (
         <div className="watchlists-grid">
           {watchlists.map((watchlist) => (

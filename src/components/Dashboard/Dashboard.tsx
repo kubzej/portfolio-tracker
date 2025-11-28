@@ -11,6 +11,7 @@ import {
   BottomSheetSelect,
   type SelectOption,
 } from '@/components/shared/BottomSheet';
+import { LoadingSpinner, ErrorState, EmptyState } from '@/components/shared';
 import './Dashboard.css';
 
 type SortKey =
@@ -189,11 +190,11 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
   );
 
   if (loading) {
-    return <div className="dashboard-loading">Loading portfolio...</div>;
+    return <LoadingSpinner text="Loading portfolio..." />;
   }
 
   if (error) {
-    return <div className="dashboard-error">{error}</div>;
+    return <ErrorState message={error} />;
   }
 
   return (
@@ -244,9 +245,10 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
         <h2>Holdings</h2>
 
         {holdings.length === 0 ? (
-          <div className="empty-state">
-            <p>No holdings yet. Add a stock and transaction to get started!</p>
-          </div>
+          <EmptyState
+            title="No holdings yet"
+            description="Add a stock and transaction to get started!"
+          />
         ) : (
           <>
             {/* Mobile Sort Controls */}

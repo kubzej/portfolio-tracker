@@ -13,6 +13,7 @@ import { InfoTooltip } from '@/components/shared/InfoTooltip';
 import { Button } from '@/components/shared/Button';
 import { Tabs } from '@/components/shared/Tabs';
 import { BottomSheetSelect } from '@/components/shared/BottomSheet';
+import { LoadingSpinner, ErrorState } from '@/components/shared';
 import './News.css';
 
 // Market topics - must match backend labels for proper filtering
@@ -395,10 +396,7 @@ export function News({ portfolioId }: NewsProps) {
   if (loading) {
     return (
       <div className="news-container">
-        <div className="news-loading">
-          <div className="loading-spinner"></div>
-          <p>Loading news...</p>
-        </div>
+        <LoadingSpinner text="Loading news..." />
       </div>
     );
   }
@@ -406,13 +404,7 @@ export function News({ portfolioId }: NewsProps) {
   if (error) {
     return (
       <div className="news-container">
-        <div className="news-error">
-          <h3>❌ Error loading news</h3>
-          <p>{error}</p>
-          <Button variant="primary" onClick={loadNews}>
-            Try Again
-          </Button>
-        </div>
+        <ErrorState message={error} onRetry={loadNews} />
       </div>
     );
   }

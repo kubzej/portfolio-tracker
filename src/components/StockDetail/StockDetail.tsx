@@ -9,6 +9,7 @@ import {
   formatDate,
 } from '@/utils/format';
 import { Button } from '@/components/shared/Button';
+import { LoadingSpinner, ErrorState, EmptyState } from '@/components/shared';
 import { EditTransactionModal } from './EditTransactionModal';
 import { EditStockModal } from './EditStockModal';
 import { AddTransactionModal } from '../StocksList/AddTransactionModal';
@@ -101,15 +102,15 @@ export function StockDetail({
   };
 
   if (loading) {
-    return <div className="stock-detail-loading">Loading...</div>;
+    return <LoadingSpinner text="Loading stock..." />;
   }
 
   if (error) {
-    return <div className="stock-detail-error">{error}</div>;
+    return <ErrorState message={error} />;
   }
 
   if (!stock) {
-    return <div className="stock-detail-error">Stock not found</div>;
+    return <ErrorState message="Stock not found" />;
   }
 
   // Calculate summary
@@ -217,7 +218,9 @@ export function StockDetail({
         </div>
 
         {transactions.length === 0 ? (
-          <div className="empty-state">No transactions yet</div>
+          <EmptyState
+            title="No transactions yet"
+          />
         ) : (
           <>
             {/* Mobile Cards View */}
