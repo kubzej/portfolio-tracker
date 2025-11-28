@@ -545,7 +545,7 @@
 }
 
 /* ============================================================================
-   MODAL
+   MODAL -> SLIDE-IN PANEL
    ============================================================================ */
 
 .rec-modal {
@@ -553,41 +553,43 @@
   inset: 0;
   z-index: 1000;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
+  justify-content: flex-end;
 }
 
 .rec-modal-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  animation: overlayFadeIn 0.2s ease-out;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .rec-modal-content {
   position: relative;
   background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl);
-  width: 100%;
-  max-width: 560px;
-  max-height: 90vh;
+  width: calc(100% - 60px);
+  max-width: 700px;
+  height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: modalSlideIn 0.2s ease-out;
+  box-shadow: -4px 0 30px rgba(0, 0, 0, 0.15);
+  animation: panelSlideIn 0.25s ease-out;
   padding-bottom: 2rem;
 }
 
-@keyframes modalSlideIn {
+@keyframes panelSlideIn {
   from {
     opacity: 0;
-    transform: scale(0.95) translateY(10px);
+    transform: translateX(100%);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translateX(0);
   }
 }
 
@@ -1461,14 +1463,8 @@
   }
 
   .rec-modal-content {
-    max-height: 100vh;
-    border-radius: 0;
-    margin: 0;
-  }
-  
-  .rec-modal {
-    padding: 0;
-    align-items: stretch;
+    width: 100%;
+    max-width: 100%;
   }
 }
 
