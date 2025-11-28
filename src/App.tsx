@@ -8,6 +8,7 @@ import { PortfolioSelector } from './components/PortfolioSelector';
 import { Analysis } from './components/Analysis';
 import { News } from './components/News';
 import { Login } from './components/Login';
+import { Button } from './components/shared/Button';
 import { useAuth } from './contexts/AuthContext';
 import { refreshAllPrices } from './services/api';
 import type { Portfolio } from './types/database';
@@ -107,14 +108,14 @@ function App() {
             )}
           </div>
           <div className="header-actions">
-            <button
-              className="refresh-prices-btn"
+            <Button
+              variant="success"
               onClick={handleRefreshPrices}
               disabled={refreshingPrices}
               title="Refresh all stock prices"
             >
               {refreshingPrices ? 'Refreshing...' : 'Refresh Prices'}
-            </button>
+            </Button>
             <PortfolioSelector
               selectedPortfolioId={selectedPortfolioId}
               onPortfolioChange={(id, portfolio) => {
@@ -126,9 +127,9 @@ function App() {
                 currentView === 'dashboard' || currentView === 'stocks'
               }
             />
-            <button className="sign-out-btn" onClick={signOut} title="Sign out">
+            <Button variant="secondary" onClick={signOut} title="Sign out">
               Sign Out
-            </button>
+            </Button>
           </div>
         </div>
         <nav className="app-nav">

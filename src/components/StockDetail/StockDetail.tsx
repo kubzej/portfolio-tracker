@@ -19,6 +19,7 @@ import {
   BottomSheetSelect,
   type SelectOption,
 } from '@/components/shared/BottomSheet';
+import { Button } from '@/components/shared/Button';
 import './StockDetail.css';
 
 const CURRENCY_OPTIONS: SelectOption[] = [
@@ -256,15 +257,12 @@ export function StockDetail({
         <div className="header-actions">
           {!editingStock && (
             <>
-              <button
-                className="btn-secondary"
-                onClick={() => setEditingStock(true)}
-              >
+              <Button variant="secondary" onClick={() => setEditingStock(true)}>
                 Edit
-              </button>
-              <button className="btn-danger" onClick={handleDeleteStock}>
+              </Button>
+              <Button variant="danger" onClick={handleDeleteStock}>
                 Delete
-              </button>
+              </Button>
             </>
           )}
         </div>
@@ -375,15 +373,15 @@ export function StockDetail({
               />
             </div>
             <div className="form-actions">
-              <button
-                className="btn-secondary"
+              <Button
+                variant="secondary"
                 onClick={() => setEditingStock(false)}
               >
                 Cancel
-              </button>
-              <button className="btn-primary" onClick={handleSaveStock}>
+              </Button>
+              <Button variant="primary" onClick={handleSaveStock}>
                 Save
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
@@ -448,9 +446,9 @@ export function StockDetail({
       <div className="transactions-section">
         <div className="section-header">
           <h3>Transactions</h3>
-          <button className="btn-primary" onClick={startAddTransaction}>
+          <Button variant="primary" onClick={startAddTransaction}>
             + Add Transaction
-          </button>
+          </Button>
         </div>
 
         {addingTransaction && (
@@ -555,15 +553,15 @@ export function StockDetail({
               </div>
             </div>
             <div className="form-actions">
-              <button
-                className="btn-secondary"
+              <Button
+                variant="secondary"
                 onClick={() => setAddingTransaction(false)}
               >
                 Cancel
-              </button>
-              <button className="btn-primary" onClick={handleAddTransaction}>
+              </Button>
+              <Button variant="primary" onClick={handleAddTransaction}>
                 Add
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -584,18 +582,23 @@ export function StockDetail({
                       <span className="date"> {formatDate(tx.date)}</span>
                     </div>
                     <div className="transaction-card-actions">
-                      <button
-                        className="btn-icon"
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon
                         onClick={() => startEditTransaction(tx)}
                       >
                         ✏️
-                      </button>
-                      <button
-                        className="btn-icon danger"
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon
+                        className="danger"
                         onClick={() => handleDeleteTransaction(tx.id)}
                       >
                         🗑️
-                      </button>
+                      </Button>
                     </div>
                   </div>
                   <div className="transaction-card-body">
@@ -729,18 +732,20 @@ export function StockDetail({
                           </td>
                           <td colSpan={2}>
                             <div className="inline-actions">
-                              <button
-                                className="btn-sm btn-secondary"
+                              <Button
+                                variant="secondary"
+                                size="sm"
                                 onClick={() => setEditingTransaction(null)}
                               >
                                 Cancel
-                              </button>
-                              <button
-                                className="btn-sm btn-primary"
+                              </Button>
+                              <Button
+                                variant="primary"
+                                size="sm"
                                 onClick={() => handleSaveTransaction(tx.id)}
                               >
                                 Save
-                              </button>
+                              </Button>
                             </div>
                           </td>
                         </>
@@ -767,18 +772,23 @@ export function StockDetail({
                           </td>
                           <td>
                             <div className="row-actions">
-                              <button
-                                className="btn-icon"
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                icon
                                 onClick={() => startEditTransaction(tx)}
                               >
                                 ✏️
-                              </button>
-                              <button
-                                className="btn-icon danger"
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                icon
+                                className="danger"
                                 onClick={() => handleDeleteTransaction(tx.id)}
                               >
                                 🗑️
-                              </button>
+                              </Button>
                             </div>
                           </td>
                         </>

@@ -74,4 +74,5 @@
   overflow-y: auto;
   max-height: calc(70vh - 65px);
   -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
 }

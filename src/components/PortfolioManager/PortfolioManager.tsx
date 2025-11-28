@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Portfolio, CreatePortfolioInput } from '@/types/database';
 import { portfoliosApi } from '@/services/api';
+import { Button } from '@/components/shared/Button';
 import './PortfolioManager.css';
 
 interface PortfolioManagerProps {
@@ -171,27 +172,31 @@ export function PortfolioManager({
                   </div>
                   <div className="pm-item-actions">
                     {!portfolio.is_default && (
-                      <button
-                        className="pm-btn pm-btn-default"
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleSetDefault(portfolio.id)}
                         title="Set as default"
+                        className="pm-btn-default"
                       >
                         ★
-                      </button>
+                      </Button>
                     )}
-                    <button
-                      className="pm-btn pm-btn-edit"
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => handleEdit(portfolio)}
                     >
                       Edit
-                    </button>
+                    </Button>
                     {!portfolio.is_default && (
-                      <button
-                        className="pm-btn pm-btn-delete"
+                      <Button
+                        variant="danger"
+                        size="sm"
                         onClick={() => handleDelete(portfolio.id)}
                       >
                         Delete
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -247,25 +252,29 @@ export function PortfolioManager({
                 </div>
 
                 <div className="pm-form-actions">
-                  <button
+                  <Button
                     type="button"
-                    className="pm-btn pm-btn-cancel"
+                    variant="secondary"
                     onClick={handleCancel}
                   >
                     Cancel
-                  </button>
-                  <button type="submit" className="pm-btn pm-btn-save">
+                  </Button>
+                  <Button type="submit" variant="primary">
                     {editingId ? 'Save Changes' : 'Add Portfolio'}
-                  </button>
+                  </Button>
                 </div>
               </form>
             ) : (
-              <button
-                className="pm-add-btn"
-                onClick={() => setShowAddForm(true)}
-              >
-                + Add New Portfolio
-              </button>
+              <div className="pm-add-wrapper">
+                <Button
+                  variant="outline"
+                  fullWidth
+                  className="pm-add-btn"
+                  onClick={() => setShowAddForm(true)}
+                >
+                  + Add New Portfolio
+                </Button>
+              </div>
             )}
           </>
         )}

@@ -22,7 +22,6 @@
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: var(--shadow-xl);
-  padding-bottom: 2rem;
 }
 
 .pm-header {
@@ -46,12 +45,14 @@
   color: var(--text-muted);
   font-size: 1.25rem;
   width: 2rem;
+  min-width: 2rem;
   height: 2rem;
   border-radius: var(--radius-md);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   transition: all var(--transition-normal);
 }
 
@@ -152,69 +153,27 @@
   flex-shrink: 0;
 }
 
-.pm-btn {
-  padding: 0.375rem 0.625rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  font-weight: 500;
-  cursor: pointer;
-  border: 1px solid var(--border-light);
-  background: var(--bg-secondary);
-  color: var(--text-muted);
-  transition: all var(--transition-normal);
-}
-
-.pm-btn:hover {
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-}
-
 .pm-btn-default {
-  color: var(--warning);
+  color: var(--warning) !important;
 }
 
 .pm-btn-default:hover {
-  background: var(--warning-light);
-  border-color: var(--warning);
-  color: var(--warning);
+  background: var(--warning-light) !important;
+  color: var(--warning) !important;
 }
 
-.pm-btn-edit:hover {
-  background: var(--accent-primary-light);
-}
-
-.pm-btn-delete {
-  color: var(--danger);
-}
-
-.pm-btn-delete:hover {
-  background: var(--danger-light);
-  border-color: var(--danger);
-  color: var(--danger);
+.pm-add-wrapper {
+  padding: 1rem 1.5rem 1.5rem;
 }
 
 .pm-add-btn {
-  width: calc(100% - 3rem);
-  margin: 0 1.5rem 1.5rem;
-  padding: 0.875rem;
-  background: transparent;
-  border: 2px dashed var(--border-light);
-  border-radius: var(--radius-md);
-  color: var(--text-muted);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-}
-
-.pm-add-btn:hover {
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-  background: var(--accent-primary-light);
+  border-style: dashed !important;
+  border-width: 2px !important;
 }
 
 .pm-form {
   padding: 1.5rem;
+  padding-bottom: 2rem;
   border-top: 1px solid var(--border-light);
 }
 
@@ -289,30 +248,6 @@
   margin-top: 1.25rem;
 }
 
-.pm-btn-cancel {
-  padding: 0.5rem 1rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-light);
-  color: var(--text-secondary);
-}
-
-.pm-btn-cancel:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-}
-
-.pm-btn-save {
-  background: var(--accent-primary);
-  border-color: var(--accent-primary);
-  color: var(--text-inverse);
-  padding: 0.5rem 1rem;
-}
-
-.pm-btn-save:hover {
-  background: var(--accent-primary-hover);
-  border-color: var(--accent-primary-hover);
-}
-
 /* Mobile */
 @media (max-width: 640px) {
   .portfolio-manager {
@@ -326,6 +261,13 @@
 
   .pm-header h2 {
     font-size: 1.125rem;
+  }
+
+  .pm-close {
+    width: 2rem;
+    min-width: 2rem;
+    max-width: 2rem;
+    height: 2rem;
   }
 
   .pm-list {
@@ -344,9 +286,8 @@
     margin-top: 0.5rem;
   }
 
-  .pm-add-btn {
-    width: calc(100% - 2rem);
-    margin: 0 1rem 1rem;
+  .pm-add-wrapper {
+    padding: 0.75rem 1rem 1rem;
   }
 
   .pm-form {
@@ -357,7 +298,7 @@
     flex-direction: column;
   }
 
-  .pm-form-actions .pm-btn {
+  .pm-form-actions .btn {
     width: 100%;
     text-align: center;
   }
@@ -380,6 +321,7 @@
   }
 
   .pm-form-group input {
-    font-size: 1rem; /* Prevents zoom on iOS */
+    font-size: 1rem;
+    /* Prevents zoom on iOS */
   }
 }

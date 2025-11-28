@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/shared/Button';
 import './Login.css';
 
 export function Login() {
@@ -60,9 +61,15 @@ export function Login() {
             />
           </div>
 
-          <button type="submit" className="login-btn" disabled={loading}>
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            fullWidth
+            disabled={loading}
+          >
             {loading ? 'Signing in...' : 'Sign In'}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

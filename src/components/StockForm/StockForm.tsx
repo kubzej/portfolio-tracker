@@ -5,6 +5,7 @@ import {
   BottomSheetSelect,
   type SelectOption,
 } from '@/components/shared/BottomSheet';
+import { Button } from '@/components/shared/Button';
 import './StockForm.css';
 
 const EXCHANGE_OPTIONS: SelectOption[] = [
@@ -233,13 +234,18 @@ export function StockForm({ onSuccess, onCancel }: StockFormProps) {
 
       <div className="form-actions">
         {onCancel && (
-          <button type="button" className="btn-secondary" onClick={onCancel}>
+          <Button
+            type="button"
+            variant="secondary"
+            size="lg"
+            onClick={onCancel}
+          >
             Cancel
-          </button>
+          </Button>
         )}
-        <button type="submit" className="btn-primary" disabled={loading}>
+        <Button type="submit" variant="primary" size="lg" disabled={loading}>
           {loading ? 'Adding...' : 'Add Stock'}
-        </button>
+        </Button>
       </div>
     </form>
   );

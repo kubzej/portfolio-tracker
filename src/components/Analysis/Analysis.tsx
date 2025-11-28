@@ -12,6 +12,7 @@ import { fetchPortfolioNews, type NewsArticle } from '@/services/api/news';
 import { TechnicalChart } from './TechnicalChart';
 import { Recommendations as RecommendationsComponent } from './Recommendations';
 import { InfoTooltip } from '@/components/shared/InfoTooltip';
+import { Button } from '@/components/shared/Button';
 import { holdingsApi } from '@/services/api';
 import {
   BottomSheetSelect,
@@ -601,7 +602,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
     <div className="analysis">
       <div className="analysis-header">
         <h2>Analysis</h2>
-        <button className="refresh-btn" onClick={loadData}>
+        <Button variant="outline" onClick={loadData}>
           <svg
             width="14"
             height="14"
@@ -618,7 +619,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
             <path d="M16 21h5v-5" />
           </svg>
           Refresh
-        </button>
+        </Button>
       </div>
 
       {/* Tab Navigation */}

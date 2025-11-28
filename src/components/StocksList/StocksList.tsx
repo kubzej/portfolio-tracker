@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { stocksApi } from '@/services/api';
 import type { StockWithSector } from '@/types/database';
 import { formatPrice } from '@/utils/format';
+import { Button } from '@/components/shared/Button';
 import './StocksList.css';
 
 interface StocksListProps {
@@ -42,9 +43,9 @@ export function StocksList({ onStockClick, onAddStock }: StocksListProps) {
     <div className="stocks-list">
       <div className="stocks-list-header">
         <h2>Stocks</h2>
-        <button className="btn-primary" onClick={onAddStock}>
+        <Button variant="primary" onClick={onAddStock}>
           + Add Stock
-        </button>
+        </Button>
       </div>
 
       {stocks.length === 0 ? (

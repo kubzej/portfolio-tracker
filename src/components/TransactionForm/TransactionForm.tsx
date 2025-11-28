@@ -10,6 +10,7 @@ import {
   BottomSheetSelect,
   type SelectOption,
 } from '@/components/shared/BottomSheet';
+import { Button } from '@/components/shared/Button';
 import './TransactionForm.css';
 
 const CURRENCY_OPTIONS: SelectOption[] = [
@@ -349,13 +350,18 @@ export function TransactionForm({
 
       <div className="form-actions">
         {onCancel && (
-          <button type="button" className="btn-secondary" onClick={onCancel}>
+          <Button
+            type="button"
+            variant="secondary"
+            size="lg"
+            onClick={onCancel}
+          >
             Cancel
-          </button>
+          </Button>
         )}
-        <button type="submit" className="btn-primary" disabled={loading}>
+        <Button type="submit" variant="primary" size="lg" disabled={loading}>
           {loading ? 'Adding...' : `Add ${formData.type}`}
-        </button>
+        </Button>
       </div>
     </form>
   );

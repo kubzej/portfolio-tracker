@@ -74,29 +74,6 @@
   color: var(--text-muted);
 }
 
-.login-btn {
-  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-primary-hover) 100%);
-  color: white;
-  border: none;
-  padding: 0.875rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  margin-top: 0.5rem;
-}
-
-.login-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
-}
-
-.login-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
 .login-error {
   background: var(--danger-light);
   color: var(--danger);

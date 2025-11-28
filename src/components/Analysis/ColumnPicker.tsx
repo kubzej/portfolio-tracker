@@ -3,6 +3,7 @@ import type {
   AnalysisIndicator,
   UserAnalysisView,
 } from '@/services/api/indicators';
+import { Button } from '@/components/shared/Button';
 import './ColumnPicker.css';
 
 interface ColumnPickerProps {
@@ -209,13 +210,14 @@ export function ColumnPicker({
         </button>
 
         {onSaveView && (
-          <button
-            className="save-view-btn"
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setShowSaveDialog(true)}
             title="Save current column configuration as a view"
           >
             💾 Save View
-          </button>
+          </Button>
         )}
       </div>
 
@@ -438,12 +440,16 @@ export function ColumnPicker({
           </div>
 
           <div className="picker-footer">
-            <button className="reset-btn" onClick={handleResetToDefault}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleResetToDefault}
+            >
               Reset to Default
-            </button>
-            <button className="done-btn" onClick={handleClose}>
+            </Button>
+            <Button variant="primary" size="sm" onClick={handleClose}>
               Done
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -613,15 +619,12 @@ export function ColumnPicker({
             </div>
 
             <div className="mobile-picker-footer">
-              <button
-                className="mobile-reset-btn"
-                onClick={handleResetToDefault}
-              >
+              <Button variant="secondary" onClick={handleResetToDefault}>
                 Reset to Default
-              </button>
-              <button className="mobile-done-btn" onClick={handleClose}>
+              </Button>
+              <Button variant="primary" onClick={handleClose}>
                 Done ({selectedKeys.length})
-              </button>
+              </Button>
             </div>
           </div>
         </>

@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import type { StockRecommendation, SignalType } from '@/utils/recommendations';
 import { InfoTooltip } from '@/components/shared/InfoTooltip';
 import { ToggleGroup } from '@/components/shared/ToggleGroup';
+import { Button } from '@/components/shared/Button';
 import {
   logMultipleSignals,
   getRecentSignals,
@@ -260,12 +261,14 @@ export function Recommendations({
           )}
         </div>
         <div className="rec-header-right">
-          <button
-            className={`history-btn ${showHistory ? 'active' : ''}`}
+          <Button
+            variant="outline"
+            size="sm"
+            isActive={showHistory}
             onClick={() => setShowHistory(!showHistory)}
           >
             History
-          </button>
+          </Button>
         </div>
       </div>
 

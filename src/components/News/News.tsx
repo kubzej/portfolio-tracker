@@ -9,6 +9,7 @@ import {
   type NewsArticle,
 } from '@/services/api/news';
 import { InfoTooltip } from '@/components/shared/InfoTooltip';
+import { Button } from '@/components/shared/Button';
 import './News.css';
 
 // Market topics organized by category
@@ -236,9 +237,9 @@ export function News({ portfolioId }: NewsProps) {
         <div className="news-error">
           <h3>❌ Error loading news</h3>
           <p>{error}</p>
-          <button onClick={loadNews} className="retry-btn">
+          <Button variant="primary" onClick={loadNews}>
             Try Again
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -267,9 +268,9 @@ export function News({ portfolioId }: NewsProps) {
               Market
             </button>
           </div>
-          <button onClick={loadNews} className="refresh-btn" disabled={loading}>
+          <Button variant="outline" onClick={loadNews} disabled={loading}>
             Refresh
-          </button>
+          </Button>
         </div>
       </div>
 
