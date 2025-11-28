@@ -97,6 +97,7 @@ All scores are 0-100. Main functions:
 ### UI Guidelines
 
 - **No emojis in UI** - use text labels and CSS styling instead
+- **Language:** UI labels and text in English, only tooltips (InfoTooltip) in Czech
 - Use color coding for sentiment (green/red/yellow)
 - Consistent typography with CSS variables
 

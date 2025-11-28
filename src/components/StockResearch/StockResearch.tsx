@@ -24,6 +24,7 @@ import { ResearchSummary } from './ResearchSummary';
 import { ResearchValuation } from './ResearchValuation';
 import { ResearchTechnical } from './ResearchTechnical';
 import { ResearchFundamentals } from './ResearchFundamentals';
+import { ResearchPeers } from './ResearchPeers';
 import './StockResearch.css';
 
 interface StockResearchProps {
@@ -171,6 +172,7 @@ export function StockResearch({
     { value: 'fundamentals', label: 'Fundamentals' },
     { value: 'valuation', label: 'Valuation' },
     { value: 'technical', label: 'Technical' },
+    { value: 'peers', label: 'Peers' },
   ];
 
   // Get exchange info for non-US stock badges
@@ -300,6 +302,10 @@ export function StockResearch({
             technicalData={technicalData}
             recommendation={recommendation}
           />
+        )}
+
+        {activeTab === 'peers' && (
+          <ResearchPeers ticker={ticker} peers={analystData.peers} />
         )}
       </div>
     </div>

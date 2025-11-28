@@ -1,0 +1,432 @@
+.research-peers {
+  padding: 0;
+}
+
+.peers-header {
+  margin-bottom: 1.25rem;
+}
+
+.peers-header h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.peers-subtitle {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+/* Table wrapper for horizontal scroll */
+.peers-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+}
+
+/* Table */
+.peers-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  min-width: 600px;
+}
+
+.peers-table th,
+.peers-table td {
+  padding: 0.75rem 0.625rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.peers-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Header */
+.peers-table thead {
+  background: var(--bg-tertiary);
+}
+
+.peers-table th {
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.peers-table th.metric-col {
+  text-align: left;
+  width: 120px;
+  min-width: 120px;
+}
+
+.peers-table th.stock-col {
+  min-width: 100px;
+}
+
+.stock-ticker {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.stock-name {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Current stock column highlight */
+.peers-table th.current,
+.peers-table td.current {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.peers-table th.current {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.peers-table th.current .stock-ticker {
+  color: var(--accent-primary);
+}
+
+/* Metric column */
+.peers-table td.metric-col {
+  text-align: left;
+  background: var(--bg-secondary);
+}
+
+.metric-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* Cell values */
+.metric-value {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Best/Worst highlighting */
+.peers-table td.best {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.peers-table td.best .metric-value {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.peers-table td.worst {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.peers-table td.worst .metric-value {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+/* Combined current + best/worst */
+.peers-table td.current.best {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(16, 185, 129, 0.12));
+}
+
+.peers-table td.current.worst {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(239, 68, 68, 0.12));
+}
+
+/* Price row */
+.price-row td {
+  border-bottom: 2px solid var(--border-light);
+}
+
+.price-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.price-value {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.price-change {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.price-change.positive {
+  color: var(--success);
+}
+
+.price-change.negative {
+  color: var(--danger);
+}
+
+/* Recommendation badge */
+.recommendation-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+}
+
+.recommendation-badge.positive {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success);
+}
+
+.recommendation-badge.negative {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+}
+
+.recommendation-badge.neutral {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--warning);
+}
+
+/* Legend */
+.peers-legend {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.legend-item::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.legend-item.best::before {
+  background: rgba(16, 185, 129, 0.3);
+  border: 1px solid var(--success);
+}
+
+.legend-item.worst::before {
+  background: rgba(239, 68, 68, 0.3);
+  border: 1px solid var(--danger);
+}
+
+.legend-item.current::before {
+  background: rgba(59, 130, 246, 0.3);
+  border: 1px solid var(--accent-primary);
+}
+
+/* Empty state */
+.peers-empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted);
+}
+
+.peers-empty p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+/* ============================================================================
+   MOBILE CARD LAYOUT
+   ============================================================================ */
+
+/* Hide mobile cards on desktop */
+.peers-cards {
+  display: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  /* Hide table on mobile */
+  .peers-table-wrapper {
+    display: none;
+  }
+
+  /* Show cards on mobile */
+  .peers-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .peer-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  .peer-card.current {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 1px var(--accent-primary);
+  }
+
+  /* Card Header */
+  .peer-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.875rem;
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .peer-card.current .peer-card-header {
+    background: rgba(59, 130, 246, 0.1);
+  }
+
+  .peer-card-title {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .peer-card-ticker {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .peer-card.current .peer-card-ticker {
+    color: var(--accent-primary);
+  }
+
+  .peer-card-name {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .peer-card-price {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.125rem;
+  }
+
+  .peer-card-price-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .peer-card-price-change {
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .peer-card-price-change.positive {
+    color: var(--success);
+  }
+
+  .peer-card-price-change.negative {
+    color: var(--danger);
+  }
+
+  /* Card Metrics Grid */
+  .peer-card-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border-light);
+  }
+
+  .peer-card-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.625rem;
+    background: var(--bg-secondary);
+    text-align: center;
+  }
+
+  .peer-card-metric-label {
+    font-size: 0.625rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .peer-card-metric-value {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .peer-card-metric.best .peer-card-metric-value {
+    color: var(--success);
+  }
+
+  .peer-card-metric.worst .peer-card-metric-value {
+    color: var(--danger);
+  }
+
+  /* Card Footer - Recommendation */
+  .peer-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.625rem 0.875rem;
+    border-top: 1px solid var(--border-light);
+  }
+
+  .peer-card-rec-label {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  /* Legend on mobile */
+  .peers-legend {
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: flex-start;
+    padding: 0;
+    margin-top: 0.75rem;
+  }
+
+  .legend-item {
+    font-size: 0.6875rem;
+  }
+
+  .legend-item::before {
+    width: 10px;
+    height: 10px;
+  }
+}
