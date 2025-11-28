@@ -9,6 +9,8 @@ import {
   LoadingSpinner,
   EmptyState,
   ErrorState,
+  EditIcon,
+  TrashIcon,
 } from '@/components/shared';
 import {
   BottomSheetSelect,
@@ -430,14 +432,14 @@ export function WatchlistView({
                       onClick={() => handleEditItem(item)}
                       title="Edit"
                     >
-                      ✏️
+                      <EditIcon size={14} />
                     </button>
                     <button
                       className="item-action-btn danger"
                       onClick={() => handleRemoveItem(item.id, item.ticker)}
                       title="Remove"
                     >
-                      🗑️
+                      <TrashIcon size={14} />
                     </button>
                   </td>
                 </tr>
@@ -467,13 +469,13 @@ export function WatchlistView({
                       className="item-action-btn"
                       onClick={() => handleEditItem(item)}
                     >
-                      ✏️
+                      <EditIcon size={14} />
                     </button>
                     <button
                       className="item-action-btn danger"
                       onClick={() => handleRemoveItem(item.id, item.ticker)}
                     >
-                      🗑️
+                      <TrashIcon size={14} />
                     </button>
                   </div>
                 </div>

@@ -368,15 +368,15 @@ function getSMASentiment(
 
 function getSMAInterpretation(vsSma50: number, vsSma200: number): string {
   if (vsSma50 > 0 && vsSma200 > 0) {
-    return '📈 Price above both SMAs - Bullish trend';
+    return 'Price above both SMAs - Bullish trend';
   }
   if (vsSma50 < 0 && vsSma200 < 0) {
-    return '📉 Price below both SMAs - Bearish trend';
+    return 'Price below both SMAs - Bearish trend';
   }
   if (vsSma50 > 0 && vsSma200 < 0) {
-    return '🔄 Short-term recovery, still below long-term trend';
+    return 'Short-term recovery, still below long-term trend';
   }
-  return '⚠️ Recent weakness, but long-term trend intact';
+  return 'Recent weakness, but long-term trend intact';
 }
 
 function getRSISignal(rsi: number | null): string {

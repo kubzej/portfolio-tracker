@@ -135,7 +135,7 @@ export function ResearchSummary({
           <div className="entry-strategy">
             {buyStrategy.inBuyZone && (
               <div className="in-buy-zone-alert">
-                🎯 Current price is in the buy zone
+                Current price is in the buy zone
               </div>
             )}
             <div className="strategy-cards">
@@ -214,10 +214,10 @@ export function ResearchSummary({
                 )}
               >
                 {exitStrategy.holdingPeriod === 'SWING'
-                  ? '⚡ Swing Trade'
+                  ? 'Swing Trade'
                   : exitStrategy.holdingPeriod === 'MEDIUM'
-                  ? '📅 Medium Term'
-                  : '🏦 Long Term Hold'}
+                  ? 'Medium Term'
+                  : 'Long Term Hold'}
               </span>
               <span className="period-reason">
                 {exitStrategy.holdingReason}
@@ -313,8 +313,8 @@ export function ResearchSummary({
             </div>
             {exitStrategy.trailingStopPercent && (
               <div className="trailing-stop-note">
-                💡 Consider {exitStrategy.trailingStopPercent}% trailing stop
-                after first target
+                Consider {exitStrategy.trailingStopPercent}% trailing stop after
+                first target
               </div>
             )}
           </div>
@@ -370,7 +370,7 @@ export function ResearchSummary({
             </>
           ) : (
             <div className="no-analyst-data">
-              <span className="no-data-icon">📊</span>
+              <span className="no-data-icon">—</span>
               <span>No analyst coverage available</span>
             </div>
           )}

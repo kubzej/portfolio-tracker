@@ -61,7 +61,6 @@ export interface StockSignal {
   strength: number; // 0-100
   title: string;
   description: string;
-  icon: string;
   priority: number; // For sorting (lower = higher priority)
 }
 
@@ -173,18 +172,6 @@ const SCORE_WEIGHTS = {
   news: 0.1,
   insider: 0.1,
   portfolio: 0.2,
-};
-
-/** Signal icons */
-const SIGNAL_ICONS: Record<SignalType, string> = {
-  DIP_OPPORTUNITY: '🔥',
-  MOMENTUM: '📈',
-  CONVICTION_HOLD: '💎',
-  NEAR_TARGET: '🎯',
-  WATCH_CLOSELY: '⚠️',
-  CONSIDER_TRIM: '📉',
-  ACCUMULATE: '🔄',
-  NEUTRAL: '➖',
 };
 
 /** Signal priorities (lower = higher priority) */
@@ -1618,7 +1605,6 @@ function generateSignals(
       strength: dipScore,
       title: 'DIP Opportunity',
       description: `Oversold conditions (DIP score: ${dipScore}). Fundamentals check out.`,
-      icon: SIGNAL_ICONS.DIP_OPPORTUNITY,
       priority: SIGNAL_PRIORITIES.DIP_OPPORTUNITY,
     });
   }
@@ -1636,7 +1622,6 @@ function generateSignals(
       strength: technicalScore,
       title: 'Momentum Play',
       description: 'Technical indicators are bullish with confirmed trend.',
-      icon: SIGNAL_ICONS.MOMENTUM,
       priority: SIGNAL_PRIORITIES.MOMENTUM,
     });
   }
@@ -1649,7 +1634,6 @@ function generateSignals(
       title: 'High Conviction Hold',
       description:
         'Strong long-term fundamentals. Hold through short-term noise.',
-      icon: SIGNAL_ICONS.CONVICTION_HOLD,
       priority: SIGNAL_PRIORITIES.CONVICTION_HOLD,
     });
   }
@@ -1663,7 +1647,6 @@ function generateSignals(
       description: `Within ${Math.abs(targetUpside).toFixed(
         1
       )}% of analyst target.`,
-      icon: SIGNAL_ICONS.NEAR_TARGET,
       priority: SIGNAL_PRIORITIES.NEAR_TARGET,
     });
   }
@@ -1682,7 +1665,6 @@ function generateSignals(
       title: 'Consider Trimming',
       description:
         'Overbought, high weight, and near target. Consider taking some profits.',
-      icon: SIGNAL_ICONS.CONSIDER_TRIM,
       priority: SIGNAL_PRIORITIES.CONSIDER_TRIM,
     });
   }
@@ -1698,7 +1680,6 @@ function generateSignals(
       strength: 50,
       title: 'Watch Closely',
       description: 'Some metrics are deteriorating. Monitor for changes.',
-      icon: SIGNAL_ICONS.WATCH_CLOSELY,
       priority: SIGNAL_PRIORITIES.WATCH_CLOSELY,
     });
   }
@@ -1715,7 +1696,6 @@ function generateSignals(
       strength: 60,
       title: 'Accumulate',
       description: 'Good quality stock. Wait for better entry or DCA slowly.',
-      icon: SIGNAL_ICONS.ACCUMULATE,
       priority: SIGNAL_PRIORITIES.ACCUMULATE,
     });
   }
@@ -1727,7 +1707,6 @@ function generateSignals(
       strength: 50,
       title: 'No Strong Signal',
       description: 'No actionable signals at this time.',
-      icon: SIGNAL_ICONS.NEUTRAL,
       priority: SIGNAL_PRIORITIES.NEUTRAL,
     });
   }

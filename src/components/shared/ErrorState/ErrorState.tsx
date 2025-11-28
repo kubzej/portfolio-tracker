@@ -9,7 +9,7 @@ interface ErrorStateProps {
 export function ErrorState({ message, onRetry }: ErrorStateProps) {
   return (
     <div className="error-state">
-      <span className="error-state-icon">⚠️</span>
+      <span className="error-state-icon">!</span>
       <p className="error-state-message">{message}</p>
       {onRetry && (
         <Button variant="outline" onClick={onRetry}>

@@ -27,7 +27,7 @@ export function QuickResearch({ onOpenResearch }: QuickResearchProps) {
   return (
     <div className="quick-research">
       <div className="quick-research-header">
-        <span className="quick-research-icon">🔍</span>
+        <span className="quick-research-icon">Q</span>
         <h3>Quick Research</h3>
         <span className="quick-research-desc">
           Enter any ticker to get detailed analysis

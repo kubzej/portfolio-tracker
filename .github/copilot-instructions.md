@@ -94,6 +94,12 @@ All scores are 0-100. Main functions:
 - CSS variables for colors in `:root`
 - Mobile-first responsive design
 
+### UI Guidelines
+
+- **No emojis in UI** - use text labels and CSS styling instead
+- Use color coding for sentiment (green/red/yellow)
+- Consistent typography with CSS variables
+
 ### Edge Functions (Deno)
 
 - Use `serve()` from std library
@@ -184,11 +190,11 @@ When modifying recommendations:
 
 ### Signal Types
 
-- 🔥 DIP_OPPORTUNITY
-- 📈 MOMENTUM
-- 💎 CONVICTION_HOLD
-- 🎯 NEAR_TARGET
-- 📉 CONSIDER_TRIM
-- ⚠️ WATCH_CLOSELY
-- 🔄 ACCUMULATE
-- ➖ NEUTRAL
+- DIP_OPPORTUNITY
+- MOMENTUM
+- CONVICTION_HOLD
+- NEAR_TARGET
+- CONSIDER_TRIM
+- WATCH_CLOSELY
+- ACCUMULATE
+- NEUTRAL

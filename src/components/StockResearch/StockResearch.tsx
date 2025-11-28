@@ -192,7 +192,7 @@ export function StockResearch({
         {technicalData?.ticker ?? '?'}
         {(ticker !== analystData.ticker ||
           (technicalData && ticker !== technicalData.ticker)) && (
-          <span style={{ color: 'red' }}> ⚠</span>
+          <span style={{ color: 'red' }}> !</span>
         )}
       </div>
 

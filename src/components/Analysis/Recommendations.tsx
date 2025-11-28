@@ -647,10 +647,10 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                   className={`holding-badge ${rec.exitStrategy.holdingPeriod.toLowerCase()}`}
                 >
                   {rec.exitStrategy.holdingPeriod === 'SWING'
-                    ? '⚡ Swing'
+                    ? 'Swing'
                     : rec.exitStrategy.holdingPeriod === 'MEDIUM'
-                    ? '📅 Medium'
-                    : '🏦 Long'}
+                    ? 'Medium'
+                    : 'Long'}
                 </span>
                 <span className="holding-reason">
                   {rec.exitStrategy.holdingReason}
@@ -728,8 +728,8 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
               </div>
               {rec.exitStrategy.trailingStopPercent && (
                 <p className="metrics-note">
-                  💡 Consider {rec.exitStrategy.trailingStopPercent}% trailing
-                  stop after TP1
+                  Consider {rec.exitStrategy.trailingStopPercent}% trailing stop
+                  after TP1
                 </p>
               )}
             </div>
