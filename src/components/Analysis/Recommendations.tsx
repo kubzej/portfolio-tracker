@@ -639,6 +639,102 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
           </div>
           <p className="metrics-note">{rec.buyStrategy.dcaReason}</p>
 
+          {/* Exit Strategy */}
+          {rec.exitStrategy && (
+            <div className="exit-strategy-section">
+              <div className="exit-header">
+                <span
+                  className={`holding-badge ${rec.exitStrategy.holdingPeriod.toLowerCase()}`}
+                >
+                  {rec.exitStrategy.holdingPeriod === 'SWING'
+                    ? '⚡ Swing'
+                    : rec.exitStrategy.holdingPeriod === 'MEDIUM'
+                    ? '📅 Medium'
+                    : '🏦 Long'}
+                </span>
+                <span className="holding-reason">
+                  {rec.exitStrategy.holdingReason}
+                </span>
+              </div>
+              <div className="metrics-grid">
+                {rec.exitStrategy.takeProfit1 !== null && (
+                  <div className="metric-cell">
+                    <span className="metric-label">TP1</span>
+                    <span className="metric-value positive">
+                      ${rec.exitStrategy.takeProfit1.toFixed(0)}
+                      <span className="metric-sub positive">
+                        (+
+                        {(
+                          ((rec.exitStrategy.takeProfit1 - rec.currentPrice) /
+                            rec.currentPrice) *
+                          100
+                        ).toFixed(0)}
+                        %)
+                      </span>
+                    </span>
+                  </div>
+                )}
+                {rec.exitStrategy.takeProfit2 !== null && (
+                  <div className="metric-cell">
+                    <span className="metric-label">TP2</span>
+                    <span className="metric-value positive">
+                      ${rec.exitStrategy.takeProfit2.toFixed(0)}
+                      <span className="metric-sub positive">
+                        (+
+                        {(
+                          ((rec.exitStrategy.takeProfit2 - rec.currentPrice) /
+                            rec.currentPrice) *
+                          100
+                        ).toFixed(0)}
+                        %)
+                      </span>
+                    </span>
+                  </div>
+                )}
+                {rec.exitStrategy.takeProfit3 !== null && (
+                  <div className="metric-cell">
+                    <span className="metric-label">Target</span>
+                    <span className="metric-value positive">
+                      ${rec.exitStrategy.takeProfit3.toFixed(0)}
+                      <span className="metric-sub positive">
+                        (+
+                        {(
+                          ((rec.exitStrategy.takeProfit3 - rec.currentPrice) /
+                            rec.currentPrice) *
+                          100
+                        ).toFixed(0)}
+                        %)
+                      </span>
+                    </span>
+                  </div>
+                )}
+                {rec.exitStrategy.stopLoss !== null && (
+                  <div className="metric-cell">
+                    <span className="metric-label">Stop Loss</span>
+                    <span className="metric-value negative">
+                      ${rec.exitStrategy.stopLoss.toFixed(0)}
+                      <span className="metric-sub negative">
+                        (
+                        {(
+                          ((rec.exitStrategy.stopLoss - rec.currentPrice) /
+                            rec.currentPrice) *
+                          100
+                        ).toFixed(0)}
+                        %)
+                      </span>
+                    </span>
+                  </div>
+                )}
+              </div>
+              {rec.exitStrategy.trailingStopPercent && (
+                <p className="metrics-note">
+                  💡 Consider {rec.exitStrategy.trailingStopPercent}% trailing
+                  stop after TP1
+                </p>
+              )}
+            </div>
+          )}
+
           {/* 52-Week Range */}
           {rec.fiftyTwoWeekHigh !== null && rec.fiftyTwoWeekLow !== null && (
             <div className="week-range">

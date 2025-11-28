@@ -17,6 +17,7 @@ import {
   ErrorState,
   PriceDisplay,
   SignalBadge,
+  InfoTooltip,
 } from '@/components/shared';
 import { Tabs } from '@/components/shared/Tabs';
 import { ResearchSummary } from './ResearchSummary';
@@ -251,7 +252,10 @@ export function StockResearch({
         />
         <QuickStat
           label="Analyst"
-          value={analystData.recommendationKey ?? '—'}
+          value={
+            analystData.recommendationKey?.toUpperCase().replace('_', ' ') ??
+            '—'
+          }
           sentiment={
             analystData.consensusScore !== null
               ? analystData.consensusScore > 0.5
@@ -263,19 +267,6 @@ export function StockResearch({
           }
         />
         <QuickStat label="Industry" value={analystData.industry ?? '—'} />
-        {recommendation && (
-          <QuickStat
-            label="Score"
-            value={`${recommendation.compositeScore}/100`}
-            sentiment={
-              recommendation.compositeScore >= 60
-                ? 'positive'
-                : recommendation.compositeScore < 40
-                ? 'negative'
-                : 'neutral'
-            }
-          />
-        )}
       </div>
 
       {/* Tabs */}
@@ -320,12 +311,16 @@ interface QuickStatProps {
   label: string;
   value: string;
   sentiment?: 'positive' | 'negative' | 'neutral';
+  tooltip?: string;
 }
 
-function QuickStat({ label, value, sentiment }: QuickStatProps) {
+function QuickStat({ label, value, sentiment, tooltip }: QuickStatProps) {
   return (
     <div className="quick-stat">
-      <span className="quick-stat-label">{label}</span>
+      <span className="quick-stat-label">
+        {label}
+        {tooltip && <InfoTooltip text={tooltip} />}
+      </span>
       <span className={cn('quick-stat-value', sentiment)}>{value}</span>
     </div>
   );

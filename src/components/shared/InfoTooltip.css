@@ -86,7 +86,8 @@
 .info-tooltip__content p {
   margin: 0 0 8px 0;
   font-size: 0.9rem;
-  line-height: 1.7;
+  font-weight: 400;
+  line-height: 1.6;
   color: var(--text-secondary);
   white-space: normal;
   word-wrap: break-word;
