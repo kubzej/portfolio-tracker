@@ -2,12 +2,15 @@ import { useState, useEffect } from 'react';
 import {
   fetchAnalystData,
   type FundamentalMetrics,
+  type EarningsData,
 } from '@/services/api/analysis';
 import {
   fetchTechnicalData,
   type TechnicalData,
 } from '@/services/api/technical';
+import { fetchPortfolioNews, type NewsArticle } from '@/services/api/news';
 import { TechnicalChart } from './TechnicalChart';
+import { Recommendations as RecommendationsComponent } from './Recommendations';
 import { InfoTooltip } from '@/components/shared/InfoTooltip';
 import { holdingsApi } from '@/services/api';
 import {
@@ -23,10 +26,11 @@ import {
   type UserAnalysisView,
 } from '@/services/api/indicators';
 import {
-  getStockRecommendation,
+  generateAllRecommendations,
   getFilteredInsiderSentiment,
   type InsiderTimeRange,
   type EnrichedAnalystData,
+  type StockRecommendation,
 } from '@/utils/recommendations';
 import { ColumnPicker } from './ColumnPicker';
 import './Analysis.css';
@@ -80,15 +84,22 @@ export function Analysis({ portfolioId }: AnalysisProps) {
     string | null
   >(null);
 
+  // Recommendations state
+  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
+  const [recommendations, setRecommendations] = useState<StockRecommendation[]>(
+    []
+  );
+  const [recsLoading, setRecsLoading] = useState(false);
+
   useEffect(() => {
     loadData();
     loadIndicators();
   }, [portfolioId]);
 
-  // Load technical data when switching to technicals tab
+  // Load technical data when switching to technicals or recommendations tab
   useEffect(() => {
     if (
-      activeTab === 'technicals' &&
+      (activeTab === 'technicals' || activeTab === 'recommendations') &&
       portfolioId &&
       technicalData.length === 0 &&
       !technicalLoading
@@ -96,6 +107,51 @@ export function Analysis({ portfolioId }: AnalysisProps) {
       loadTechnicalData();
     }
   }, [activeTab, portfolioId]);
+
+  // Load recommendations when switching to recommendations tab
+  useEffect(() => {
+    if (
+      activeTab === 'recommendations' &&
+      portfolioId &&
+      analystData.length > 0
+    ) {
+      loadRecommendations();
+    }
+  }, [
+    activeTab,
+    portfolioId,
+    analystData.length,
+    technicalData.length,
+    insiderTimeRange,
+  ]);
+
+  const loadRecommendations = async () => {
+    if (!portfolioId || analystData.length === 0) return;
+
+    setRecsLoading(true);
+    try {
+      // Load news if not already loaded
+      let news = newsArticles;
+      if (newsArticles.length === 0) {
+        const newsResult = await fetchPortfolioNews(portfolioId);
+        news = newsResult.articles || [];
+        setNewsArticles(news);
+      }
+
+      // Generate recommendations
+      const recs = generateAllRecommendations(
+        analystData,
+        technicalData,
+        news,
+        insiderTimeRange
+      );
+      setRecommendations(recs);
+    } catch (err) {
+      console.error('Failed to load recommendations:', err);
+    } finally {
+      setRecsLoading(false);
+    }
+  };
 
   const loadTechnicalData = async () => {
     if (!portfolioId) return;
@@ -171,6 +227,14 @@ export function Analysis({ portfolioId }: AnalysisProps) {
             holding.current_value_czk || holding.total_invested_czk || 0;
           const weight = totalValue > 0 ? (currentValue / totalValue) * 100 : 0;
 
+          // Get target price from holding
+          const targetPrice = holding.target_price ?? null;
+          const distanceToTarget =
+            targetPrice && analyst.currentPrice
+              ? ((targetPrice - analyst.currentPrice) / analyst.currentPrice) *
+                100
+              : null;
+
           return {
             ...analyst,
             weight,
@@ -180,6 +244,8 @@ export function Analysis({ portfolioId }: AnalysisProps) {
             totalInvested: holding.total_invested_czk,
             unrealizedGain: holding.unrealized_gain || 0,
             gainPercentage: holding.gain_percentage || 0,
+            targetPrice,
+            distanceToTarget,
           };
         })
         .filter((item): item is EnrichedAnalystData => item !== null);
@@ -470,11 +536,6 @@ export function Analysis({ portfolioId }: AnalysisProps) {
     }).length;
   };
 
-  // Get recommendations for all stocks, sorted by score
-  const stockRecommendations = analystData
-    .map((item) => getStockRecommendation(item, insiderTimeRange))
-    .sort((a, b) => b.scorePercent - a.scorePercent);
-
   if (!portfolioId) {
     return (
       <div className="analysis">
@@ -697,31 +758,33 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                       <td className="center">
                         {item.earnings && item.earnings.length > 0 ? (
                           <div className="earnings-surprises">
-                            {item.earnings.slice(0, 4).map((e, i) => (
-                              <span
-                                key={i}
-                                className={`earnings-dot ${
-                                  (e.surprisePercent ?? 0) >= 0
-                                    ? 'beat'
-                                    : 'miss'
-                                }`}
-                                title={
-                                  e.period
-                                    ? `${e.period}: ${
-                                        e.surprisePercent !== null
-                                          ? (e.surprisePercent >= 0
-                                              ? '+'
-                                              : '') +
-                                            e.surprisePercent.toFixed(1) +
-                                            '%'
-                                          : 'N/A'
-                                      }`
-                                    : 'N/A'
-                                }
-                              >
-                                {(e.surprisePercent ?? 0) >= 0 ? '✓' : '✗'}
-                              </span>
-                            ))}
+                            {item.earnings
+                              .slice(0, 4)
+                              .map((e: EarningsData, i: number) => (
+                                <span
+                                  key={i}
+                                  className={`earnings-dot ${
+                                    (e.surprisePercent ?? 0) >= 0
+                                      ? 'beat'
+                                      : 'miss'
+                                  }`}
+                                  title={
+                                    e.period
+                                      ? `${e.period}: ${
+                                          e.surprisePercent !== null
+                                            ? (e.surprisePercent >= 0
+                                                ? '+'
+                                                : '') +
+                                              e.surprisePercent.toFixed(1) +
+                                              '%'
+                                            : 'N/A'
+                                        }`
+                                      : 'N/A'
+                                  }
+                                >
+                                  {(e.surprisePercent ?? 0) >= 0 ? '✓' : '✗'}
+                                </span>
+                              ))}
                           </div>
                         ) : (
                           <span className="muted">—</span>
@@ -1455,7 +1518,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                         <td className="left">
                           {item.peers && item.peers.length > 0 ? (
                             <div className="peers-list">
-                              {item.peers.map((peer, i) => (
+                              {item.peers.map((peer: string, i: number) => (
                                 <span key={i} className="peer-tag">
                                   {peer}
                                 </span>
@@ -1548,159 +1611,11 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
       {/* Recommendations Tab */}
       {activeTab === 'recommendations' && (
-        <>
-          <section className="analysis-section recommendations-section">
-            <h3>Smart Recommendations</h3>
-            <p className="section-description">
-              Algorithmic scoring based on valuation, profitability, growth,
-              financial health, and market sentiment. Scores range from 0-100.
-            </p>
-
-            {/* Summary Cards */}
-            <div className="recommendation-summary">
-              <div className="rec-summary-card strong-buy">
-                <span className="rec-count">
-                  {
-                    stockRecommendations.filter(
-                      (r) => r.recommendation === 'Strong Buy'
-                    ).length
-                  }
-                </span>
-                <span className="rec-label">Strong Buy</span>
-              </div>
-              <div className="rec-summary-card buy">
-                <span className="rec-count">
-                  {
-                    stockRecommendations.filter(
-                      (r) => r.recommendation === 'Buy'
-                    ).length
-                  }
-                </span>
-                <span className="rec-label">Buy</span>
-              </div>
-              <div className="rec-summary-card hold">
-                <span className="rec-count">
-                  {
-                    stockRecommendations.filter(
-                      (r) => r.recommendation === 'Hold'
-                    ).length
-                  }
-                </span>
-                <span className="rec-label">Hold</span>
-              </div>
-              <div className="rec-summary-card reduce">
-                <span className="rec-count">
-                  {
-                    stockRecommendations.filter(
-                      (r) => r.recommendation === 'Reduce'
-                    ).length
-                  }
-                </span>
-                <span className="rec-label">Reduce</span>
-              </div>
-              <div className="rec-summary-card sell">
-                <span className="rec-count">
-                  {
-                    stockRecommendations.filter(
-                      (r) => r.recommendation === 'Sell'
-                    ).length
-                  }
-                </span>
-                <span className="rec-label">Sell</span>
-              </div>
-            </div>
-
-            {/* Detailed Recommendations */}
-            <div className="recommendations-grid">
-              {stockRecommendations.map((rec) => (
-                <div
-                  key={rec.ticker}
-                  className={`recommendation-card ${rec.recommendationClass}`}
-                >
-                  <div className="rec-header">
-                    <div className="rec-stock-info">
-                      <span className="rec-ticker">{rec.ticker}</span>
-                      <span className="rec-weight">
-                        {rec.weight.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="rec-score-badge">
-                      <span className="score-value">
-                        {rec.scorePercent.toFixed(0)}
-                      </span>
-                      <span className="score-label">/ 100</span>
-                    </div>
-                  </div>
-
-                  <div
-                    className={`rec-recommendation-badge ${rec.recommendationClass}`}
-                  >
-                    {rec.recommendation}
-                  </div>
-
-                  {/* Score Breakdown */}
-                  <div className="rec-breakdown">
-                    {rec.breakdown.map((b) => (
-                      <div key={b.category} className="breakdown-row">
-                        <div className="breakdown-header">
-                          <span className="breakdown-category">
-                            {b.category}
-                          </span>
-                          <span className={`breakdown-score ${b.sentiment}`}>
-                            {b.score}/{b.maxScore}
-                          </span>
-                        </div>
-                        <div className="breakdown-bar">
-                          <div
-                            className={`breakdown-fill ${b.sentiment}`}
-                            style={{
-                              width: `${(b.score / b.maxScore) * 100}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Key Points */}
-                  {rec.keyStrengths.length > 0 && (
-                    <div className="rec-points strengths">
-                      <span className="points-label">Strengths</span>
-                      <ul>
-                        {rec.keyStrengths.map((s, i) => (
-                          <li key={i}>{s}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {rec.keyWeaknesses.length > 0 && (
-                    <div className="rec-points weaknesses">
-                      <span className="points-label">Concerns</span>
-                      <ul>
-                        {rec.keyWeaknesses.map((w, i) => (
-                          <li key={i}>{w}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Action Items */}
-                  {rec.actionItems.length > 0 && (
-                    <div className="rec-actions">
-                      <span className="actions-label">Actions</span>
-                      <ul>
-                        {rec.actionItems.map((a, i) => (
-                          <li key={i}>{a}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-        </>
+        <RecommendationsComponent
+          recommendations={recommendations}
+          portfolioId={portfolioId}
+          loading={recsLoading || technicalLoading}
+        />
       )}
 
       {analystData.length === 0 && (

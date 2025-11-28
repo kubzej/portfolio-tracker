@@ -1,6 +1,24 @@
-import type { AnalystData } from '@/services/api/analysis';
+/**
+ * Smart Recommendations System
+ *
+ * Generates contextual insights for portfolio stocks by combining:
+ * - Fundamental analysis (valuation, profitability, growth, financial health)
+ * - Technical analysis (RSI, MACD, Bollinger, ADX, Stochastic, Fibonacci)
+ * - Analyst sentiment (consensus score, target price)
+ * - News sentiment (article sentiment scores)
+ * - Insider activity (MSPR, net shares)
+ * - Portfolio context (weight, avg price, unrealized gain)
+ */
 
-// Extended analyst data with portfolio context
+import type { AnalystData, FundamentalMetrics } from '@/services/api/analysis';
+import type { TechnicalData } from '@/services/api/technical';
+import type { NewsArticle } from '@/services/api/news';
+
+// ============================================================================
+// TYPES & INTERFACES
+// ============================================================================
+
+/** Extended analyst data with portfolio context */
 export interface EnrichedAnalystData extends AnalystData {
   weight: number;
   currentValue: number;
@@ -9,38 +27,169 @@ export interface EnrichedAnalystData extends AnalystData {
   totalInvested: number;
   unrealizedGain: number;
   gainPercentage: number;
+  targetPrice: number | null;
+  distanceToTarget: number | null;
 }
 
-export interface ScoreBreakdown {
+/** Insider sentiment time range options (in months) */
+export type InsiderTimeRange = 1 | 2 | 3 | 6 | 12;
+
+/** Score breakdown for a single category */
+export interface ScoreComponent {
   category: string;
   score: number;
   maxScore: number;
-  details: string;
-  sentiment: 'positive' | 'negative' | 'neutral';
+  percent: number;
+  details: string[];
+  sentiment: 'bullish' | 'bearish' | 'neutral';
 }
 
+/** Signal types that can be generated */
+export type SignalType =
+  | 'DIP_OPPORTUNITY' // Oversold + fundamentals OK
+  | 'MOMENTUM' // Technical bullish trend
+  | 'CONVICTION_HOLD' // Long-term strong metrics
+  | 'NEAR_TARGET' // Close to analyst target price
+  | 'WATCH_CLOSELY' // Something is changing
+  | 'CONSIDER_TRIM' // Overbought + high weight + near target
+  | 'ACCUMULATE' // Good stock, wait for better price
+  | 'NEUTRAL'; // No strong signal
+
+/** A single insight/signal for a stock */
+export interface StockSignal {
+  type: SignalType;
+  strength: number; // 0-100
+  title: string;
+  description: string;
+  icon: string;
+  priority: number; // For sorting (lower = higher priority)
+}
+
+/** Complete recommendation for a stock */
 export interface StockRecommendation {
   ticker: string;
   stockName: string;
+
+  // Portfolio context
   weight: number;
-  totalScore: number;
-  maxPossibleScore: number;
-  scorePercent: number;
-  recommendation: 'Strong Buy' | 'Buy' | 'Hold' | 'Reduce' | 'Sell';
-  recommendationClass: string;
-  breakdown: ScoreBreakdown[];
-  keyStrengths: string[];
-  keyWeaknesses: string[];
+  avgBuyPrice: number;
+  currentPrice: number;
+  gainPercentage: number;
+  distanceFromAvg: number; // % difference from avg buy price
+
+  // Composite scores (0-100)
+  compositeScore: number;
+  fundamentalScore: number;
+  technicalScore: number;
+  analystScore: number;
+  newsScore: number;
+  insiderScore: number;
+  portfolioScore: number;
+
+  // Conviction score (0-100) - long-term quality
+  convictionScore: number;
+  convictionLevel: 'HIGH' | 'MEDIUM' | 'LOW';
+
+  // DIP score (0-100) - buying opportunity
+  dipScore: number;
+  isDip: boolean;
+  dipQualityCheck: boolean; // Passes fundamental checks
+
+  // Score breakdowns
+  breakdown: ScoreComponent[];
+
+  // Generated signals (sorted by priority)
+  signals: StockSignal[];
+  primarySignal: StockSignal;
+
+  // Key points for display
+  strengths: string[];
+  concerns: string[];
   actionItems: string[];
+
+  // Target price analysis
+  targetPrice: number | null;
+  targetUpside: number | null; // % upside to target
+
+  // 52-week data
+  fiftyTwoWeekHigh: number | null;
+  fiftyTwoWeekLow: number | null;
+  distanceFrom52wHigh: number | null; // % below 52w high
+
+  // Technical summary
+  technicalBias: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+
+  // Buy Strategy
+  buyStrategy: {
+    buyZoneLow: number | null;
+    buyZoneHigh: number | null;
+    inBuyZone: boolean;
+    dcaRecommendation: 'AGGRESSIVE' | 'NORMAL' | 'CAUTIOUS' | 'NO_DCA';
+    dcaReason: string;
+    maxAddPercent: number; // max % of portfolio to add
+    riskRewardRatio: number | null;
+    supportPrice: number | null;
+  };
+
+  // For signal logging
+  metadata: {
+    rsiValue: number | null;
+    macdSignal: string | null;
+    bollingerPosition: string | null;
+    newsSentiment: number | null;
+    insiderMspr: number | null;
+  };
 }
 
-// Insider sentiment time range options (in months)
-export type InsiderTimeRange = 1 | 2 | 3 | 6 | 12;
-
-interface InsiderData {
-  mspr: number | null;
-  change: number | null;
+/** Input data for generating recommendations */
+export interface RecommendationInput {
+  analystData: EnrichedAnalystData;
+  technicalData?: TechnicalData;
+  newsArticles?: NewsArticle[];
+  insiderTimeRange: InsiderTimeRange;
 }
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+/** Weight distribution for composite score */
+const SCORE_WEIGHTS = {
+  fundamental: 0.2,
+  technical: 0.25,
+  analyst: 0.15,
+  news: 0.1,
+  insider: 0.1,
+  portfolio: 0.2,
+};
+
+/** Signal icons */
+const SIGNAL_ICONS: Record<SignalType, string> = {
+  DIP_OPPORTUNITY: '🔥',
+  MOMENTUM: '📈',
+  CONVICTION_HOLD: '💎',
+  NEAR_TARGET: '🎯',
+  WATCH_CLOSELY: '⚠️',
+  CONSIDER_TRIM: '📉',
+  ACCUMULATE: '🔄',
+  NEUTRAL: '➖',
+};
+
+/** Signal priorities (lower = higher priority) */
+const SIGNAL_PRIORITIES: Record<SignalType, number> = {
+  DIP_OPPORTUNITY: 1,
+  MOMENTUM: 2,
+  CONVICTION_HOLD: 3,
+  NEAR_TARGET: 4,
+  CONSIDER_TRIM: 5,
+  WATCH_CLOSELY: 6,
+  ACCUMULATE: 7,
+  NEUTRAL: 10,
+};
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
 
 /**
  * Filter insider sentiment data based on time range (in months)
@@ -48,10 +197,9 @@ interface InsiderData {
 export function getFilteredInsiderSentiment(
   item: EnrichedAnalystData,
   months: InsiderTimeRange
-): InsiderData {
+): { mspr: number | null; change: number | null } {
   const monthlyData = item.insiderSentiment?.monthlyData;
 
-  // If no monthlyData but we have aggregated values, use those (backward compatibility)
   if (!monthlyData || monthlyData.length === 0) {
     if (
       item.insiderSentiment?.mspr !== null &&
@@ -65,18 +213,15 @@ export function getFilteredInsiderSentiment(
     return { mspr: null, change: null };
   }
 
-  // Calculate the cutoff date
   const now = new Date();
   const cutoffYear = now.getFullYear();
-  const cutoffMonth = now.getMonth() + 1; // 1-indexed
+  const cutoffMonth = now.getMonth() + 1;
 
-  // Filter to only include months within the range
   const filtered = monthlyData.filter((d) => {
     const monthsDiff = (cutoffYear - d.year) * 12 + (cutoffMonth - d.month);
     return monthsDiff >= 0 && monthsDiff < months;
   });
 
-  // If no data in selected range, try using all available data
   const dataToUse =
     filtered.length > 0 ? filtered : monthlyData.slice(0, months);
 
@@ -84,7 +229,6 @@ export function getFilteredInsiderSentiment(
     return { mspr: null, change: null };
   }
 
-  // Calculate aggregates
   const avgMspr =
     dataToUse.reduce((sum, d) => sum + d.mspr, 0) / dataToUse.length;
   const totalChange = dataToUse.reduce((sum, d) => sum + d.change, 0);
@@ -96,490 +240,1568 @@ export function getFilteredInsiderSentiment(
 }
 
 /**
- * Calculate recommendation score and details for a stock
+ * Get sentiment label from score
  */
-export function getStockRecommendation(
-  item: EnrichedAnalystData,
-  insiderTimeRange: InsiderTimeRange
-): StockRecommendation {
-  const breakdown: ScoreBreakdown[] = [];
-  const keyStrengths: string[] = [];
-  const keyWeaknesses: string[] = [];
-  const actionItems: string[] = [];
-  const f = item.fundamentals;
+function getSentiment(
+  score: number,
+  maxScore: number
+): 'bullish' | 'bearish' | 'neutral' {
+  const percent = (score / maxScore) * 100;
+  if (percent >= 65) return 'bullish';
+  if (percent <= 35) return 'bearish';
+  return 'neutral';
+}
 
-  // 1. VALUATION SCORE (max 25 points)
-  let valuationScore = 0;
-  const valuationMax = 25;
-  const valuationDetails: string[] = [];
+// ============================================================================
+// SCORING FUNCTIONS
+// ============================================================================
 
-  // P/E Ratio (0-8 points)
-  if (f?.peRatio !== null && f?.peRatio !== undefined && f.peRatio > 0) {
-    if (f.peRatio < 15) {
-      valuationScore += 8;
-      valuationDetails.push('P/E < 15 (undervalued)');
-      keyStrengths.push('Attractively valued P/E ratio');
-    } else if (f.peRatio < 25) {
-      valuationScore += 5;
-      valuationDetails.push('P/E 15-25 (fair)');
-    } else if (f.peRatio < 40) {
-      valuationScore += 2;
-      valuationDetails.push('P/E 25-40 (expensive)');
+/**
+ * Calculate fundamental score (0-100)
+ * Based on: P/E, ROE, margins, growth, debt
+ */
+function calculateFundamentalScore(
+  f: FundamentalMetrics | null | undefined
+): ScoreComponent {
+  const details: string[] = [];
+  let score = 0;
+  const maxScore = 100;
+
+  if (!f) {
+    return {
+      category: 'Fundamentals',
+      score: 0,
+      maxScore,
+      percent: 0,
+      details: ['No fundamental data available'],
+      sentiment: 'neutral',
+    };
+  }
+
+  // P/E Ratio (0-20 points) - lower is better (within reason)
+  if (f.peRatio !== null && f.peRatio !== undefined && f.peRatio > 0) {
+    if (f.peRatio < 12) {
+      score += 20;
+      details.push(`P/E ${f.peRatio.toFixed(1)} - undervalued`);
+    } else if (f.peRatio < 20) {
+      score += 15;
+      details.push(`P/E ${f.peRatio.toFixed(1)} - fair value`);
+    } else if (f.peRatio < 30) {
+      score += 10;
+      details.push(`P/E ${f.peRatio.toFixed(1)} - growth premium`);
+    } else if (f.peRatio < 50) {
+      score += 5;
+      details.push(`P/E ${f.peRatio.toFixed(1)} - expensive`);
     } else {
-      valuationDetails.push('P/E > 40 (very expensive)');
-      keyWeaknesses.push('Very high P/E ratio');
+      details.push(`P/E ${f.peRatio.toFixed(1)} - very expensive`);
     }
   }
 
-  // Forward P/E vs Trailing P/E (0-5 points) - earnings growth expected
-  if (
-    f?.peRatio !== null &&
-    f?.forwardPe !== null &&
-    f.peRatio > 0 &&
-    f.forwardPe > 0
-  ) {
-    const peImprovement = ((f.peRatio - f.forwardPe) / f.peRatio) * 100;
-    if (peImprovement > 20) {
-      valuationScore += 5;
-      valuationDetails.push('Strong earnings growth expected');
-      keyStrengths.push('Earnings expected to grow significantly');
-    } else if (peImprovement > 10) {
-      valuationScore += 3;
-      valuationDetails.push('Moderate earnings growth expected');
-    } else if (peImprovement < -10) {
-      valuationDetails.push('Earnings expected to decline');
-      keyWeaknesses.push('Analysts expect earnings decline');
-    }
-  }
-
-  // PEG Ratio (0-6 points) - growth at reasonable price
-  if (f?.pegRatio !== null && f?.pegRatio !== undefined && f.pegRatio > 0) {
-    if (f.pegRatio < 1) {
-      valuationScore += 6;
-      valuationDetails.push('PEG < 1 (growth undervalued)');
-      keyStrengths.push('Growth at a reasonable price (PEG < 1)');
-    } else if (f.pegRatio < 1.5) {
-      valuationScore += 4;
-      valuationDetails.push('PEG 1-1.5 (fairly valued growth)');
-    } else if (f.pegRatio < 2) {
-      valuationScore += 2;
-      valuationDetails.push('PEG 1.5-2 (expensive growth)');
-    } else {
-      valuationDetails.push('PEG > 2 (overpriced for growth)');
-    }
-  }
-
-  // P/B Ratio (0-6 points)
-  if (f?.pbRatio !== null && f?.pbRatio !== undefined && f.pbRatio > 0) {
-    if (f.pbRatio < 1) {
-      valuationScore += 6;
-      valuationDetails.push('P/B < 1 (below book value)');
-      keyStrengths.push('Trading below book value');
-    } else if (f.pbRatio < 3) {
-      valuationScore += 4;
-      valuationDetails.push('P/B 1-3 (reasonable)');
-    } else if (f.pbRatio < 5) {
-      valuationScore += 2;
-      valuationDetails.push('P/B 3-5 (premium)');
-    }
-  }
-
-  breakdown.push({
-    category: 'Valuation',
-    score: valuationScore,
-    maxScore: valuationMax,
-    details: valuationDetails.join('; ') || 'Insufficient data',
-    sentiment:
-      valuationScore >= 15
-        ? 'positive'
-        : valuationScore <= 8
-        ? 'negative'
-        : 'neutral',
-  });
-
-  // 2. PROFITABILITY SCORE (max 20 points)
-  let profitScore = 0;
-  const profitMax = 20;
-  const profitDetails: string[] = [];
-
-  // ROE (0-7 points)
-  if (f?.roe !== null && f?.roe !== undefined) {
-    if (f.roe > 20) {
-      profitScore += 7;
-      profitDetails.push('Excellent ROE > 20%');
-      keyStrengths.push('Exceptional return on equity');
-    } else if (f.roe > 15) {
-      profitScore += 5;
-      profitDetails.push('Good ROE 15-20%');
-    } else if (f.roe > 10) {
-      profitScore += 3;
-      profitDetails.push('Moderate ROE 10-15%');
+  // ROE (0-20 points) - higher is better
+  if (f.roe !== null && f.roe !== undefined) {
+    if (f.roe > 25) {
+      score += 20;
+      details.push(`ROE ${f.roe.toFixed(1)}% - exceptional`);
+    } else if (f.roe > 18) {
+      score += 16;
+      details.push(`ROE ${f.roe.toFixed(1)}% - excellent`);
+    } else if (f.roe > 12) {
+      score += 12;
+      details.push(`ROE ${f.roe.toFixed(1)}% - good`);
+    } else if (f.roe > 5) {
+      score += 6;
+      details.push(`ROE ${f.roe.toFixed(1)}% - moderate`);
     } else if (f.roe > 0) {
-      profitScore += 1;
-      profitDetails.push('Low ROE < 10%');
+      score += 2;
+      details.push(`ROE ${f.roe.toFixed(1)}% - weak`);
     } else {
-      profitDetails.push('Negative ROE');
-      keyWeaknesses.push('Negative return on equity');
+      details.push(`ROE ${f.roe.toFixed(1)}% - negative`);
     }
   }
 
-  // Net Margin (0-7 points)
-  if (f?.netMargin !== null && f?.netMargin !== undefined) {
-    if (f.netMargin > 20) {
-      profitScore += 7;
-      profitDetails.push('Excellent margins > 20%');
-      keyStrengths.push('Very high profit margins');
-    } else if (f.netMargin > 10) {
-      profitScore += 5;
-      profitDetails.push('Good margins 10-20%');
-    } else if (f.netMargin > 5) {
-      profitScore += 3;
-      profitDetails.push('Moderate margins 5-10%');
+  // Net Margin (0-20 points) - higher is better
+  if (f.netMargin !== null && f.netMargin !== undefined) {
+    if (f.netMargin > 25) {
+      score += 20;
+      details.push(`Net margin ${f.netMargin.toFixed(1)}% - exceptional`);
+    } else if (f.netMargin > 15) {
+      score += 15;
+      details.push(`Net margin ${f.netMargin.toFixed(1)}% - strong`);
+    } else if (f.netMargin > 8) {
+      score += 10;
+      details.push(`Net margin ${f.netMargin.toFixed(1)}% - decent`);
     } else if (f.netMargin > 0) {
-      profitScore += 1;
-      profitDetails.push('Thin margins < 5%');
-      keyWeaknesses.push('Very thin profit margins');
+      score += 5;
+      details.push(`Net margin ${f.netMargin.toFixed(1)}% - thin`);
     } else {
-      profitDetails.push('Unprofitable');
-      keyWeaknesses.push('Company is not profitable');
+      details.push(`Net margin ${f.netMargin.toFixed(1)}% - unprofitable`);
     }
   }
 
-  // Gross Margin (0-6 points) - pricing power
-  if (f?.grossMargin !== null && f?.grossMargin !== undefined) {
-    if (f.grossMargin > 50) {
-      profitScore += 6;
-      profitDetails.push('Strong pricing power');
-      keyStrengths.push('Strong pricing power (high gross margin)');
-    } else if (f.grossMargin > 30) {
-      profitScore += 4;
-      profitDetails.push('Decent gross margin');
-    } else if (f.grossMargin > 15) {
-      profitScore += 2;
-      profitDetails.push('Low gross margin');
-    }
-  }
-
-  breakdown.push({
-    category: 'Profitability',
-    score: profitScore,
-    maxScore: profitMax,
-    details: profitDetails.join('; ') || 'Insufficient data',
-    sentiment:
-      profitScore >= 14
-        ? 'positive'
-        : profitScore <= 6
-        ? 'negative'
-        : 'neutral',
-  });
-
-  // 3. GROWTH SCORE (max 20 points)
-  let growthScore = 0;
-  const growthMax = 20;
-  const growthDetails: string[] = [];
-
-  // Revenue Growth (0-8 points)
-  if (f?.revenueGrowth !== null && f?.revenueGrowth !== undefined) {
-    if (f.revenueGrowth > 20) {
-      growthScore += 8;
-      growthDetails.push('Strong revenue growth > 20%');
-      keyStrengths.push('Rapidly growing revenue');
-    } else if (f.revenueGrowth > 10) {
-      growthScore += 6;
-      growthDetails.push('Good revenue growth 10-20%');
+  // Revenue Growth (0-20 points)
+  if (f.revenueGrowth !== null && f.revenueGrowth !== undefined) {
+    if (f.revenueGrowth > 25) {
+      score += 20;
+      details.push(`Revenue growth ${f.revenueGrowth.toFixed(1)}% - rapid`);
+    } else if (f.revenueGrowth > 15) {
+      score += 15;
+      details.push(`Revenue growth ${f.revenueGrowth.toFixed(1)}% - strong`);
+    } else if (f.revenueGrowth > 5) {
+      score += 10;
+      details.push(`Revenue growth ${f.revenueGrowth.toFixed(1)}% - moderate`);
     } else if (f.revenueGrowth > 0) {
-      growthScore += 3;
-      growthDetails.push('Modest revenue growth');
+      score += 5;
+      details.push(`Revenue growth ${f.revenueGrowth.toFixed(1)}% - slow`);
     } else {
-      growthDetails.push('Revenue declining');
-      keyWeaknesses.push('Revenue is declining');
+      details.push(`Revenue growth ${f.revenueGrowth.toFixed(1)}% - declining`);
     }
   }
 
-  // EPS Growth (0-7 points)
-  if (f?.epsGrowth !== null && f?.epsGrowth !== undefined) {
-    if (f.epsGrowth > 20) {
-      growthScore += 7;
-      growthDetails.push('Strong EPS growth > 20%');
-    } else if (f.epsGrowth > 10) {
-      growthScore += 5;
-      growthDetails.push('Good EPS growth 10-20%');
-    } else if (f.epsGrowth > 0) {
-      growthScore += 2;
-      growthDetails.push('Modest EPS growth');
-    } else {
-      growthDetails.push('EPS declining');
-    }
-  }
-
-  // 5-Year Revenue Growth (0-5 points) - consistency
-  if (f?.revenueGrowth5Y !== null && f?.revenueGrowth5Y !== undefined) {
-    if (f.revenueGrowth5Y > 15) {
-      growthScore += 5;
-      growthDetails.push('Consistent 5Y growth');
-      keyStrengths.push('Consistent long-term growth track record');
-    } else if (f.revenueGrowth5Y > 8) {
-      growthScore += 3;
-      growthDetails.push('Moderate 5Y growth');
-    } else if (f.revenueGrowth5Y > 0) {
-      growthScore += 1;
-      growthDetails.push('Slow 5Y growth');
-    }
-  }
-
-  breakdown.push({
-    category: 'Growth',
-    score: growthScore,
-    maxScore: growthMax,
-    details: growthDetails.join('; ') || 'Insufficient data',
-    sentiment:
-      growthScore >= 14
-        ? 'positive'
-        : growthScore <= 6
-        ? 'negative'
-        : 'neutral',
-  });
-
-  // 4. FINANCIAL HEALTH SCORE (max 15 points)
-  let healthScore = 0;
-  const healthMax = 15;
-  const healthDetails: string[] = [];
-
-  // Debt to Equity (0-6 points)
-  if (f?.debtToEquity !== null && f?.debtToEquity !== undefined) {
+  // Debt/Equity (0-20 points) - lower is better
+  if (f.debtToEquity !== null && f.debtToEquity !== undefined) {
     if (f.debtToEquity < 0.3) {
-      healthScore += 6;
-      healthDetails.push('Very low debt');
-      keyStrengths.push('Very strong balance sheet');
+      score += 20;
+      details.push(`D/E ${f.debtToEquity.toFixed(2)} - minimal debt`);
     } else if (f.debtToEquity < 0.7) {
-      healthScore += 5;
-      healthDetails.push('Low debt');
+      score += 16;
+      details.push(`D/E ${f.debtToEquity.toFixed(2)} - low debt`);
     } else if (f.debtToEquity < 1.5) {
-      healthScore += 3;
-      healthDetails.push('Moderate debt');
+      score += 10;
+      details.push(`D/E ${f.debtToEquity.toFixed(2)} - moderate debt`);
     } else if (f.debtToEquity < 2.5) {
-      healthScore += 1;
-      healthDetails.push('High debt');
-      keyWeaknesses.push('High debt levels');
+      score += 4;
+      details.push(`D/E ${f.debtToEquity.toFixed(2)} - high debt`);
     } else {
-      healthDetails.push('Very high debt risk');
-      keyWeaknesses.push('Dangerously high debt');
-      actionItems.push('Monitor debt levels closely');
-    }
-  }
-
-  // Current Ratio (0-5 points) - liquidity
-  if (f?.currentRatio !== null && f?.currentRatio !== undefined) {
-    if (f.currentRatio > 2) {
-      healthScore += 5;
-      healthDetails.push('Strong liquidity');
-    } else if (f.currentRatio > 1.5) {
-      healthScore += 4;
-      healthDetails.push('Good liquidity');
-    } else if (f.currentRatio > 1) {
-      healthScore += 2;
-      healthDetails.push('Adequate liquidity');
-    } else {
-      healthDetails.push('Liquidity concerns');
-      keyWeaknesses.push('Potential liquidity issues');
-    }
-  }
-
-  // Beta (0-4 points) - lower volatility preferred
-  if (f?.beta !== null && f?.beta !== undefined) {
-    if (f.beta >= 0 && f.beta < 0.8) {
-      healthScore += 4;
-      healthDetails.push('Low volatility');
-      keyStrengths.push('Lower volatility than market');
-    } else if (f.beta < 1.2) {
-      healthScore += 3;
-      healthDetails.push('Market-like volatility');
-    } else if (f.beta < 1.5) {
-      healthScore += 1;
-      healthDetails.push('Above-average volatility');
-    } else {
-      healthDetails.push('High volatility');
-      keyWeaknesses.push('Very volatile stock');
-    }
-  }
-
-  breakdown.push({
-    category: 'Financial Health',
-    score: healthScore,
-    maxScore: healthMax,
-    details: healthDetails.join('; ') || 'Insufficient data',
-    sentiment:
-      healthScore >= 11
-        ? 'positive'
-        : healthScore <= 5
-        ? 'negative'
-        : 'neutral',
-  });
-
-  // 5. ANALYST & INSIDER SENTIMENT (max 20 points)
-  let sentimentScore = 0;
-  const sentimentMax = 20;
-  const sentimentDetails: string[] = [];
-
-  // Analyst Consensus (0-10 points)
-  if (item.consensusScore !== null) {
-    if (item.consensusScore > 1) {
-      sentimentScore += 10;
-      sentimentDetails.push('Strong Buy consensus');
-      keyStrengths.push('Analysts strongly recommend buying');
-    } else if (item.consensusScore > 0.5) {
-      sentimentScore += 8;
-      sentimentDetails.push('Buy consensus');
-    } else if (item.consensusScore > 0) {
-      sentimentScore += 6;
-      sentimentDetails.push('Moderate Buy');
-    } else if (item.consensusScore > -0.5) {
-      sentimentScore += 4;
-      sentimentDetails.push('Hold consensus');
-    } else if (item.consensusScore > -1) {
-      sentimentScore += 2;
-      sentimentDetails.push('Underperform rating');
-      keyWeaknesses.push('Analysts recommend reducing');
-      actionItems.push('Consider reducing position');
-    } else {
-      sentimentDetails.push('Sell rating');
-      keyWeaknesses.push('Analysts recommend selling');
-      actionItems.push('Review position - analysts bearish');
-    }
-  }
-
-  // Insider Sentiment (0-10 points)
-  const insiderData = getFilteredInsiderSentiment(item, insiderTimeRange);
-  if (insiderData.mspr !== null) {
-    if (insiderData.mspr > 50) {
-      sentimentScore += 10;
-      sentimentDetails.push('Very strong insider buying');
-      keyStrengths.push('Heavy insider buying - bullish signal');
-    } else if (insiderData.mspr > 25) {
-      sentimentScore += 8;
-      sentimentDetails.push('Strong insider buying');
-      keyStrengths.push('Insiders are buying');
-    } else if (insiderData.mspr > 0) {
-      sentimentScore += 5;
-      sentimentDetails.push('Modest insider buying');
-    } else if (insiderData.mspr > -25) {
-      sentimentScore += 2;
-      sentimentDetails.push('Some insider selling');
-    } else {
-      sentimentDetails.push('Heavy insider selling');
-      keyWeaknesses.push('Insiders are selling heavily');
-      actionItems.push('Investigate insider selling');
-    }
-  }
-
-  breakdown.push({
-    category: 'Sentiment',
-    score: sentimentScore,
-    maxScore: sentimentMax,
-    details: sentimentDetails.join('; ') || 'Insufficient data',
-    sentiment:
-      sentimentScore >= 14
-        ? 'positive'
-        : sentimentScore <= 6
-        ? 'negative'
-        : 'neutral',
-  });
-
-  // Calculate total score
-  const totalScore =
-    valuationScore + profitScore + growthScore + healthScore + sentimentScore;
-  const maxPossibleScore =
-    valuationMax + profitMax + growthMax + healthMax + sentimentMax;
-  const scorePercent = (totalScore / maxPossibleScore) * 100;
-
-  // Determine recommendation
-  let recommendation: StockRecommendation['recommendation'];
-  let recommendationClass: string;
-
-  if (scorePercent >= 75) {
-    recommendation = 'Strong Buy';
-    recommendationClass = 'strong-buy';
-    actionItems.push('Consider increasing position');
-  } else if (scorePercent >= 60) {
-    recommendation = 'Buy';
-    recommendationClass = 'buy';
-    actionItems.push('Good candidate for adding on dips');
-  } else if (scorePercent >= 45) {
-    recommendation = 'Hold';
-    recommendationClass = 'hold';
-    actionItems.push('Monitor for changes in fundamentals');
-  } else if (scorePercent >= 30) {
-    recommendation = 'Reduce';
-    recommendationClass = 'reduce';
-    actionItems.push('Consider trimming position');
-  } else {
-    recommendation = 'Sell';
-    recommendationClass = 'sell';
-    actionItems.push('Consider exiting position');
-  }
-
-  // Add 52-week position context
-  if (
-    item.currentPrice !== null &&
-    item.fiftyTwoWeekHigh !== null &&
-    item.fiftyTwoWeekLow !== null
-  ) {
-    const position =
-      ((item.currentPrice - item.fiftyTwoWeekLow) /
-        (item.fiftyTwoWeekHigh - item.fiftyTwoWeekLow)) *
-      100;
-    if (position < 20) {
-      keyStrengths.push('Near 52-week low - potential value');
-      if (recommendation === 'Hold' || recommendation === 'Buy') {
-        actionItems.push('Near lows - could be good entry point');
-      }
-    } else if (position > 80) {
-      keyWeaknesses.push('Near 52-week high - less upside');
-      if (recommendation === 'Hold') {
-        actionItems.push('Near highs - consider taking some profits');
-      }
-    }
-  }
-
-  // Earnings context
-  if (item.earnings && item.earnings.length > 0) {
-    const recentBeats = item.earnings
-      .slice(0, 4)
-      .filter(
-        (e) => e.surprisePercent !== null && e.surprisePercent > 0
-      ).length;
-    if (recentBeats >= 3) {
-      keyStrengths.push(`Beat earnings ${recentBeats}/4 quarters`);
-    } else if (recentBeats <= 1) {
-      keyWeaknesses.push('Struggling to beat earnings estimates');
+      details.push(`D/E ${f.debtToEquity.toFixed(2)} - very high debt`);
     }
   }
 
   return {
-    ticker: item.ticker,
-    stockName: item.stockName,
-    weight: item.weight,
-    totalScore,
-    maxPossibleScore,
-    scorePercent,
-    recommendation,
-    recommendationClass,
-    breakdown,
-    keyStrengths: keyStrengths.slice(0, 4), // Top 4
-    keyWeaknesses: keyWeaknesses.slice(0, 4),
-    actionItems: actionItems.slice(0, 3),
+    category: 'Fundamentals',
+    score,
+    maxScore,
+    percent: (score / maxScore) * 100,
+    details,
+    sentiment: getSentiment(score, maxScore),
   };
 }
 
 /**
- * Get recommendations for all stocks
+ * Calculate technical score (0-100)
+ * Based on: RSI, MACD, Bollinger, ADX, Stochastic
  */
-export function getAllRecommendations(
-  data: EnrichedAnalystData[],
+function calculateTechnicalScore(
+  tech: TechnicalData | undefined
+): ScoreComponent {
+  const details: string[] = [];
+  let score = 0;
+  const maxScore = 100;
+  let bullishSignals = 0;
+  let bearishSignals = 0;
+
+  if (!tech) {
+    return {
+      category: 'Technical',
+      score: 50, // Neutral when no data
+      maxScore,
+      percent: 50,
+      details: ['No technical data available'],
+      sentiment: 'neutral',
+    };
+  }
+
+  // RSI (0-25 points)
+  if (tech.rsi14 !== null && tech.rsi14 !== undefined) {
+    const rsi = tech.rsi14;
+    if (rsi < 30) {
+      score += 25; // Oversold = bullish opportunity
+      details.push(`RSI ${rsi.toFixed(0)} - oversold (bullish)`);
+      bullishSignals++;
+    } else if (rsi < 45) {
+      score += 18;
+      details.push(`RSI ${rsi.toFixed(0)} - approaching oversold`);
+      bullishSignals++;
+    } else if (rsi > 70) {
+      score += 5;
+      details.push(`RSI ${rsi.toFixed(0)} - overbought (bearish)`);
+      bearishSignals++;
+    } else if (rsi > 60) {
+      score += 12;
+      details.push(`RSI ${rsi.toFixed(0)} - bullish momentum`);
+    } else {
+      score += 15;
+      details.push(`RSI ${rsi.toFixed(0)} - neutral`);
+    }
+  }
+
+  // MACD (0-20 points)
+  if (tech.macdHistogram !== null && tech.macdHistogram !== undefined) {
+    const histogram = tech.macdHistogram;
+    const macdTrend = tech.macdTrend;
+    if (histogram > 0 && macdTrend === 'bullish') {
+      score += 20;
+      details.push('MACD bullish & strengthening');
+      bullishSignals++;
+    } else if (histogram > 0) {
+      score += 15;
+      details.push('MACD bullish');
+      bullishSignals++;
+    } else if (histogram < 0 && macdTrend === 'bearish') {
+      score += 5;
+      details.push('MACD bearish & weakening');
+      bearishSignals++;
+    } else if (histogram < 0) {
+      score += 8;
+      details.push('MACD bearish');
+      bearishSignals++;
+    } else {
+      score += 10;
+      details.push('MACD neutral');
+    }
+  }
+
+  // Bollinger Bands (0-20 points)
+  if (
+    tech.bollingerUpper !== null &&
+    tech.bollingerLower !== null &&
+    tech.currentPrice !== null
+  ) {
+    const price = tech.currentPrice;
+    const upper = tech.bollingerUpper;
+    const lower = tech.bollingerLower;
+    const middle = tech.bollingerMiddle ?? (upper + lower) / 2;
+
+    if (price < lower) {
+      score += 20; // Below lower band = potential bounce
+      details.push('Price below lower Bollinger (oversold)');
+      bullishSignals++;
+    } else if (price < middle && price > lower) {
+      score += 15;
+      details.push('Price in lower Bollinger zone');
+    } else if (price > upper) {
+      score += 5;
+      details.push('Price above upper Bollinger (overbought)');
+      bearishSignals++;
+    } else if (price > middle) {
+      score += 12;
+      details.push('Price in upper Bollinger zone');
+    } else {
+      score += 10;
+      details.push('Price at Bollinger midline');
+    }
+  }
+
+  // ADX - Trend Strength (0-15 points)
+  if (tech.adx !== null && tech.plusDI !== null && tech.minusDI !== null) {
+    const adx = tech.adx;
+    const plusDI = tech.plusDI;
+    const minusDI = tech.minusDI;
+    if (adx > 25 && plusDI > minusDI) {
+      score += 15;
+      details.push(`ADX ${adx.toFixed(0)} - strong uptrend`);
+      bullishSignals++;
+    } else if (adx > 25 && minusDI > plusDI) {
+      score += 5;
+      details.push(`ADX ${adx.toFixed(0)} - strong downtrend`);
+      bearishSignals++;
+    } else if (adx < 20) {
+      score += 8;
+      details.push(`ADX ${adx.toFixed(0)} - weak trend/consolidation`);
+    } else {
+      score += 10;
+      details.push(`ADX ${adx.toFixed(0)} - moderate trend`);
+    }
+  }
+
+  // Stochastic (0-20 points)
+  if (tech.stochasticK !== null && tech.stochasticD !== null) {
+    const k = tech.stochasticK;
+    const d = tech.stochasticD;
+    if (k < 20 && d < 20) {
+      score += 20;
+      details.push(`Stoch %K:${k.toFixed(0)} %D:${d.toFixed(0)} - oversold`);
+      bullishSignals++;
+    } else if (k < 30) {
+      score += 15;
+      details.push(`Stoch %K:${k.toFixed(0)} - approaching oversold`);
+    } else if (k > 80 && d > 80) {
+      score += 5;
+      details.push(`Stoch %K:${k.toFixed(0)} %D:${d.toFixed(0)} - overbought`);
+      bearishSignals++;
+    } else if (k > 70) {
+      score += 10;
+      details.push(`Stoch %K:${k.toFixed(0)} - strong momentum`);
+    } else {
+      score += 12;
+      details.push(`Stoch %K:${k.toFixed(0)} - neutral`);
+    }
+  }
+
+  // Determine overall sentiment based on signal count
+  let sentiment: 'bullish' | 'bearish' | 'neutral' = 'neutral';
+  if (bullishSignals >= 3) sentiment = 'bullish';
+  else if (bearishSignals >= 3) sentiment = 'bearish';
+  else if (bullishSignals > bearishSignals) sentiment = 'bullish';
+  else if (bearishSignals > bullishSignals) sentiment = 'bearish';
+
+  return {
+    category: 'Technical',
+    score,
+    maxScore,
+    percent: (score / maxScore) * 100,
+    details,
+    sentiment,
+  };
+}
+
+/**
+ * Calculate analyst score (0-100)
+ * Based on: consensus score, analyst count
+ */
+function calculateAnalystScore(item: EnrichedAnalystData): ScoreComponent {
+  const details: string[] = [];
+  let score = 0;
+  const maxScore = 100;
+
+  // Consensus Score (0-70 points)
+  // Scale: -2 (Strong Sell) to +2 (Strong Buy)
+  if (item.consensusScore !== null) {
+    const cs = item.consensusScore;
+    if (cs > 1.5) {
+      score += 70;
+      details.push(`Consensus ${cs.toFixed(2)} - Strong Buy`);
+    } else if (cs > 1) {
+      score += 58;
+      details.push(`Consensus ${cs.toFixed(2)} - Buy`);
+    } else if (cs > 0.5) {
+      score += 48;
+      details.push(`Consensus ${cs.toFixed(2)} - Moderate Buy`);
+    } else if (cs > 0) {
+      score += 38;
+      details.push(`Consensus ${cs.toFixed(2)} - Weak Buy`);
+    } else if (cs > -0.5) {
+      score += 28;
+      details.push(`Consensus ${cs.toFixed(2)} - Hold`);
+    } else if (cs > -1) {
+      score += 14;
+      details.push(`Consensus ${cs.toFixed(2)} - Underperform`);
+    } else {
+      score += 0;
+      details.push(`Consensus ${cs.toFixed(2)} - Sell`);
+    }
+  }
+
+  // Analyst Coverage (0-30 points) - more analysts = more reliable
+  if (item.numberOfAnalysts !== null) {
+    const count = item.numberOfAnalysts;
+    if (count >= 20) {
+      score += 30;
+      details.push(`${count} analysts - high coverage`);
+    } else if (count >= 10) {
+      score += 24;
+      details.push(`${count} analysts - good coverage`);
+    } else if (count >= 5) {
+      score += 16;
+      details.push(`${count} analysts - moderate coverage`);
+    } else if (count >= 1) {
+      score += 8;
+      details.push(`${count} analysts - low coverage`);
+    } else {
+      details.push('No analyst coverage');
+    }
+  }
+
+  return {
+    category: 'Analyst',
+    score,
+    maxScore,
+    percent: (score / maxScore) * 100,
+    details,
+    sentiment: getSentiment(score, maxScore),
+  };
+}
+
+/**
+ * Calculate news sentiment score (0-100)
+ * Based on: average sentiment from recent articles
+ */
+function calculateNewsScore(
+  ticker: string,
+  articles: NewsArticle[] | undefined
+): ScoreComponent {
+  const details: string[] = [];
+  let score = 50; // Default neutral
+  const maxScore = 100;
+
+  if (!articles || articles.length === 0) {
+    return {
+      category: 'News',
+      score: 50,
+      maxScore,
+      percent: 50,
+      details: ['No recent news articles'],
+      sentiment: 'neutral',
+    };
+  }
+
+  // Filter articles for this ticker
+  const tickerArticles = articles.filter(
+    (a) => a.ticker === ticker || a.relatedTickers?.includes(ticker)
+  );
+
+  if (tickerArticles.length === 0) {
+    return {
+      category: 'News',
+      score: 50,
+      maxScore,
+      percent: 50,
+      details: ['No news for this stock'],
+      sentiment: 'neutral',
+    };
+  }
+
+  // Calculate average sentiment (-1 to +1)
+  const avgSentiment =
+    tickerArticles.reduce((sum, a) => {
+      return sum + (a.sentiment?.score ?? 0);
+    }, 0) / tickerArticles.length;
+
+  // Convert -1..+1 to 0..100
+  score = Math.round((avgSentiment + 1) * 50);
+
+  // Count positive/negative articles
+  const positive = tickerArticles.filter(
+    (a) => (a.sentiment?.score ?? 0) > 0.2
+  ).length;
+  const negative = tickerArticles.filter(
+    (a) => (a.sentiment?.score ?? 0) < -0.2
+  ).length;
+  const neutral = tickerArticles.length - positive - negative;
+
+  details.push(
+    `${tickerArticles.length} articles: ${positive} positive, ${neutral} neutral, ${negative} negative`
+  );
+  details.push(
+    `Average sentiment: ${avgSentiment > 0 ? '+' : ''}${(
+      avgSentiment * 100
+    ).toFixed(0)}%`
+  );
+
+  return {
+    category: 'News',
+    score,
+    maxScore,
+    percent: (score / maxScore) * 100,
+    details,
+    sentiment:
+      avgSentiment > 0.15
+        ? 'bullish'
+        : avgSentiment < -0.15
+        ? 'bearish'
+        : 'neutral',
+  };
+}
+
+/**
+ * Calculate insider sentiment score (0-100)
+ * Based on: MSPR and net share changes
+ */
+function calculateInsiderScore(
+  item: EnrichedAnalystData,
+  timeRange: InsiderTimeRange
+): ScoreComponent {
+  const details: string[] = [];
+  let score = 50; // Default neutral
+  const maxScore = 100;
+
+  const insider = getFilteredInsiderSentiment(item, timeRange);
+
+  if (insider.mspr === null) {
+    return {
+      category: 'Insider',
+      score: 50,
+      maxScore,
+      percent: 50,
+      details: ['No insider data available'],
+      sentiment: 'neutral',
+    };
+  }
+
+  // MSPR ranges from roughly -100 to +100
+  // Convert to 0-100 score (50 = neutral)
+  score = Math.round(50 + insider.mspr / 2);
+  score = Math.max(0, Math.min(100, score));
+
+  if (insider.mspr > 50) {
+    details.push(`MSPR +${insider.mspr.toFixed(1)} - very strong buying`);
+  } else if (insider.mspr > 25) {
+    details.push(`MSPR +${insider.mspr.toFixed(1)} - strong buying`);
+  } else if (insider.mspr > 0) {
+    details.push(`MSPR +${insider.mspr.toFixed(1)} - moderate buying`);
+  } else if (insider.mspr > -25) {
+    details.push(`MSPR ${insider.mspr.toFixed(1)} - moderate selling`);
+  } else if (insider.mspr > -50) {
+    details.push(`MSPR ${insider.mspr.toFixed(1)} - strong selling`);
+  } else {
+    details.push(`MSPR ${insider.mspr.toFixed(1)} - very strong selling`);
+  }
+
+  if (insider.change !== null) {
+    details.push(
+      `Net shares: ${
+        insider.change > 0 ? '+' : ''
+      }${insider.change.toLocaleString()}`
+    );
+  }
+
+  return {
+    category: 'Insider',
+    score,
+    maxScore,
+    percent: (score / maxScore) * 100,
+    details,
+    sentiment:
+      insider.mspr > 15
+        ? 'bullish'
+        : insider.mspr < -15
+        ? 'bearish'
+        : 'neutral',
+  };
+}
+
+/**
+ * Calculate portfolio context score (0-100)
+ * Based on: position size, distance from avg price, gain/loss, target price upside
+ */
+function calculatePortfolioScore(item: EnrichedAnalystData): ScoreComponent {
+  const details: string[] = [];
+  let score = 0;
+  const maxScore = 100;
+
+  // Target Price Upside (0-30 points) - your personal target
+  if (
+    item.targetPrice !== null &&
+    item.currentPrice !== null &&
+    item.currentPrice > 0
+  ) {
+    const upside =
+      ((item.targetPrice - item.currentPrice) / item.currentPrice) * 100;
+    if (upside > 40) {
+      score += 30;
+      details.push(`Target upside +${upside.toFixed(0)}% - high potential`);
+    } else if (upside > 25) {
+      score += 25;
+      details.push(`Target upside +${upside.toFixed(0)}% - good potential`);
+    } else if (upside > 15) {
+      score += 20;
+      details.push(`Target upside +${upside.toFixed(0)}% - moderate`);
+    } else if (upside > 5) {
+      score += 12;
+      details.push(`Target upside +${upside.toFixed(0)}% - limited`);
+    } else if (upside > -5) {
+      score += 6;
+      details.push(
+        `Near target price (${upside > 0 ? '+' : ''}${upside.toFixed(0)}%)`
+      );
+    } else {
+      score += 0;
+      details.push(
+        `Above target ${Math.abs(upside).toFixed(0)}% - consider trimming`
+      );
+    }
+  }
+
+  // Distance from average buy price (0-25 points)
+  if (item.avgBuyPrice > 0 && item.currentPrice !== null) {
+    const distanceFromAvg =
+      ((item.currentPrice - item.avgBuyPrice) / item.avgBuyPrice) * 100;
+
+    if (distanceFromAvg < -20) {
+      score += 25; // Significantly below avg = good DCA opportunity
+      details.push(
+        `${distanceFromAvg.toFixed(1)}% below avg cost - DCA opportunity`
+      );
+    } else if (distanceFromAvg < -10) {
+      score += 20;
+      details.push(`${distanceFromAvg.toFixed(1)}% below avg cost`);
+    } else if (distanceFromAvg < 0) {
+      score += 15;
+      details.push(`${distanceFromAvg.toFixed(1)}% below avg cost`);
+    } else if (distanceFromAvg < 20) {
+      score += 12;
+      details.push(`+${distanceFromAvg.toFixed(1)}% above avg cost`);
+    } else if (distanceFromAvg < 50) {
+      score += 8;
+      details.push(`+${distanceFromAvg.toFixed(1)}% above avg cost`);
+    } else {
+      score += 4;
+      details.push(
+        `+${distanceFromAvg.toFixed(
+          1
+        )}% above avg cost - consider taking profits`
+      );
+    }
+  }
+
+  // Position weight (0-20 points)
+  // Balanced weight (2-8%) is ideal
+  if (item.weight !== undefined) {
+    if (item.weight > 15) {
+      score += 4;
+      details.push(`Weight ${item.weight.toFixed(1)}% - overweight (risk)`);
+    } else if (item.weight > 8) {
+      score += 12;
+      details.push(`Weight ${item.weight.toFixed(1)}% - slightly overweight`);
+    } else if (item.weight >= 2) {
+      score += 20;
+      details.push(`Weight ${item.weight.toFixed(1)}% - balanced position`);
+    } else {
+      score += 16;
+      details.push(`Weight ${item.weight.toFixed(1)}% - small position`);
+    }
+  }
+
+  // Unrealized gain status (0-25 points)
+  if (item.gainPercentage !== undefined) {
+    if (item.gainPercentage > 100) {
+      score += 15;
+      details.push(
+        `+${item.gainPercentage.toFixed(0)}% gain - strong performer`
+      );
+    } else if (item.gainPercentage > 50) {
+      score += 18;
+      details.push(`+${item.gainPercentage.toFixed(0)}% gain - solid return`);
+    } else if (item.gainPercentage > 20) {
+      score += 22;
+      details.push(`+${item.gainPercentage.toFixed(0)}% gain`);
+    } else if (item.gainPercentage > 0) {
+      score += 25;
+      details.push(`+${item.gainPercentage.toFixed(0)}% gain - in profit`);
+    } else if (item.gainPercentage > -10) {
+      score += 20;
+      details.push(`${item.gainPercentage.toFixed(0)}% - small loss`);
+    } else if (item.gainPercentage > -25) {
+      score += 15;
+      details.push(`${item.gainPercentage.toFixed(0)}% - moderate loss`);
+    } else {
+      score += 8;
+      details.push(`${item.gainPercentage.toFixed(0)}% - significant loss`);
+    }
+  }
+
+  // Cap at 100
+  score = Math.min(100, score);
+
+  return {
+    category: 'Portfolio',
+    score,
+    maxScore,
+    percent: (score / maxScore) * 100,
+    details,
+    sentiment: score >= 65 ? 'bullish' : score <= 35 ? 'bearish' : 'neutral',
+  };
+}
+
+// ============================================================================
+// DIP DETECTION
+// ============================================================================
+
+/**
+ * Calculate DIP score (0-100)
+ * Identifies oversold conditions that may present buying opportunities
+ */
+function calculateDipScore(
+  tech: TechnicalData | undefined,
+  item: EnrichedAnalystData
+): { score: number; details: string[] } {
+  let score = 0;
+  const details: string[] = [];
+
+  // RSI based (0-25 points)
+  if (tech?.rsi14 !== null && tech?.rsi14 !== undefined) {
+    const rsi = tech.rsi14;
+    if (rsi < 25) {
+      score += 25;
+      details.push(`RSI ${rsi.toFixed(0)} - deeply oversold`);
+    } else if (rsi < 30) {
+      score += 20;
+      details.push(`RSI ${rsi.toFixed(0)} - oversold`);
+    } else if (rsi < 40) {
+      score += 10;
+      details.push(`RSI ${rsi.toFixed(0)} - approaching oversold`);
+    }
+  }
+
+  // Bollinger position (0-20 points)
+  if (
+    tech &&
+    tech.bollingerLower !== null &&
+    tech.bollingerMiddle !== null &&
+    tech.currentPrice !== null
+  ) {
+    const price = tech.currentPrice;
+    const lower = tech.bollingerLower;
+    const middle = tech.bollingerMiddle;
+    const bandWidth = middle - lower;
+
+    if (price < lower) {
+      score += 20;
+      details.push('Below lower Bollinger band');
+    } else if (price < lower + bandWidth * 0.2) {
+      score += 12;
+      details.push('Near lower Bollinger band');
+    }
+  }
+
+  // SMA position (0-20 points)
+  if (tech?.currentPrice !== null && tech?.currentPrice !== undefined) {
+    const price = tech.currentPrice;
+    const sma50 = tech.sma50;
+    const sma200 = tech.sma200;
+
+    if (sma200 !== null && sma200 !== undefined && price < sma200 * 0.9) {
+      score += 15;
+      details.push('Price >10% below SMA200');
+    } else if (sma200 !== null && sma200 !== undefined && price < sma200) {
+      score += 10;
+      details.push('Price below SMA200');
+    }
+
+    if (sma50 !== null && sma50 !== undefined && price < sma50 * 0.95) {
+      score += 5;
+      details.push('Price below SMA50');
+    }
+  }
+
+  // 52-week position (0-15 points)
+  if (
+    item.fiftyTwoWeekHigh !== null &&
+    item.fiftyTwoWeekLow !== null &&
+    item.currentPrice !== null
+  ) {
+    const dropFromHigh =
+      ((item.fiftyTwoWeekHigh - item.currentPrice) / item.fiftyTwoWeekHigh) *
+      100;
+
+    if (dropFromHigh > 30) {
+      score += 15;
+      details.push(`${dropFromHigh.toFixed(0)}% below 52W high`);
+    } else if (dropFromHigh > 20) {
+      score += 10;
+      details.push(`${dropFromHigh.toFixed(0)}% below 52W high`);
+    } else if (dropFromHigh > 10) {
+      score += 5;
+      details.push(`${dropFromHigh.toFixed(0)}% below 52W high`);
+    }
+  }
+
+  // Stochastic (0-10 points)
+  if (tech?.stochasticK !== null && tech?.stochasticK !== undefined) {
+    const k = tech.stochasticK;
+    if (k < 20) {
+      score += 10;
+      details.push(`Stochastic oversold (${k.toFixed(0)})`);
+    } else if (k < 30) {
+      score += 5;
+      details.push(`Stochastic low (${k.toFixed(0)})`);
+    }
+  }
+
+  // Distance from avg buy price (0-10 points)
+  if (item.avgBuyPrice > 0 && item.currentPrice !== null) {
+    const distanceFromAvg =
+      ((item.currentPrice - item.avgBuyPrice) / item.avgBuyPrice) * 100;
+    if (distanceFromAvg < -15) {
+      score += 10;
+      details.push(`${distanceFromAvg.toFixed(0)}% below avg cost`);
+    } else if (distanceFromAvg < -5) {
+      score += 5;
+      details.push(`${distanceFromAvg.toFixed(0)}% below avg cost`);
+    }
+  }
+
+  return { score: Math.min(100, score), details };
+}
+
+/**
+ * Check if DIP passes fundamental quality checks
+ */
+function checkDipQuality(
+  fundamentalScore: number,
+  analystScore: number,
+  newsScore: number
+): { passes: boolean; reasons: string[] } {
+  const reasons: string[] = [];
+  let passes = true;
+
+  // Fundamentals should be at least decent (>35%)
+  if (fundamentalScore < 35) {
+    passes = false;
+    reasons.push('Weak fundamentals');
+  }
+
+  // Analyst sentiment shouldn't be strongly negative (<25%)
+  if (analystScore < 25) {
+    passes = false;
+    reasons.push('Analysts bearish');
+  }
+
+  // News sentiment shouldn't be extremely negative (<20%)
+  if (newsScore < 20) {
+    passes = false;
+    reasons.push('Very negative news');
+  }
+
+  return { passes, reasons };
+}
+
+// ============================================================================
+// BUY STRATEGY
+// ============================================================================
+
+interface BuyStrategy {
+  buyZoneLow: number | null;
+  buyZoneHigh: number | null;
+  inBuyZone: boolean;
+  dcaRecommendation: 'AGGRESSIVE' | 'NORMAL' | 'CAUTIOUS' | 'NO_DCA';
+  dcaReason: string;
+  maxAddPercent: number;
+  riskRewardRatio: number | null;
+  supportPrice: number | null;
+}
+
+/**
+ * Calculate Buy Strategy
+ * Determines buy zone, DCA recommendation, and risk/reward
+ */
+function calculateBuyStrategy(
+  item: EnrichedAnalystData,
+  tech: TechnicalData | undefined,
+  isDip: boolean,
+  isPrimarySignalBuyable: boolean
+): BuyStrategy {
+  const currentPrice = item.currentPrice ?? 0;
+  const avgBuyPrice = item.avgBuyPrice;
+  const weight = item.weight;
+  const targetPrice = item.targetPrice;
+
+  // Calculate support price (lowest of key technical levels)
+  let supportPrice: number | null = null;
+  const supportLevels: number[] = [];
+
+  // Bollinger lower band
+  if (tech?.bollingerLower !== null && tech?.bollingerLower !== undefined) {
+    supportLevels.push(tech.bollingerLower);
+  }
+
+  // SMA 200
+  if (tech?.sma200 !== null && tech?.sma200 !== undefined) {
+    supportLevels.push(tech.sma200);
+  }
+
+  // 52-week low (strong support)
+  if (item.fiftyTwoWeekLow !== null) {
+    supportLevels.push(item.fiftyTwoWeekLow);
+  }
+
+  if (supportLevels.length > 0) {
+    // Use a weighted support - not the absolute lowest, but a reasonable one
+    supportLevels.sort((a, b) => a - b);
+    // Take the second lowest if available, otherwise the lowest
+    supportPrice =
+      supportLevels.length > 1 ? supportLevels[1] : supportLevels[0];
+  }
+
+  // Calculate Buy Zone
+  // Low: Support level or 10% below current price
+  // High: Avg buy price or current price (don't buy higher than you already have)
+  let buyZoneLow: number | null = null;
+  let buyZoneHigh: number | null = null;
+
+  if (currentPrice > 0) {
+    // Buy zone low - based on technical support or % drop
+    if (supportPrice && supportPrice < currentPrice) {
+      buyZoneLow = supportPrice;
+    } else {
+      buyZoneLow = currentPrice * 0.9; // 10% below current
+    }
+
+    // Buy zone high - don't recommend buying higher than avg price (with some tolerance)
+    if (avgBuyPrice > 0) {
+      buyZoneHigh = Math.min(avgBuyPrice * 1.05, currentPrice); // Max 5% above avg or current
+    } else {
+      buyZoneHigh = currentPrice;
+    }
+
+    // Ensure low < high
+    if (buyZoneLow >= buyZoneHigh) {
+      buyZoneLow = buyZoneHigh * 0.9;
+    }
+  }
+
+  // Is current price in buy zone?
+  const inBuyZone =
+    buyZoneLow !== null &&
+    buyZoneHigh !== null &&
+    currentPrice >= buyZoneLow &&
+    currentPrice <= buyZoneHigh;
+
+  // DCA Recommendation based on weight
+  let dcaRecommendation: 'AGGRESSIVE' | 'NORMAL' | 'CAUTIOUS' | 'NO_DCA';
+  let dcaReason: string;
+  let maxAddPercent: number;
+
+  if (weight > 12) {
+    dcaRecommendation = 'NO_DCA';
+    dcaReason = 'Position overweight (>12%)';
+    maxAddPercent = 0;
+  } else if (weight > 8) {
+    dcaRecommendation = 'CAUTIOUS';
+    dcaReason = 'Position overweight (8-12%)';
+    maxAddPercent = 0.5;
+  } else if (weight >= 3) {
+    dcaRecommendation = 'NORMAL';
+    dcaReason = 'Position balanced (3-8%)';
+    maxAddPercent = 1;
+  } else {
+    dcaRecommendation = 'AGGRESSIVE';
+    dcaReason = 'Position underweight (<3%)';
+    maxAddPercent = 2;
+  }
+
+  // Override if not a buy signal
+  if (!isPrimarySignalBuyable && !isDip) {
+    if (dcaRecommendation !== 'NO_DCA') {
+      dcaRecommendation = 'CAUTIOUS';
+      dcaReason = 'No strong buy signal';
+      maxAddPercent = Math.min(maxAddPercent, 0.5);
+    }
+  }
+
+  // Calculate Risk/Reward ratio
+  let riskRewardRatio: number | null = null;
+  if (
+    targetPrice &&
+    currentPrice > 0 &&
+    supportPrice &&
+    supportPrice < currentPrice
+  ) {
+    const potentialUpside = targetPrice - currentPrice;
+    const potentialDownside = currentPrice - supportPrice;
+    if (potentialDownside > 0) {
+      riskRewardRatio =
+        Math.round((potentialUpside / potentialDownside) * 10) / 10;
+    }
+  }
+
+  return {
+    buyZoneLow,
+    buyZoneHigh,
+    inBuyZone,
+    dcaRecommendation,
+    dcaReason,
+    maxAddPercent,
+    riskRewardRatio,
+    supportPrice,
+  };
+}
+
+// ============================================================================
+// CONVICTION SCORE
+// ============================================================================
+
+/**
+ * Calculate Conviction Score (0-100)
+ * Measures long-term quality and holding conviction
+ */
+function calculateConvictionScore(
+  item: EnrichedAnalystData,
+  tech: TechnicalData | undefined,
+  insiderScore: number
+): { score: number; level: 'HIGH' | 'MEDIUM' | 'LOW'; details: string[] } {
+  let score = 0;
+  const details: string[] = [];
+  const f = item.fundamentals;
+
+  // === Fundamental Stability (40 points max) ===
+
+  // High ROE (0-12 points)
+  if (f?.roe !== null && f?.roe !== undefined) {
+    if (f.roe > 20) {
+      score += 12;
+      details.push(`Strong ROE: ${f.roe.toFixed(1)}%`);
+    } else if (f.roe > 15) {
+      score += 9;
+    } else if (f.roe > 10) {
+      score += 5;
+    }
+  }
+
+  // Consistent growth (0-10 points)
+  if (f?.revenueGrowth5Y !== null && f?.revenueGrowth5Y !== undefined) {
+    if (f.revenueGrowth5Y > 15) {
+      score += 10;
+      details.push(`5Y revenue CAGR: ${f.revenueGrowth5Y.toFixed(1)}%`);
+    } else if (f.revenueGrowth5Y > 10) {
+      score += 7;
+    } else if (f.revenueGrowth5Y > 5) {
+      score += 4;
+    }
+  }
+
+  // Strong margins (0-10 points)
+  if (f?.netMargin !== null && f?.netMargin !== undefined) {
+    if (f.netMargin > 20) {
+      score += 10;
+      details.push(`High margins: ${f.netMargin.toFixed(1)}%`);
+    } else if (f.netMargin > 12) {
+      score += 7;
+    } else if (f.netMargin > 5) {
+      score += 3;
+    }
+  }
+
+  // Low debt (0-8 points)
+  if (f?.debtToEquity !== null && f?.debtToEquity !== undefined) {
+    if (f.debtToEquity < 0.5) {
+      score += 8;
+      details.push('Low debt');
+    } else if (f.debtToEquity < 1) {
+      score += 5;
+    } else if (f.debtToEquity < 2) {
+      score += 2;
+    }
+  }
+
+  // === Market Position (30 points max) ===
+
+  // Analyst consensus (0-12 points)
+  if (item.consensusScore !== null && item.consensusScore > 0.5) {
+    const points = Math.min(12, Math.round(item.consensusScore * 6));
+    score += points;
+    details.push('Positive analyst consensus');
+  }
+
+  // Target price upside (0-10 points)
+  if (
+    item.targetPrice !== null &&
+    item.currentPrice !== null &&
+    item.currentPrice > 0
+  ) {
+    const upside =
+      ((item.targetPrice - item.currentPrice) / item.currentPrice) * 100;
+    if (upside > 25) {
+      score += 10;
+      details.push(`${upside.toFixed(0)}% upside to target`);
+    } else if (upside > 15) {
+      score += 7;
+    } else if (upside > 5) {
+      score += 3;
+    }
+  }
+
+  // Earnings consistency (0-8 points)
+  if (item.earnings && item.earnings.length >= 4) {
+    const beats = item.earnings
+      .slice(0, 4)
+      .filter(
+        (e) => e.surprisePercent !== null && e.surprisePercent > 0
+      ).length;
+    if (beats >= 4) {
+      score += 8;
+      details.push('Beat earnings 4/4 quarters');
+    } else if (beats >= 3) {
+      score += 6;
+      details.push(`Beat earnings ${beats}/4 quarters`);
+    } else if (beats >= 2) {
+      score += 3;
+    }
+  }
+
+  // === Momentum & Sentiment (30 points max) ===
+
+  // Insider buying (0-12 points)
+  if (insiderScore > 65) {
+    score += 12;
+    details.push('Strong insider buying');
+  } else if (insiderScore > 55) {
+    score += 8;
+  } else if (insiderScore > 45) {
+    score += 4;
+  }
+
+  // Price above SMA200 (0-10 points)
+  if (
+    tech?.sma200 !== null &&
+    tech?.sma200 !== undefined &&
+    tech.currentPrice !== null &&
+    tech.currentPrice !== undefined
+  ) {
+    if (tech.currentPrice > tech.sma200) {
+      score += 10;
+      details.push('Price above SMA200 (uptrend)');
+    } else if (tech.currentPrice > tech.sma200 * 0.95) {
+      score += 5;
+    }
+  }
+
+  // Recent momentum (0-8 points)
+  if (tech?.rsi14 !== null && tech?.rsi14 !== undefined) {
+    const rsi = tech.rsi14;
+    if (rsi > 50 && rsi < 70) {
+      score += 8;
+      details.push('Healthy momentum');
+    } else if (rsi > 40 && rsi < 60) {
+      score += 5;
+    }
+  }
+
+  // Determine level
+  let level: 'HIGH' | 'MEDIUM' | 'LOW' = 'LOW';
+  if (score >= 70) level = 'HIGH';
+  else if (score >= 45) level = 'MEDIUM';
+
+  return { score: Math.min(100, score), level, details };
+}
+
+// ============================================================================
+// SIGNAL GENERATION
+// ============================================================================
+
+/**
+ * Generate signals based on all scores
+ */
+function generateSignals(
+  _compositeScore: number,
+  fundamentalScore: number,
+  technicalScore: number,
+  _analystScore: number,
+  newsScore: number,
+  insiderScore: number,
+  _portfolioScore: number,
+  dipScore: number,
+  dipQualityPasses: boolean,
+  convictionScore: number,
+  convictionLevel: 'HIGH' | 'MEDIUM' | 'LOW',
+  targetUpside: number | null,
+  _distanceFromAvg: number,
+  weight: number,
+  tech: TechnicalData | undefined
+): StockSignal[] {
+  const signals: StockSignal[] = [];
+
+  // === DIP OPPORTUNITY ===
+  if (dipScore >= 50 && dipQualityPasses) {
+    signals.push({
+      type: 'DIP_OPPORTUNITY',
+      strength: dipScore,
+      title: 'DIP Opportunity',
+      description: `Oversold conditions (DIP score: ${dipScore}). Fundamentals check out.`,
+      icon: SIGNAL_ICONS.DIP_OPPORTUNITY,
+      priority: SIGNAL_PRIORITIES.DIP_OPPORTUNITY,
+    });
+  }
+
+  // === MOMENTUM ===
+  const rsiValue = tech?.rsi14 ?? null;
+  if (
+    technicalScore >= 70 &&
+    rsiValue !== null &&
+    rsiValue > 50 &&
+    rsiValue < 70
+  ) {
+    signals.push({
+      type: 'MOMENTUM',
+      strength: technicalScore,
+      title: 'Momentum Play',
+      description: 'Technical indicators are bullish with confirmed trend.',
+      icon: SIGNAL_ICONS.MOMENTUM,
+      priority: SIGNAL_PRIORITIES.MOMENTUM,
+    });
+  }
+
+  // === CONVICTION HOLD ===
+  if (convictionLevel === 'HIGH') {
+    signals.push({
+      type: 'CONVICTION_HOLD',
+      strength: convictionScore,
+      title: 'High Conviction Hold',
+      description:
+        'Strong long-term fundamentals. Hold through short-term noise.',
+      icon: SIGNAL_ICONS.CONVICTION_HOLD,
+      priority: SIGNAL_PRIORITIES.CONVICTION_HOLD,
+    });
+  }
+
+  // === NEAR TARGET ===
+  if (targetUpside !== null && Math.abs(targetUpside) <= 8) {
+    signals.push({
+      type: 'NEAR_TARGET',
+      strength: 100 - Math.abs(targetUpside) * 5,
+      title: 'Near Target Price',
+      description: `Within ${Math.abs(targetUpside).toFixed(
+        1
+      )}% of analyst target.`,
+      icon: SIGNAL_ICONS.NEAR_TARGET,
+      priority: SIGNAL_PRIORITIES.NEAR_TARGET,
+    });
+  }
+
+  // === CONSIDER TRIM ===
+  if (
+    technicalScore < 40 &&
+    (rsiValue ?? 50) > 70 &&
+    weight > 8 &&
+    targetUpside !== null &&
+    targetUpside < 5
+  ) {
+    signals.push({
+      type: 'CONSIDER_TRIM',
+      strength: 70,
+      title: 'Consider Trimming',
+      description:
+        'Overbought, high weight, and near target. Consider taking some profits.',
+      icon: SIGNAL_ICONS.CONSIDER_TRIM,
+      priority: SIGNAL_PRIORITIES.CONSIDER_TRIM,
+    });
+  }
+
+  // === WATCH CLOSELY ===
+  if (
+    (fundamentalScore < 35 && fundamentalScore > 20) ||
+    insiderScore < 35 ||
+    (newsScore < 30 && newsScore > 15)
+  ) {
+    signals.push({
+      type: 'WATCH_CLOSELY',
+      strength: 50,
+      title: 'Watch Closely',
+      description: 'Some metrics are deteriorating. Monitor for changes.',
+      icon: SIGNAL_ICONS.WATCH_CLOSELY,
+      priority: SIGNAL_PRIORITIES.WATCH_CLOSELY,
+    });
+  }
+
+  // === ACCUMULATE ===
+  if (
+    convictionLevel !== 'LOW' &&
+    dipScore < 40 &&
+    dipScore > 20 &&
+    fundamentalScore >= 50
+  ) {
+    signals.push({
+      type: 'ACCUMULATE',
+      strength: 60,
+      title: 'Accumulate',
+      description: 'Good quality stock. Wait for better entry or DCA slowly.',
+      icon: SIGNAL_ICONS.ACCUMULATE,
+      priority: SIGNAL_PRIORITIES.ACCUMULATE,
+    });
+  }
+
+  // If no signals, add neutral
+  if (signals.length === 0) {
+    signals.push({
+      type: 'NEUTRAL',
+      strength: 50,
+      title: 'No Strong Signal',
+      description: 'No actionable signals at this time.',
+      icon: SIGNAL_ICONS.NEUTRAL,
+      priority: SIGNAL_PRIORITIES.NEUTRAL,
+    });
+  }
+
+  // Sort by priority
+  return signals.sort((a, b) => a.priority - b.priority);
+}
+
+// ============================================================================
+// MAIN RECOMMENDATION FUNCTION
+// ============================================================================
+
+/**
+ * Generate complete recommendation for a stock
+ */
+export function generateRecommendation(
+  input: RecommendationInput
+): StockRecommendation {
+  const {
+    analystData: item,
+    technicalData: tech,
+    newsArticles,
+    insiderTimeRange,
+  } = input;
+
+  // Calculate all score components
+  const fundamentalComponent = calculateFundamentalScore(item.fundamentals);
+  const technicalComponent = calculateTechnicalScore(tech);
+  const analystComponent = calculateAnalystScore(item);
+  const newsComponent = calculateNewsScore(item.ticker, newsArticles);
+  const insiderComponent = calculateInsiderScore(item, insiderTimeRange);
+  const portfolioComponent = calculatePortfolioScore(item);
+
+  // Calculate composite score
+  const compositeScore = Math.round(
+    fundamentalComponent.percent * SCORE_WEIGHTS.fundamental +
+      technicalComponent.percent * SCORE_WEIGHTS.technical +
+      analystComponent.percent * SCORE_WEIGHTS.analyst +
+      newsComponent.percent * SCORE_WEIGHTS.news +
+      insiderComponent.percent * SCORE_WEIGHTS.insider +
+      portfolioComponent.percent * SCORE_WEIGHTS.portfolio
+  );
+
+  // Calculate DIP score
+  const dipResult = calculateDipScore(tech, item);
+  const dipQuality = checkDipQuality(
+    fundamentalComponent.percent,
+    analystComponent.percent,
+    newsComponent.percent
+  );
+
+  // Calculate conviction score
+  const conviction = calculateConvictionScore(
+    item,
+    tech,
+    insiderComponent.percent
+  );
+
+  // Calculate target upside
+  let targetUpside: number | null = null;
+  if (
+    item.targetPrice !== null &&
+    item.currentPrice !== null &&
+    item.currentPrice > 0
+  ) {
+    targetUpside =
+      ((item.targetPrice - item.currentPrice) / item.currentPrice) * 100;
+  }
+
+  // Calculate distance from average
+  let distanceFromAvg = 0;
+  if (item.avgBuyPrice > 0 && item.currentPrice !== null) {
+    distanceFromAvg =
+      ((item.currentPrice - item.avgBuyPrice) / item.avgBuyPrice) * 100;
+  }
+
+  // Determine technical bias
+  let technicalBias: 'BULLISH' | 'BEARISH' | 'NEUTRAL' = 'NEUTRAL';
+  if (technicalComponent.sentiment === 'bullish') technicalBias = 'BULLISH';
+  else if (technicalComponent.sentiment === 'bearish')
+    technicalBias = 'BEARISH';
+
+  // Generate signals
+  const signals = generateSignals(
+    compositeScore,
+    fundamentalComponent.percent,
+    technicalComponent.percent,
+    analystComponent.percent,
+    newsComponent.percent,
+    insiderComponent.percent,
+    portfolioComponent.percent,
+    dipResult.score,
+    dipQuality.passes,
+    conviction.score,
+    conviction.level,
+    targetUpside,
+    distanceFromAvg,
+    item.weight,
+    tech
+  );
+
+  // Compile strengths and concerns
+  const strengths: string[] = [];
+  const concerns: string[] = [];
+
+  if (fundamentalComponent.percent >= 65) strengths.push('Strong fundamentals');
+  if (technicalComponent.percent >= 65) strengths.push('Bullish technicals');
+  if (analystComponent.percent >= 65)
+    strengths.push('Positive analyst sentiment');
+  if (insiderComponent.percent >= 60) strengths.push('Insider buying');
+  if (conviction.level === 'HIGH') strengths.push('High conviction quality');
+  if (dipResult.score >= 50 && dipQuality.passes)
+    strengths.push('DIP opportunity');
+
+  if (fundamentalComponent.percent < 35) concerns.push('Weak fundamentals');
+  if (technicalComponent.percent < 35) concerns.push('Bearish technicals');
+  if (analystComponent.percent < 35)
+    concerns.push('Negative analyst sentiment');
+  if (insiderComponent.percent < 40) concerns.push('Insider selling');
+  if (newsComponent.percent < 35) concerns.push('Negative news sentiment');
+  if (item.weight > 12) concerns.push('Overweight position');
+
+  // Action items
+  const actionItems: string[] = [];
+  const primarySignal = signals[0];
+
+  if (primarySignal.type === 'DIP_OPPORTUNITY') {
+    actionItems.push('Consider adding to position');
+    if (distanceFromAvg < -10) actionItems.push('Good DCA opportunity');
+  }
+  if (primarySignal.type === 'CONVICTION_HOLD') {
+    actionItems.push('Hold through short-term volatility');
+  }
+  if (primarySignal.type === 'CONSIDER_TRIM') {
+    actionItems.push('Consider taking partial profits');
+  }
+  if (primarySignal.type === 'WATCH_CLOSELY') {
+    actionItems.push('Monitor upcoming earnings');
+    actionItems.push('Set price alerts');
+  }
+
+  // Calculate buy strategy
+  const isPrimarySignalBuyable = [
+    'DIP_OPPORTUNITY',
+    'ACCUMULATE',
+    'MOMENTUM',
+  ].includes(primarySignal.type);
+  const buyStrategy = calculateBuyStrategy(
+    item,
+    tech,
+    dipResult.score >= 50,
+    isPrimarySignalBuyable
+  );
+
+  return {
+    ticker: item.ticker,
+    stockName: item.stockName,
+
+    weight: item.weight,
+    avgBuyPrice: item.avgBuyPrice,
+    currentPrice: item.currentPrice ?? 0,
+    gainPercentage: item.gainPercentage,
+    distanceFromAvg,
+
+    compositeScore,
+    fundamentalScore: fundamentalComponent.percent,
+    technicalScore: technicalComponent.percent,
+    analystScore: analystComponent.percent,
+    newsScore: newsComponent.percent,
+    insiderScore: insiderComponent.percent,
+    portfolioScore: portfolioComponent.percent,
+
+    convictionScore: conviction.score,
+    convictionLevel: conviction.level,
+
+    dipScore: dipResult.score,
+    isDip: dipResult.score >= 50,
+    dipQualityCheck: dipQuality.passes,
+
+    breakdown: [
+      fundamentalComponent,
+      technicalComponent,
+      analystComponent,
+      newsComponent,
+      insiderComponent,
+      portfolioComponent,
+    ],
+
+    signals,
+    primarySignal,
+
+    strengths: strengths.slice(0, 4),
+    concerns: concerns.slice(0, 4),
+    actionItems: actionItems.slice(0, 3),
+
+    targetPrice: item.targetPrice,
+    targetUpside,
+
+    fiftyTwoWeekHigh: item.fiftyTwoWeekHigh,
+    fiftyTwoWeekLow: item.fiftyTwoWeekLow,
+    distanceFrom52wHigh:
+      item.fiftyTwoWeekHigh && item.currentPrice
+        ? ((item.fiftyTwoWeekHigh - item.currentPrice) /
+            item.fiftyTwoWeekHigh) *
+          100
+        : null,
+
+    technicalBias,
+
+    buyStrategy,
+
+    metadata: {
+      rsiValue: tech?.rsi14 ?? null,
+      macdSignal:
+        tech?.macdHistogram !== null && tech?.macdHistogram !== undefined
+          ? tech.macdHistogram > 0
+            ? 'bullish'
+            : 'bearish'
+          : null,
+      bollingerPosition:
+        tech &&
+        tech.bollingerLower !== null &&
+        tech.bollingerUpper !== null &&
+        tech.currentPrice !== null
+          ? tech.currentPrice < tech.bollingerLower
+            ? 'below'
+            : tech.currentPrice > tech.bollingerUpper
+            ? 'above'
+            : 'within'
+          : null,
+      newsSentiment:
+        newsComponent.percent > 50
+          ? (newsComponent.percent - 50) / 50
+          : (newsComponent.percent - 50) / 50,
+      insiderMspr: getFilteredInsiderSentiment(item, insiderTimeRange).mspr,
+    },
+  };
+}
+
+/**
+ * Generate recommendations for all stocks in portfolio
+ */
+export function generateAllRecommendations(
+  analystData: EnrichedAnalystData[],
+  technicalData: TechnicalData[],
+  newsArticles: NewsArticle[],
   insiderTimeRange: InsiderTimeRange
 ): StockRecommendation[] {
-  return data
+  return analystData
     .filter((item) => item.weight > 0)
-    .map((item) => getStockRecommendation(item, insiderTimeRange))
-    .sort((a, b) => b.scorePercent - a.scorePercent);
+    .map((item) => {
+      const tech = technicalData.find((t) => t.ticker === item.ticker);
+      return generateRecommendation({
+        analystData: item,
+        technicalData: tech,
+        newsArticles,
+        insiderTimeRange,
+      });
+    })
+    .sort((a, b) => {
+      // Sort by primary signal priority, then by composite score
+      if (a.primarySignal.priority !== b.primarySignal.priority) {
+        return a.primarySignal.priority - b.primarySignal.priority;
+      }
+      return b.compositeScore - a.compositeScore;
+    });
+}
+
+// ============================================================================
+// SIGNAL LOGGING (for future historical analysis)
+// ============================================================================
+
+export interface SignalLogEntry {
+  ticker: string;
+  signalType: SignalType;
+  signalStrength: number;
+  priceAtSignal: number;
+  compositeScore: number;
+  dipScore: number;
+  convictionScore: number;
+  metadata: StockRecommendation['metadata'];
+}
+
+/**
+ * Create a signal log entry for database storage
+ */
+export function createSignalLogEntry(rec: StockRecommendation): SignalLogEntry {
+  return {
+    ticker: rec.ticker,
+    signalType: rec.primarySignal.type,
+    signalStrength: rec.primarySignal.strength,
+    priceAtSignal: rec.currentPrice,
+    compositeScore: rec.compositeScore,
+    dipScore: rec.dipScore,
+    convictionScore: rec.convictionScore,
+    metadata: rec.metadata,
+  };
 }

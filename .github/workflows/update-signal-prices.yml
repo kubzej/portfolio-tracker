@@ -1,0 +1,47 @@
+# GitHub Actions workflow for updating signal prices
+# Runs daily to evaluate signal performance
+
+name: Update Signal Prices
+
+on:
+  schedule:
+    # Run every day at 6:00 AM UTC (after US market close, before EU market open)
+    - cron: "0 6 * * *"
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  update-prices:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Update Signal Prices
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            "${{ secrets.SUPABASE_URL }}/functions/v1/update-signal-prices" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json")
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+
+          echo "Response: $body"
+          echo "HTTP Code: $http_code"
+
+          if [ "$http_code" != "200" ]; then
+            echo "::error::Request failed with status $http_code"
+            exit 1
+          fi
+
+          # Parse and display summary
+          echo "$body" | jq -r '.summary // empty'
+
+      - name: Report Status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Signal prices updated successfully"
+          else
+            echo "❌ Signal price update failed"
+          fi
