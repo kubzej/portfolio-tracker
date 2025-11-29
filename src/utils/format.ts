@@ -372,31 +372,255 @@ const LIMITED_DATA_EXCHANGES = [
 ];
 
 /**
- * Exchange info with display names
+ * Exchange info with display names and trading hours
+ * Hours are in local exchange time, timezone is IANA timezone name
  */
-const EXCHANGE_INFO: Record<string, { name: string; country: string }> = {
-  '.HK': { name: 'Hong Kong Stock Exchange', country: 'Hong Kong' },
-  '.SS': { name: 'Shanghai Stock Exchange', country: 'China' },
-  '.SZ': { name: 'Shenzhen Stock Exchange', country: 'China' },
-  '.T': { name: 'Tokyo Stock Exchange', country: 'Japan' },
-  '.KS': { name: 'Korea Exchange', country: 'South Korea' },
-  '.TW': { name: 'Taiwan Stock Exchange', country: 'Taiwan' },
-  '.SI': { name: 'Singapore Exchange', country: 'Singapore' },
-  '.AX': { name: 'Australian Securities Exchange', country: 'Australia' },
-  '.NZ': { name: 'New Zealand Exchange', country: 'New Zealand' },
-  '.BO': { name: 'Bombay Stock Exchange', country: 'India' },
-  '.NS': { name: 'National Stock Exchange', country: 'India' },
-  '.JK': { name: 'Indonesia Stock Exchange', country: 'Indonesia' },
-  '.KL': { name: 'Bursa Malaysia', country: 'Malaysia' },
-  '.BK': { name: 'Stock Exchange of Thailand', country: 'Thailand' },
-  '.DE': { name: 'XETRA', country: 'Germany' },
-  '.L': { name: 'London Stock Exchange', country: 'UK' },
-  '.PA': { name: 'Euronext Paris', country: 'France' },
-  '.AS': { name: 'Euronext Amsterdam', country: 'Netherlands' },
-  '.SW': { name: 'SIX Swiss Exchange', country: 'Switzerland' },
-  '.MI': { name: 'Borsa Italiana', country: 'Italy' },
-  '.MC': { name: 'Bolsa de Madrid', country: 'Spain' },
-  '.TO': { name: 'Toronto Stock Exchange', country: 'Canada' },
+interface ExchangeDetails {
+  name: string;
+  country: string;
+  timezone: string;
+  openHour: number;
+  openMinute: number;
+  closeHour: number;
+  closeMinute: number;
+  weekendClosed: boolean; // Most exchanges closed Sat-Sun
+}
+
+const EXCHANGE_INFO: Record<string, ExchangeDetails> = {
+  // US Markets (default for tickers without suffix)
+  US: {
+    name: 'US Markets',
+    country: 'USA',
+    timezone: 'America/New_York',
+    openHour: 9,
+    openMinute: 30,
+    closeHour: 16,
+    closeMinute: 0,
+    weekendClosed: true,
+  },
+  // Asia Pacific
+  '.HK': {
+    name: 'Hong Kong Stock Exchange',
+    country: 'Hong Kong',
+    timezone: 'Asia/Hong_Kong',
+    openHour: 9,
+    openMinute: 30,
+    closeHour: 16,
+    closeMinute: 0,
+    weekendClosed: true,
+  },
+  '.SS': {
+    name: 'Shanghai Stock Exchange',
+    country: 'China',
+    timezone: 'Asia/Shanghai',
+    openHour: 9,
+    openMinute: 30,
+    closeHour: 15,
+    closeMinute: 0,
+    weekendClosed: true,
+  },
+  '.SZ': {
+    name: 'Shenzhen Stock Exchange',
+    country: 'China',
+    timezone: 'Asia/Shanghai',
+    openHour: 9,
+    openMinute: 30,
+    closeHour: 15,
+    closeMinute: 0,
+    weekendClosed: true,
+  },
+  '.T': {
+    name: 'Tokyo Stock Exchange',
+    country: 'Japan',
+    timezone: 'Asia/Tokyo',
+    openHour: 9,
+    openMinute: 0,
+    closeHour: 15,
+    closeMinute: 0,
+    weekendClosed: true,
+  },
+  '.KS': {
+    name: 'Korea Exchange',
+    country: 'South Korea',
+    timezone: 'Asia/Seoul',
+    openHour: 9,
+    openMinute: 0,
+    closeHour: 15,
+    closeMinute: 30,
+    weekendClosed: true,
+  },
+  '.TW': {
+    name: 'Taiwan Stock Exchange',
+    country: 'Taiwan',
+    timezone: 'Asia/Taipei',
+    openHour: 9,
+    openMinute: 0,
+    closeHour: 13,
+    closeMinute: 30,
+    weekendClosed: true,
+  },
+  '.SI': {
+    name: 'Singapore Exchange',
+    country: 'Singapore',
+    timezone: 'Asia/Singapore',
+    openHour: 9,
+    openMinute: 0,
+    closeHour: 17,
+    closeMinute: 0,
+    weekendClosed: true,
+  },
+  '.AX': {
+    name: 'Australian Securities Exchange',
+    country: 'Australia',
+    timezone: 'Australia/Sydney',
+    openHour: 10,
+    openMinute: 0,
+    closeHour: 16,
+    closeMinute: 0,
+    weekendClosed: true,
+  },
+  '.NZ': {
+    name: 'New Zealand Exchange',
+    country: 'New Zealand',
+    timezone: 'Pacific/Auckland',
+    openHour: 10,
+    openMinute: 0,
+    closeHour: 16,
+    closeMinute: 45,
+    weekendClosed: true,
+  },
+  '.BO': {
+    name: 'Bombay Stock Exchange',
+    country: 'India',
+    timezone: 'Asia/Kolkata',
+    openHour: 9,
+    openMinute: 15,
+    closeHour: 15,
+    closeMinute: 30,
+    weekendClosed: true,
+  },
+  '.NS': {
+    name: 'National Stock Exchange',
+    country: 'India',
+    timezone: 'Asia/Kolkata',
+    openHour: 9,
+    openMinute: 15,
+    closeHour: 15,
+    closeMinute: 30,
+    weekendClosed: true,
+  },
+  '.JK': {
+    name: 'Indonesia Stock Exchange',
+    country: 'Indonesia',
+    timezone: 'Asia/Jakarta',
+    openHour: 9,
+    openMinute: 0,
+    closeHour: 16,
+    closeMinute: 0,
+    weekendClosed: true,
+  },
+  '.KL': {
+    name: 'Bursa Malaysia',
+    country: 'Malaysia',
+    timezone: 'Asia/Kuala_Lumpur',
+    openHour: 9,
+    openMinute: 0,
+    closeHour: 17,
+    closeMinute: 0,
+    weekendClosed: true,
+  },
+  '.BK': {
+    name: 'Stock Exchange of Thailand',
+    country: 'Thailand',
+    timezone: 'Asia/Bangkok',
+    openHour: 10,
+    openMinute: 0,
+    closeHour: 16,
+    closeMinute: 30,
+    weekendClosed: true,
+  },
+  // Europe
+  '.DE': {
+    name: 'XETRA',
+    country: 'Germany',
+    timezone: 'Europe/Berlin',
+    openHour: 9,
+    openMinute: 0,
+    closeHour: 17,
+    closeMinute: 30,
+    weekendClosed: true,
+  },
+  '.L': {
+    name: 'London Stock Exchange',
+    country: 'UK',
+    timezone: 'Europe/London',
+    openHour: 8,
+    openMinute: 0,
+    closeHour: 16,
+    closeMinute: 30,
+    weekendClosed: true,
+  },
+  '.PA': {
+    name: 'Euronext Paris',
+    country: 'France',
+    timezone: 'Europe/Paris',
+    openHour: 9,
+    openMinute: 0,
+    closeHour: 17,
+    closeMinute: 30,
+    weekendClosed: true,
+  },
+  '.AS': {
+    name: 'Euronext Amsterdam',
+    country: 'Netherlands',
+    timezone: 'Europe/Amsterdam',
+    openHour: 9,
+    openMinute: 0,
+    closeHour: 17,
+    closeMinute: 30,
+    weekendClosed: true,
+  },
+  '.SW': {
+    name: 'SIX Swiss Exchange',
+    country: 'Switzerland',
+    timezone: 'Europe/Zurich',
+    openHour: 9,
+    openMinute: 0,
+    closeHour: 17,
+    closeMinute: 30,
+    weekendClosed: true,
+  },
+  '.MI': {
+    name: 'Borsa Italiana',
+    country: 'Italy',
+    timezone: 'Europe/Rome',
+    openHour: 9,
+    openMinute: 0,
+    closeHour: 17,
+    closeMinute: 30,
+    weekendClosed: true,
+  },
+  '.MC': {
+    name: 'Bolsa de Madrid',
+    country: 'Spain',
+    timezone: 'Europe/Madrid',
+    openHour: 9,
+    openMinute: 0,
+    closeHour: 17,
+    closeMinute: 30,
+    weekendClosed: true,
+  },
+  // Americas
+  '.TO': {
+    name: 'Toronto Stock Exchange',
+    country: 'Canada',
+    timezone: 'America/Toronto',
+    openHour: 9,
+    openMinute: 30,
+    closeHour: 16,
+    closeMinute: 0,
+    weekendClosed: true,
+  },
 };
 
 export interface ExchangeDataInfo {
@@ -406,6 +630,15 @@ export interface ExchangeDataInfo {
   country: string;
   hasLimitedData: boolean;
   isUSStock: boolean;
+  timezone: string;
+  tradingHours: string; // e.g. "9:30 - 16:00"
+}
+
+export interface MarketStatus {
+  isOpen: boolean;
+  statusText: string; // "Open", "Closed", "Pre-market", "After-hours"
+  localTime: string; // Current time at exchange
+  nextChange: string | null; // When market opens/closes next
 }
 
 /**
@@ -420,22 +653,128 @@ export function getExchangeInfo(ticker: string): ExchangeDataInfo {
   // Check if it's a US stock (no suffix)
   const isUSStock = !exchangeSuffix;
 
-  // Get exchange details
-  const exchangeDetails = exchangeSuffix ? EXCHANGE_INFO[exchangeSuffix] : null;
+  // Get exchange details - US stocks use 'US' key
+  const exchangeDetails = exchangeSuffix
+    ? EXCHANGE_INFO[exchangeSuffix]
+    : EXCHANGE_INFO['US'];
 
   // Check if this exchange has limited data
   const hasLimitedData = exchangeSuffix
     ? LIMITED_DATA_EXCHANGES.includes(exchangeSuffix)
     : false;
 
+  const tradingHours = exchangeDetails
+    ? `${String(exchangeDetails.openHour).padStart(2, '0')}:${String(
+        exchangeDetails.openMinute
+      ).padStart(2, '0')} - ${String(exchangeDetails.closeHour).padStart(
+        2,
+        '0'
+      )}:${String(exchangeDetails.closeMinute).padStart(2, '0')}`
+    : 'Unknown';
+
   return {
     ticker,
     exchangeSuffix,
-    exchangeName:
-      exchangeDetails?.name ?? (isUSStock ? 'US Markets' : 'Unknown Exchange'),
-    country: exchangeDetails?.country ?? (isUSStock ? 'USA' : 'Unknown'),
+    exchangeName: exchangeDetails?.name ?? 'Unknown Exchange',
+    country: exchangeDetails?.country ?? 'Unknown',
     hasLimitedData,
     isUSStock,
+    timezone: exchangeDetails?.timezone ?? 'America/New_York',
+    tradingHours,
+  };
+}
+
+/**
+ * Get market status for a ticker - is the exchange currently open?
+ * @param ticker - The stock ticker (e.g., "AAPL", "1211.HK", "SAP.DE")
+ */
+export function getMarketStatus(ticker: string): MarketStatus {
+  const info = getExchangeInfo(ticker);
+  const exchangeKey = info.exchangeSuffix ?? 'US';
+  const exchange = EXCHANGE_INFO[exchangeKey];
+
+  if (!exchange) {
+    return {
+      isOpen: false,
+      statusText: 'Unknown',
+      localTime: '--:--',
+      nextChange: null,
+    };
+  }
+
+  // Get current time at the exchange
+  const now = new Date();
+  const exchangeTime = new Date(
+    now.toLocaleString('en-US', { timeZone: exchange.timezone })
+  );
+  const dayOfWeek = exchangeTime.getDay(); // 0 = Sunday, 6 = Saturday
+  const hours = exchangeTime.getHours();
+  const minutes = exchangeTime.getMinutes();
+  const currentMinutes = hours * 60 + minutes;
+
+  const openMinutes = exchange.openHour * 60 + exchange.openMinute;
+  const closeMinutes = exchange.closeHour * 60 + exchange.closeMinute;
+
+  const localTimeStr = exchangeTime.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+
+  // Weekend check
+  if (exchange.weekendClosed && (dayOfWeek === 0 || dayOfWeek === 6)) {
+    return {
+      isOpen: false,
+      statusText: 'Weekend',
+      localTime: localTimeStr,
+      nextChange: `Opens Monday ${String(exchange.openHour).padStart(
+        2,
+        '0'
+      )}:${String(exchange.openMinute).padStart(2, '0')}`,
+    };
+  }
+
+  // Pre-market (before open)
+  if (currentMinutes < openMinutes) {
+    const minsUntilOpen = openMinutes - currentMinutes;
+    const hoursUntil = Math.floor(minsUntilOpen / 60);
+    const minsUntil = minsUntilOpen % 60;
+    return {
+      isOpen: false,
+      statusText: 'Pre-market',
+      localTime: localTimeStr,
+      nextChange:
+        hoursUntil > 0
+          ? `Opens in ${hoursUntil}h ${minsUntil}m`
+          : `Opens in ${minsUntil}m`,
+    };
+  }
+
+  // After-hours (after close)
+  if (currentMinutes >= closeMinutes) {
+    return {
+      isOpen: false,
+      statusText: 'After-hours',
+      localTime: localTimeStr,
+      nextChange: `Opens tomorrow ${String(exchange.openHour).padStart(
+        2,
+        '0'
+      )}:${String(exchange.openMinute).padStart(2, '0')}`,
+    };
+  }
+
+  // Market is open
+  const minsUntilClose = closeMinutes - currentMinutes;
+  const hoursUntil = Math.floor(minsUntilClose / 60);
+  const minsUntil = minsUntilClose % 60;
+  return {
+    isOpen: true,
+    statusText: 'Open',
+    localTime: localTimeStr,
+    nextChange:
+      hoursUntil > 0
+        ? `Closes in ${hoursUntil}h ${minsUntil}m`
+        : `Closes in ${minsUntil}m`,
   };
 }
 

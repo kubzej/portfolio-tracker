@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { stocksApi } from '@/services/api';
 import type { StockWithSector } from '@/types/database';
-import { formatPrice } from '@/utils/format';
+import { formatPrice, getMarketStatus } from '@/utils/format';
 import { Button } from '@/components/shared/Button';
 import { LoadingSpinner, ErrorState, EmptyState } from '@/components/shared';
 import { AddStockModal } from './AddStockModal';
@@ -61,30 +61,47 @@ export function StocksList({ onStockClick }: StocksListProps) {
         />
       ) : (
         <div className="stocks-grid">
-          {stocks.map((stock) => (
-            <div
-              key={stock.id}
-              className="stock-card"
-              onClick={() => onStockClick(stock.id)}
-            >
-              <div className="stock-card-header">
-                <span className="ticker">{stock.ticker}</span>
-                <span className="exchange">{stock.exchange || '—'}</span>
-              </div>
-              <div className="stock-card-name">{stock.name}</div>
-              <div className="stock-card-meta">
-                <span className="sector">
-                  {stock.sector_name || 'No sector'}
-                </span>
-                <span className="currency">{stock.currency}</span>
-              </div>
-              {stock.target_price && (
-                <div className="stock-card-target">
-                  Target: {formatPrice(stock.target_price, stock.currency)}
+          {stocks.map((stock) => {
+            const marketStatus = getMarketStatus(stock.ticker);
+            return (
+              <div
+                key={stock.id}
+                className="stock-card"
+                onClick={() => onStockClick(stock.id)}
+              >
+                <div className="stock-card-header">
+                  <span className="ticker">{stock.ticker}</span>
+                  <div className="stock-card-badges">
+                    <span
+                      className={`market-status market-status--${
+                        marketStatus.isOpen ? 'open' : 'closed'
+                      }`}
+                      title={`${marketStatus.localTime} local • ${
+                        marketStatus.nextChange || ''
+                      }`}
+                    >
+                      {marketStatus.isOpen ? 'Open' : marketStatus.statusText}
+                    </span>
+                    {stock.exchange && (
+                      <span className="exchange">{stock.exchange}</span>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
-          ))}
+                <div className="stock-card-name">{stock.name}</div>
+                <div className="stock-card-meta">
+                  <span className="sector">
+                    {stock.sector_name || 'No sector'}
+                  </span>
+                  <span className="currency">{stock.currency}</span>
+                </div>
+                {stock.target_price && (
+                  <div className="stock-card-target">
+                    Target: {formatPrice(stock.target_price, stock.currency)}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
