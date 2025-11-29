@@ -1991,16 +1991,6 @@
   }
 }
 
-/* Mobile: Fullscreen panel */
-@media (max-width: 768px) {
-  .technical-chart-modal .technical-chart-container {
-    width: 100%;
-    max-width: 100%;
-    padding: 1rem;
-    padding-bottom: 2rem;
-  }
-}
-
 .chart-header {
   display: flex;
   justify-content: space-between;
@@ -2036,6 +2026,32 @@
   background: var(--danger-light);
   border-color: var(--danger);
   color: var(--danger);
+}
+
+/* Mobile: Fullscreen panel */
+@media (max-width: 768px) {
+  .technical-chart-modal .technical-chart-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 1rem 2rem 1rem;
+  }
+
+  .chart-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg-primary);
+    margin: 0 -1rem 1.5rem -1rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .chart-header .close-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 1.75rem;
+  }
+}
 }
 
 /* Time Range Selector */
@@ -2149,7 +2165,6 @@
   .technical-chart-modal .technical-chart-container {
     max-height: 100vh;
     border-radius: 0;
-    padding: 1rem;
   }
 
   .chart-header h3 {
