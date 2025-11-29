@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { fetchSingleAnalystData } from '@/services/api/analysis';
+import { supabase } from '@/lib/supabase';
 import { fetchSingleTechnicalData } from '@/services/api/technical';
 import { fetchTickerNews } from '@/services/api/news';
-import type { AnalystData } from '@/services/api/analysis';
+import { fetchPeersData } from '@/services/api/peers';
+import type { AnalystData, RateLimitInfo } from '@/services/api/analysis';
 import type { TechnicalData } from '@/services/api/technical';
 import type { NewsArticle } from '@/services/api/news';
+import type { PeersResult } from '@/services/api/peers';
 import {
   generateRecommendation,
   type EnrichedAnalystData,
@@ -27,6 +29,15 @@ import { ResearchFundamentals } from './ResearchFundamentals';
 import { ResearchPeers } from './ResearchPeers';
 import './StockResearch.css';
 
+// Debug info for data loading status
+interface DataLoadStatus {
+  analyst: boolean;
+  technical: boolean;
+  news: boolean;
+  peers: boolean;
+  rateLimited?: RateLimitInfo;
+}
+
 interface StockResearchProps {
   ticker: string;
   stockName?: string;
@@ -48,10 +59,17 @@ export function StockResearch({
     null
   );
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
+  const [peersData, setPeersData] = useState<PeersResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('summary');
   const [retryCount, setRetryCount] = useState(0);
+  const [dataLoadStatus, setDataLoadStatus] = useState<DataLoadStatus>({
+    analyst: false,
+    technical: false,
+    news: false,
+    peers: false,
+  });
 
   // Track last fetched ticker to prevent duplicate fetches
   const lastFetchedRef = useRef<string | null>(null);
@@ -72,26 +90,66 @@ export function StockResearch({
       setAnalystData(null);
       setTechnicalData(null);
       setNewsArticles([]);
+      setPeersData(null);
       setActiveTab('summary');
       setLoading(true);
       setError(null);
+      setDataLoadStatus({
+        analyst: false,
+        technical: false,
+        news: false,
+        peers: false,
+      });
 
       try {
-        // Fetch analyst, technical, and news data in parallel
-        const [analyst, technical, tickerNews] = await Promise.all([
-          fetchSingleAnalystData(ticker, stockName, finnhubTicker),
-          fetchSingleTechnicalData(ticker),
-          fetchTickerNews(ticker).catch(() => null), // Don't fail if news fails
-        ]);
+        // Fetch all data in parallel - analyst, technical, news, and peers
+        const [analystResult, technical, tickerNews, peers] = await Promise.all(
+          [
+            supabase.functions.invoke('fetch-analyst-data', {
+              body: { ticker, stockName, finnhubTicker, _t: Date.now() },
+            }),
+            fetchSingleTechnicalData(ticker).catch(() => null),
+            fetchTickerNews(ticker).catch(() => null),
+            fetchPeersData(ticker).catch(() => null),
+          ]
+        );
 
         if (!cancelled) {
+          // Parse analyst result with rate limit info
+          const analystDataResult = analystResult.data as {
+            data: AnalystData[];
+            errors: string[];
+            rateLimited?: RateLimitInfo;
+          } | null;
+
+          const analyst = analystDataResult?.data?.[0] ?? null;
+          const rateLimited =
+            analystDataResult?.rateLimited ?? peers?.rateLimited;
+
           setAnalystData(analyst);
           setTechnicalData(technical);
+          setPeersData(peers);
+
           // Convert news to NewsArticle[] with ticker attached
           if (tickerNews?.articles) {
             setNewsArticles(tickerNews.articles.map((a) => ({ ...a, ticker })));
           }
+
+          // Update load status for debug
+          setDataLoadStatus({
+            analyst: !!analyst,
+            technical: !!technical,
+            news: !!tickerNews?.articles?.length,
+            peers: !!peers?.mainStock,
+            rateLimited,
+          });
+
           lastFetchedRef.current = fetchKey;
+
+          // Error if no analyst data (critical)
+          if (!analyst && analystResult.error) {
+            throw new Error(analystResult.error.message);
+          }
         }
       } catch (err) {
         if (!cancelled) {
@@ -188,13 +246,26 @@ export function StockResearch({
           color: '#666',
           padding: '2px 4px',
           background: '#f5f5f5',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '8px',
         }}
       >
-        req: {ticker} | analyst: {analystData.ticker} | tech:{' '}
-        {technicalData?.ticker ?? '?'}
+        <span>
+          req: {ticker} | analyst: {dataLoadStatus.analyst ? '✓' : '✗'} | tech:{' '}
+          {dataLoadStatus.technical ? '✓' : '✗'} | news:{' '}
+          {dataLoadStatus.news ? '✓' : '✗'} | peers:{' '}
+          {dataLoadStatus.peers ? '✓' : '✗'}
+        </span>
+        {dataLoadStatus.rateLimited && (
+          <span style={{ color: '#c00', fontWeight: 'bold' }}>
+            RATE LIMITED: {dataLoadStatus.rateLimited.finnhub && 'Finnhub'}{' '}
+            {dataLoadStatus.rateLimited.yahoo && 'Yahoo'}
+          </span>
+        )}
         {(ticker !== analystData.ticker ||
           (technicalData && ticker !== technicalData.ticker)) && (
-          <span style={{ color: 'red' }}> !</span>
+          <span style={{ color: 'red' }}>ticker mismatch!</span>
         )}
       </div>
 
@@ -305,7 +376,11 @@ export function StockResearch({
         )}
 
         {activeTab === 'peers' && (
-          <ResearchPeers ticker={ticker} peers={analystData.peers} />
+          <ResearchPeers
+            ticker={ticker}
+            peers={analystData.peers}
+            prefetchedData={peersData}
+          />
         )}
       </div>
     </div>

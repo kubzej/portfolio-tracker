@@ -21,6 +21,8 @@ import './ResearchPeers.css';
 interface ResearchPeersProps {
   ticker: string;
   peers?: string[];
+  /** Optional: prefetched data to skip internal fetch */
+  prefetchedData?: PeersResult | null;
 }
 
 type MetricKey =
@@ -411,12 +413,29 @@ function generateInsights(
   return insights.slice(0, 3); // Max 3 insights
 }
 
-export function ResearchPeers({ ticker, peers }: ResearchPeersProps) {
-  const [data, setData] = useState<PeersResult | null>(null);
-  const [loading, setLoading] = useState(true);
+export function ResearchPeers({
+  ticker,
+  peers,
+  prefetchedData,
+}: ResearchPeersProps) {
+  const [data, setData] = useState<PeersResult | null>(prefetchedData ?? null);
+  const [loading, setLoading] = useState(!prefetchedData);
   const [error, setError] = useState<string | null>(null);
 
+  // Update from prefetched data if it changes
   useEffect(() => {
+    if (prefetchedData) {
+      setData(prefetchedData);
+      setLoading(false);
+      setError(null);
+    }
+  }, [prefetchedData]);
+
+  // Only fetch if no prefetched data
+  useEffect(() => {
+    // Skip if we already have prefetched data
+    if (prefetchedData) return;
+
     let cancelled = false;
 
     const loadData = async () => {
@@ -446,7 +465,7 @@ export function ResearchPeers({ ticker, peers }: ResearchPeersProps) {
     return () => {
       cancelled = true;
     };
-  }, [ticker, peers]);
+  }, [ticker, peers, prefetchedData]);
 
   // Calculate all rankings
   const { rankings, allStocks, radarData, industryAvg, insights } =

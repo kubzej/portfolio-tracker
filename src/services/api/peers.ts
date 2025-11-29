@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import type { RateLimitInfo } from './analysis';
 
 // Simplified peer data for comparison
 export interface PeerData {
@@ -38,6 +39,7 @@ export interface PeersResult {
   mainStock: PeerData;
   peers: PeerData[];
   errors: string[];
+  rateLimited?: RateLimitInfo;
 }
 
 /**

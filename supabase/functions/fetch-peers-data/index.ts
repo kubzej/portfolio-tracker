@@ -9,7 +9,7 @@ const corsHeaders = {
     'authorization, x-client-info, apikey, content-type',
 };
 
-const FINNHUB_API_KEY = 'd4ad4shr01qnehvu2m00d4ad4shr01qnehvu2m0g';
+const FINNHUB_API_KEY = Deno.env.get('FINNHUB_API_KEY') ?? '';
 
 // Simplified peer data for comparison
 interface PeerData {
@@ -49,6 +49,25 @@ interface PeersResult {
   mainStock: PeerData;
   peers: PeerData[];
   errors: string[];
+  rateLimited?: {
+    finnhub: boolean;
+    yahoo: boolean;
+  };
+}
+
+// Rate limit tracking
+let rateLimitInfo = { finnhub: false, yahoo: false };
+
+async function safeFetch(
+  url: string,
+  source: 'finnhub' | 'yahoo'
+): Promise<Response> {
+  const response = await fetch(url);
+  if (response.status === 429) {
+    rateLimitInfo[source] = true;
+    console.warn(`Rate limited by ${source}: ${url}`);
+  }
+  return response;
 }
 
 async function fetchPeerData(ticker: string): Promise<PeerData> {
@@ -77,28 +96,32 @@ async function fetchPeerData(ticker: string): Promise<PeerData> {
   };
 
   try {
-    // Fetch data from Finnhub in parallel
+    // Fetch data from Finnhub in parallel using safeFetch for rate limit detection
     const [quoteRes, metricsRes, recommendationRes, profileRes] =
       await Promise.all([
-        fetch(
+        safeFetch(
           `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(
             ticker
-          )}&token=${FINNHUB_API_KEY}`
+          )}&token=${FINNHUB_API_KEY}`,
+          'finnhub'
         ),
-        fetch(
+        safeFetch(
           `https://finnhub.io/api/v1/stock/metric?symbol=${encodeURIComponent(
             ticker
-          )}&metric=all&token=${FINNHUB_API_KEY}`
+          )}&metric=all&token=${FINNHUB_API_KEY}`,
+          'finnhub'
         ),
-        fetch(
+        safeFetch(
           `https://finnhub.io/api/v1/stock/recommendation?symbol=${encodeURIComponent(
             ticker
-          )}&token=${FINNHUB_API_KEY}`
+          )}&token=${FINNHUB_API_KEY}`,
+          'finnhub'
         ),
-        fetch(
+        safeFetch(
           `https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(
             ticker
-          )}&token=${FINNHUB_API_KEY}`
+          )}&token=${FINNHUB_API_KEY}`,
+          'finnhub'
         ),
       ]);
 
@@ -168,10 +191,11 @@ async function fetchPeerData(ticker: string): Promise<PeerData> {
     // Fetch analyst target from Yahoo
     let analystTargetPrice: number | null = null;
     try {
-      const yahooRes = await fetch(
+      const yahooRes = await safeFetch(
         `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(
           ticker
-        )}?modules=financialData`
+        )}?modules=financialData`,
+        'yahoo'
       );
       if (yahooRes.ok) {
         const yahooData = await yahooRes.json();
@@ -243,6 +267,9 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  // Reset rate limit tracking for each request
+  rateLimitInfo = { finnhub: false, yahoo: false };
+
   try {
     const { ticker, peers } = await req.json().catch(() => ({}));
 
@@ -258,10 +285,11 @@ serve(async (req) => {
 
     if (!peers || peers.length === 0) {
       try {
-        const peersRes = await fetch(
+        const peersRes = await safeFetch(
           `https://finnhub.io/api/v1/stock/peers?symbol=${encodeURIComponent(
             ticker
-          )}&token=${FINNHUB_API_KEY}`
+          )}&token=${FINNHUB_API_KEY}`,
+          'finnhub'
         );
         if (peersRes.ok) {
           const peersData = await peersRes.json();
@@ -300,6 +328,10 @@ serve(async (req) => {
       mainStock,
       peers: peersData,
       errors,
+      rateLimited:
+        rateLimitInfo.finnhub || rateLimitInfo.yahoo
+          ? rateLimitInfo
+          : undefined,
     };
 
     return new Response(JSON.stringify(result), {
