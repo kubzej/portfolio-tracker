@@ -230,13 +230,39 @@
 .tag {
   display: inline-flex;
   align-items: center;
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  background: #f1f5f9;
-  color: var(--text-secondary);
-  padding: 2px 8px;
-  border-radius: 4px;
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-radius: var(--radius-sm);
   white-space: nowrap;
+}
+
+/* Tag sizes */
+.tag--xs {
+  font-size: var(--text-xs);
+  padding: 2px 6px;
+}
+
+.tag--sm {
+  font-size: 0.6875rem;
+  padding: 4px 8px;
+}
+
+/* Tag variants */
+.tag--default {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.tag--success {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.tag--muted {
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  cursor: help;
 }
 
 /* ========================================
@@ -318,6 +344,8 @@
 .text--primary { color: var(--text-primary); }
 .text--secondary { color: var(--text-secondary); }
 .text--muted { color: var(--text-muted); }
+.text--success { color: var(--color-success); }
+.text--danger { color: var(--color-danger); }
 
 /* ========================================
    LABEL (generic, not uppercase)

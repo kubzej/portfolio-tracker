@@ -4,7 +4,7 @@
  * Visible only on localhost for development purposes.
  * Shows all components, typography, colors, and design system elements.
  */
-import React from 'react';
+import React, { useState } from 'react';
 import './DebugShowcase.css';
 import {
   // Core text
@@ -48,10 +48,43 @@ import { Tabs } from '../shared/Tabs';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { InfoTooltip } from '../shared/InfoTooltip';
 import { BottomSheet, BottomSheetOption } from '../shared/BottomSheet';
+import { StockCard } from '../shared/StockCard';
+
+// Navigation categories
+type Category = 'typography' | 'components' | 'patterns' | 'tokens';
+
+interface NavItem {
+  id: string;
+  label: string;
+  category: Category;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  // Typography
+  { id: 'core-text', label: 'Core Text', category: 'typography' },
+  { id: 'headings', label: 'Headings & Titles', category: 'typography' },
+  { id: 'metrics', label: 'Metrics', category: 'typography' },
+  { id: 'badges', label: 'Badges & Tags', category: 'typography' },
+  // Components
+  { id: 'stock', label: 'Stock Components', category: 'components' },
+  { id: 'forms', label: 'Forms', category: 'components' },
+  { id: 'ui', label: 'UI Controls', category: 'components' },
+  { id: 'shared', label: 'Shared (Legacy)', category: 'components' },
+  // Design Tokens
+  { id: 'colors', label: 'Colors', category: 'tokens' },
+  { id: 'fonts', label: 'Font Sizes', category: 'tokens' },
+];
+
+const CATEGORY_LABELS: Record<Category, string> = {
+  typography: 'Typography',
+  components: 'Components',
+  patterns: 'Patterns',
+  tokens: 'Design Tokens',
+};
 
 function CoreTextSection() {
   return (
-    <section className="debug-section">
+    <section className="debug-section" id="core-text">
       <SectionTitle>Core Text Components</SectionTitle>
 
       {/* Text */}
@@ -77,6 +110,8 @@ function CoreTextSection() {
           <Text color="primary">primary</Text>
           <Text color="secondary">secondary</Text>
           <Text color="muted">muted</Text>
+          <Text color="success">success</Text>
+          <Text color="danger">danger</Text>
         </div>
       </div>
 
@@ -158,7 +193,7 @@ function CoreTextSection() {
 
 function HeadingsSection() {
   return (
-    <section className="debug-section">
+    <section className="debug-section" id="headings">
       <SectionTitle>Headings & Titles</SectionTitle>
 
       {/* Title */}
@@ -210,8 +245,49 @@ function HeadingsSection() {
 
 function StockSection() {
   return (
-    <section className="debug-section">
-      <SectionTitle>Stock-specific Components</SectionTitle>
+    <section className="debug-section" id="stock">
+      <SectionTitle>Stock Components</SectionTitle>
+
+      {/* StockCard */}
+      <div className="debug-group">
+        <CardTitle>{'<StockCard>'}</CardTitle>
+        <code className="debug-code">
+          {
+            '<StockCard ticker="AAPL" name="Apple Inc." exchange="NASDAQ" currency="USD" />'
+          }
+        </code>
+        <div
+          className="debug-row"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: '1rem',
+            width: '100%',
+          }}
+        >
+          <StockCard
+            ticker="AAPL"
+            name="Apple Inc."
+            exchange="NASDAQ"
+            currency="USD"
+            sectorName="Technology"
+            targetPrice={200}
+            onClick={() => {}}
+          />
+          <StockCard
+            ticker="CEZ"
+            name="ČEZ, a.s."
+            exchange="PSE"
+            currency="CZK"
+            sectorName="Utilities"
+            onClick={() => {}}
+          />
+        </div>
+        <Description>
+          Complete stock card with market status, exchange, and optional target
+          price.
+        </Description>
+      </div>
 
       {/* Ticker */}
       <div className="debug-group">
@@ -250,8 +326,8 @@ function StockSection() {
 
 function MetricsSection() {
   return (
-    <section className="debug-section">
-      <SectionTitle>Metrics Components</SectionTitle>
+    <section className="debug-section" id="metrics">
+      <SectionTitle>Metrics</SectionTitle>
 
       {/* MetricLabel */}
       <div className="debug-group">
@@ -293,7 +369,7 @@ function MetricsSection() {
 
 function BadgesSection() {
   return (
-    <section className="debug-section">
+    <section className="debug-section" id="badges">
       <SectionTitle>Badges & Tags</SectionTitle>
 
       {/* Badge */}
@@ -355,14 +431,26 @@ function BadgesSection() {
       {/* Tag */}
       <div className="debug-group">
         <CardTitle>{'<Tag>'}</CardTitle>
-        <code className="debug-code">{'<Tag>NVDA</Tag>'}</code>
+        <code className="debug-code">
+          {'<Tag variant="default" size="sm">USD</Tag>'}
+        </code>
+
+        <Label>Variants:</Label>
         <div className="debug-row">
-          <Tag>NVDA</Tag>
-          <Tag>AMD</Tag>
-          <Tag>earnings</Tag>
-          <Tag>AI</Tag>
+          <Tag variant="default">NASDAQ</Tag>
+          <Tag variant="default">USD</Tag>
+          <Tag variant="success">Open</Tag>
+          <Tag variant="muted" title="Tooltip on hover">
+            Closed
+          </Tag>
         </div>
-        <Description>For peer tags, keyword tags, etc.</Description>
+
+        <Label>Sizes:</Label>
+        <div className="debug-row">
+          <Tag size="xs">xs tag</Tag>
+          <Tag size="sm">sm tag</Tag>
+        </div>
+        <Description>For exchange, currency, market status tags.</Description>
       </div>
 
       {/* Count */}
@@ -406,8 +494,8 @@ function BadgesSection() {
 
 function ColorsSection() {
   return (
-    <section className="debug-section">
-      <SectionTitle>Color Palette</SectionTitle>
+    <section className="debug-section" id="colors">
+      <SectionTitle>Colors</SectionTitle>
 
       <div className="debug-group">
         <CardTitle>Semantic Colors</CardTitle>
@@ -466,7 +554,7 @@ function ColorsSection() {
 
 function FontSizesSection() {
   return (
-    <section className="debug-section">
+    <section className="debug-section" id="fonts">
       <SectionTitle>Font Sizes</SectionTitle>
 
       <div className="debug-group">
@@ -494,8 +582,8 @@ function FontSizesSection() {
 
 function FormComponentsSection() {
   return (
-    <section className="debug-section">
-      <SectionTitle>Form Components</SectionTitle>
+    <section className="debug-section" id="forms">
+      <SectionTitle>Forms</SectionTitle>
 
       {/* Button */}
       <div className="debug-group">
@@ -609,8 +697,8 @@ function UIComponentsSection() {
   const [bottomSheetOpen, setBottomSheetOpen] = React.useState(false);
 
   return (
-    <section className="debug-section">
-      <SectionTitle>UI Components</SectionTitle>
+    <section className="debug-section" id="ui">
+      <SectionTitle>UI Controls</SectionTitle>
 
       {/* ToggleGroup */}
       <div className="debug-group">
@@ -763,8 +851,8 @@ function UIComponentsSection() {
 
 function SharedComponentsSection() {
   return (
-    <section className="debug-section">
-      <SectionTitle>Shared Components (Current State)</SectionTitle>
+    <section className="debug-section" id="shared">
+      <SectionTitle>Shared Components (Legacy)</SectionTitle>
       <Description>
         Tyto komponenty používají vlastní span elementy. Při refactoringu by
         měly používat Typography komponenty.
@@ -921,6 +1009,21 @@ function SharedComponentsSection() {
 }
 
 export function DebugShowcase() {
+  const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
+
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const filteredItems = activeCategory === 'all' 
+    ? NAV_ITEMS 
+    : NAV_ITEMS.filter(item => item.category === activeCategory);
+
+  const categories: Category[] = ['typography', 'components', 'tokens'];
+
   return (
     <div className="debug-showcase">
       <header className="debug-header">
@@ -930,17 +1033,63 @@ export function DebugShowcase() {
         </Description>
       </header>
 
+      {/* Category Tabs */}
+      <nav className="debug-nav">
+        <div className="debug-nav-tabs">
+          <button 
+            className={`debug-nav-tab ${activeCategory === 'all' ? 'active' : ''}`}
+            onClick={() => setActiveCategory('all')}
+          >
+            All
+          </button>
+          {categories.map(cat => (
+            <button
+              key={cat}
+              className={`debug-nav-tab ${activeCategory === cat ? 'active' : ''}`}
+              onClick={() => setActiveCategory(cat)}
+            >
+              {CATEGORY_LABELS[cat]}
+            </button>
+          ))}
+        </div>
+
+        {/* Quick Jump */}
+        <div className="debug-nav-links">
+          {filteredItems.map(item => (
+            <button
+              key={item.id}
+              className="debug-nav-link"
+              onClick={() => scrollToSection(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </nav>
+
       <div className="debug-content">
-        <CoreTextSection />
-        <HeadingsSection />
-        <StockSection />
-        <MetricsSection />
-        <BadgesSection />
-        <FormComponentsSection />
-        <UIComponentsSection />
-        <SharedComponentsSection />
-        <ColorsSection />
-        <FontSizesSection />
+        {(activeCategory === 'all' || activeCategory === 'typography') && (
+          <>
+            <CoreTextSection />
+            <HeadingsSection />
+            <MetricsSection />
+            <BadgesSection />
+          </>
+        )}
+        {(activeCategory === 'all' || activeCategory === 'components') && (
+          <>
+            <StockSection />
+            <FormComponentsSection />
+            <UIComponentsSection />
+            <SharedComponentsSection />
+          </>
+        )}
+        {(activeCategory === 'all' || activeCategory === 'tokens') && (
+          <>
+            <ColorsSection />
+            <FontSizesSection />
+          </>
+        )}
       </div>
 
       <footer className="debug-footer">

@@ -4,7 +4,7 @@ interface TextProps {
   children: React.ReactNode;
   size?: 'xs' | 'sm' | 'base' | 'md' | 'lg';
   weight?: 'normal' | 'medium' | 'semibold' | 'bold';
-  color?: 'primary' | 'secondary' | 'muted';
+  color?: 'primary' | 'secondary' | 'muted' | 'success' | 'danger';
 }
 
 export function Text({
