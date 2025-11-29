@@ -1211,7 +1211,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
           <section className="analysis-section">
             <div className="insider-section-header">
               <div className="insider-title-row">
-                <h3>Insider Sentiment</h3>
+                <SectionTitle>Insider Sentiment</SectionTitle>
                 <InfoTooltip text="CO TO JE: Insider Sentiment = nálada insiderů (vedení firmy). Sleduje nákupy a prodeje akcií managementem a řediteli (Form 4 filings). PROČ JE TO DŮLEŽITÉ: Vysoký nákup insiderů často signalizuje důvěru ve firmu. MSPR: Monthly Share Purchase Ratio (-100 až +100). Kladné = nákup, záporné = prodej. Net Shares: Celkový počet akcií nakoupených minus prodaných." />
               </div>
               <div className="insider-time-filter">
@@ -1228,11 +1228,6 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 ))}
               </div>
             </div>
-            <p className="section-description">
-              Bars show monthly MSPR trend.{' '}
-              <span className="positive-text">Green</span> = buying,{' '}
-              <span className="negative-text">Red</span> = selling.
-            </p>
 
             <div className="insider-grid">
               {sortedData.map((item) => {
@@ -1257,47 +1252,57 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     className={`insider-card ${!hasData ? 'no-data' : ''}`}
                   >
                     <div className="insider-header">
-                      <span className="ticker">{item.ticker}</span>
-                      <span className={`insider-badge ${sentiment.class}`}>
-                        {sentiment.label}
-                      </span>
+                      <Ticker>{item.ticker}</Ticker>
+                      {sentiment.label && (
+                        <Badge
+                          variant={
+                            sentiment.class === 'positive'
+                              ? 'buy'
+                              : sentiment.class === 'negative'
+                              ? 'sell'
+                              : 'hold'
+                          }
+                        >
+                          {sentiment.label}
+                        </Badge>
+                      )}
                     </div>
                     {hasData ? (
                       <>
                         <div className="insider-details">
                           <div className="insider-stat">
-                            <span className="stat-label">MSPR</span>
-                            <span
-                              className={`stat-value ${
+                            <MetricLabel>MSPR</MetricLabel>
+                            <MetricValue
+                              sentiment={
                                 (filteredSentiment.mspr ?? 0) >= 0
                                   ? 'positive'
                                   : 'negative'
-                              }`}
+                              }
                             >
                               {(filteredSentiment.mspr ?? 0) >= 0 ? '+' : ''}
                               {filteredSentiment.mspr?.toFixed(1)}
-                            </span>
+                            </MetricValue>
                           </div>
                           <div className="insider-stat">
-                            <span className="stat-label">Net Shares</span>
-                            <span
-                              className={`stat-value ${
+                            <MetricLabel>Net Shares</MetricLabel>
+                            <MetricValue
+                              sentiment={
                                 (filteredSentiment.change ?? 0) >= 0
                                   ? 'positive'
                                   : 'negative'
-                              }`}
+                              }
                             >
                               {(filteredSentiment.change ?? 0) >= 0 ? '+' : ''}
                               {filteredSentiment.change?.toLocaleString()}
-                            </span>
+                            </MetricValue>
                           </div>
                         </div>
                         {/* Mini MSPR Chart - Left=Oldest, Right=Newest */}
                         {chartData.length > 1 && (
                           <div className="insider-chart">
                             <div className="chart-labels">
-                              <span className="chart-label-old">Older</span>
-                              <span className="chart-label-new">Recent</span>
+                              <MetricLabel>Older</MetricLabel>
+                              <MetricLabel>Recent</MetricLabel>
                             </div>
                             <div className="chart-bars">
                               {chartData.map((d, i) => {
@@ -1351,7 +1356,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                       </>
                     ) : (
                       <div className="insider-no-data">
-                        <span>No insider data</span>
+                        <Muted>No insider data</Muted>
                       </div>
                     )}
                   </div>

@@ -611,10 +611,6 @@
   gap: 0.5rem;
 }
 
-.insider-title-row h3 {
-  margin: 0;
-}
-
 /* Time Range Filter */
 .insider-time-filter {
   display: flex;
@@ -647,16 +643,18 @@
 }
 
 .insider-card {
-  background: var(--bg-secondary);
+  background: transparent;
   border-radius: var(--radius-md);
   padding: 0.875rem;
   border: 1px solid var(--border-light);
   transition: all var(--transition-fast);
 }
 
-.insider-card:hover {
-  border-color: var(--border-medium);
-  box-shadow: var(--shadow-sm);
+@media (hover: hover) {
+  .insider-card:hover {
+    border-color: var(--border-medium);
+    box-shadow: var(--shadow-sm);
+  }
 }
 
 .insider-card.no-data {
@@ -670,33 +668,6 @@
   margin-bottom: 0.75rem;
 }
 
-.insider-header .ticker {
-  font-weight: 700;
-  font-size: 0.9375rem;
-  color: var(--accent-primary);
-}
-
-.insider-badge {
-  font-size: 0.625rem;
-  font-weight: 600;
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--radius-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  background: var(--bg-secondary);
-  color: var(--text-muted);
-}
-
-.insider-badge.positive {
-  background: var(--success-light);
-  color: var(--success-dark);
-}
-
-.insider-badge.negative {
-  background: var(--danger-light);
-  color: var(--danger);
-}
-
 .insider-details {
   display: flex;
   gap: 1.5rem;
@@ -708,36 +679,12 @@
   gap: 0.125rem;
 }
 
-.insider-stat .stat-label {
-  font-size: 0.6875rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.insider-stat .stat-value {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.insider-stat .stat-value.positive {
-  color: var(--success);
-}
-
-.insider-stat .stat-value.negative {
-  color: var(--danger);
-}
-
 /* Insider No Data State */
 .insider-no-data {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0.75rem 0.5rem;
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  font-style: italic;
 }
 
 /* Insider Mini Chart */
@@ -752,14 +699,6 @@
   display: flex;
   justify-content: space-between;
   margin-bottom: 0.25rem;
-}
-
-.chart-label-old,
-.chart-label-new {
-  font-size: 0.5625rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
 }
 
 .chart-bars {
@@ -805,22 +744,6 @@
   right: 0;
   height: 1px;
   background: var(--border-medium);
-}
-
-/* Colored text helpers */
-.positive-text {
-  color: var(--success);
-  font-weight: 500;
-}
-
-.negative-text {
-  color: var(--danger);
-  font-weight: 500;
-}
-
-/* Stat Label Tooltip */
-.insider-stat .stat-label {
-  cursor: default;
 }
 
 /* Range Bar for 52W Position */
