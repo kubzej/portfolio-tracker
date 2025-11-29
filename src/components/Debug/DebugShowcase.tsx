@@ -417,11 +417,15 @@ function BadgesSection() {
       {/* RecItem */}
       <div className="debug-group">
         <CardTitle>{'<RecItem>'}</CardTitle>
-        <code className="debug-code">{'<RecItem type="buy">15</RecItem>'}</code>
+        <code className="debug-code">
+          {'<RecItem variant="buy">15</RecItem>'}
+        </code>
         <div className="debug-row">
-          <RecItem type="buy">15</RecItem>
-          <RecItem type="hold">8</RecItem>
-          <RecItem type="sell">2</RecItem>
+          <RecItem variant="strong-buy">5</RecItem>
+          <RecItem variant="buy">15</RecItem>
+          <RecItem variant="hold">8</RecItem>
+          <RecItem variant="sell">2</RecItem>
+          <RecItem variant="strong-sell">1</RecItem>
         </div>
         <Description>
           For Buy/Hold/Sell analyst recommendation counts

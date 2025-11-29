@@ -117,17 +117,11 @@
   box-shadow: var(--shadow-sm);
 }
 
-.analysis-section h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
+/* Typography components handle h3 styling - removed override */
 
-.section-description {
-  color: var(--text-muted);
-  font-size: 0.875rem;
-  margin: 0 0 1.25rem 0;
+/* Description component handles styling - added margin for spacing */
+.analysis-section .description {
+  margin-bottom: 1.25rem;
 }
 
 .section-hint {
@@ -170,16 +164,21 @@
 }
 
 .analyst-card {
-  background: var(--bg-secondary);
+  background: transparent;
   border-radius: var(--radius-md);
   padding: 1rem;
   border: 1px solid var(--border-light);
-  transition: all var(--transition-normal);
 }
 
-.analyst-card:hover {
-  border-color: var(--accent-primary);
-  background: var(--accent-primary-light);
+@media (hover: hover) {
+  .analyst-card {
+    transition: all var(--transition-normal);
+  }
+  
+  .analyst-card:hover {
+    border-color: var(--accent-primary);
+    background: var(--accent-primary-light);
+  }
 }
 
 .analyst-card-header {
@@ -194,21 +193,7 @@
   flex-direction: column;
   gap: 0.125rem;
 }
-
-.analyst-card-title .ticker {
-  font-weight: 600;
-  color: var(--accent-primary);
-  font-size: 1rem;
-}
-
-.analyst-card-title .name {
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+/* Typography components (Ticker, StockName) handle text styling */
 
 .analyst-card-rating {
   text-align: right;
@@ -231,24 +216,7 @@
   padding: 0.25rem 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
-
-.analyst-card-stat .label {
-  color: var(--text-muted);
-}
-
-.analyst-card-stat .value {
-  color: var(--text-primary);
-  font-weight: 500;
-  text-align: right;
-}
-
-.analyst-card-stat .value.positive {
-  color: var(--success);
-}
-
-.analyst-card-stat .value.negative {
-  color: var(--danger);
-}
+/* Typography components (MetricLabel, MetricValue, Text) handle text styling */
 
 .analyst-card-breakdown {
   grid-column: 1 / -1;
@@ -256,11 +224,7 @@
   align-items: center;
   gap: 0.5rem;
 }
-
-.analyst-card-breakdown .label {
-  color: var(--text-muted);
-  font-size: 0.75rem;
-}
+/* Typography components handle .label styling */
 
 .analysis-table th,
 .analysis-table td {
@@ -531,6 +495,7 @@
   border: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 0.375rem;
 }
 

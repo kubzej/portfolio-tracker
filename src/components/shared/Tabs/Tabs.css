@@ -7,17 +7,16 @@
   border: 1px solid var(--border-light);
 }
 
+/* Override Button styles for tabs */
 .tabs .tab-btn {
   flex: 1;
   padding: 0.75rem 1rem;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
+  border-radius: var(--radius-md);
   font-size: 0.875rem;
   font-weight: 600;
-  cursor: pointer;
-  border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
 }
 
 .tabs .tab-btn:hover:not(:disabled) {

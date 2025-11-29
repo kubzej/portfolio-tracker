@@ -3,7 +3,6 @@ import { stocksApi, transactionsApi } from '@/services/api';
 import type { StockWithSector, Transaction } from '@/types/database';
 import {
   formatCurrency,
-  formatNumber,
   formatPrice,
   formatShares,
   formatDate,

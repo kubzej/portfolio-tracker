@@ -341,19 +341,29 @@
   border-radius: 4px;
 }
 
+.rec-item--strong-buy {
+  background: #16a34a;
+  color: white;
+}
+
 .rec-item--buy {
-  background: var(--color-success-bg);
-  color: var(--color-success);
+  background: #65a30d;
+  color: white;
 }
 
 .rec-item--hold {
-  background: var(--color-warning-bg);
-  color: var(--color-warning);
+  background: #ca8a04;
+  color: white;
 }
 
 .rec-item--sell {
-  background: var(--color-danger-bg);
-  color: var(--color-danger);
+  background: #ea580c;
+  color: white;
+}
+
+.rec-item--strong-sell {
+  background: #dc2626;
+  color: white;
 }
 
 /* ========================================

@@ -2,9 +2,14 @@ import './Typography.css';
 
 interface RecItemProps {
   children: React.ReactNode;
-  type: 'buy' | 'hold' | 'sell';
+  variant: 'strong-buy' | 'buy' | 'hold' | 'sell' | 'strong-sell';
+  title?: string;
 }
 
-export function RecItem({ children, type }: RecItemProps) {
-  return <span className={`rec-item rec-item--${type}`}>{children}</span>;
+export function RecItem({ children, variant, title }: RecItemProps) {
+  return (
+    <span className={`rec-item rec-item--${variant}`} title={title}>
+      {children}
+    </span>
+  );
 }

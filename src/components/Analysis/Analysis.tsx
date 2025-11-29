@@ -18,6 +18,19 @@ import {
   EmptyState,
   ErrorState,
 } from '@/components/shared';
+import {
+  SectionTitle,
+  Description,
+  Ticker,
+  StockName,
+  MetricLabel,
+  MetricValue,
+  Subtext,
+  Muted,
+  Text,
+  RecItem,
+  Badge,
+} from '@/components/shared/Typography';
 import { Tabs } from '@/components/shared/Tabs';
 import { holdingsApi } from '@/services/api';
 import {
@@ -526,8 +539,8 @@ export function Analysis({ portfolioId }: AnalysisProps) {
       </div>
 
       <div className="analysis-header">
-        <h2>Analysis</h2>
-        <Button variant="outline" onClick={loadData}>
+        <SectionTitle>Analysis</SectionTitle>
+        <Button variant="outline" size="sm" onClick={loadData}>
           <svg
             width="14"
             height="14"
@@ -564,10 +577,10 @@ export function Analysis({ portfolioId }: AnalysisProps) {
       {activeTab === 'analysts' && (
         <>
           <section className="analysis-section">
-            <h3>Analyst Recommendations</h3>
-            <p className="section-description">
+            <SectionTitle>Analyst Recommendations</SectionTitle>
+            <Description>
               Analyst ratings and earnings surprises from Finnhub (FREE tier).
-            </p>
+            </Description>
 
             <div className="analysis-table-wrapper">
               <table className="analysis-table">
@@ -619,8 +632,8 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     <tr key={item.ticker}>
                       <td>
                         <div className="stock-cell">
-                          <span className="ticker">{item.ticker}</span>
-                          <span className="name">{item.stockName}</span>
+                          <Ticker>{item.ticker}</Ticker>
+                          <StockName truncate>{item.stockName}</StockName>
                         </div>
                       </td>
                       <td className="right">
@@ -632,79 +645,82 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                             } as React.CSSProperties
                           }
                         >
-                          {item.weight.toFixed(1)}%
+                          <Text size="sm">{item.weight.toFixed(1)}%</Text>
                         </span>
                       </td>
                       <td className="right">
-                        {formatNumber(item.currentPrice)}
+                        <Text size="sm">{formatNumber(item.currentPrice)}</Text>
                       </td>
-                      <td
-                        className={`right ${
-                          (item.priceChangePercent ?? 0) >= 0
-                            ? 'positive'
-                            : 'negative'
-                        }`}
-                      >
-                        {formatPercent(item.priceChangePercent)}
+                      <td className="right">
+                        <MetricValue
+                          sentiment={
+                            (item.priceChangePercent ?? 0) >= 0
+                              ? 'positive'
+                              : 'negative'
+                          }
+                        >
+                          {formatPercent(item.priceChangePercent)}
+                        </MetricValue>
                       </td>
                       <td className="center">
-                        <span
-                          className={`recommendation-badge ${getRecommendationClass(
-                            item.recommendationKey
-                          )}`}
+                        <Badge
+                          variant={
+                            item.recommendationKey === 'strong_buy' ||
+                            item.recommendationKey === 'buy'
+                              ? 'buy'
+                              : item.recommendationKey === 'sell' ||
+                                item.recommendationKey === 'underperform'
+                              ? 'sell'
+                              : 'hold'
+                          }
                         >
                           {getRecommendationLabel(item.recommendationKey)}
-                        </span>
+                        </Badge>
                       </td>
                       <td className="center">
                         {item.consensusScore !== null ? (
-                          <span
-                            className={`consensus-score ${
+                          <MetricValue
+                            sentiment={
                               item.consensusScore > 0.5
                                 ? 'positive'
                                 : item.consensusScore < -0.5
                                 ? 'negative'
                                 : 'neutral'
-                            }`}
-                            title="Score from -2 (Strong Sell) to +2 (Strong Buy)"
+                            }
                           >
                             {item.consensusScore > 0 ? '+' : ''}
                             {item.consensusScore.toFixed(2)}
-                          </span>
+                          </MetricValue>
                         ) : (
-                          <span className="muted">—</span>
+                          <Muted>—</Muted>
                         )}
                       </td>
                       <td className="center">
                         {item.numberOfAnalysts ? (
                           <div className="recommendations-breakdown">
-                            <span
-                              className="rec-item strong-buy"
-                              title="Strong Buy"
-                            >
+                            <RecItem variant="strong-buy" title="Strong Buy">
                               {item.strongBuy || 0}
-                            </span>
-                            <span className="rec-item buy" title="Buy">
+                            </RecItem>
+                            <RecItem variant="buy" title="Buy">
                               {item.buy || 0}
-                            </span>
-                            <span className="rec-item hold" title="Hold">
+                            </RecItem>
+                            <RecItem variant="hold" title="Hold">
                               {item.hold || 0}
-                            </span>
-                            <span className="rec-item sell" title="Sell">
+                            </RecItem>
+                            <RecItem variant="sell" title="Sell">
                               {item.sell || 0}
-                            </span>
-                            <span
-                              className="rec-item strong-sell"
-                              title="Strong Sell"
-                            >
+                            </RecItem>
+                            <RecItem variant="strong-sell" title="Strong Sell">
                               {item.strongSell || 0}
-                            </span>
+                            </RecItem>
                           </div>
                         ) : (
-                          <span className="muted">—</span>
+                          <Muted>—</Muted>
                         )}
                       </td>
-                      <td className="center">{item.numberOfAnalysts || '—'}</td>
+                      <td className="center">
+                        <Text size="sm">{item.numberOfAnalysts || '—'}</Text>
+                      </td>
                       <td className="center">
                         {item.earnings && item.earnings.length > 0 ? (
                           <div className="earnings-surprises">
@@ -737,7 +753,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                               ))}
                           </div>
                         ) : (
-                          <span className="muted">—</span>
+                          <Muted>—</Muted>
                         )}
                       </td>
                       <td className="center muted">
@@ -762,8 +778,8 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 <div key={item.ticker} className="analyst-card">
                   <div className="analyst-card-header">
                     <div className="analyst-card-title">
-                      <span className="ticker">{item.ticker}</span>
-                      <span className="name">{item.stockName}</span>
+                      <Ticker>{item.ticker}</Ticker>
+                      <StockName truncate>{item.stockName}</StockName>
                     </div>
                     <div className="analyst-card-rating">
                       <span
@@ -777,56 +793,58 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                   </div>
                   <div className="analyst-card-stats">
                     <div className="analyst-card-stat">
-                      <span className="label">Price</span>
-                      <span className="value">
+                      <MetricLabel>Price</MetricLabel>
+                      <Text size="sm" weight="medium">
                         {formatNumber(item.currentPrice)}
-                      </span>
+                      </Text>
                     </div>
                     <div className="analyst-card-stat">
-                      <span className="label">Change</span>
-                      <span
-                        className={`value ${
+                      <MetricLabel>Change</MetricLabel>
+                      <MetricValue
+                        sentiment={
                           (item.priceChangePercent ?? 0) >= 0
                             ? 'positive'
                             : 'negative'
-                        }`}
+                        }
                       >
                         {formatPercent(item.priceChangePercent)}
-                      </span>
+                      </MetricValue>
                     </div>
                     <div className="analyst-card-stat">
-                      <span className="label">Weight</span>
-                      <span className="value">{item.weight.toFixed(1)}%</span>
+                      <MetricLabel>Weight</MetricLabel>
+                      <Text size="sm" weight="medium">
+                        {item.weight.toFixed(1)}%
+                      </Text>
                     </div>
                     <div className="analyst-card-stat">
-                      <span className="label">Score</span>
-                      <span
-                        className={`value ${
+                      <MetricLabel>Score</MetricLabel>
+                      <MetricValue
+                        sentiment={
                           item.consensusScore !== null
                             ? item.consensusScore > 0.5
                               ? 'positive'
                               : item.consensusScore < -0.5
                               ? 'negative'
-                              : ''
-                            : ''
-                        }`}
+                              : 'neutral'
+                            : 'neutral'
+                        }
                       >
                         {item.consensusScore !== null
                           ? `${
                               item.consensusScore > 0 ? '+' : ''
                             }${item.consensusScore.toFixed(2)}`
                           : '—'}
-                      </span>
+                      </MetricValue>
                     </div>
                     <div className="analyst-card-stat">
-                      <span className="label">Analysts</span>
-                      <span className="value">
+                      <MetricLabel>Analysts</MetricLabel>
+                      <Text size="sm" weight="medium">
                         {item.numberOfAnalysts || '—'}
-                      </span>
+                      </Text>
                     </div>
                     <div className="analyst-card-stat">
-                      <span className="label">Earnings</span>
-                      <span className="value">
+                      <MetricLabel>Earnings</MetricLabel>
+                      <Text size="sm" weight="medium">
                         {item.earnings && item.earnings.length > 0 ? (
                           <span className="earnings-surprises">
                             {item.earnings
@@ -860,33 +878,27 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                         ) : (
                           '—'
                         )}
-                      </span>
+                      </Text>
                     </div>
                     {item.numberOfAnalysts && (
                       <div className="analyst-card-breakdown">
-                        <span className="label">Breakdown:</span>
+                        <MetricLabel>Breakdown:</MetricLabel>
                         <div className="recommendations-breakdown">
-                          <span
-                            className="rec-item strong-buy"
-                            title="Strong Buy"
-                          >
+                          <RecItem variant="strong-buy" title="Strong Buy">
                             {item.strongBuy || 0}
-                          </span>
-                          <span className="rec-item buy" title="Buy">
+                          </RecItem>
+                          <RecItem variant="buy" title="Buy">
                             {item.buy || 0}
-                          </span>
-                          <span className="rec-item hold" title="Hold">
+                          </RecItem>
+                          <RecItem variant="hold" title="Hold">
                             {item.hold || 0}
-                          </span>
-                          <span className="rec-item sell" title="Sell">
+                          </RecItem>
+                          <RecItem variant="sell" title="Sell">
                             {item.sell || 0}
-                          </span>
-                          <span
-                            className="rec-item strong-sell"
-                            title="Strong Sell"
-                          >
+                          </RecItem>
+                          <RecItem variant="strong-sell" title="Strong Sell">
                             {item.strongSell || 0}
-                          </span>
+                          </RecItem>
                         </div>
                       </div>
                     )}
@@ -898,15 +910,16 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
           {/* Analyst Summary */}
           <section className="analysis-section">
-            <h3>Analyst Insights</h3>
+            <SectionTitle>Analyst Insights</SectionTitle>
             <div className="insights-grid">
               <div className="insight-card">
-                <span className="insight-label">
+                <MetricLabel>
                   Avg Consensus Score{' '}
                   <InfoTooltip text="CO TO JE: Průměrné skóre doporučení analytiků přes celé portfolio. STUPNICE: -2 (Strong Sell = silný prodej) → 0 (Hold = držet) → +2 (Strong Buy = silný nákup). JAK ČÍST: Nad 0 = analytici jsou celkově optimističtí. Pod 0 = analytici jsou celkově pesimističtí. IDEÁLNÍ: Nad +0.5 značí zdravé portfolio z pohledu analytiků." />
-                </span>
-                <span
-                  className={`insight-value ${
+                </MetricLabel>
+                <MetricValue
+                  size="lg"
+                  sentiment={
                     analystData.filter((d) => d.consensusScore !== null)
                       .length > 0
                       ? analystData.reduce(
@@ -925,9 +938,9 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                               .length <
                           -0.5
                         ? 'negative'
-                        : ''
-                      : ''
-                  }`}
+                        : 'neutral'
+                      : 'neutral'
+                  }
                 >
                   {analystData.filter((d) => d.consensusScore !== null).length >
                   0
@@ -940,12 +953,12 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                           .length
                       ).toFixed(2)
                     : '—'}
-                  <span className="insight-subtext"> / 2.00</span>
-                </span>
+                  <Subtext> / 2.00</Subtext>
+                </MetricValue>
               </div>
               <div className="insight-card">
-                <span className="insight-label">Stocks with Buy Rating</span>
-                <span className="insight-value positive">
+                <MetricLabel>Stocks with Buy Rating</MetricLabel>
+                <MetricValue size="lg" sentiment="positive">
                   {
                     analystData.filter(
                       (d) =>
@@ -953,14 +966,12 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                         d.recommendationKey === 'strong_buy'
                     ).length
                   }
-                  <span className="insight-subtext">
-                    / {analystData.length}
-                  </span>
-                </span>
+                  <Subtext>/ {analystData.length}</Subtext>
+                </MetricValue>
               </div>
               <div className="insight-card">
-                <span className="insight-label">Stocks with Sell Rating</span>
-                <span className="insight-value negative">
+                <MetricLabel>Stocks with Sell Rating</MetricLabel>
+                <MetricValue size="lg" sentiment="negative">
                   {
                     analystData.filter(
                       (d) =>
@@ -968,24 +979,22 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                         d.recommendationKey === 'underperform'
                     ).length
                   }
-                  <span className="insight-subtext">
-                    / {analystData.length}
-                  </span>
-                </span>
+                  <Subtext>/ {analystData.length}</Subtext>
+                </MetricValue>
               </div>
               <div className="insight-card">
-                <span className="insight-label">Total Analyst Coverage</span>
-                <span className="insight-value">
+                <MetricLabel>Total Analyst Coverage</MetricLabel>
+                <MetricValue size="lg">
                   {analystData.reduce(
                     (sum, d) => sum + (d.numberOfAnalysts || 0),
                     0
                   )}
-                  <span className="insight-subtext"> analysts</span>
-                </span>
+                  <Subtext> analysts</Subtext>
+                </MetricValue>
               </div>
               <div className="insight-card">
-                <span className="insight-label">Beat Earnings (Last Q)</span>
-                <span className="insight-value positive">
+                <MetricLabel>Beat Earnings (Last Q)</MetricLabel>
+                <MetricValue size="lg" sentiment="positive">
                   {
                     analystData.filter(
                       (d) =>
@@ -996,7 +1005,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                         d.earnings[0].surprisePercent > 0
                     ).length
                   }
-                  <span className="insight-subtext">
+                  <Subtext>
                     /{' '}
                     {
                       analystData.filter(
@@ -1007,8 +1016,8 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                           d.earnings[0]?.surprisePercent !== undefined
                       ).length
                     }
-                  </span>
-                </span>
+                  </Subtext>
+                </MetricValue>
               </div>
             </div>
           </section>
