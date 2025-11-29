@@ -12,4 +12,5 @@ export { SignalBadge } from './SignalBadge';
 export { StockCard } from './StockCard';
 export { Tabs } from './Tabs';
 export { ToggleGroup } from './ToggleGroup';
+export { MobileSortControl, type SortField } from './MobileSortControl';
 export * from './Icons';

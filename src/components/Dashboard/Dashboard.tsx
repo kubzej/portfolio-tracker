@@ -10,10 +10,12 @@ import {
 import { cn } from '@/utils/cn';
 import { useSortable } from '@/hooks';
 import {
-  BottomSheetSelect,
-  type SelectOption,
-} from '@/components/shared/BottomSheet';
-import { LoadingSpinner, ErrorState, EmptyState } from '@/components/shared';
+  LoadingSpinner,
+  ErrorState,
+  EmptyState,
+  MobileSortControl,
+  type SortField,
+} from '@/components/shared';
 import {
   SectionTitle,
   Ticker,
@@ -38,20 +40,14 @@ type SortKey =
   | 'targetPrice'
   | 'distanceToTarget';
 
-const SORT_OPTIONS: SelectOption[] = [
-  { value: 'ticker-asc', label: 'Ticker (A-Z)' },
-  { value: 'ticker-desc', label: 'Ticker (Z-A)' },
-  { value: 'plPercent-desc', label: 'P&L % (Best)' },
-  { value: 'plPercent-asc', label: 'P&L % (Worst)' },
-  { value: 'plCzk-desc', label: 'P&L CZK (Best)' },
-  { value: 'plCzk-asc', label: 'P&L CZK (Worst)' },
-  { value: 'current-desc', label: 'Value (High-Low)' },
-  { value: 'current-asc', label: 'Value (Low-High)' },
-  { value: 'portfolio-desc', label: 'Weight (High-Low)' },
-  { value: 'portfolio-asc', label: 'Weight (Low-High)' },
-  { value: 'distanceToTarget-asc', label: 'Target (Closest)' },
-  { value: 'distanceToTarget-desc', label: 'Target (Farthest)' },
-  { value: 'sector-asc', label: 'Sector (A-Z)' },
+const SORT_FIELDS: SortField[] = [
+  { value: 'ticker', label: 'Ticker', defaultDirection: 'asc' },
+  { value: 'plPercent', label: 'P&L %', defaultDirection: 'desc' },
+  { value: 'plCzk', label: 'P&L CZK', defaultDirection: 'desc' },
+  { value: 'current', label: 'Value', defaultDirection: 'desc' },
+  { value: 'portfolio', label: 'Weight', defaultDirection: 'desc' },
+  { value: 'distanceToTarget', label: 'To Target', defaultDirection: 'asc' },
+  { value: 'sector', label: 'Sector', defaultDirection: 'asc' },
 ];
 
 interface DashboardProps {
@@ -108,9 +104,10 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
 
   const {
     sortedData: sortedHoldings,
-    sortValue,
+    sortField,
+    sortDirection,
     handleSort,
-    setSortFromValue,
+    setSort,
     getSortIndicator,
     isSorted,
   } = useSortable<PortfolioSummary, SortKey>(holdings, getHoldingValue, {
@@ -230,11 +227,20 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
           <>
             {/* Mobile Sort Controls */}
             <div className="mobile-sort-controls">
-              <BottomSheetSelect
-                label="Sort by"
-                options={SORT_OPTIONS}
-                value={sortValue}
-                onChange={setSortFromValue}
+              <MobileSortControl
+                fields={SORT_FIELDS}
+                selectedField={sortField}
+                direction={sortDirection}
+                onFieldChange={(field) => {
+                  const fieldConfig = SORT_FIELDS.find(
+                    (f) => f.value === field
+                  );
+                  setSort(
+                    field as SortKey,
+                    fieldConfig?.defaultDirection || 'desc'
+                  );
+                }}
+                onDirectionChange={(dir) => setSort(sortField, dir)}
               />
             </div>
 

@@ -1,0 +1,64 @@
+.mobile-sort-control {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.mobile-sort-control__select {
+  flex: 1;
+}
+
+/* Remove label margin and make select same height as button */
+.mobile-sort-control__field-select {
+  margin: 0;
+}
+
+.mobile-sort-control__field-select .bottom-sheet-select-label {
+  display: none;
+}
+
+/* Override select colors to neutral and match height */
+.mobile-sort-control__field-select .native-select-trigger,
+.mobile-sort-control__field-select .bottom-sheet-select-trigger {
+  height: 44px;
+  box-sizing: border-box;
+  color: var(--text-primary);
+}
+
+.mobile-sort-control__field-select .bottom-sheet-select-trigger .select-text,
+.mobile-sort-control__field-select .bottom-sheet-select-trigger .select-chevron {
+  color: var(--text-primary);
+}
+
+.mobile-sort-control__field-select .native-select-trigger {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+.mobile-sort-control__direction {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  color: var(--text-primary);
+}
+
+.mobile-sort-control__direction:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-medium);
+}
+
+.mobile-sort-control__direction:active {
+  transform: scale(0.97);
+}
+
+.sort-direction-icon {
+  transition: transform var(--transition-normal);
+}
+
