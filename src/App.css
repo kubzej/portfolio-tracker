@@ -98,14 +98,6 @@
   transition: background-color 0.3s ease;
 }
 
-.header-subtitle {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
 .header-actions {
   display: flex;
   align-items: center;
@@ -168,45 +160,22 @@
   border-radius: var(--radius-lg);
 }
 
-.app-nav button {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  padding: 0.75rem 1.25rem;
-  border-radius: var(--radius-md);
+/* Nav buttons styling via Button component */
+.app-nav .btn {
   font-size: 0.9375rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  white-space: nowrap;
+  padding: 0.75rem 1.25rem;
 }
 
-.app-nav button:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-}
-
-.app-nav button.active {
+.app-nav .btn-ghost.active {
   background: var(--bg-secondary);
   color: var(--accent-primary);
   box-shadow: var(--shadow-sm);
 }
 
-/* Add action buttons get special styling */
-.app-nav button.add-action {
-  background: var(--accent-primary-light);
-  color: var(--accent-primary);
-}
-
-.app-nav button.add-action:hover {
-  background: var(--accent-primary);
-  color: white;
-}
-
-.app-nav button.add-action.active {
-  background: var(--accent-primary);
-  color: white;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+.debug-nav-btn {
+  margin-left: auto;
+  opacity: 0.6;
 }
 
 .app-main {
@@ -236,7 +205,7 @@
     padding: 0.5rem;
   }
 
-  .app-nav button {
+  .app-nav .btn {
     padding: 0.75rem 1.5rem;
   }
 
@@ -310,7 +279,7 @@
     display: none;
   }
 
-  .app-nav button {
+  .app-nav .btn {
     flex: 0 0 auto;
     padding: 0.625rem 1rem;
     font-size: 0.8125rem;
@@ -365,7 +334,7 @@
     margin: 0 -0.75rem;
   }
 
-  .app-nav button {
+  .app-nav .btn {
     padding: 0.5rem 0.75rem;
     font-size: 0.75rem;
     border-radius: var(--radius-sm);
@@ -412,7 +381,7 @@
     padding: 0.25rem 0.5rem;
   }
 
-  .app-nav button {
+  .app-nav .btn {
     padding: 0.4375rem 0.625rem;
     font-size: 0.6875rem;
   }
