@@ -918,7 +918,6 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 0;
-  border-bottom: 1px solid var(--border-light);
   margin-bottom: 1rem;
 }
 
@@ -928,38 +927,7 @@
   gap: 0.75rem;
 }
 
-.history-title h3 {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-.history-count {
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-}
-
-.history-header .close-btn {
-  width: 2rem;
-  height: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
-  font-size: 1.25rem;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.history-header .close-btn:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-}
-
-/* History Stats */
+/* History Stats - uses MetricCard */
 .history-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -967,55 +935,21 @@
   margin-bottom: 1rem;
 }
 
-.history-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.875rem;
+.history-stats .metric-card {
   background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-light);
 }
 
-.history-stat .stat-value {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.history-stat .stat-value.positive { color: var(--success); }
-.history-stat .stat-value.negative { color: var(--danger); }
-
-.history-stat .stat-label {
-  font-size: 0.6875rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-/* History Filters */
+/* History Filters - uses BottomSheetSelect */
 .history-filters {
   display: flex;
   gap: 0.75rem;
   margin-bottom: 1rem;
 }
 
-.history-select {
+.history-filters .form-group {
   flex: 1;
   max-width: 12rem;
-  padding: 0.5rem 0.75rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
-  font-size: 0.8125rem;
-  color: var(--text-primary);
-  cursor: pointer;
-}
-
-.history-select:focus {
-  outline: none;
-  border-color: var(--accent-primary);
+  margin: 0;
 }
 
 /* History Table */
@@ -1062,7 +996,7 @@
 .history-table td.positive { color: var(--success); font-weight: 600; }
 .history-table td.negative { color: var(--danger); font-weight: 600; }
 
-/* Pagination */
+/* Pagination - uses Button component */
 .history-pagination {
   display: flex;
   justify-content: center;
@@ -1070,39 +1004,6 @@
   gap: 1rem;
   margin-top: 1rem;
   padding: 0.75rem 0;
-}
-
-.page-btn {
-  padding: 0.5rem 1rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
-  font-size: 0.8125rem;
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.page-btn:hover:not(:disabled) {
-  background: var(--bg-tertiary);
-  border-color: var(--accent-primary);
-}
-
-.page-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.page-info {
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-}
-
-.no-data {
-  text-align: center;
-  padding: 2rem;
-  color: var(--text-muted);
-  font-size: 0.875rem;
 }
 
 /* ============================================================================
@@ -1279,20 +1180,7 @@
 
   /* History panel adjustments */
   .history-stats {
-    grid-template-columns: repeat(3, 1fr);
     gap: 0.5rem;
-  }
-
-  .history-stat {
-    padding: 0.625rem 0.5rem;
-  }
-
-  .history-stat .stat-value {
-    font-size: 1rem;
-  }
-
-  .history-stat .stat-label {
-    font-size: 0.5625rem;
   }
 
   .history-filters {
@@ -1300,7 +1188,7 @@
     gap: 0.5rem;
   }
 
-  .history-select {
+  .history-filters .form-group {
     max-width: 100%;
   }
 

@@ -8,7 +8,16 @@ import {
   ToggleGroup,
   type ToggleOption,
 } from '@/components/shared/ToggleGroup';
-import { LoadingSpinner, EmptyState, SignalBadge } from '@/components/shared';
+import {
+  BottomSheetSelect,
+  type SelectOption,
+} from '@/components/shared/BottomSheet';
+import {
+  LoadingSpinner,
+  EmptyState,
+  SignalBadge,
+  MetricCard,
+} from '@/components/shared';
 import {
   SectionTitle,
   CardTitle,
@@ -983,6 +992,25 @@ function SignalHistoryPanel({
     return { total: filteredHistory.length, avgReturn1w, winRate };
   }, [filteredHistory]);
 
+  // Ticker options for filter dropdown
+  const tickerOptions: SelectOption[] = useMemo(() => {
+    return [
+      { value: '', label: 'All Tickers' },
+      ...uniqueTickers.map((t) => ({ value: t, label: t })),
+    ];
+  }, [uniqueTickers]);
+
+  // Signal options for filter dropdown
+  const signalOptions: SelectOption[] = useMemo(() => {
+    return [
+      { value: 'all', label: 'All Signals' },
+      ...Object.entries(SIGNAL_CONFIG).map(([key, val]) => ({
+        value: key,
+        label: val.label,
+      })),
+    ];
+  }, []);
+
   if (loading) {
     return (
       <div className="history-fullscreen">
@@ -999,62 +1027,48 @@ function SignalHistoryPanel({
           <SectionTitle>Signal History</SectionTitle>
           <Muted>{stats.total} signals</Muted>
         </div>
-        <button className="close-btn" onClick={onClose}>
+        <Button variant="ghost" size="sm" icon onClick={onClose}>
           ×
-        </button>
+        </Button>
       </div>
 
       {/* Stats Bar */}
       <div className="history-stats">
-        <div className="history-stat">
-          <MetricValue>{stats.total}</MetricValue>
-          <MetricLabel>Total Signals</MetricLabel>
-        </div>
-        <div className="history-stat">
-          <MetricValue
-            sentiment={stats.avgReturn1w >= 0 ? 'positive' : 'negative'}
-          >
-            {stats.avgReturn1w >= 0 ? '+' : ''}
-            {stats.avgReturn1w.toFixed(1)}%
-          </MetricValue>
-          <MetricLabel>Avg 1W Return</MetricLabel>
-        </div>
-        <div className="history-stat">
-          <MetricValue
-            sentiment={stats.winRate >= 50 ? 'positive' : 'negative'}
-          >
-            {stats.winRate.toFixed(0)}%
-          </MetricValue>
-          <MetricLabel>Win Rate (1W)</MetricLabel>
-        </div>
+        <MetricCard label="Total Signals" value={stats.total} size="sm" />
+        <MetricCard
+          label="Avg 1W Return"
+          value={`${
+            stats.avgReturn1w >= 0 ? '+' : ''
+          }${stats.avgReturn1w.toFixed(1)}`}
+          suffix="%"
+          sentiment={stats.avgReturn1w >= 0 ? 'positive' : 'negative'}
+          size="sm"
+        />
+        <MetricCard
+          label="Win Rate (1W)"
+          value={stats.winRate.toFixed(0)}
+          suffix="%"
+          sentiment={stats.winRate >= 50 ? 'positive' : 'negative'}
+          size="sm"
+        />
       </div>
 
       {/* Filters */}
       <div className="history-filters">
-        <select
+        <BottomSheetSelect
           value={tickerFilter}
-          onChange={(e) => setTickerFilter(e.target.value)}
-          className="history-select"
-        >
-          <option value="">All Tickers</option>
-          {uniqueTickers.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-        <select
+          onChange={setTickerFilter}
+          options={tickerOptions}
+          placeholder="All Tickers"
+          title="Filter by Ticker"
+        />
+        <BottomSheetSelect
           value={signalFilter}
-          onChange={(e) => setSignalFilter(e.target.value)}
-          className="history-select"
-        >
-          <option value="all">All Signals</option>
-          {Object.entries(SIGNAL_CONFIG).map(([key, val]) => (
-            <option key={key} value={key}>
-              {val.label}
-            </option>
-          ))}
-        </select>
+          onChange={setSignalFilter}
+          options={signalOptions}
+          placeholder="All Signals"
+          title="Filter by Signal"
+        />
       </div>
 
       {/* Table */}
