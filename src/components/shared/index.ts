@@ -7,6 +7,7 @@ export { EmptyState } from './EmptyState';
 export { ErrorState } from './ErrorState';
 export { PriceDisplay } from './PriceDisplay';
 export { ScoreCard } from './ScoreCard';
+export { MetricCard } from './MetricCard';
 export { MetricRow } from './MetricRow';
 export { SignalBadge } from './SignalBadge';
 export { StockCard } from './StockCard';
