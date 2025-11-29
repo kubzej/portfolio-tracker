@@ -2,7 +2,16 @@ import { useState, useEffect } from 'react';
 import type { Portfolio, CreatePortfolioInput } from '@/types/database';
 import { portfoliosApi } from '@/services/api';
 import { Button } from '@/components/shared/Button';
+import { Input } from '@/components/shared/Input';
 import { LoadingSpinner } from '@/components/shared';
+import {
+  SectionTitle,
+  CardTitle,
+  Text,
+  Label,
+  Description,
+  Badge,
+} from '@/components/shared/Typography';
 import './PortfolioManager.css';
 
 interface PortfolioManagerProps {
@@ -137,13 +146,23 @@ export function PortfolioManager({
     <div className="portfolio-manager-overlay" onClick={onClose}>
       <div className="portfolio-manager" onClick={(e) => e.stopPropagation()}>
         <div className="pm-header">
-          <h2>Manage Portfolios</h2>
-          <button className="pm-close" onClick={onClose}>
+          <SectionTitle>Manage Portfolios</SectionTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon
+            onClick={onClose}
+            aria-label="Close"
+          >
             ×
-          </button>
+          </Button>
         </div>
 
-        {error && <div className="pm-error">{error}</div>}
+        {error && (
+          <div className="pm-error">
+            <Text>{error}</Text>
+          </div>
+        )}
 
         {loading ? (
           <LoadingSpinner text="Loading..." size="sm" />
@@ -158,16 +177,18 @@ export function PortfolioManager({
                       style={{ backgroundColor: portfolio.color }}
                     />
                     <div className="pm-item-text">
-                      <span className="pm-name">
-                        {portfolio.name}
+                      <div className="pm-name">
+                        <Text weight="semibold">{portfolio.name}</Text>
                         {portfolio.is_default && (
-                          <span className="pm-default-badge">Default</span>
+                          <Badge variant="info" size="xs">
+                            Default
+                          </Badge>
                         )}
-                      </span>
+                      </div>
                       {portfolio.description && (
-                        <span className="pm-description">
+                        <Description size="sm">
                           {portfolio.description}
-                        </span>
+                        </Description>
                       )}
                     </div>
                   </div>
@@ -206,13 +227,17 @@ export function PortfolioManager({
 
             {showAddForm ? (
               <form className="pm-form" onSubmit={handleSubmit}>
-                <h3>{editingId ? 'Edit Portfolio' : 'Add Portfolio'}</h3>
+                <CardTitle>
+                  {editingId ? 'Edit Portfolio' : 'Add Portfolio'}
+                </CardTitle>
 
                 <div className="pm-form-group">
-                  <label htmlFor="name">Name *</label>
-                  <input
+                  <Label htmlFor="name">Name *</Label>
+                  <Input
                     type="text"
                     id="name"
+                    inputSize="md"
+                    fullWidth
                     value={formData.name}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
@@ -223,10 +248,12 @@ export function PortfolioManager({
                 </div>
 
                 <div className="pm-form-group">
-                  <label htmlFor="description">Description</label>
-                  <input
+                  <Label htmlFor="description">Description</Label>
+                  <Input
                     type="text"
                     id="description"
+                    inputSize="md"
+                    fullWidth
                     value={formData.description || ''}
                     onChange={(e) =>
                       setFormData({ ...formData, description: e.target.value })
@@ -236,17 +263,21 @@ export function PortfolioManager({
                 </div>
 
                 <div className="pm-form-group">
-                  <label>Color</label>
+                  <Label>Color</Label>
                   <div className="pm-color-picker">
                     {COLORS.map((color) => (
-                      <button
+                      <Button
                         key={color}
                         type="button"
+                        variant="ghost"
+                        icon
+                        size="sm"
                         className={`pm-color-option ${
                           formData.color === color ? 'selected' : ''
                         }`}
                         style={{ backgroundColor: color }}
                         onClick={() => setFormData({ ...formData, color })}
+                        aria-label={`Select color ${color}`}
                       />
                     ))}
                   </div>

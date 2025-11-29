@@ -13,6 +13,7 @@ import { Analysis } from './components/Analysis';
 import { News } from './components/News';
 import { WatchlistManager, WatchlistView } from './components/Watchlists';
 import { Login } from './components/Login';
+import { DebugShowcase } from './components/Debug';
 import { Button } from './components/shared/Button';
 import { useAuth } from './contexts/AuthContext';
 import { refreshAllPrices } from './services/api';
@@ -28,7 +29,8 @@ type View =
   | 'analysis'
   | 'news'
   | 'watchlists'
-  | 'watchlist-detail';
+  | 'watchlist-detail'
+  | 'debug';
 
 // Valid views for URL persistence
 const VALID_VIEWS: View[] = [
@@ -38,6 +40,7 @@ const VALID_VIEWS: View[] = [
   'news',
   'research',
   'watchlists',
+  ...(import.meta.env.DEV ? ['debug' as View] : []),
 ];
 
 // Get initial view from URL hash
@@ -277,6 +280,15 @@ function App() {
           >
             + Add Transaction
           </button>
+          {import.meta.env.DEV && (
+            <button
+              className={currentView === 'debug' ? 'active' : ''}
+              onClick={() => setCurrentView('debug')}
+              style={{ marginLeft: 'auto', opacity: 0.6 }}
+            >
+              Debug
+            </button>
+          )}
         </nav>
       </header>
 
@@ -329,6 +341,7 @@ function App() {
             onBack={handleBackFromResearch}
           />
         )}
+        {currentView === 'debug' && <DebugShowcase />}
         {currentView === 'stock-detail' && selectedStockId && (
           <StockDetail
             stockId={selectedStockId}

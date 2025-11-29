@@ -22,20 +22,6 @@
   margin-bottom: 2rem;
 }
 
-.login-header h1 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 0.5rem 0;
-  letter-spacing: -0.02em;
-}
-
-.login-header p {
-  color: var(--text-muted);
-  margin: 0;
-  font-size: 0.9375rem;
-}
-
 .login-form {
   display: flex;
   flex-direction: column;
@@ -46,32 +32,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
-
-.login-form .form-group label {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.login-form .form-group input {
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  transition: all var(--transition-normal);
-}
-
-.login-form .form-group input:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px var(--accent-primary-light);
-}
-
-.login-form .form-group input::placeholder {
-  color: var(--text-muted);
 }
 
 .login-error {
@@ -122,14 +82,6 @@
     padding: 2rem;
     border-radius: var(--radius-lg);
   }
-
-  .login-header h1 {
-    font-size: 1.375rem;
-  }
-
-  .login-icon {
-    font-size: 2.5rem;
-  }
 }
 
 @media (max-width: 480px) {
@@ -145,21 +97,8 @@
     margin-bottom: 1.5rem;
   }
 
-  .login-header h1 {
-    font-size: 1.25rem;
-  }
-
-  .login-header p {
-    font-size: 0.875rem;
-  }
-
   .login-form {
     gap: 1rem;
-  }
-
-  .login-form .form-group input {
-    padding: 0.875rem 1rem;
-    font-size: 1rem; /* Prevents zoom on iOS */
   }
 
   .login-btn {
@@ -174,9 +113,5 @@
 @media (max-width: 360px) {
   .login-card {
     padding: 1.25rem;
-  }
-
-  .login-header h1 {
-    font-size: 1.125rem;
   }
 }

@@ -1,0 +1,75 @@
+/* =============================================================================
+   SHARED INPUT COMPONENT
+   Unified input styles for the entire application
+   ============================================================================= */
+
+.input {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: inherit;
+  transition: all var(--transition-normal);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-primary-light);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.input:disabled {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+/* =============================================================================
+   SIZE VARIANTS
+   ============================================================================= */
+
+.input-sm {
+  padding: 0.375rem 0.625rem;
+  font-size: 0.75rem;
+}
+
+.input-md {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.input-lg {
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+}
+
+/* =============================================================================
+   MODIFIERS
+   ============================================================================= */
+
+.input-full {
+  width: 100%;
+}
+
+.input-error {
+  border-color: var(--danger);
+}
+
+.input-error:focus {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-light);
+}
+
+/* =============================================================================
+   MOBILE - Prevent zoom on iOS
+   ============================================================================= */
+
+@media (max-width: 480px) {
+  .input-lg {
+    font-size: 1rem; /* 16px minimum prevents iOS zoom */
+  }
+}
