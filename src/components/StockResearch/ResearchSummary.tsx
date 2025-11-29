@@ -1,7 +1,7 @@
 import type { AnalystData } from '@/services/api/analysis';
 import type { StockRecommendation } from '@/utils/recommendations';
 import { cn } from '@/utils/cn';
-import { ScoreCard, MetricRow, InfoTooltip } from '@/components/shared';
+import { ScoreCard, InfoTooltip } from '@/components/shared';
 import './ResearchSummary.css';
 
 interface ResearchSummaryProps {

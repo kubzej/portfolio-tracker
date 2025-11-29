@@ -25,6 +25,11 @@ export interface PeerData {
   targetUpside: number | null;
   // Size
   marketCap: number | null;
+  // Historical returns
+  return1M: number | null;
+  return3M: number | null;
+  return6M: number | null;
+  return1Y: number | null;
   // Error
   error?: string;
 }

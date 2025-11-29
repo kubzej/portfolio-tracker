@@ -36,6 +36,11 @@ interface PeerData {
   targetUpside: number | null;
   // Size
   marketCap: number | null;
+  // Historical returns
+  return1M: number | null;
+  return3M: number | null;
+  return6M: number | null;
+  return1Y: number | null;
   // Error
   error?: string;
 }
@@ -65,6 +70,10 @@ async function fetchPeerData(ticker: string): Promise<PeerData> {
     analystTargetPrice: null,
     targetUpside: null,
     marketCap: null,
+    return1M: null,
+    return3M: null,
+    return6M: null,
+    return1Y: null,
   };
 
   try {
@@ -184,6 +193,21 @@ async function fetchPeerData(ticker: string): Promise<PeerData> {
       targetUpside = Math.round(targetUpside * 10) / 10;
     }
 
+    // Fetch historical returns from Finnhub metrics
+    const return1M = metrics['1MonthPriceReturnDaily'] ?? null;
+    const return3M =
+      metrics['3MonthPriceReturnDaily'] ??
+      metrics['13WeekPriceReturnDaily'] ??
+      null;
+    const return6M =
+      metrics['6MonthPriceReturnDaily'] ??
+      metrics['26WeekPriceReturnDaily'] ??
+      null;
+    const return1Y =
+      metrics['52WeekPriceReturnDaily'] ??
+      metrics['yearToDatePriceReturnDaily'] ??
+      null;
+
     return {
       ticker,
       name,
@@ -202,6 +226,10 @@ async function fetchPeerData(ticker: string): Promise<PeerData> {
       analystTargetPrice,
       targetUpside,
       marketCap,
+      return1M,
+      return3M,
+      return6M,
+      return1Y,
     };
   } catch (error) {
     console.error(`Error fetching peer ${ticker}:`, error);

@@ -402,8 +402,8 @@
 }
 
 .perf-value {
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 .perf-value.positive { color: var(--success); }
