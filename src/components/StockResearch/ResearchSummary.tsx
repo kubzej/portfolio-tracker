@@ -1,7 +1,7 @@
 import type { AnalystData } from '@/services/api/analysis';
 import type { StockRecommendation } from '@/utils/recommendations';
 import { cn } from '@/utils/cn';
-import { ScoreCard, MetricRow, InfoTooltip } from '@/components/shared';
+import { ScoreCard, InfoTooltip } from '@/components/shared';
 import './ResearchSummary.css';
 
 interface ResearchSummaryProps {
@@ -353,33 +353,64 @@ export function ResearchSummary({
       {analystData.insiderSentiment &&
         analystData.insiderSentiment.mspr !== null && (
           <section className="summary-section">
-            <h3 className="section-title">Insider Sentiment</h3>
-            <div className="insider-sentiment">
-              <MetricRow
-                label="MSPR (3M)"
-                value={analystData.insiderSentiment.mspr.toFixed(1)}
-                tooltip="Monthly Share Purchase Ratio. Positive = net buying, Negative = net selling"
-                sentiment={
-                  analystData.insiderSentiment.mspr > 15
-                    ? 'positive'
-                    : analystData.insiderSentiment.mspr < -15
-                    ? 'negative'
-                    : 'neutral'
-                }
-              />
-              {analystData.insiderSentiment.change !== null && (
-                <MetricRow
-                  label="Net Shares Changed"
-                  value={analystData.insiderSentiment.change.toLocaleString()}
-                  sentiment={
-                    analystData.insiderSentiment.change > 0
+            <h3 className="section-title">
+              Insider Sentiment
+              <InfoTooltip text="Aktivita insiderů (vedení, ředitelé) za posledních 3 měsíce. MSPR = Monthly Share Purchase Ratio. Kladné = nákupy, záporné = prodeje. Silný nákup insiderů je pozitivní signál důvěry ve firmu." />
+            </h3>
+            <div className="strategy-cards insider-cards">
+              <div className="strategy-card">
+                <span className="strategy-label">MSPR (3M)</span>
+                <span
+                  className={cn(
+                    'strategy-value',
+                    analystData.insiderSentiment.mspr > 15
                       ? 'positive'
-                      : analystData.insiderSentiment.change < 0
+                      : analystData.insiderSentiment.mspr < -15
                       ? 'negative'
                       : 'neutral'
-                  }
-                />
+                  )}
+                >
+                  {analystData.insiderSentiment.mspr > 0 ? '+' : ''}
+                  {analystData.insiderSentiment.mspr.toFixed(1)}
+                </span>
+              </div>
+              {analystData.insiderSentiment.change !== null && (
+                <div className="strategy-card">
+                  <span className="strategy-label">Net Shares</span>
+                  <span
+                    className={cn(
+                      'strategy-value',
+                      analystData.insiderSentiment.change > 0
+                        ? 'positive'
+                        : analystData.insiderSentiment.change < 0
+                        ? 'negative'
+                        : 'neutral'
+                    )}
+                  >
+                    {analystData.insiderSentiment.change > 0 ? '+' : ''}
+                    {analystData.insiderSentiment.change.toLocaleString()}
+                  </span>
+                </div>
               )}
+              <div className="strategy-card">
+                <span className="strategy-label">Signál</span>
+                <span
+                  className={cn(
+                    'strategy-value',
+                    analystData.insiderSentiment.mspr > 15
+                      ? 'positive'
+                      : analystData.insiderSentiment.mspr < -15
+                      ? 'negative'
+                      : 'neutral'
+                  )}
+                >
+                  {analystData.insiderSentiment.mspr > 15
+                    ? 'Buying'
+                    : analystData.insiderSentiment.mspr < -15
+                    ? 'Selling'
+                    : 'Neutral'}
+                </span>
+              </div>
             </div>
           </section>
         )}

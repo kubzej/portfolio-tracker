@@ -94,17 +94,15 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
   // Technical analysis state
   const [technicalData, setTechnicalData] = useState<TechnicalData[]>([]);
-  const [technicalLoading, setTechnicalLoading] = useState(false);
   const [selectedTechnicalStock, setSelectedTechnicalStock] = useState<
     string | null
   >(null);
 
-  // Recommendations state
+  // Recommendations state (prefetched with initial load)
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [recommendations, setRecommendations] = useState<StockRecommendation[]>(
     []
   );
-  const [recsLoading, setRecsLoading] = useState(false);
 
   // Mobile tooltip state
   const [mobileTooltip, setMobileTooltip] = useState<{
@@ -138,80 +136,18 @@ export function Analysis({ portfolioId }: AnalysisProps) {
     loadIndicators();
   }, [portfolioId]);
 
-  // Load technical data when switching to technicals or recommendations tab
+  // Regenerate recommendations when insider time range changes
   useEffect(() => {
-    if (
-      (activeTab === 'technicals' || activeTab === 'recommendations') &&
-      portfolioId &&
-      technicalData.length === 0 &&
-      !technicalLoading
-    ) {
-      loadTechnicalData();
-    }
-  }, [activeTab, portfolioId]);
-
-  // Load recommendations when switching to recommendations tab
-  useEffect(() => {
-    if (
-      activeTab === 'recommendations' &&
-      portfolioId &&
-      analystData.length > 0
-    ) {
-      loadRecommendations();
-    }
-  }, [
-    activeTab,
-    portfolioId,
-    analystData.length,
-    technicalData.length,
-    insiderTimeRange,
-  ]);
-
-  const loadRecommendations = async () => {
-    if (!portfolioId || analystData.length === 0) return;
-
-    setRecsLoading(true);
-    try {
-      // Load news if not already loaded
-      let news = newsArticles;
-      if (newsArticles.length === 0) {
-        const newsResult = await fetchPortfolioNews(portfolioId);
-        news = newsResult.articles || [];
-        setNewsArticles(news);
-      }
-
-      // Generate recommendations
+    if (analystData.length > 0) {
       const recs = generateAllRecommendations(
         analystData,
         technicalData,
-        news,
+        newsArticles,
         insiderTimeRange
       );
       setRecommendations(recs);
-    } catch (err) {
-      console.error('Failed to load recommendations:', err);
-    } finally {
-      setRecsLoading(false);
     }
-  };
-
-  const loadTechnicalData = async () => {
-    if (!portfolioId) return;
-
-    try {
-      setTechnicalLoading(true);
-      const result = await fetchTechnicalData(portfolioId);
-
-      if (result.data && result.data.length > 0) {
-        setTechnicalData(result.data);
-        // Don't auto-select - let user click to open detail
-      }
-    } catch (err) {
-      console.error('Failed to load technical data:', err);
-    } finally {
-      setTechnicalLoading(false);
-    }
-  };
+  }, [insiderTimeRange, analystData, technicalData, newsArticles]);
 
   const loadIndicators = async () => {
     try {
@@ -247,11 +183,20 @@ export function Analysis({ portfolioId }: AnalysisProps) {
       setLoading(true);
       setError(null);
 
-      // Fetch both analyst data and portfolio summary in parallel
-      const [analysisResult, holdings] = await Promise.all([
-        fetchAnalystData(portfolioId),
-        holdingsApi.getPortfolioSummary(portfolioId),
-      ]);
+      // Fetch ALL data in parallel: analyst, holdings, technical, and news
+      const [analysisResult, holdings, technicalResult, newsResult] =
+        await Promise.all([
+          fetchAnalystData(portfolioId),
+          holdingsApi.getPortfolioSummary(portfolioId),
+          fetchTechnicalData(portfolioId).catch(() => ({ data: [] })),
+          fetchPortfolioNews(portfolioId).catch(() => ({ articles: [] })),
+        ]);
+
+      // Store technical and news data
+      const techData = technicalResult.data || [];
+      const news = newsResult.articles || [];
+      setTechnicalData(techData);
+      setNewsArticles(news);
 
       // Calculate total portfolio value
       const totalValue = holdings.reduce(
@@ -293,6 +238,17 @@ export function Analysis({ portfolioId }: AnalysisProps) {
         .filter((item): item is EnrichedAnalystData => item !== null);
 
       setAnalystData(enriched);
+
+      // Generate recommendations immediately with all prefetched data
+      if (enriched.length > 0) {
+        const recs = generateAllRecommendations(
+          enriched,
+          techData,
+          news,
+          insiderTimeRange
+        );
+        setRecommendations(recs);
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Failed to load analysis data'
@@ -550,6 +506,25 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
   return (
     <div className="analysis">
+      {/* Debug */}
+      <div
+        style={{
+          fontSize: '9px',
+          fontFamily: 'monospace',
+          color: '#666',
+          padding: '2px 4px',
+          background: '#f5f5f5',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '8px',
+        }}
+      >
+        <span>
+          stocks: {analystData.length} | tech: {technicalData.length} | news:{' '}
+          {newsArticles.length} | recs: {recommendations.length}
+        </span>
+      </div>
+
       <div className="analysis-header">
         <h2>Analysis</h2>
         <Button variant="outline" onClick={loadData}>
@@ -1841,13 +1816,6 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                   onClose={() => setSelectedTechnicalStock(null)}
                 />
               )}
-
-            {technicalLoading && (
-              <div className="technical-loading-inline">
-                <div className="spinner" />
-                <span>Loading technical indicators...</span>
-              </div>
-            )}
           </section>
 
           {/* Technical Summary */}
@@ -1906,7 +1874,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
         <RecommendationsComponent
           recommendations={recommendations}
           portfolioId={portfolioId}
-          loading={recsLoading || technicalLoading}
+          loading={false}
         />
       )}
 

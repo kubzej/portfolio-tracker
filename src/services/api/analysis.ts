@@ -1,5 +1,11 @@
 import { supabase } from '@/lib/supabase';
 
+// Rate limit info returned by API
+export interface RateLimitInfo {
+  finnhub: boolean;
+  yahoo: boolean;
+}
+
 // Earnings surprise data for a single quarter
 export interface EarningsData {
   actual: number | null;
@@ -102,6 +108,7 @@ export interface AnalystData {
 export interface AnalysisResult {
   data: AnalystData[];
   errors: string[];
+  rateLimited?: RateLimitInfo;
 }
 
 /**

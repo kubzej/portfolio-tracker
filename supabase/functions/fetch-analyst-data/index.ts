@@ -10,7 +10,23 @@ const corsHeaders = {
     'authorization, x-client-info, apikey, content-type',
 };
 
-const FINNHUB_API_KEY = 'd4ad4shr01qnehvu2m00d4ad4shr01qnehvu2m0g';
+const FINNHUB_API_KEY = Deno.env.get('FINNHUB_API_KEY') ?? '';
+
+// Rate limit tracking
+let rateLimitInfo = { finnhub: false, yahoo: false };
+
+// Safe fetch with rate limit detection
+async function safeFetch(
+  url: string,
+  source: 'finnhub' | 'yahoo'
+): Promise<Response> {
+  const response = await fetch(url);
+  if (response.status === 429) {
+    rateLimitInfo[source] = true;
+    console.warn(`Rate limited by ${source}: ${url}`);
+  }
+  return response;
+}
 
 // Earnings surprise data
 interface EarningsData {
@@ -196,48 +212,55 @@ async function fetchAnalystData(
       insiderRes,
     ] = await Promise.all([
       // Recommendation trends endpoint (FREE)
-      fetch(
+      safeFetch(
         `https://finnhub.io/api/v1/stock/recommendation?symbol=${encodeURIComponent(
           finnhubSymbol
-        )}&token=${FINNHUB_API_KEY}`
+        )}&token=${FINNHUB_API_KEY}`,
+        'finnhub'
       ),
       // Quote endpoint for current price (FREE)
-      fetch(
+      safeFetch(
         `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(
           finnhubSymbol
-        )}&token=${FINNHUB_API_KEY}`
+        )}&token=${FINNHUB_API_KEY}`,
+        'finnhub'
       ),
       // Earnings surprises - last 4 quarters (FREE)
-      fetch(
+      safeFetch(
         `https://finnhub.io/api/v1/stock/earnings?symbol=${encodeURIComponent(
           finnhubSymbol
-        )}&token=${FINNHUB_API_KEY}`
+        )}&token=${FINNHUB_API_KEY}`,
+        'finnhub'
       ),
       // Basic financials/metrics (FREE)
-      fetch(
+      safeFetch(
         `https://finnhub.io/api/v1/stock/metric?symbol=${encodeURIComponent(
           finnhubSymbol
-        )}&metric=all&token=${FINNHUB_API_KEY}`
+        )}&metric=all&token=${FINNHUB_API_KEY}`,
+        'finnhub'
       ),
       // Company peers (FREE)
-      fetch(
+      safeFetch(
         `https://finnhub.io/api/v1/stock/peers?symbol=${encodeURIComponent(
           finnhubSymbol
-        )}&token=${FINNHUB_API_KEY}`
+        )}&token=${FINNHUB_API_KEY}`,
+        'finnhub'
       ),
       // Company profile (FREE version)
-      fetch(
+      safeFetch(
         `https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(
           finnhubSymbol
-        )}&token=${FINNHUB_API_KEY}`
+        )}&token=${FINNHUB_API_KEY}`,
+        'finnhub'
       ),
       // Insider sentiment (FREE) - get last 12 months for better coverage
-      fetch(
+      safeFetch(
         `https://finnhub.io/api/v1/stock/insider-sentiment?symbol=${encodeURIComponent(
           finnhubSymbol
         )}&from=${getDateMonthsAgo(
           12
-        )}&to=${getTodayDate()}&token=${FINNHUB_API_KEY}`
+        )}&to=${getTodayDate()}&token=${FINNHUB_API_KEY}`,
+        'finnhub'
       ),
     ]);
 
@@ -282,7 +305,7 @@ async function fetchAnalystData(
         const yahooQuoteUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
           ticker
         )}?interval=1d&range=1d`;
-        const yahooQuoteRes = await fetch(yahooQuoteUrl);
+        const yahooQuoteRes = await safeFetch(yahooQuoteUrl, 'yahoo');
 
         if (yahooQuoteRes.ok) {
           const yahooData = await yahooQuoteRes.json();
@@ -310,7 +333,7 @@ async function fetchAnalystData(
           const yahoo52wUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
             ticker
           )}?interval=1d&range=1y`;
-          const yahoo52wRes = await fetch(yahoo52wUrl);
+          const yahoo52wRes = await safeFetch(yahoo52wUrl, 'yahoo');
 
           if (yahoo52wRes.ok) {
             const yahooData = await yahoo52wRes.json();
@@ -342,7 +365,7 @@ async function fetchAnalystData(
       const yahooSummaryUrl = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(
         ticker
       )}?modules=financialData`;
-      const yahooSummaryRes = await fetch(yahooSummaryUrl);
+      const yahooSummaryRes = await safeFetch(yahooSummaryUrl, 'yahoo');
 
       if (yahooSummaryRes.ok) {
         const summaryData = await yahooSummaryRes.json();
@@ -639,6 +662,9 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  // Reset rate limit tracking for each request
+  rateLimitInfo = { finnhub: false, yahoo: false };
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -661,6 +687,10 @@ serve(async (req) => {
         JSON.stringify({
           data: [data],
           errors: data.error ? [data.error] : [],
+          rateLimited:
+            rateLimitInfo.finnhub || rateLimitInfo.yahoo
+              ? rateLimitInfo
+              : undefined,
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -736,9 +766,19 @@ serve(async (req) => {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
-    return new Response(JSON.stringify({ data: results, errors }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({
+        data: results,
+        errors,
+        rateLimited:
+          rateLimitInfo.finnhub || rateLimitInfo.yahoo
+            ? rateLimitInfo
+            : undefined,
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,

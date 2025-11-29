@@ -411,10 +411,14 @@
 }
 
 /* Insider Sentiment */
-.insider-sentiment {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.5rem;
+.insider-cards {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 640px) {
+  .insider-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 /* Mobile */
