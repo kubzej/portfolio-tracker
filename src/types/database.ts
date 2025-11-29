@@ -293,6 +293,7 @@ export interface AddWatchlistItemInput {
 }
 
 export interface UpdateWatchlistItemInput {
+  ticker?: string;
   name?: string;
   finnhub_ticker?: string | null;
   target_buy_price?: number | null;

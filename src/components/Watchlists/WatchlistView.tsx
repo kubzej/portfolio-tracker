@@ -344,6 +344,9 @@ export function WatchlistView({
                     >
                       {item.ticker}
                     </button>
+                    {item.name && (
+                      <span className="stock-name">{item.name}</span>
+                    )}
                   </td>
                   <td className="text-right">
                     {item.last_price
@@ -452,18 +455,23 @@ export function WatchlistView({
             {sortedItems.map((item) => (
               <div key={item.id} className="watchlist-item-card">
                 <div className="item-card-header">
-                  <button
-                    className="ticker-link large"
-                    onClick={() =>
-                      onOpenResearch?.(
-                        item.ticker,
-                        item.name ?? undefined,
-                        item.finnhub_ticker ?? undefined
-                      )
-                    }
-                  >
-                    {item.ticker}
-                  </button>
+                  <div className="item-card-ticker-group">
+                    <button
+                      className="ticker-link large"
+                      onClick={() =>
+                        onOpenResearch?.(
+                          item.ticker,
+                          item.name ?? undefined,
+                          item.finnhub_ticker ?? undefined
+                        )
+                      }
+                    >
+                      {item.ticker}
+                    </button>
+                    {item.name && (
+                      <span className="stock-name">{item.name}</span>
+                    )}
+                  </div>
                   <div className="item-card-actions">
                     <button
                       className="item-action-btn"
