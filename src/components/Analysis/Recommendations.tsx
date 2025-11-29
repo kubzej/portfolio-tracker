@@ -479,9 +479,9 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
               {rec.primarySignal.strength.toFixed(0)}%
             </Text>
           </div>
-          <button className="close-btn-light" onClick={onClose}>
-            ×
-          </button>
+          <Button variant="ghost" size="lg" icon onClick={onClose}>
+            X
+          </Button>
         </div>
 
         {/* Header */}

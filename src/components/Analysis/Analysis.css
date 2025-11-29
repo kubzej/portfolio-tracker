@@ -292,17 +292,7 @@
   color: var(--danger);
 }
 
-/* Sort Icon */
-.sort-icon {
-  margin-left: 0.25rem;
-  opacity: 0.3;
-  font-size: 0.625rem;
-}
-
-.sort-icon.active {
-  opacity: 1;
-  color: var(--accent-primary);
-}
+/* REMOVED: .sort-icon styles - Now using SortIcon component */
 
 /* Stock Cell */
 .stock-cell {

@@ -23,6 +23,7 @@ import {
 } from '@/components/shared';
 import {
   SectionTitle,
+  CardTitle,
   Description,
   Ticker,
   StockName,
@@ -32,6 +33,7 @@ import {
   Text,
   RecItem,
   Badge,
+  SortIcon,
 } from '@/components/shared/Typography';
 import { Tabs } from '@/components/shared/Tabs';
 import { holdingsApi } from '@/services/api';
@@ -445,9 +447,9 @@ export function Analysis({ portfolioId }: AnalysisProps) {
     return typeof value === 'number' ? value : null;
   };
 
-  const SortIcon = ({ column }: { column: SortKey }) => {
-    if (sortKey !== column) return <span className="sort-icon">↕</span>;
-    return <span className="sort-icon active">{sortAsc ? '↑' : '↓'}</span>;
+  const SortIconComponent = ({ column }: { column: SortKey }) => {
+    if (sortKey !== column) return <SortIcon direction="none" />;
+    return <SortIcon direction={sortAsc ? 'asc' : 'desc'} active />;
   };
 
   // Helper functions - must be defined before any returns that use them
@@ -540,10 +542,10 @@ export function Analysis({ portfolioId }: AnalysisProps) {
           gap: '8px',
         }}
       >
-        <span>
+        <Text size="sm" color="muted">
           stocks: {analystData.length} | tech: {technicalData.length} | news:{' '}
           {newsArticles.length} | recs: {recommendations.length}
-        </span>
+        </Text>
       </div>
 
       <div className="analysis-header">
@@ -595,22 +597,22 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 <thead>
                   <tr>
                     <th onClick={() => handleSort('ticker')}>
-                      Stock <SortIcon column="ticker" />
+                      Stock <SortIconComponent column="ticker" />
                     </th>
                     <th className="right" onClick={() => handleSort('weight')}>
-                      Weight <SortIcon column="weight" />
+                      Weight <SortIconComponent column="weight" />
                     </th>
                     <th
                       className="right"
                       onClick={() => handleSort('currentPrice')}
                     >
-                      Price <SortIcon column="currentPrice" />
+                      Price <SortIconComponent column="currentPrice" />
                     </th>
                     <th
                       className="right"
                       onClick={() => handleSort('priceChangePercent')}
                     >
-                      Change <SortIcon column="priceChangePercent" />
+                      Change <SortIconComponent column="priceChangePercent" />
                     </th>
                     <th className="center">Rating</th>
                     <th
@@ -619,14 +621,14 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     >
                       Score{' '}
                       <InfoTooltip text="CO TO JE: Consensus Score = váž ené skóre doporučení analytiků. STUPNICE: -2 (Strong Sell) → 0 (Hold) → +2 (Strong Buy). JAK ČÍST: Kladné číslo (+) = analytici doporučují nákup. Záporné číslo (-) = analytici doporučují prodej. Blízko 0 = držet. IDEÁLNÍ: Nad +0.5 je dobré, nad +1 je výborné." />{' '}
-                      <SortIcon column="consensusScore" />
+                      <SortIconComponent column="consensusScore" />
                     </th>
                     <th className="center">Breakdown</th>
                     <th
                       className="center"
                       onClick={() => handleSort('numberOfAnalysts')}
                     >
-                      Analysts <SortIcon column="numberOfAnalysts" />
+                      Analysts <SortIconComponent column="numberOfAnalysts" />
                     </th>
                     <th className="center">Earnings (4Q)</th>
                     <th className="center">
@@ -1050,10 +1052,10 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 <thead>
                   <tr>
                     <th onClick={() => handleSort('ticker')}>
-                      Stock <SortIcon column="ticker" />
+                      Stock <SortIconComponent column="ticker" />
                     </th>
                     <th className="right" onClick={() => handleSort('weight')}>
-                      Weight <SortIcon column="weight" />
+                      Weight <SortIconComponent column="weight" />
                     </th>
                     {selectedColumns.map((key) => {
                       const indicator = getIndicatorByKey(key);
@@ -1066,7 +1068,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                         >
                           {indicator.short_name}
                           <InfoTooltip text={indicator.description} />
-                          <SortIcon column={key} />
+                          <SortIconComponent column={key} />
                         </th>
                       );
                     })}
@@ -1199,15 +1201,15 @@ export function Analysis({ portfolioId }: AnalysisProps) {
               </div>
               <div className="insider-time-filter">
                 {INSIDER_TIME_RANGES.map((range) => (
-                  <button
+                  <Button
                     key={range.value}
-                    className={`time-range-btn ${
-                      insiderTimeRange === range.value ? 'active' : ''
-                    }`}
+                    variant="ghost"
+                    size="sm"
+                    isActive={insiderTimeRange === range.value}
                     onClick={() => setInsiderTimeRange(range.value)}
                   >
                     {range.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -1535,22 +1537,22 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 <thead>
                   <tr>
                     <th onClick={() => handleSort('ticker')}>
-                      Stock <SortIcon column="ticker" />
+                      Stock <SortIconComponent column="ticker" />
                     </th>
                     <th className="right" onClick={() => handleSort('weight')}>
-                      Weight <SortIcon column="weight" />
+                      Weight <SortIconComponent column="weight" />
                     </th>
                     <th
                       className="right"
                       onClick={() => handleSort('currentPrice')}
                     >
-                      Price <SortIcon column="currentPrice" />
+                      Price <SortIconComponent column="currentPrice" />
                     </th>
                     <th
                       className="right"
                       onClick={() => handleSort('priceChangePercent')}
                     >
-                      Change <SortIcon column="priceChangePercent" />
+                      Change <SortIconComponent column="priceChangePercent" />
                     </th>
                     <th className="right">52W Low</th>
                     <th className="right">52W High</th>
@@ -1854,10 +1856,16 @@ export function Analysis({ portfolioId }: AnalysisProps) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mobile-tooltip-header">
-              <h4>{mobileTooltip.title}</h4>
-              <button onClick={() => setMobileTooltip(null)}>×</button>
+              <CardTitle>{mobileTooltip.title}</CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setMobileTooltip(null)}
+              >
+                ×
+              </Button>
             </div>
-            <p>{mobileTooltip.text}</p>
+            <Description>{mobileTooltip.text}</Description>
           </div>
         </div>
       )}
