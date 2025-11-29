@@ -11,4 +11,5 @@ export { MetricRow } from './MetricRow';
 export { SignalBadge } from './SignalBadge';
 export { StockCard } from './StockCard';
 export { Tabs } from './Tabs';
+export { ToggleGroup } from './ToggleGroup';
 export * from './Icons';

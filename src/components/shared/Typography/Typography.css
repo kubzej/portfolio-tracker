@@ -100,7 +100,7 @@
    METRIC VALUE
    ======================================== */
 .metric-value {
-  font-weight: var(--font-semibold);
+  font-weight: var(--font-medium);
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
 }

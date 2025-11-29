@@ -35,6 +35,32 @@
   cursor: not-allowed;
 }
 
+/* Transaction variant (BUY/SELL) */
+.toggle-group--transaction {
+  width: 100%;
+  background: var(--bg-secondary);
+  padding: 4px;
+}
+
+.toggle-group--transaction .toggle-option {
+  flex: 1;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.625rem 1rem;
+}
+
+.toggle-group--transaction .toggle-option--buy.active {
+  background: var(--color-success);
+  color: white;
+  box-shadow: none;
+}
+
+.toggle-group--transaction .toggle-option--sell.active {
+  background: var(--color-danger);
+  color: white;
+  box-shadow: none;
+}
+
 /* Mobile adjustments */
 @media (max-width: 768px) {
   .toggle-group {

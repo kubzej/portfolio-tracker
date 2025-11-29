@@ -16,9 +16,7 @@ import {
   EditIcon,
   TrashIcon,
 } from '@/components/shared';
-import { EditTransactionModal } from './EditTransactionModal';
-import { StockModal } from '../StocksList/StockModal';
-import { AddTransactionModal } from '../StocksList/AddTransactionModal';
+import { StockModal, TransactionModal } from '../StocksList';
 import './StockDetail.css';
 
 interface StockDetailProps {
@@ -360,7 +358,7 @@ export function StockDetail({
       />
 
       {/* Edit Transaction Modal */}
-      <EditTransactionModal
+      <TransactionModal
         isOpen={editingTransaction !== null}
         onClose={handleEditModalClose}
         onSuccess={handleEditModalSuccess}
@@ -368,7 +366,7 @@ export function StockDetail({
       />
 
       {/* Add Transaction Modal */}
-      <AddTransactionModal
+      <TransactionModal
         isOpen={showAddTransaction}
         onClose={() => setShowAddTransaction(false)}
         onSuccess={loadData}

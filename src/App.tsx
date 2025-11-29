@@ -3,7 +3,7 @@ import { Dashboard } from './components/Dashboard';
 import {
   StocksList,
   StockModal,
-  AddTransactionModal,
+  TransactionModal,
 } from './components/StocksList';
 import { StockDetail } from './components/StockDetail';
 import { StockResearch } from './components/StockResearch';
@@ -361,7 +361,7 @@ function App() {
         onClose={() => setShowAddStockModal(false)}
         onSuccess={() => setRefreshKey((k) => k + 1)}
       />
-      <AddTransactionModal
+      <TransactionModal
         isOpen={showAddTransactionModal}
         onClose={() => setShowAddTransactionModal(false)}
         onSuccess={() => setRefreshKey((k) => k + 1)}
