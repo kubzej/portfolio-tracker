@@ -118,11 +118,11 @@
 }
 
 .metric-value--positive {
-  color: var(--color-success);
+  color: var(--success) !important;
 }
 
 .metric-value--negative {
-  color: var(--color-danger);
+  color: var(--danger) !important;
 }
 
 .metric-value--neutral {

@@ -2,21 +2,6 @@
   width: 100%;
 }
 
-.dashboard-loading,
-.dashboard-error {
-  text-align: center;
-  padding: 3rem;
-  color: var(--text-muted);
-  font-size: 0.9375rem;
-}
-
-.dashboard-error {
-  color: var(--danger);
-  background: var(--danger-light);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--danger);
-}
-
 /* Dashboard Header */
 .dashboard-header {
   display: flex;
@@ -25,14 +10,6 @@
   margin-bottom: 1.5rem;
   flex-wrap: wrap;
   gap: 1rem;
-}
-
-.dashboard-header h2 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
 }
 
 /* Summary Cards */
@@ -55,6 +32,7 @@
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 0.5rem;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-light);
@@ -66,45 +44,16 @@
   transform: translateY(-2px);
 }
 
-.card-label {
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 600;
-}
-
-.card-value {
-  color: var(--text-primary);
-  font-size: 1.25rem;
-  font-weight: 700;
+.card-value-with-percent {
   display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 @media (min-width: 768px) {
-  .card-value {
-    font-size: 1.5rem;
-  }
-  
   .summary-card {
     padding: 1.5rem;
   }
-}
-
-.card-value small {
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.card-value.positive {
-  color: var(--success);
-}
-
-.card-value.negative {
-  color: var(--danger);
 }
 
 /* Holdings Section */
@@ -117,34 +66,17 @@
   border: 1px solid var(--border-light);
 }
 
-.holdings-section h2 {
-  margin: 0 0 1rem 0;
-  font-size: 1.125rem;
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
 @media (min-width: 768px) {
   .holdings-section {
     padding: 1.5rem;
   }
-  
-  .holdings-section h2 {
-    font-size: 1.25rem;
-    margin-bottom: 1.25rem;
-  }
-}
-
-.empty-state {
-  text-align: center;
-  padding: 3rem 1.5rem;
-  color: var(--text-muted);
 }
 
 /* Mobile Sort Controls */
 .mobile-sort-controls {
   display: none;
   margin-bottom: 1rem;
+  margin-top: 1rem;
 }
 
 @media (max-width: 899px) {
@@ -187,28 +119,11 @@
   gap: 0.125rem;
 }
 
-.holding-card-title .ticker {
-  font-weight: 600;
-  color: var(--accent-primary);
-  font-size: 1rem;
-}
-
-.holding-card-title .name {
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-}
-
 .holding-card-pl {
-  text-align: right;
-}
-
-.holding-card-pl .value {
-  font-weight: 600;
-  font-size: 1rem;
-}
-
-.holding-card-pl .percent {
-  font-size: 0.8125rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.125rem;
 }
 
 .holding-card-stats {
@@ -221,37 +136,9 @@
 .holding-card-stat {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 0.25rem 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.holding-card-stat .label {
-  color: var(--text-muted);
-}
-
-.holding-card-stat .value {
-  color: var(--text-primary);
-  font-weight: 500;
-  text-align: right;
-}
-
-.holding-card-stat .value.positive {
-  color: var(--success);
-}
-
-.holding-card-stat .value.negative {
-  color: var(--danger);
-}
-
-.holding-card-stat.full-width {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
-}
-
-.holding-card-stat.full-width .value {
-  text-align: left;
 }
 
 /* Desktop table */
@@ -348,23 +235,6 @@
   gap: 0.125rem;
 }
 
-.dual-value .primary {
-  font-weight: 500;
-}
-
-.dual-value .secondary {
-  font-size: 0.6875rem;
-  color: var(--text-secondary);
-}
-
-.dual-value .secondary.positive {
-  color: var(--color-success);
-}
-
-.dual-value .secondary.negative {
-  color: var(--color-error);
-}
-
 .holdings-table tr:last-child td {
   border-bottom: none;
 }
@@ -387,47 +257,6 @@
   gap: 0;
 }
 
-.stock-cell .ticker {
-  font-weight: 600;
-  color: var(--accent-primary);
-  font-size: 0.8125rem;
-}
-
-.stock-cell .name {
-  font-size: 0.6875rem;
-  color: var(--text-muted);
-  max-width: 120px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Compact value cells */
-.holdings-table .value-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0;
-}
-
-.holdings-table .value-primary {
-  font-weight: 600;
-  font-size: 0.8125rem;
-}
-
-.holdings-table .value-secondary {
-  font-size: 0.6875rem;
-  color: var(--text-muted);
-}
-
-.positive {
-  color: var(--success) !important;
-}
-
-.negative {
-  color: var(--danger) !important;
-}
-
 /* Sector Distribution */
 .sector-section {
   background: var(--bg-secondary);
@@ -437,21 +266,9 @@
   border: 1px solid var(--border-light);
 }
 
-.sector-section h2 {
-  margin: 0 0 0.75rem 0;
-  font-size: 1rem;
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
 @media (min-width: 768px) {
   .sector-section {
     padding: 1.25rem 1.5rem;
-  }
-  
-  .sector-section h2 {
-    font-size: 1.125rem;
-    margin-bottom: 1rem;
   }
 }
 
@@ -459,21 +276,14 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  margin-top: 1rem;
 }
 
 .sector-row {
   display: grid;
-  grid-template-columns: minmax(120px, 200px) 1fr 50px;
+  grid-template-columns: minmax(120px, 200px) 1fr 60px;
   gap: 0.75rem;
   align-items: center;
-}
-
-.sector-name {
-  color: var(--text-secondary);
-  font-size: 0.8125rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .sector-bar-wrapper {
@@ -491,33 +301,16 @@
   min-width: 2px;
 }
 
-.sector-pct {
-  color: var(--text-primary);
-  font-size: 0.875rem;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  font-weight: 500;
-}
-
 /* ============================================
-   ADDITIONAL MOBILE RESPONSIVE STYLES
+   MOBILE RESPONSIVE STYLES
    ============================================ */
 
-/* Mobile - Dashboard Header */
 @media (max-width: 480px) {
   .dashboard-header {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .dashboard-header h2 {
-    font-size: 1.25rem;
-    text-align: center;
-  }
-}
-
-/* Mobile - Summary Cards */
-@media (max-width: 480px) {
   .summary-cards {
     grid-template-columns: 1fr;
     gap: 0.75rem;
@@ -530,21 +323,11 @@
     align-items: center;
   }
 
-  .card-label {
-    font-size: 0.6875rem;
-  }
-
-  .card-value {
-    font-size: 1.125rem;
-    text-align: right;
-  }
-
-  .card-value small {
-    font-size: 0.75rem;
+  .card-value-with-percent {
+    align-items: flex-end;
   }
 }
 
-/* Mobile - Holdings Cards Enhanced */
 @media (max-width: 900px) {
   .holding-card {
     padding: 0.875rem;
@@ -554,59 +337,8 @@
     margin-bottom: 0.625rem;
   }
 
-  .holding-card-title .ticker {
-    font-size: 0.9375rem;
-  }
-
-  .holding-card-title .name {
-    font-size: 0.75rem;
-    max-width: 180px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .holding-card-pl .value {
-    font-size: 0.9375rem;
-  }
-
-  .holding-card-pl .percent {
-    font-size: 0.75rem;
-  }
-
   .holding-card-stats {
     gap: 0.375rem;
     font-size: 0.75rem;
-  }
-}
-
-/* Mobile - Holdings Table Scroll */
-@media (max-width: 900px) {
-  .holdings-table-wrapper {
-    position: relative;
-  }
-
-  .holdings-table-wrapper::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 20px;
-    background: linear-gradient(to right, transparent, var(--bg-secondary));
-    pointer-events: none;
-  }
-}
-
-/* Mobile - Loading & Error States */
-@media (max-width: 480px) {
-  .dashboard-loading,
-  .dashboard-error {
-    padding: 2rem 1rem;
-    font-size: 0.875rem;
-  }
-
-  .empty-state {
-    padding: 2rem 1rem;
   }
 }

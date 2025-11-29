@@ -14,6 +14,14 @@ import {
   type SelectOption,
 } from '@/components/shared/BottomSheet';
 import { LoadingSpinner, ErrorState, EmptyState } from '@/components/shared';
+import {
+  SectionTitle,
+  Ticker,
+  StockName,
+  MetricLabel,
+  MetricValue,
+  Text,
+} from '@/components/shared/Typography';
 import './Dashboard.css';
 
 type SortKey =
@@ -160,49 +168,58 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
     <div className="dashboard">
       {/* Dashboard Header */}
       <div className="dashboard-header">
-        <h2>Portfolio Overview</h2>
+        <SectionTitle>Portfolio Overview</SectionTitle>
       </div>
 
       {/* Portfolio Summary Cards */}
       <div className="summary-cards">
         <div className="summary-card">
-          <span className="card-label">Total Invested</span>
-          <span className="card-value">
+          <MetricLabel>Total Invested</MetricLabel>
+          <MetricValue size="lg">
             {formatCurrency(totals?.totalInvestedCzk || 0)}
-          </span>
+          </MetricValue>
         </div>
 
         <div className="summary-card">
-          <span className="card-label">Current Value</span>
-          <span className="card-value">
+          <MetricLabel>Current Value</MetricLabel>
+          <MetricValue size="lg">
             {formatCurrency(totals?.totalCurrentValueCzk || 0)}
-          </span>
+          </MetricValue>
         </div>
 
         <div className="summary-card">
-          <span className="card-label">Unrealized P&L</span>
-          <span
-            className={cn(
-              'card-value',
-              (totals?.totalUnrealizedGain || 0) >= 0 ? 'positive' : 'negative'
-            )}
-          >
-            {formatCurrency(totals?.totalUnrealizedGain || 0)}
-            <small>
+          <MetricLabel>Unrealized P&L</MetricLabel>
+          <div className="card-value-with-percent">
+            <MetricValue
+              size="lg"
+              sentiment={
+                (totals?.totalUnrealizedGain || 0) >= 0
+                  ? 'positive'
+                  : 'negative'
+              }
+            >
+              {formatCurrency(totals?.totalUnrealizedGain || 0)}
+            </MetricValue>
+            <Text
+              size="sm"
+              color={
+                (totals?.totalUnrealizedGain || 0) >= 0 ? 'success' : 'danger'
+              }
+            >
               {formatPercent(totals?.totalUnrealizedGainPercentage || 0)}
-            </small>
-          </span>
+            </Text>
+          </div>
         </div>
 
         <div className="summary-card">
-          <span className="card-label">Stocks</span>
-          <span className="card-value">{totals?.stockCount || 0}</span>
+          <MetricLabel>Stocks</MetricLabel>
+          <MetricValue size="lg">{totals?.stockCount || 0}</MetricValue>
         </div>
       </div>
 
       {/* Holdings Table */}
       <div className="holdings-section">
-        <h2>Holdings</h2>
+        <SectionTitle>Holdings</SectionTitle>
 
         {holdings.length === 0 ? (
           <EmptyState
@@ -243,72 +260,71 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                   >
                     <div className="holding-card-header">
                       <div className="holding-card-title">
-                        <span className="ticker">{holding.ticker}</span>
-                        <span className="name">{holding.stock_name}</span>
+                        <Ticker>{holding.ticker}</Ticker>
+                        <StockName truncate>{holding.stock_name}</StockName>
                       </div>
                       <div className="holding-card-pl">
-                        <div
-                          className={cn(
-                            'value',
+                        <MetricValue
+                          sentiment={
                             (plCzk || 0) >= 0 ? 'positive' : 'negative'
-                          )}
+                          }
                         >
                           {plCzk !== null ? formatCurrency(plCzk) : '—'}
-                        </div>
-                        <div
-                          className={cn(
-                            'percent',
+                        </MetricValue>
+                        <Text
+                          size="sm"
+                          color={
                             (holding.gain_percentage || 0) >= 0
-                              ? 'positive'
-                              : 'negative'
-                          )}
+                              ? 'success'
+                              : 'danger'
+                          }
                         >
                           {formatPercent(holding.gain_percentage)}
-                        </div>
+                        </Text>
                       </div>
                     </div>
                     <div className="holding-card-stats">
                       <div className="holding-card-stat">
-                        <span className="label">Shares</span>
-                        <span className="value">
+                        <MetricLabel>Shares</MetricLabel>
+                        <MetricValue>
                           {formatNumber(holding.total_shares, 4)}
-                        </span>
+                        </MetricValue>
                       </div>
                       <div className="holding-card-stat">
-                        <span className="label">Avg Price</span>
-                        <span className="value">
+                        <MetricLabel>Avg Price</MetricLabel>
+                        <MetricValue>
                           {formatPrice(holding.avg_buy_price)}
-                        </span>
+                        </MetricValue>
                       </div>
                       <div className="holding-card-stat">
-                        <span className="label">Current Price</span>
-                        <span className="value">
+                        <MetricLabel>Current Price</MetricLabel>
+                        <MetricValue>
                           {formatPrice(holding.current_price)}
-                        </span>
+                        </MetricValue>
                       </div>
                       <div className="holding-card-stat">
-                        <span className="label">Invested</span>
-                        <span className="value">
+                        <MetricLabel>Invested</MetricLabel>
+                        <MetricValue>
                           {formatCurrency(holding.total_invested_czk)}
-                        </span>
+                        </MetricValue>
                       </div>
                       <div className="holding-card-stat">
-                        <span className="label">Current</span>
-                        <span className="value">
+                        <MetricLabel>Current</MetricLabel>
+                        <MetricValue>
                           {formatCurrency(holding.current_value_czk)}
-                        </span>
+                        </MetricValue>
                       </div>
                       <div className="holding-card-stat">
-                        <span className="label">Weight</span>
-                        <span className="value">
+                        <MetricLabel>Weight</MetricLabel>
+                        <MetricValue>
                           {portfolioPercentage !== null
                             ? formatPercent(portfolioPercentage, 1)
                             : '—'}
-                        </span>
+                        </MetricValue>
                       </div>
                       <div className="holding-card-stat">
-                        <span className="label">Target</span>
-                        <span className="value">
+                        <MetricLabel>Target</MetricLabel>
+                        <MetricValue>
                           {holding.target_price !== null
                             ? `$${formatPrice(
                                 holding.target_price,
@@ -316,18 +332,18 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                                 false
                               )}`
                             : '—'}
-                        </span>
+                        </MetricValue>
                       </div>
                       <div className="holding-card-stat">
-                        <span className="label">To Target</span>
-                        <span
-                          className={cn(
-                            'value',
-                            holding.distance_to_target_pct !== null &&
-                              (holding.distance_to_target_pct <= 0
+                        <MetricLabel>To Target</MetricLabel>
+                        <MetricValue
+                          sentiment={
+                            holding.distance_to_target_pct !== null
+                              ? holding.distance_to_target_pct <= 0
                                 ? 'positive'
-                                : 'negative')
-                          )}
+                                : 'negative'
+                              : undefined
+                          }
                         >
                           {holding.distance_to_target_pct !== null
                             ? formatPercent(
@@ -336,12 +352,12 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                                 true
                               )
                             : '—'}
-                        </span>
+                        </MetricValue>
                       </div>
                       {holding.sector_name && (
                         <div className="holding-card-stat">
-                          <span className="label">Sector</span>
-                          <span className="value">{holding.sector_name}</span>
+                          <MetricLabel>Sector</MetricLabel>
+                          <MetricValue>{holding.sector_name}</MetricValue>
                         </div>
                       )}
                     </div>
@@ -406,6 +422,10 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                             totals.totalCurrentValueCzk) *
                           100
                         : null;
+                    const isPositive = (holding.gain_percentage || 0) >= 0;
+                    const isTargetReached =
+                      holding.distance_to_target_pct !== null &&
+                      holding.distance_to_target_pct <= 0;
 
                     return (
                       <tr
@@ -415,54 +435,60 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                       >
                         <td>
                           <div className="stock-cell">
-                            <span className="ticker">{holding.ticker}</span>
-                            <span className="name">{holding.stock_name}</span>
+                            <Ticker>{holding.ticker}</Ticker>
+                            <StockName truncate>{holding.stock_name}</StockName>
                           </div>
                         </td>
                         <td className="right">
-                          {formatNumber(holding.total_shares, 4)}
+                          <MetricValue>
+                            {formatNumber(holding.total_shares, 4)}
+                          </MetricValue>
                         </td>
                         <td className="right">
-                          {formatPrice(holding.avg_buy_price)}
+                          <MetricValue>
+                            {formatPrice(holding.avg_buy_price)}
+                          </MetricValue>
                         </td>
                         <td className="right">
-                          {formatPrice(holding.current_price)}
+                          <MetricValue>
+                            {formatPrice(holding.current_price)}
+                          </MetricValue>
                         </td>
                         <td className="right">
                           <div className="dual-value">
-                            <span className="primary">
+                            <MetricValue>
                               {formatCurrency(holding.current_value_czk)}
-                            </span>
-                            <span className="secondary">
+                            </MetricValue>
+                            <Text size="xs" color="muted">
                               inv: {formatCurrency(holding.total_invested_czk)}
-                            </span>
+                            </Text>
                           </div>
                         </td>
-                        <td
-                          className={cn(
-                            'right',
-                            (holding.gain_percentage || 0) >= 0
-                              ? 'positive'
-                              : 'negative'
-                          )}
-                        >
+                        <td className="right">
                           <div className="dual-value">
-                            <span className="primary">
+                            <MetricValue
+                              sentiment={isPositive ? 'positive' : 'negative'}
+                            >
                               {formatPercent(holding.gain_percentage)}
-                            </span>
-                            <span className="secondary">
+                            </MetricValue>
+                            <Text
+                              size="xs"
+                              color={isPositive ? 'success' : 'danger'}
+                            >
                               {plCzk !== null ? formatCurrency(plCzk) : '—'}
-                            </span>
+                            </Text>
                           </div>
                         </td>
                         <td className="right">
-                          {portfolioPercentage !== null
-                            ? formatPercent(portfolioPercentage, 1)
-                            : '—'}
+                          <MetricValue>
+                            {portfolioPercentage !== null
+                              ? formatPercent(portfolioPercentage, 1)
+                              : '—'}
+                          </MetricValue>
                         </td>
                         <td className="right">
                           <div className="dual-value">
-                            <span className="primary">
+                            <MetricValue>
                               {holding.target_price !== null
                                 ? `$${formatPrice(
                                     holding.target_price,
@@ -470,27 +496,26 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                                     false
                                   )}`
                                 : '—'}
-                            </span>
-                            <span
-                              className={cn(
-                                'secondary',
-                                holding.distance_to_target_pct !== null &&
-                                  (holding.distance_to_target_pct <= 0
-                                    ? 'positive'
-                                    : 'negative')
-                              )}
-                            >
-                              {holding.distance_to_target_pct !== null
-                                ? formatPercent(
-                                    holding.distance_to_target_pct,
-                                    1,
-                                    true
-                                  )
-                                : ''}
-                            </span>
+                            </MetricValue>
+                            {holding.distance_to_target_pct !== null && (
+                              <Text
+                                size="xs"
+                                color={isTargetReached ? 'success' : 'danger'}
+                              >
+                                {formatPercent(
+                                  holding.distance_to_target_pct,
+                                  1,
+                                  true
+                                )}
+                              </Text>
+                            )}
                           </div>
                         </td>
-                        <td>{holding.sector_name || '—'}</td>
+                        <td>
+                          <Text color="secondary">
+                            {holding.sector_name || '—'}
+                          </Text>
+                        </td>
                       </tr>
                     );
                   })}
@@ -504,20 +529,20 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
       {/* Sector Distribution */}
       {totals && totals.sectorDistribution.length > 0 && (
         <div className="sector-section">
-          <h2>Sector Distribution</h2>
+          <SectionTitle>Sector Distribution</SectionTitle>
           <div className="sector-bars">
             {totals.sectorDistribution.map((sector) => (
               <div key={sector.sector} className="sector-row">
-                <span className="sector-name">{sector.sector}</span>
+                <Text size="sm" color="secondary">
+                  {sector.sector}
+                </Text>
                 <div className="sector-bar-wrapper">
                   <div
                     className="sector-bar"
                     style={{ width: `${sector.percentage}%` }}
                   />
                 </div>
-                <span className="sector-pct">
-                  {formatPercent(sector.percentage, 1)}
-                </span>
+                <MetricValue>{formatPercent(sector.percentage, 1)}</MetricValue>
               </div>
             ))}
           </div>
