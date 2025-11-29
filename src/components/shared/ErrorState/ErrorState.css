@@ -1,19 +1,23 @@
 .error-state {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
   padding: 2rem;
-  background: var(--danger-light);
+  background: var(--bg-secondary);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--danger);
+  border: 1px solid var(--border-light);
 }
 
 .error-state-icon {
-  font-size: 2rem;
-  display: block;
-  margin-bottom: 0.75rem;
-}
-
-.error-state-message {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 700;
   color: var(--danger);
-  font-size: 0.9375rem;
-  margin: 0 0 1rem;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 50%;
 }

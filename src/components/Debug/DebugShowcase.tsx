@@ -69,7 +69,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'stock', label: 'Stock Components', category: 'components' },
   { id: 'forms', label: 'Forms', category: 'components' },
   { id: 'ui', label: 'UI Controls', category: 'components' },
-  { id: 'shared', label: 'Shared (Legacy)', category: 'components' },
+  { id: 'shared', label: 'Data Display', category: 'components' },
   // Design Tokens
   { id: 'colors', label: 'Colors', category: 'tokens' },
   { id: 'fonts', label: 'Font Sizes', category: 'tokens' },
@@ -852,10 +852,9 @@ function UIComponentsSection() {
 function SharedComponentsSection() {
   return (
     <section className="debug-section" id="shared">
-      <SectionTitle>Shared Components (Legacy)</SectionTitle>
+      <SectionTitle>Data Display Components</SectionTitle>
       <Description>
-        Tyto komponenty používají vlastní span elementy. Při refactoringu by
-        měly používat Typography komponenty.
+        Složené komponenty pro zobrazení dat - interně používají Typography.
       </Description>
 
       {/* ScoreCard */}
@@ -870,14 +869,6 @@ function SharedComponentsSection() {
           <ScoreCard label="Good" value={90} sentiment="positive" />
           <ScoreCard label="Bad" value={25} sentiment="negative" />
           <ScoreCard label="Empty" value={null} />
-        </div>
-        <div className="debug-refactor">
-          <Label>Refactor plan:</Label>
-          <Description>
-            Interně používá <code>span.score-card-label</code> a{' '}
-            <code>span.score-card-value</code>. → Nahradit za{' '}
-            <code>{'<MetricLabel>'}</code> a <code>{'<MetricValue>'}</code>
-          </Description>
         </div>
       </div>
 
@@ -898,14 +889,6 @@ function SharedComponentsSection() {
           <MetricRow label="Debt/Equity" value={1.8} sentiment="negative" />
           <MetricRow label="No Data" value={null} />
         </div>
-        <div className="debug-refactor">
-          <Label>Refactor plan:</Label>
-          <Description>
-            Interně používá <code>span.metric-row-label</code> a{' '}
-            <code>span.metric-row-value</code>. → Nahradit za{' '}
-            <code>{'<MetricLabel>'}</code> a <code>{'<MetricValue>'}</code>
-          </Description>
-        </div>
       </div>
 
       {/* PriceDisplay */}
@@ -919,14 +902,6 @@ function SharedComponentsSection() {
           <PriceDisplay price={150.25} change={2.5} changePercent={1.7} />
           <PriceDisplay price={148.0} change={-1.5} changePercent={-1.0} />
           <PriceDisplay price={null} />
-        </div>
-        <div className="debug-refactor">
-          <Label>Refactor plan:</Label>
-          <Description>
-            Interně používá <code>span.price-display-value</code> a{' '}
-            <code>span.price-display-change</code>. → Nahradit za{' '}
-            <code>{'<MetricValue>'}</code> se sentiment prop
-          </Description>
         </div>
       </div>
 
@@ -942,14 +917,6 @@ function SharedComponentsSection() {
           <SignalBadge type="CONVICTION_HOLD" />
           <SignalBadge type="CONSIDER_TRIM" />
           <SignalBadge type="NEUTRAL" />
-        </div>
-        <div className="debug-refactor">
-          <Label>Refactor plan:</Label>
-          <Description>
-            Používá vlastní span s SIGNAL_CONFIG systémem. → Ponechat jako je
-            (specifická logika), ale interně může používat{' '}
-            <code>{'<Badge>'}</code>
-          </Description>
         </div>
       </div>
 
@@ -969,14 +936,6 @@ function SharedComponentsSection() {
             action={{ label: 'Add Stock', onClick: () => {} }}
           />
         </div>
-        <div className="debug-refactor">
-          <Label>Refactor plan:</Label>
-          <Description>
-            Používá <code>h3.empty-state-title</code> a{' '}
-            <code>p.empty-state-description</code>. → Nahradit za{' '}
-            <code>{'<CardTitle>'}</code> a <code>{'<Description>'}</code>
-          </Description>
-        </div>
       </div>
 
       {/* ErrorState */}
@@ -994,15 +953,6 @@ function SharedComponentsSection() {
             onRetry={() => {}}
           />
         </div>
-        <div className="debug-refactor">
-          <Label>Refactor plan:</Label>
-          <Description>
-            Používá <code>span.error-state-icon</code> a{' '}
-            <code>p.error-state-message</code>. → Nahradit za{' '}
-            <code>{'<Description>'}</code> nebo novou{' '}
-            <code>{'<ErrorText>'}</code>
-          </Description>
-        </div>
       </div>
     </section>
   );
@@ -1018,9 +968,10 @@ export function DebugShowcase() {
     }
   };
 
-  const filteredItems = activeCategory === 'all' 
-    ? NAV_ITEMS 
-    : NAV_ITEMS.filter(item => item.category === activeCategory);
+  const filteredItems =
+    activeCategory === 'all'
+      ? NAV_ITEMS
+      : NAV_ITEMS.filter((item) => item.category === activeCategory);
 
   const categories: Category[] = ['typography', 'components', 'tokens'];
 
@@ -1036,16 +987,20 @@ export function DebugShowcase() {
       {/* Category Tabs */}
       <nav className="debug-nav">
         <div className="debug-nav-tabs">
-          <button 
-            className={`debug-nav-tab ${activeCategory === 'all' ? 'active' : ''}`}
+          <button
+            className={`debug-nav-tab ${
+              activeCategory === 'all' ? 'active' : ''
+            }`}
             onClick={() => setActiveCategory('all')}
           >
             All
           </button>
-          {categories.map(cat => (
+          {categories.map((cat) => (
             <button
               key={cat}
-              className={`debug-nav-tab ${activeCategory === cat ? 'active' : ''}`}
+              className={`debug-nav-tab ${
+                activeCategory === cat ? 'active' : ''
+              }`}
               onClick={() => setActiveCategory(cat)}
             >
               {CATEGORY_LABELS[cat]}
@@ -1055,7 +1010,7 @@ export function DebugShowcase() {
 
         {/* Quick Jump */}
         <div className="debug-nav-links">
-          {filteredItems.map(item => (
+          {filteredItems.map((item) => (
             <button
               key={item.id}
               className="debug-nav-link"

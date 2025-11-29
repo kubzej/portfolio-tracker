@@ -1,7 +1,28 @@
 import type { SignalType } from '@/utils/recommendations';
 import { SIGNAL_CONFIG } from '@/utils/signals';
-import { cn } from '@/utils/cn';
-import './SignalBadge.css';
+import { Badge } from '../Typography';
+
+// Map signal class to Badge variant
+const CLASS_TO_VARIANT: Record<
+  string,
+  | 'dip'
+  | 'momentum'
+  | 'conviction'
+  | 'target'
+  | 'trim'
+  | 'watch'
+  | 'accumulate'
+  | 'neutral'
+> = {
+  dip: 'dip',
+  momentum: 'momentum',
+  conviction: 'conviction',
+  target: 'target',
+  trim: 'trim',
+  watch: 'watch',
+  accumulate: 'accumulate',
+  neutral: 'neutral',
+};
 
 interface SignalBadgeProps {
   type: SignalType;
@@ -15,17 +36,16 @@ export function SignalBadge({
   showTooltip = false,
 }: SignalBadgeProps) {
   const config = SIGNAL_CONFIG[type] || SIGNAL_CONFIG.NEUTRAL;
+  const variant = CLASS_TO_VARIANT[config.class] || 'neutral';
+  const badgeSize = size === 'sm' ? 'xs' : 'sm';
 
   return (
-    <span
-      className={cn(
-        'signal-badge',
-        `signal-badge--${config.class}`,
-        `signal-badge--${size}`
-      )}
+    <Badge
+      variant={variant}
+      size={badgeSize}
       title={showTooltip ? config.description : undefined}
     >
       {config.label}
-    </span>
+    </Badge>
   );
 }

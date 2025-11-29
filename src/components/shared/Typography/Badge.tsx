@@ -1,24 +1,39 @@
 import './Typography.css';
 
 type BadgeVariant =
+  // Recommendation
   | 'buy'
   | 'sell'
   | 'hold'
+  // Sentiment
   | 'positive'
   | 'negative'
   | 'neutral'
+  // General
   | 'info'
-  | 'warning';
+  | 'warning'
+  // Signals
+  | 'dip'
+  | 'momentum'
+  | 'conviction'
+  | 'target'
+  | 'trim'
+  | 'watch'
+  | 'accumulate';
+
 type BadgeSize = 'xs' | 'sm' | 'base';
 
 interface BadgeProps {
   children: React.ReactNode;
   variant: BadgeVariant;
   size?: BadgeSize;
+  title?: string;
 }
 
-export function Badge({ children, variant, size = 'base' }: BadgeProps) {
+export function Badge({ children, variant, size = 'base', title }: BadgeProps) {
   return (
-    <span className={`badge badge--${size} badge--${variant}`}>{children}</span>
+    <span className={`badge badge--${size} badge--${variant}`} title={title}>
+      {children}
+    </span>
   );
 }
