@@ -96,7 +96,7 @@ export function AddStockForm({
         const input: UpdateWatchlistItemInput = {
           ticker:
             normalizedTicker !== item.ticker ? normalizedTicker : undefined,
-          name: name.trim() || null,
+          name: name.trim() || undefined,
           target_buy_price: parsedBuyPrice ?? null,
           target_sell_price: parsedSellPrice ?? null,
           notes: notes.trim() || null,
