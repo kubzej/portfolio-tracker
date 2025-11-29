@@ -17,6 +17,8 @@ import {
   LoadingSpinner,
   EmptyState,
   ErrorState,
+  MobileSortControl,
+  type SortField,
 } from '@/components/shared';
 import {
   SectionTitle,
@@ -33,10 +35,7 @@ import {
 } from '@/components/shared/Typography';
 import { Tabs } from '@/components/shared/Tabs';
 import { holdingsApi } from '@/services/api';
-import {
-  BottomSheetSelect,
-  type SelectOption,
-} from '@/components/shared/BottomSheet';
+import { type SelectOption } from '@/components/shared/BottomSheet';
 import {
   getAllIndicators,
   getUserViews,
@@ -143,6 +142,15 @@ export function Analysis({ portfolioId }: AnalysisProps) {
       .filter((opt): opt is SelectOption => opt !== null);
     return [...baseOptions, ...indicatorOptions];
   }, [selectedColumns, indicators]);
+
+  // Sort fields for MobileSortControl
+  const sortFields = useMemo((): SortField[] => {
+    return sortOptions.map((opt) => ({
+      value: opt.value,
+      label: opt.label,
+      defaultDirection: 'desc' as const,
+    }));
+  }, [sortOptions]);
 
   useEffect(() => {
     loadData();
@@ -1030,15 +1038,13 @@ export function Analysis({ portfolioId }: AnalysisProps) {
           <section className="analysis-section">
             <div className="section-header-row">
               <div>
-                <h3>Fundamental Metrics</h3>
-                <p className="section-description">
+                <SectionTitle>Fundamental Metrics</SectionTitle>
+                <Description>
                   Customize columns to show the metrics you care about. Data
                   from Finnhub (FREE tier).
-                </p>
+                </Description>
               </div>
-              {currentView && (
-                <div className="current-view-badge">📋 {currentView.name}</div>
-              )}
+              {currentView && <Badge variant="info">{currentView.name}</Badge>}
             </div>
 
             {/* Column Picker */}
@@ -1090,8 +1096,8 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                       <tr key={item.ticker}>
                         <td>
                           <div className="stock-cell">
-                            <span className="ticker">{item.ticker}</span>
-                            <span className="name">{item.stockName}</span>
+                            <Ticker>{item.ticker}</Ticker>
+                            <StockName truncate>{item.stockName}</StockName>
                           </div>
                         </td>
                         <td className="right">
@@ -1133,24 +1139,16 @@ export function Analysis({ portfolioId }: AnalysisProps) {
             {/* Mobile Fundamentals Cards */}
             <div className="fundamentals-mobile">
               {/* Mobile Sort Selector */}
-              <div className="mobile-sort-row">
-                <BottomSheetSelect
-                  label="Sort by"
-                  value={sortKey}
-                  onChange={(value) => {
-                    setSortKey(value);
-                    setSortAsc(false);
-                  }}
-                  options={sortOptions}
-                />
-                <button
-                  className="mobile-sort-dir"
-                  onClick={() => setSortAsc(!sortAsc)}
-                  title={sortAsc ? 'Ascending' : 'Descending'}
-                >
-                  {sortAsc ? '↑' : '↓'}
-                </button>
-              </div>
+              <MobileSortControl
+                fields={sortFields}
+                selectedField={sortKey}
+                direction={sortAsc ? 'asc' : 'desc'}
+                onFieldChange={(field) => {
+                  setSortKey(field);
+                  setSortAsc(false);
+                }}
+                onDirectionChange={(dir) => setSortAsc(dir === 'asc')}
+              />
 
               {/* Mobile Cards */}
               <div className="fundamentals-cards">
@@ -1160,22 +1158,31 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     <div key={item.ticker} className="fundamentals-card">
                       <div className="fundamentals-card-header">
                         <div className="fundamentals-card-title">
-                          <span className="ticker">{item.ticker}</span>
-                          <span className="name">{item.stockName}</span>
+                          <Ticker>{item.ticker}</Ticker>
+                          <StockName truncate>{item.stockName}</StockName>
                         </div>
-                        <span className="fundamentals-card-weight">
+                        <Text size="sm" weight="semibold">
                           {item.weight.toFixed(1)}%
-                        </span>
+                        </Text>
                       </div>
                       <div className="fundamentals-card-metrics">
                         {selectedColumns.map((key) => {
                           const indicator = getIndicatorByKey(key);
                           if (!indicator) return null;
                           const value = getMetricValue(f, key);
+                          const valueClass = getIndicatorValueClass(
+                            value,
+                            indicator
+                          );
+                          const sentiment =
+                            valueClass === 'positive'
+                              ? 'positive'
+                              : valueClass === 'negative'
+                              ? 'negative'
+                              : 'neutral';
                           return (
                             <div key={key} className="fundamentals-metric">
-                              <span
-                                className="metric-label"
+                              <MetricLabel
                                 onClick={() =>
                                   setMobileTooltip({
                                     title: indicator.name,
@@ -1185,15 +1192,10 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                               >
                                 {indicator.short_name}
                                 <span className="metric-info-icon">ⓘ</span>
-                              </span>
-                              <span
-                                className={`metric-value ${getIndicatorValueClass(
-                                  value,
-                                  indicator
-                                )}`}
-                              >
+                              </MetricLabel>
+                              <MetricValue sentiment={sentiment}>
                                 {formatIndicatorValue(value, indicator)}
-                              </span>
+                              </MetricValue>
                             </div>
                           );
                         })}

@@ -4,6 +4,14 @@ import type {
   UserAnalysisView,
 } from '@/services/api/indicators';
 import { Button } from '@/components/shared/Button';
+import { Input } from '@/components/shared/Input';
+import {
+  CardTitle,
+  SectionTitle,
+  Caption,
+  Text,
+  Muted,
+} from '@/components/shared/Typography';
 import './ColumnPicker.css';
 
 interface ColumnPickerProps {
@@ -216,7 +224,7 @@ export function ColumnPicker({
             onClick={() => setShowSaveDialog(true)}
             title="Save current column configuration as a view"
           >
-            💾 Save View
+            Save View
           </Button>
         )}
       </div>
@@ -224,7 +232,7 @@ export function ColumnPicker({
       {/* Views Selector */}
       {views.length > 0 && (
         <div className="views-row">
-          <span className="views-label">Views:</span>
+          <Caption>Views:</Caption>
           <div className="views-list">
             {views.map((view) => (
               <div
@@ -284,24 +292,32 @@ export function ColumnPicker({
           onClick={() => setShowSaveDialog(false)}
         >
           <div className="save-dialog" onClick={(e) => e.stopPropagation()}>
-            <h4>Save View</h4>
-            <input
+            <CardTitle>Save View</CardTitle>
+            <Input
               type="text"
               placeholder="View name..."
               value={viewName}
               onChange={(e) => setViewName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSaveView()}
               autoFocus
+              fullWidth
             />
             <div className="dialog-actions">
-              <button onClick={() => setShowSaveDialog(false)}>Cancel</button>
-              <button
-                className="primary"
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowSaveDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={handleSaveView}
                 disabled={!viewName.trim()}
               >
                 Save
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -310,7 +326,7 @@ export function ColumnPicker({
       {/* Selected Columns Preview - Drag & Drop (Desktop only) */}
       {!isMobile && (
         <div className="selected-columns">
-          <span className="columns-hint">Drag to reorder:</span>
+          <Caption>Drag to reorder:</Caption>
           {selectedKeys.map((key, index) => {
             const indicator = getIndicatorByKey(key);
             if (!indicator) return null;
@@ -361,7 +377,7 @@ export function ColumnPicker({
       {isOpen && !isMobile && (
         <div className="picker-dropdown">
           <div className="picker-search">
-            <input
+            <Input
               type="text"
               placeholder="Search indicators..."
               value={searchTerm}
@@ -370,6 +386,7 @@ export function ColumnPicker({
                 if (e.target.value) setActiveCategory(null);
               }}
               autoFocus
+              fullWidth
             />
           </div>
 
@@ -388,14 +405,14 @@ export function ColumnPicker({
                   }}
                 >
                   {categoryLabels[cat] || cat}
-                  <span className="count">
+                  <Muted>
                     {
                       (categories[cat] || []).filter((i) =>
                         selectedKeys.includes(i.key)
                       ).length
                     }
                     /{(categories[cat] || []).length}
-                  </span>
+                  </Muted>
                 </button>
               ))}
             </div>
@@ -404,13 +421,11 @@ export function ColumnPicker({
             <div className="indicator-list">
               {(searchTerm || activeCategory) &&
                 filteredIndicators.length === 0 && (
-                  <div className="no-results">No indicators found</div>
+                  <Muted>No indicators found</Muted>
                 )}
 
               {!searchTerm && !activeCategory && (
-                <div className="select-category-hint">
-                  Select a category or search to add columns
-                </div>
+                <Muted>Select a category or search to add columns</Muted>
               )}
 
               {filteredIndicators.map((ind) => (
@@ -426,13 +441,11 @@ export function ColumnPicker({
                     onChange={() => toggleColumn(ind.key)}
                   />
                   <div className="indicator-info">
-                    <span className="indicator-name">
+                    <Text size="sm" weight="medium">
                       {ind.name}
-                      <span className="indicator-short">
-                        ({ind.short_name})
-                      </span>
-                    </span>
-                    <span className="indicator-desc">{ind.description}</span>
+                      <Muted> ({ind.short_name})</Muted>
+                    </Text>
+                    <Muted>{ind.description}</Muted>
                   </div>
                 </label>
               ))}
@@ -460,7 +473,7 @@ export function ColumnPicker({
           <div className="mobile-picker-backdrop" onClick={handleClose} />
           <div className="mobile-picker-sheet">
             <div className="mobile-picker-header">
-              <h3>Select Columns</h3>
+              <SectionTitle>Select Columns</SectionTitle>
               <button className="mobile-picker-close" onClick={handleClose}>
                 <svg
                   width="24"
@@ -476,11 +489,12 @@ export function ColumnPicker({
             </div>
 
             <div className="mobile-picker-search">
-              <input
+              <Input
                 type="text"
                 placeholder="Search indicators..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                fullWidth
               />
               {searchTerm && (
                 <button
@@ -497,7 +511,7 @@ export function ColumnPicker({
               {mobileFilteredIndicators && (
                 <div className="mobile-search-results">
                   {mobileFilteredIndicators.length === 0 ? (
-                    <div className="no-results">No indicators found</div>
+                    <Muted>No indicators found</Muted>
                   ) : (
                     mobileFilteredIndicators.map((ind) => (
                       <div
@@ -508,12 +522,10 @@ export function ColumnPicker({
                         onClick={() => toggleColumn(ind.key)}
                       >
                         <div className="mobile-indicator-info">
-                          <span className="mobile-indicator-name">
+                          <Text size="base" weight="medium">
                             {ind.name}
-                          </span>
-                          <span className="mobile-indicator-short">
-                            {ind.short_name}
-                          </span>
+                          </Text>
+                          <Muted>{ind.short_name}</Muted>
                         </div>
                         <div
                           className={`mobile-toggle ${
@@ -548,18 +560,12 @@ export function ColumnPicker({
                           }`}
                           onClick={() => toggleCategory(cat)}
                         >
-                          <span className="category-icon">
-                            {categoryLabels[cat]?.split(' ')[0] || ''}
-                          </span>
-                          <span className="category-name">
-                            {categoryLabels[cat]
-                              ?.split(' ')
-                              .slice(1)
-                              .join(' ') || cat}
-                          </span>
-                          <span className="category-count">
+                          <Text size="base" weight="medium">
+                            {categoryLabels[cat] || cat}
+                          </Text>
+                          <Muted>
                             {selectedCount}/{catIndicators.length}
-                          </span>
+                          </Muted>
                           <span
                             className={`category-arrow ${
                               isExpanded ? 'expanded' : ''
@@ -591,12 +597,10 @@ export function ColumnPicker({
                                 onClick={() => toggleColumn(ind.key)}
                               >
                                 <div className="mobile-indicator-info">
-                                  <span className="mobile-indicator-name">
+                                  <Text size="base" weight="medium">
                                     {ind.name}
-                                  </span>
-                                  <span className="mobile-indicator-desc">
-                                    {ind.description}
-                                  </span>
+                                  </Text>
+                                  <Muted>{ind.description}</Muted>
                                 </div>
                                 <div
                                   className={`mobile-toggle ${

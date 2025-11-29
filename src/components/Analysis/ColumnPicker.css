@@ -67,14 +67,7 @@
   margin-top: 12px;
   flex-wrap: wrap;
 }
-
-.views-row .views-label {
-  font-size: 12px;
-  color: var(--text-muted);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
+/* Caption component handles views-label styling */
 
 .views-list {
   display: flex;
@@ -161,12 +154,7 @@
   margin-top: 12px;
   align-items: center;
 }
-
-.columns-hint {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-right: 4px;
-}
+/* Caption component handles columns-hint styling */
 
 .selected-column-tag {
   display: flex;
@@ -248,21 +236,7 @@
   padding: 12px;
   border-bottom: 1px solid var(--border-light);
 }
-
-.picker-search input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  font-size: 14px;
-}
-
-.picker-search input:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-}
+/* Input component handles input styling */
 
 .picker-content {
   display: flex;
@@ -303,11 +277,7 @@
   background: var(--accent-primary);
   color: white;
 }
-
-.category-tab .count {
-  font-size: 11px;
-  opacity: 0.7;
-}
+/* Muted component handles count styling */
 
 /* Indicator List */
 .indicator-list {
@@ -316,12 +286,9 @@
   padding: 8px;
 }
 
-.no-results,
-.select-category-hint {
+.indicator-list .muted {
   padding: 24px;
   text-align: center;
-  color: var(--text-muted);
-  font-size: 14px;
 }
 
 .indicator-item {
@@ -354,24 +321,7 @@
   flex-direction: column;
   gap: 4px;
 }
-
-.indicator-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.indicator-short {
-  font-weight: 400;
-  color: var(--text-muted);
-  margin-left: 6px;
-}
-
-.indicator-desc {
-  font-size: 12px;
-  color: var(--text-secondary);
-  line-height: 1.4;
-}
+/* Typography components (Text, Muted) handle text styling */
 
 /* Footer */
 .picker-footer {
@@ -382,39 +332,7 @@
   border-top: 1px solid var(--border-light);
   background: var(--bg-secondary);
 }
-
-.reset-btn {
-  padding: 8px 16px;
-  background: transparent;
-  border: 1px solid var(--border-light);
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--text-secondary);
-  transition: all 0.2s;
-}
-
-.reset-btn:hover {
-  background: var(--danger);
-  color: white;
-  border-color: var(--danger);
-}
-
-.done-btn {
-  padding: 8px 24px;
-  background: var(--accent-primary);
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  color: white;
-  font-weight: 500;
-  transition: opacity 0.2s;
-}
-
-.done-btn:hover {
-  opacity: 0.9;
-}
+/* Button component handles button styling */
 
 /* Save Dialog */
 .save-dialog-overlay {
@@ -435,34 +353,15 @@
   min-width: 320px;
   max-width: 90vw;
 }
+/* CardTitle component handles h4 styling */
+/* Input component handles input styling */
 
-.save-dialog h4 {
-  margin: 0 0 16px;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.save-dialog input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  font-size: 14px;
+.save-dialog .card-title {
   margin-bottom: 16px;
-  box-sizing: border-box;
 }
 
-.save-dialog input::placeholder {
-  color: var(--text-muted);
-}
-
-.save-dialog input:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px var(--accent-primary-light);
+.save-dialog .input {
+  margin-bottom: 16px;
 }
 
 .dialog-actions {
@@ -470,36 +369,7 @@
   justify-content: flex-end;
   gap: 8px;
 }
-
-.dialog-actions button {
-  padding: 10px 18px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.dialog-actions button:first-child {
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-light);
-  color: var(--text-secondary);
-}
-
-.dialog-actions button:first-child:hover {
-  background: var(--bg-primary);
-  border-color: var(--border-medium);
-}
-
-.dialog-actions button.primary {
-  background: var(--accent-primary);
-  border: none;
-  color: white;
-}
-
-.dialog-actions button.primary:hover {
-  background: var(--accent-primary-hover);
-}
+/* Button component handles button styling */
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -647,13 +517,7 @@
     padding: 16px 20px;
     border-bottom: 1px solid var(--border-light);
   }
-
-  .mobile-picker-header h3 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-primary);
-  }
+  /* SectionTitle component handles h3 styling */
 
   .mobile-picker-close {
     background: transparent;
@@ -716,10 +580,9 @@
     padding: 8px 0;
   }
 
-  .mobile-search-results .no-results {
+  .mobile-search-results .muted {
     padding: 40px 20px;
     text-align: center;
-    color: var(--text-muted);
   }
 
   /* Categories Accordion */
@@ -754,18 +617,8 @@
     background: var(--bg-secondary);
   }
 
-  .mobile-category-header .category-icon {
-    font-size: 20px;
-  }
-
-  .mobile-category-header .category-name {
+  .mobile-category-header .text {
     flex: 1;
-  }
-
-  .mobile-category-header .category-count {
-    font-size: 13px;
-    color: var(--text-muted);
-    font-weight: 400;
   }
 
   .mobile-category-header .category-arrow {
@@ -803,28 +656,9 @@
   .mobile-indicator-info {
     flex: 1;
     min-width: 0;
-  }
-
-  .mobile-indicator-name {
-    display: block;
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin-bottom: 2px;
-  }
-
-  .mobile-indicator-short {
-    display: block;
-    font-size: 12px;
-    color: var(--text-muted);
-  }
-
-  .mobile-indicator-desc {
-    display: block;
-    font-size: 12px;
-    color: var(--text-secondary);
-    line-height: 1.4;
-    margin-top: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }
 
   /* Toggle Switch */
@@ -873,28 +707,8 @@
     background: var(--bg-primary);
   }
 
-  .mobile-reset-btn {
+  .mobile-picker-footer .btn {
     flex: 1;
-    padding: 14px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-light);
-    border-radius: 10px;
-    color: var(--text-secondary);
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-  }
-
-  .mobile-done-btn {
-    flex: 1;
-    padding: 14px;
-    background: var(--accent-primary);
-    border: none;
-    border-radius: 10px;
-    color: white;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
   }
 
   /* Header adjustments for mobile */
