@@ -1018,18 +1018,6 @@
     max-width: 100%;
   }
 
-  .filter-tabs {
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    padding-bottom: 0.25rem;
-    -webkit-overflow-scrolling: touch;
-    max-width: 100%;
-  }
-
-  .filter-tab {
-    flex-shrink: 0;
-  }
-
   .modal-stats {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1048,11 +1036,6 @@
 
   .rec-header-right {
     width: 100%;
-  }
-
-  .history-btn {
-    flex: 1;
-    text-align: center;
   }
 }
 
@@ -1078,14 +1061,6 @@
     padding: 1rem;
   }
 
-  .modal-title h3 {
-    font-size: 1.125rem;
-  }
-
-  .modal-subtitle {
-    font-size: 0.75rem;
-  }
-
   .modal-stats {
     grid-template-columns: repeat(2, 1fr);
     gap: 0.5rem;
@@ -1094,10 +1069,6 @@
 
   .stat-box {
     padding: 0.25rem;
-  }
-
-  .stat-value {
-    font-size: 1rem;
   }
 
   .modal-section {
@@ -1113,36 +1084,12 @@
     padding: 0.5rem;
   }
 
-  .metric-label {
-    font-size: 0.5625rem;
-  }
-
-  .metric-value {
-    font-size: 0.8125rem;
-  }
-
-  .metric-sub {
-    font-size: 0.6875rem;
-    display: block;
-    margin-left: 0;
-    margin-top: 0.125rem;
-  }
-
-  .metrics-note {
-    font-size: 0.75rem;
-    margin: 0.5rem 0 0.625rem 0;
-  }
-
   .week-range {
     padding: 0.625rem;
   }
 
   .range-visual {
     gap: 0.375rem;
-  }
-
-  .range-visual > span {
-    font-size: 0.6875rem;
   }
 
   .breakdown-list {
@@ -1157,10 +1104,6 @@
     padding: 0.75rem;
   }
 
-  .points-card h4 {
-    font-size: 0.6875rem;
-  }
-
   .points-card ul {
     font-size: 0.75rem;
     padding-left: 0.875rem;
@@ -1168,14 +1111,6 @@
 
   .exit-header {
     gap: 0.5rem;
-  }
-
-  .section-header h4 {
-    font-size: 0.6875rem;
-  }
-
-  .signal-description {
-    font-size: 0.75rem;
   }
 
   /* History panel adjustments */
