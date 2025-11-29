@@ -4,7 +4,7 @@ import type { StockWithSector } from '@/types/database';
 import { formatPrice, getMarketStatus } from '@/utils/format';
 import { Button } from '@/components/shared/Button';
 import { LoadingSpinner, ErrorState, EmptyState } from '@/components/shared';
-import { AddStockModal } from './AddStockModal';
+import { StockModal } from './StockModal';
 import './StocksList.css';
 
 interface StocksListProps {
@@ -105,7 +105,7 @@ export function StocksList({ onStockClick }: StocksListProps) {
         </div>
       )}
 
-      <AddStockModal
+      <StockModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSuccess={loadStocks}

@@ -1,3 +1,3 @@
 export { StocksList } from './StocksList';
-export { AddStockModal } from './AddStockModal';
+export { StockModal } from './StockModal';
 export { AddTransactionModal } from './AddTransactionModal';

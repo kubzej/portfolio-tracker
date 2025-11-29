@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Dashboard } from './components/Dashboard';
 import {
   StocksList,
-  AddStockModal,
+  StockModal,
   AddTransactionModal,
 } from './components/StocksList';
 import { StockDetail } from './components/StockDetail';
@@ -356,7 +356,7 @@ function App() {
       </main>
 
       {/* Modals */}
-      <AddStockModal
+      <StockModal
         isOpen={showAddStockModal}
         onClose={() => setShowAddStockModal(false)}
         onSuccess={() => setRefreshKey((k) => k + 1)}

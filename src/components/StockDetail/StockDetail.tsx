@@ -17,7 +17,7 @@ import {
   TrashIcon,
 } from '@/components/shared';
 import { EditTransactionModal } from './EditTransactionModal';
-import { EditStockModal } from './EditStockModal';
+import { StockModal } from '../StocksList/StockModal';
 import { AddTransactionModal } from '../StocksList/AddTransactionModal';
 import './StockDetail.css';
 
@@ -352,7 +352,7 @@ export function StockDetail({
       </div>
 
       {/* Edit Stock Modal */}
-      <EditStockModal
+      <StockModal
         isOpen={showEditStock}
         onClose={() => setShowEditStock(false)}
         onSuccess={loadData}
