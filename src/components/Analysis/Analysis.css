@@ -124,12 +124,6 @@
   margin-bottom: 1.25rem;
 }
 
-.section-hint {
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  margin: 0 0 0.75rem 0;
-}
-
 /* Table */
 .analysis-table-wrapper {
   overflow-x: auto;
@@ -2977,26 +2971,6 @@
   gap: 0.125rem;
 }
 
-.technicals-card-title .ticker {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.technicals-card-title .name {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-}
-
-.technicals-card-weight {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--accent-primary);
-  background: rgba(99, 102, 241, 0.1);
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--radius-sm);
-}
-
 /* Range Visualization */
 .technicals-range-section {
   margin-bottom: 0.75rem;
@@ -3111,8 +3085,6 @@
 
 /* Card Hint */
 .technicals-card-hint {
-  font-size: 0.75rem;
-  color: var(--accent-primary);
   text-align: right;
   margin-top: 0.5rem;
   padding-top: 0.5rem;

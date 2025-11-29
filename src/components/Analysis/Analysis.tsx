@@ -1527,8 +1527,8 @@ export function Analysis({ portfolioId }: AnalysisProps) {
       {activeTab === 'technicals' && (
         <>
           <section className="analysis-section">
-            <h3>Price Analysis</h3>
-            <p className="section-hint">Click row for chart detail</p>
+            <SectionTitle>Price Analysis</SectionTitle>
+            <Description>Click row for chart detail</Description>
 
             <div className="analysis-table-wrapper">
               <table className="analysis-table technicals-table">
@@ -1596,8 +1596,8 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                       >
                         <td>
                           <div className="stock-cell">
-                            <span className="ticker">{item.ticker}</span>
-                            <span className="name">{item.stockName}</span>
+                            <Ticker>{item.ticker}</Ticker>
+                            <StockName truncate>{item.stockName}</StockName>
                           </div>
                         </td>
                         <td className="right">
@@ -1702,12 +1702,10 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     >
                       <div className="technicals-card-header">
                         <div className="technicals-card-title">
-                          <span className="ticker">{item.ticker}</span>
-                          <span className="name">{item.stockName}</span>
+                          <Ticker>{item.ticker}</Ticker>
+                          <StockName truncate>{item.stockName}</StockName>
                         </div>
-                        <span className="technicals-card-weight">
-                          {item.weight.toFixed(1)}%
-                        </span>
+                        <Text weight="semibold">{item.weight.toFixed(1)}%</Text>
                       </div>
 
                       {/* 52W Range Visualization */}
@@ -1770,7 +1768,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
                       {hasTechnicalData && (
                         <div className="technicals-card-hint">
-                          Tap for chart →
+                          <Muted>Tap for chart →</Muted>
                         </div>
                       )}
                     </div>
