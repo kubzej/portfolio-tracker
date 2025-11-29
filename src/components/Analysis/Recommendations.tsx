@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from 'react';
 import type { StockRecommendation, SignalType } from '@/utils/recommendations';
 import { SIGNAL_CONFIG } from '@/utils/signals';
 import { formatDateShort, formatReturn, getReturnClass } from '@/utils/format';
-import { InfoTooltip } from '@/components/shared/InfoTooltip';
 import { Tabs } from '@/components/shared/Tabs';
 import { Button } from '@/components/shared/Button';
 import {
@@ -12,6 +11,7 @@ import {
 import { LoadingSpinner, EmptyState, SignalBadge } from '@/components/shared';
 import {
   SectionTitle,
+  CardTitle,
   Text,
   Badge,
   Count,
@@ -534,7 +534,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
         {/* Key Metrics - unified grid */}
         <div className="modal-section">
           <div className="section-header">
-            <Text weight="semibold">Key Metrics</Text>
+            <CardTitle>Key Metrics</CardTitle>
           </div>
           <div className="metrics-grid">
             <div className="metric-cell">
@@ -618,28 +618,35 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                 </MetricValue>
               </div>
             )}
-            <div className="metric-cell">
+            <div className="metric-cell metric-cell--full">
               <MetricLabel>DCA</MetricLabel>
-              <Badge
-                variant={
-                  rec.buyStrategy.dcaRecommendation === 'AGGRESSIVE'
-                    ? 'buy'
-                    : rec.buyStrategy.dcaRecommendation === 'NORMAL'
-                    ? 'hold'
-                    : 'info'
-                }
-              >
-                {rec.buyStrategy.dcaRecommendation === 'NO_DCA'
-                  ? 'Hold'
-                  : rec.buyStrategy.dcaRecommendation}
-              </Badge>
+              <div className="dca-content">
+                <Badge
+                  variant={
+                    rec.buyStrategy.dcaRecommendation === 'AGGRESSIVE'
+                      ? 'buy'
+                      : rec.buyStrategy.dcaRecommendation === 'NORMAL'
+                      ? 'hold'
+                      : 'info'
+                  }
+                >
+                  {rec.buyStrategy.dcaRecommendation === 'NO_DCA'
+                    ? 'Hold'
+                    : rec.buyStrategy.dcaRecommendation}
+                </Badge>
+                {rec.buyStrategy.dcaReason && (
+                  <Badge variant="info">{rec.buyStrategy.dcaReason}</Badge>
+                )}
+              </div>
             </div>
           </div>
-          <Caption>{rec.buyStrategy.dcaReason}</Caption>
 
           {/* Exit Strategy */}
           {rec.exitStrategy && (
             <div className="exit-strategy-section">
+              <div className="section-header">
+                <CardTitle>Exit Strategy</CardTitle>
+              </div>
               <div className="exit-header">
                 <Badge
                   variant={
@@ -755,10 +762,10 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                 )}
               </div>
               <div className="range-visual">
-                <Text size="sm" color="muted">
+                <Text size="sm" weight="semibold" color="muted">
                   ${rec.fiftyTwoWeekLow.toFixed(0)}
                 </Text>
-                <div className="range-bar">
+                <div className="week-range-bar">
                   <div
                     className="range-marker"
                     style={{
@@ -774,7 +781,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                     }}
                   />
                 </div>
-                <Text size="sm" color="muted">
+                <Text size="sm" weight="semibold" color="muted">
                   ${rec.fiftyTwoWeekHigh.toFixed(0)}
                 </Text>
               </div>
@@ -785,27 +792,25 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
         {/* Score Breakdown */}
         <div className="modal-section">
           <div className="section-header">
-            <Text weight="semibold">Score Breakdown</Text>
-            <InfoTooltip text="Weighted combination of fundamental, technical, analyst, news, insider, and portfolio metrics" />
+            <CardTitle>Score Breakdown</CardTitle>
           </div>
           <div className="breakdown-list">
             {rec.breakdown.map((b) => (
               <div key={b.category} className="breakdown-item">
                 <div className="breakdown-header">
-                  <Text size="sm" weight="medium">
-                    {b.category}
-                  </Text>
-                  <MetricValue
-                    sentiment={
+                  <Text weight="semibold">{b.category}</Text>
+                  <Text
+                    weight="bold"
+                    color={
                       b.sentiment === 'bullish'
-                        ? 'positive'
+                        ? 'success'
                         : b.sentiment === 'bearish'
-                        ? 'negative'
-                        : 'neutral'
+                        ? 'danger'
+                        : 'secondary'
                     }
                   >
                     {b.percent.toFixed(0)}%
-                  </MetricValue>
+                  </Text>
                 </div>
                 <div className="breakdown-bar">
                   <div
@@ -814,11 +819,13 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                   />
                 </div>
                 {b.details.length > 0 && (
-                  <ul className="breakdown-details">
+                  <div className="breakdown-details">
                     {b.details.slice(0, 3).map((d, i) => (
-                      <li key={i}>{d}</li>
+                      <Text key={i} size="sm" color="muted">
+                        {d}
+                      </Text>
                     ))}
-                  </ul>
+                  </div>
                 )}
               </div>
             ))}
@@ -829,7 +836,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
         {(rec.strengths.length > 0 || rec.concerns.length > 0) && (
           <div className="modal-section">
             <div className="section-header">
-              <Text weight="semibold">Analysis</Text>
+              <CardTitle>Analysis</CardTitle>
             </div>
             <div className="two-col">
               {rec.strengths.length > 0 && (
@@ -838,7 +845,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                     <Text color="success" weight="bold">
                       ✓
                     </Text>
-                    <Text weight="semibold">Strengths</Text>
+                    <CardTitle>Strengths</CardTitle>
                   </div>
                   <ul>
                     {rec.strengths.map((s, i) => (
@@ -853,7 +860,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                     <Text color="danger" weight="bold">
                       !
                     </Text>
-                    <Text weight="semibold">Concerns</Text>
+                    <CardTitle>Concerns</CardTitle>
                   </div>
                   <ul>
                     {rec.concerns.map((c, i) => (
@@ -870,13 +877,16 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
         {rec.actionItems.length > 0 && (
           <div className="modal-section">
             <div className="section-header">
-              <Text weight="semibold">Action Items</Text>
+              <CardTitle>Action Items</CardTitle>
             </div>
-            <ul className="action-list">
+            <div className="action-list">
               {rec.actionItems.map((a, i) => (
-                <li key={i}>{a}</li>
+                <div key={i} className="action-item">
+                  <span className="action-bullet">→</span>
+                  <Text>{a}</Text>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         )}
 
@@ -884,7 +894,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
         {rec.signals.length > 1 && (
           <div className="modal-section">
             <div className="section-header">
-              <Text weight="semibold">Other Signals</Text>
+              <CardTitle>Other Signals</CardTitle>
             </div>
             <div className="other-signals">
               {rec.signals.slice(1).map((sig, i) => (
