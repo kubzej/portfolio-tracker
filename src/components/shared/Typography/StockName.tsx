@@ -2,7 +2,7 @@ import './Typography.css';
 
 interface StockNameProps {
   children: React.ReactNode;
-  size?: 'sm' | 'base';
+  size?: 'sm' | 'base' | 'lg';
   truncate?: boolean;
 }
 
