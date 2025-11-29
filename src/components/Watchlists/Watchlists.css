@@ -289,6 +289,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.8125rem;
+  table-layout: fixed;
 }
 
 .watchlist-table th,
@@ -297,6 +298,24 @@
   text-align: left;
   border-bottom: 1px solid var(--border-light);
 }
+
+/* Column widths */
+.watchlist-table th:nth-child(1),
+.watchlist-table td:nth-child(1) { width: 15%; } /* Ticker */
+.watchlist-table th:nth-child(2),
+.watchlist-table td:nth-child(2) { width: 12%; } /* Price */
+.watchlist-table th:nth-child(3),
+.watchlist-table td:nth-child(3) { width: 10%; } /* Change */
+.watchlist-table th:nth-child(4),
+.watchlist-table td:nth-child(4) { width: 14%; } /* Buy Target */
+.watchlist-table th:nth-child(5),
+.watchlist-table td:nth-child(5) { width: 14%; } /* Sell Target */
+.watchlist-table th:nth-child(6),
+.watchlist-table td:nth-child(6) { width: 12%; } /* Status */
+.watchlist-table th:nth-child(7),
+.watchlist-table td:nth-child(7) { width: 17%; } /* Notes */
+.watchlist-table th:nth-child(8),
+.watchlist-table td:nth-child(8) { width: 6%; } /* Actions */
 
 .watchlist-table th {
   background: var(--bg-tertiary);
@@ -341,6 +360,18 @@
 
 .ticker-cell {
   font-weight: 600;
+}
+
+.ticker-cell .stock-name {
+  display: block;
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 0.125rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
 }
 
 .ticker-link {
@@ -664,8 +695,20 @@
   .item-card-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 0.75rem;
+  }
+
+  .item-card-ticker-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .item-card-ticker-group .stock-name {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 400;
   }
 
   .item-card-actions {

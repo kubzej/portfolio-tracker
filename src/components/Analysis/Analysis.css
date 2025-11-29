@@ -1939,7 +1939,7 @@
   background: transparent;
 }
 
-/* Technical Chart - Full Width Slide-in Panel */
+/* Technical Chart - Fullscreen Modal (Desktop) / Slide-in (Mobile) */
 .technical-chart-modal {
   position: fixed;
   top: 0;
@@ -1948,7 +1948,8 @@
   bottom: 0;
   z-index: 1000;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: center;
 }
 
 .technical-chart-overlay {
@@ -1957,8 +1958,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(2px);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   animation: overlayFadeIn 0.2s ease-out;
 }
 
@@ -1970,34 +1971,24 @@
 .technical-chart-modal .technical-chart-container {
   position: relative;
   background: var(--bg-primary);
-  width: calc(100% - 60px);
-  max-width: 1400px;
-  height: 100%;
+  width: calc(100% - 80px);
+  max-width: 1200px;
+  max-height: calc(100vh - 80px);
   overflow-y: auto;
   padding: 2rem;
-  padding-bottom: 3rem;
-  box-shadow: -4px 0 30px rgba(0, 0, 0, 0.15);
-  animation: panelSlideIn 0.25s ease-out;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: modalFadeIn 0.25s ease-out;
 }
 
-@keyframes panelSlideIn {
+@keyframes modalFadeIn {
   from {
     opacity: 0;
-    transform: translateX(100%);
+    transform: scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* Mobile: Fullscreen panel */
-@media (max-width: 768px) {
-  .technical-chart-modal .technical-chart-container {
-    width: 100%;
-    max-width: 100%;
-    padding: 1rem;
-    padding-bottom: 2rem;
+    transform: scale(1);
   }
 }
 
@@ -2036,6 +2027,51 @@
   background: var(--danger-light);
   border-color: var(--danger);
   color: var(--danger);
+}
+
+/* Mobile: Fullscreen slide-in panel */
+@media (max-width: 768px) {
+  .technical-chart-modal {
+    justify-content: flex-end;
+  }
+
+  .technical-chart-modal .technical-chart-container {
+    width: 100%;
+    max-width: 100%;
+    max-height: 100vh;
+    height: 100%;
+    border-radius: 0;
+    padding: 0 1rem 2rem 1rem;
+    animation: panelSlideIn 0.25s ease-out;
+  }
+
+  @keyframes panelSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .chart-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg-primary);
+    margin: 0 -1rem 1.5rem -1rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .chart-header .close-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 1.75rem;
+  }
+}
 }
 
 /* Time Range Selector */
@@ -2142,16 +2178,6 @@
 
 /* Mobile modal adjustments */
 @media (max-width: 768px) {
-  .technical-chart-modal {
-    padding: 0;
-  }
-
-  .technical-chart-modal .technical-chart-container {
-    max-height: 100vh;
-    border-radius: 0;
-    padding: 1rem;
-  }
-
   .chart-header h3 {
     font-size: 1rem;
   }

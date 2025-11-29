@@ -24,6 +24,7 @@ export function AddStockForm({
   onSuccess,
 }: AddStockFormProps) {
   const [ticker, setTicker] = useState(item?.ticker ?? '');
+  const [name, setName] = useState(item?.name ?? '');
   const [targetBuyPrice, setTargetBuyPrice] = useState(
     item?.target_buy_price?.toString() ?? ''
   );
@@ -43,12 +44,17 @@ export function AddStockForm({
       return 'Ticker symbol is required';
     }
 
-    if (!/^[A-Z]{1,5}$/.test(normalized)) {
-      return 'Invalid ticker symbol (1-5 letters)';
+    // Allow letters, numbers, dots (for exchange suffix like .HK, .DE)
+    if (!/^[A-Z0-9]{1,10}(\.[A-Z]{1,2})?$/.test(normalized)) {
+      return 'Invalid ticker symbol (e.g., AAPL, SAP.DE, 1211.HK)';
     }
 
-    // Check for duplicates when adding (not editing)
-    if (!isEditing && existingTickers.includes(normalized)) {
+    // Check for duplicates (allow keeping the same ticker when editing)
+    const isChangingTicker = isEditing && normalized !== item?.ticker;
+    if (
+      (!isEditing || isChangingTicker) &&
+      existingTickers.includes(normalized)
+    ) {
       return `${normalized} is already in this watchlist`;
     }
 
@@ -86,7 +92,11 @@ export function AddStockForm({
       setError(null);
 
       if (isEditing) {
+        const normalizedTicker = ticker.toUpperCase().trim();
         const input: UpdateWatchlistItemInput = {
+          ticker:
+            normalizedTicker !== item.ticker ? normalizedTicker : undefined,
+          name: name.trim() || undefined,
           target_buy_price: parsedBuyPrice ?? null,
           target_sell_price: parsedSellPrice ?? null,
           notes: notes.trim() || null,
@@ -96,6 +106,7 @@ export function AddStockForm({
         const input: AddWatchlistItemInput = {
           watchlist_id: watchlistId,
           ticker: ticker.toUpperCase().trim(),
+          name: name.trim() || undefined,
           target_buy_price: parsedBuyPrice,
           target_sell_price: parsedSellPrice,
           notes: notes.trim() || undefined,
@@ -128,14 +139,22 @@ export function AddStockForm({
             type="text"
             value={ticker}
             onChange={(e) => setTicker(e.target.value.toUpperCase())}
-            placeholder="e.g., AAPL"
-            disabled={isEditing}
+            placeholder="e.g., AAPL, SAP.DE, 1211.HK"
             autoFocus={!isEditing}
-            maxLength={5}
+            maxLength={15}
           />
-          {isEditing && (
-            <span className="form-hint">Ticker cannot be changed</span>
-          )}
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="stock-name">Company Name</label>
+          <input
+            id="stock-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g., Apple Inc."
+            maxLength={100}
+          />
         </div>
 
         <div className="form-row">
