@@ -2,7 +2,12 @@ import { useState, useEffect } from 'react';
 import type { Portfolio } from '@/types/database';
 import { portfoliosApi } from '@/services/api';
 import { PortfolioManager } from '@/components/PortfolioManager';
-import { BottomSheet } from '@/components/shared/BottomSheet';
+import {
+  BottomSheet,
+  BottomSheetOption,
+} from '@/components/shared/BottomSheet';
+import { Button } from '@/components/shared/Button';
+import { Text } from '@/components/shared/Typography';
 import './PortfolioSelector.css';
 
 interface PortfolioSelectorProps {
@@ -83,11 +88,19 @@ export function PortfolioSelector({
     : 'Select...';
 
   if (loading) {
-    return <div className="portfolio-selector loading">Loading...</div>;
+    return (
+      <div className="portfolio-selector loading">
+        <Text color="muted">Loading...</Text>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="portfolio-selector error">{error}</div>;
+    return (
+      <div className="portfolio-selector error">
+        <Text color="muted">{error}</Text>
+      </div>
+    );
   }
 
   return (
@@ -109,7 +122,8 @@ export function PortfolioSelector({
         </select>
 
         {/* Mobile: button that opens bottom sheet */}
-        <button
+        <Button
+          variant="ghost"
           className="portfolio-select-btn mobile-only"
           onClick={() => setShowMobilePicker(true)}
         >
@@ -119,7 +133,9 @@ export function PortfolioSelector({
               style={{ backgroundColor: selectedPortfolio.color ?? '#6366f1' }}
             />
           )}
-          <span className="btn-text">{displayName}</span>
+          <Text weight="semibold" size="sm">
+            {displayName}
+          </Text>
           <svg
             className="btn-chevron"
             width="14"
@@ -133,7 +149,7 @@ export function PortfolioSelector({
           >
             <path d="M6 9l6 6 6-6" />
           </svg>
-        </button>
+        </Button>
 
         <div className="portfolio-indicator desktop-only">
           {selectedPortfolio && (
@@ -145,13 +161,16 @@ export function PortfolioSelector({
             />
           )}
         </div>
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
+          icon
           className="portfolio-manage-btn"
           onClick={() => setShowManager(true)}
           title="Manage portfolios"
         >
           ⚙
-        </button>
+        </Button>
       </div>
 
       {/* Mobile bottom sheet picker */}
@@ -162,44 +181,22 @@ export function PortfolioSelector({
       >
         <div className="bottom-sheet-options">
           {showAllOption && (
-            <button
-              className={`bottom-sheet-option ${
-                selectedPortfolioId === null ? 'selected' : ''
-              }`}
+            <BottomSheetOption
+              label="All Portfolios"
+              color="#6366f1"
+              selected={selectedPortfolioId === null}
               onClick={() => handleSelectChange('all')}
-            >
-              <span
-                className="option-color"
-                style={{ backgroundColor: '#6366f1' }}
-              />
-              <span className="option-label">All Portfolios</span>
-              {selectedPortfolioId === null && (
-                <span className="option-check">✓</span>
-              )}
-            </button>
+            />
           )}
           {portfolios.map((portfolio) => (
-            <button
+            <BottomSheetOption
               key={portfolio.id}
-              className={`bottom-sheet-option ${
-                selectedPortfolioId === portfolio.id ? 'selected' : ''
-              }`}
+              label={portfolio.name}
+              suffix={portfolio.is_default ? ' (Default)' : undefined}
+              color={portfolio.color ?? '#6366f1'}
+              selected={selectedPortfolioId === portfolio.id}
               onClick={() => handleSelectChange(portfolio.id)}
-            >
-              <span
-                className="option-color"
-                style={{ backgroundColor: portfolio.color ?? '#6366f1' }}
-              />
-              <span className="option-label">
-                {portfolio.name}
-                {portfolio.is_default && (
-                  <span className="option-default"> (Default)</span>
-                )}
-              </span>
-              {selectedPortfolioId === portfolio.id && (
-                <span className="option-check">✓</span>
-              )}
-            </button>
+            />
           ))}
         </div>
       </BottomSheet>

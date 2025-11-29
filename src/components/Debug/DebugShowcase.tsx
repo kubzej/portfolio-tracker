@@ -4,6 +4,7 @@
  * Visible only on localhost for development purposes.
  * Shows all components, typography, colors, and design system elements.
  */
+import React from 'react';
 import './DebugShowcase.css';
 import {
   // Core text
@@ -42,6 +43,11 @@ import { PriceDisplay } from '../shared/PriceDisplay';
 import { SignalBadge } from '../shared/SignalBadge';
 import { EmptyState } from '../shared/EmptyState';
 import { ErrorState } from '../shared/ErrorState';
+import { ToggleGroup } from '../shared/ToggleGroup';
+import { Tabs } from '../shared/Tabs';
+import { LoadingSpinner } from '../shared/LoadingSpinner';
+import { InfoTooltip } from '../shared/InfoTooltip';
+import { BottomSheet, BottomSheetOption } from '../shared/BottomSheet';
 
 function CoreTextSection() {
   return (
@@ -115,11 +121,15 @@ function CoreTextSection() {
       <div className="debug-group">
         <CardTitle>{'<Description>'}</CardTitle>
         <code className="debug-code">
-          {'<Description>Paragraph text</Description>'}
+          {'<Description size="base">Paragraph text</Description>'}
         </code>
-        <div className="debug-row">
-          <Description>
-            This is a description paragraph used for longer explanatory text.
+        <div className="debug-column">
+          <Description size="sm">
+            Description sm - smaller explanatory text for compact spaces.
+          </Description>
+          <Description size="base">
+            Description base - standard paragraph used for longer explanatory
+            text.
           </Description>
         </div>
       </div>
@@ -593,6 +603,164 @@ function FormComponentsSection() {
   );
 }
 
+function UIComponentsSection() {
+  const [toggleValue, setToggleValue] = React.useState('month');
+  const [tabValue, setTabValue] = React.useState('holdings');
+  const [bottomSheetOpen, setBottomSheetOpen] = React.useState(false);
+
+  return (
+    <section className="debug-section">
+      <SectionTitle>UI Components</SectionTitle>
+
+      {/* ToggleGroup */}
+      <div className="debug-group">
+        <CardTitle>{'<ToggleGroup>'}</CardTitle>
+        <code className="debug-code">
+          {'<ToggleGroup value={value} onChange={setValue} options={[...]} />'}
+        </code>
+        <div className="debug-row">
+          <ToggleGroup
+            value={toggleValue}
+            onChange={setToggleValue}
+            options={[
+              { value: 'week', label: '1W' },
+              { value: 'month', label: '1M' },
+              { value: 'quarter', label: '3M' },
+              { value: 'year', label: '1Y' },
+            ]}
+          />
+        </div>
+        <Description size="sm">
+          For switching between time ranges, view modes, etc.
+        </Description>
+      </div>
+
+      {/* Tabs */}
+      <div className="debug-group">
+        <CardTitle>{'<Tabs>'}</CardTitle>
+        <code className="debug-code">
+          {'<Tabs value={value} onChange={setValue} options={[...]} />'}
+        </code>
+        <div className="debug-row">
+          <Tabs
+            value={tabValue}
+            onChange={setTabValue}
+            options={[
+              { value: 'holdings', label: 'Holdings' },
+              { value: 'analysis', label: 'Analysis' },
+              { value: 'news', label: 'News' },
+            ]}
+          />
+        </div>
+        <Description size="sm">
+          For page navigation or content switching.
+        </Description>
+      </div>
+
+      {/* LoadingSpinner */}
+      <div className="debug-group">
+        <CardTitle>{'<LoadingSpinner>'}</CardTitle>
+        <code className="debug-code">
+          {'<LoadingSpinner size="md" text="Loading..." />'}
+        </code>
+        <div className="debug-row" style={{ gap: '2rem' }}>
+          <div style={{ textAlign: 'center' }}>
+            <LoadingSpinner size="sm" />
+            <Caption>sm</Caption>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <LoadingSpinner size="md" />
+            <Caption>md</Caption>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <LoadingSpinner size="lg" />
+            <Caption>lg</Caption>
+          </div>
+        </div>
+        <div className="debug-row">
+          <LoadingSpinner size="sm" text="Loading data..." />
+        </div>
+      </div>
+
+      {/* InfoTooltip */}
+      <div className="debug-group">
+        <CardTitle>{'<InfoTooltip>'}</CardTitle>
+        <code className="debug-code">
+          {'<InfoTooltip text="Explanation text" />'}
+        </code>
+        <div
+          className="debug-row"
+          style={{ alignItems: 'center', gap: '1rem' }}
+        >
+          <span
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Text>Simple text</Text>
+            <InfoTooltip text="This is a simple tooltip explanation." />
+          </span>
+          <span
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Text>Rich content</Text>
+            <InfoTooltip>
+              <p>
+                <strong>RSI (Relative Strength Index)</strong>
+              </p>
+              <p>Hodnota 0-100. Pod 30 = přeprodaná akcie.</p>
+            </InfoTooltip>
+          </span>
+        </div>
+        <Description size="sm">
+          Tooltips use Czech text per project convention.
+        </Description>
+      </div>
+
+      {/* BottomSheet + BottomSheetOption */}
+      <div className="debug-group">
+        <CardTitle>{'<BottomSheet> + <BottomSheetOption>'}</CardTitle>
+        <code className="debug-code">
+          {
+            '<BottomSheet isOpen={open} onClose={close} title="Select">\n  <BottomSheetOption label="Option" onClick={...} />\n</BottomSheet>'
+          }
+        </code>
+        <div className="debug-row">
+          <Button variant="outline" onClick={() => setBottomSheetOpen(true)}>
+            Open BottomSheet
+          </Button>
+        </div>
+        <BottomSheet
+          isOpen={bottomSheetOpen}
+          onClose={() => setBottomSheetOpen(false)}
+          title="Select Portfolio"
+        >
+          <div className="bottom-sheet-options">
+            <BottomSheetOption
+              label="Main Portfolio"
+              suffix="(Default)"
+              color="#3b82f6"
+              selected
+              onClick={() => setBottomSheetOpen(false)}
+            />
+            <BottomSheetOption
+              label="Tech Stocks"
+              color="#22c55e"
+              onClick={() => setBottomSheetOpen(false)}
+            />
+            <BottomSheetOption
+              label="Dividends"
+              color="#f59e0b"
+              onClick={() => setBottomSheetOpen(false)}
+            />
+          </div>
+        </BottomSheet>
+        <Description size="sm">
+          Mobile-first sheet for selections. Uses BottomSheetOption for items.
+        </Description>
+      </div>
+    </section>
+  );
+}
+
 function SharedComponentsSection() {
   return (
     <section className="debug-section">
@@ -769,15 +937,14 @@ export function DebugShowcase() {
         <MetricsSection />
         <BadgesSection />
         <FormComponentsSection />
+        <UIComponentsSection />
         <SharedComponentsSection />
         <ColorsSection />
         <FontSizesSection />
       </div>
 
       <footer className="debug-footer">
-        <Hint>
-          Viz /docs/TYPOGRAPHY_REFACTORING_PLAN.md pro kompletní plán.
-        </Hint>
+        <Hint>Made with love</Hint>
       </footer>
     </div>
   );

@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react';
+import { Button } from '../Button';
+import { Title, Text, Muted } from '../Typography';
 import './BottomSheet.css';
 
 interface BottomSheetProps {
@@ -6,6 +8,19 @@ interface BottomSheetProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+}
+
+interface BottomSheetOptionProps {
+  /** Option label */
+  label: string;
+  /** Optional suffix like "(Default)" */
+  suffix?: string;
+  /** Whether this option is selected */
+  selected?: boolean;
+  /** Color indicator (optional) */
+  color?: string;
+  /** Click handler */
+  onClick: () => void;
 }
 
 export function BottomSheet({
@@ -37,13 +52,46 @@ export function BottomSheet({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="bottom-sheet-header">
-          <span className="bottom-sheet-title">{title}</span>
-          <button className="bottom-sheet-close" onClick={onClose}>
+          <Title size="base">{title}</Title>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon
+            onClick={onClose}
+            aria-label="Close"
+          >
             ✕
-          </button>
+          </Button>
         </div>
         <div className="bottom-sheet-content">{children}</div>
       </div>
     </div>
+  );
+}
+
+export function BottomSheetOption({
+  label,
+  suffix,
+  selected = false,
+  color,
+  onClick,
+}: BottomSheetOptionProps) {
+  return (
+    <button
+      className={`bottom-sheet-option ${selected ? 'selected' : ''}`}
+      onClick={onClick}
+    >
+      {color && (
+        <span
+          className="bottom-sheet-option-color"
+          style={{ backgroundColor: color }}
+        />
+      )}
+      <div className="bottom-sheet-option-label">
+        <Text>{label}</Text>
+        {suffix && <Muted>{suffix}</Muted>}
+      </div>
+      {selected && <span className="bottom-sheet-option-check">✓</span>}
+    </button>
   );
 }
