@@ -18,6 +18,7 @@ import {
   CardTitle,
   Ticker,
   MetricValue,
+  MetricLabel,
   Caption,
   Description,
   Muted,
@@ -138,6 +139,17 @@ const MARKET_TOPICS = [
       'chatgpt',
       'openai',
       'machine learning',
+      'claude',
+      'anthropic',
+      'gemini',
+      'llama',
+      'meta ai',
+      'copilot',
+      'grok',
+      'deepseek',
+      'mistral',
+      'llm',
+      'large language model',
     ],
   },
   {
@@ -564,7 +576,7 @@ export function News({ portfolioId }: NewsProps) {
         <div className="market-topics-compact">
           {TOPIC_CATEGORIES.map((category) => (
             <div key={category} className="topic-row">
-              <span className="topic-row-label">{category}</span>
+              <MetricLabel>{category}</MetricLabel>
               <div className="topic-chips">
                 {MARKET_TOPICS.filter((t) => t.category === category).map(
                   (topic) => {
@@ -594,9 +606,9 @@ export function News({ portfolioId }: NewsProps) {
                       >
                         {topic.label}
                         {count > 0 && (
-                          <span className="chip-count">
-                            <Text size="xs">{count}</Text>
-                          </span>
+                          <Text size="xs" color="secondary" as="span">
+                            {count}
+                          </Text>
                         )}
                       </Button>
                     );
@@ -702,38 +714,26 @@ function ArticleCard({
       )}
       <div className="article-content">
         <div className="article-meta">
-          {article.ticker && (
-            <span className="article-ticker">
-              <Ticker size="sm">{article.ticker}</Ticker>
-            </span>
-          )}
+          {article.ticker && <Ticker size="sm">{article.ticker}</Ticker>}
           <Caption>{article.source}</Caption>
           <Muted>{formatRelativeTime(article.publishedAt)}</Muted>
           {article.sentiment && (
-            <span className="article-sentiment">
-              <Badge
-                size="sm"
-                variant={
-                  article.sentiment.label === 'positive'
-                    ? 'positive'
-                    : article.sentiment.label === 'negative'
-                    ? 'negative'
-                    : 'neutral'
-                }
-              >
-                {getSentimentLabel(article.sentiment.label)}
-              </Badge>
-            </span>
+            <Badge
+              size="sm"
+              variant={
+                article.sentiment.label === 'positive'
+                  ? 'positive'
+                  : article.sentiment.label === 'negative'
+                  ? 'negative'
+                  : 'neutral'
+              }
+            >
+              {getSentimentLabel(article.sentiment.label)}
+            </Badge>
           )}
         </div>
-        <div className="article-title">
-          <CardTitle>{article.title}</CardTitle>
-        </div>
-        {article.summary && (
-          <div className="article-summary">
-            <Description>{article.summary}</Description>
-          </div>
-        )}
+        <CardTitle>{article.title}</CardTitle>
+        {article.summary && <Description>{article.summary}</Description>}
         {article.sentiment?.keywords &&
           article.sentiment.keywords.length > 0 && (
             <div className="article-keywords">
