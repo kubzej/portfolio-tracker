@@ -5,6 +5,7 @@ import type {
 } from '@/services/api/indicators';
 import { Button } from '@/components/shared/Button';
 import { Input } from '@/components/shared/Input';
+import { stripTooltipMarkdown } from '@/components/shared/InfoTooltip';
 import {
   CardTitle,
   SectionTitle,
@@ -401,41 +402,46 @@ export function ColumnPicker({
           </div>
 
           <div className="picker-content">
-            {/* Category Tabs */}
-            <div className="category-tabs">
-              {categoryOrder.map((cat) => (
-                <button
-                  key={cat}
-                  className={`category-tab ${
-                    activeCategory === cat ? 'active' : ''
-                  }`}
-                  onClick={() => {
-                    setActiveCategory(activeCategory === cat ? null : cat);
-                    setSearchTerm('');
-                  }}
-                >
-                  {categoryLabels[cat] || cat}
-                  <Muted>
-                    {
-                      (categories[cat] || []).filter((i) =>
-                        selectedKeys.includes(i.key)
-                      ).length
-                    }
-                    /{(categories[cat] || []).length}
-                  </Muted>
-                </button>
-              ))}
+            {/* Category Sidebar */}
+            <div className="category-sidebar">
+              {categoryOrder.map((cat) => {
+                const count = (categories[cat] || []).filter((i) =>
+                  selectedKeys.includes(i.key)
+                ).length;
+                const total = (categories[cat] || []).length;
+                return (
+                  <button
+                    key={cat}
+                    className={`category-item ${
+                      activeCategory === cat ? 'active' : ''
+                    }`}
+                    onClick={() => {
+                      setActiveCategory(activeCategory === cat ? null : cat);
+                      setSearchTerm('');
+                    }}
+                  >
+                    <span className="category-name">{categoryLabels[cat]}</span>
+                    <span className="category-count">
+                      {count}/{total}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Indicator List */}
             <div className="indicator-list">
               {(searchTerm || activeCategory) &&
                 filteredIndicators.length === 0 && (
-                  <Muted>No indicators found</Muted>
+                  <div className="indicator-empty">
+                    <Muted>No indicators found</Muted>
+                  </div>
                 )}
 
               {!searchTerm && !activeCategory && (
-                <Muted>Select a category or search to add columns</Muted>
+                <div className="indicator-empty">
+                  <Muted>Select a category or search</Muted>
+                </div>
               )}
 
               {filteredIndicators.map((ind) => (
@@ -445,17 +451,21 @@ export function ColumnPicker({
                     selectedKeys.includes(ind.key) ? 'selected' : ''
                   }`}
                 >
-                  <input
-                    type="checkbox"
-                    checked={selectedKeys.includes(ind.key)}
-                    onChange={() => toggleColumn(ind.key)}
-                  />
+                  <div className="indicator-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={selectedKeys.includes(ind.key)}
+                      onChange={() => toggleColumn(ind.key)}
+                    />
+                  </div>
                   <div className="indicator-info">
-                    <Text size="sm" weight="medium">
-                      {ind.name}
-                      <Muted> ({ind.short_name})</Muted>
-                    </Text>
-                    <Muted>{ind.description}</Muted>
+                    <div className="indicator-header">
+                      <Text size="sm" weight="medium">
+                        {ind.name}
+                      </Text>
+                      <span className="indicator-short">{ind.short_name}</span>
+                    </div>
+                    <Caption>{stripTooltipMarkdown(ind.description)}</Caption>
                   </div>
                 </label>
               ))}
@@ -614,7 +624,9 @@ export function ColumnPicker({
                                   <Text size="base" weight="medium">
                                     {ind.name}
                                   </Text>
-                                  <Muted>{ind.description}</Muted>
+                                  <Muted>
+                                    {stripTooltipMarkdown(ind.description)}
+                                  </Muted>
                                 </div>
                                 <div
                                   className={`mobile-toggle ${

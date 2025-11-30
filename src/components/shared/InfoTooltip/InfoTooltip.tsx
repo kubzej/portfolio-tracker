@@ -11,6 +11,23 @@ interface InfoTooltipProps {
 }
 
 /**
+ * Strip markdown-like syntax from tooltip text to get plain text.
+ * Useful for displaying descriptions outside of InfoTooltip (e.g., in lists).
+ * - Removes **bold** markers
+ * - Converts | and \n to spaces
+ * - Removes bullet points (•)
+ */
+export function stripTooltipMarkdown(text: string): string {
+  return text
+    .replace(/\*\*([^*]+)\*\*/g, '$1') // Remove **bold** markers, keep text
+    .replace(/\s*\|\s*/g, ' ') // Replace | with space
+    .replace(/\s*•\s*/g, ' ') // Replace • with space
+    .replace(/\n/g, ' ') // Replace newlines with space
+    .replace(/\s+/g, ' ') // Collapse multiple spaces
+    .trim();
+}
+
+/**
  * Parse simple markdown-like syntax in tooltip text:
  * - **text** → <strong>text</strong>
  * - \n or | → line break

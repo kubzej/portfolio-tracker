@@ -1,1 +1,1 @@
-export { InfoTooltip } from './InfoTooltip';
+export { InfoTooltip, stripTooltipMarkdown } from './InfoTooltip';
