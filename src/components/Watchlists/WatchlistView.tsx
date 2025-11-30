@@ -21,6 +21,9 @@ import {
   Caption,
   Description,
   Badge,
+  Text,
+  Muted,
+  MetricLabel,
 } from '@/components/shared/Typography';
 import { useSortable } from '@/hooks';
 import { AddStockForm } from './AddStockForm';
@@ -187,20 +190,13 @@ export function WatchlistView({
     }
   };
 
-  const getPriceClass = (change: number | null) => {
-    if (change === null) return '';
-    if (change > 0) return 'positive';
-    if (change < 0) return 'negative';
-    return '';
-  };
-
   const getTargetStatus = (item: WatchlistItemWithCalculations) => {
     const badges: React.ReactNode[] = [];
 
     if (item.at_buy_target) {
       badges.push(
         <Badge key="buy" variant="positive" size="sm">
-          ✓ Buy Target
+          ✓ Buy
         </Badge>
       );
     }
@@ -208,7 +204,7 @@ export function WatchlistView({
     if (item.at_sell_target) {
       badges.push(
         <Badge key="sell" variant="negative" size="sm">
-          ✓ Sell Target
+          ✓ Sell
         </Badge>
       );
     }
@@ -366,82 +362,92 @@ export function WatchlistView({
                       ? formatCurrency(item.last_price, item.currency || 'USD')
                       : '—'}
                   </td>
-                  <td
-                    className={cn(
-                      'text-right',
-                      getPriceClass(item.last_price_change_percent)
-                    )}
-                  >
+                  <td className="text-right change-cell">
                     {item.last_price_change_percent !== null ? (
                       <div className="dual-value">
-                        <span className="primary">
+                        <Text
+                          weight="medium"
+                          color={
+                            item.last_price_change_percent > 0
+                              ? 'success'
+                              : item.last_price_change_percent < 0
+                              ? 'danger'
+                              : undefined
+                          }
+                        >
                           {item.last_price_change_percent > 0 ? '+' : ''}
                           {item.last_price_change_percent.toFixed(2)}%
-                        </span>
+                        </Text>
                         {item.last_price_change !== null && (
-                          <span className="secondary">
+                          <Text size="xs" color="secondary">
                             {item.last_price_change > 0 ? '+' : ''}
                             {formatCurrency(
                               item.last_price_change,
                               item.currency || 'USD'
                             )}
-                          </span>
+                          </Text>
                         )}
                       </div>
                     ) : (
-                      '—'
+                      <Muted>—</Muted>
                     )}
                   </td>
                   <td className="text-right">
                     {item.target_buy_price ? (
-                      <span
-                        className={item.at_buy_target ? 'target-hit buy' : ''}
-                      >
-                        {formatCurrency(
-                          item.target_buy_price,
-                          item.currency || 'USD'
-                        )}
+                      <div className="dual-value">
+                        <Text
+                          weight={item.at_buy_target ? 'semibold' : 'medium'}
+                          color={item.at_buy_target ? 'success' : undefined}
+                        >
+                          {formatCurrency(
+                            item.target_buy_price,
+                            item.currency || 'USD'
+                          )}
+                        </Text>
                         {item.distance_to_buy_target !== null && (
-                          <span className="distance">
+                          <Text size="xs" color="secondary">
                             ({item.distance_to_buy_target > 0 ? '+' : ''}
                             {item.distance_to_buy_target.toFixed(1)}%)
-                          </span>
+                          </Text>
                         )}
-                      </span>
+                      </div>
                     ) : (
-                      '—'
+                      <Muted>—</Muted>
                     )}
                   </td>
                   <td className="text-right">
                     {item.target_sell_price ? (
-                      <span
-                        className={item.at_sell_target ? 'target-hit sell' : ''}
-                      >
-                        {formatCurrency(
-                          item.target_sell_price,
-                          item.currency || 'USD'
-                        )}
+                      <div className="dual-value">
+                        <Text
+                          weight={item.at_sell_target ? 'semibold' : 'medium'}
+                          color={item.at_sell_target ? 'danger' : undefined}
+                        >
+                          {formatCurrency(
+                            item.target_sell_price,
+                            item.currency || 'USD'
+                          )}
+                        </Text>
                         {item.distance_to_sell_target !== null && (
-                          <span className="distance">
+                          <Text size="xs" color="secondary">
                             ({item.distance_to_sell_target > 0 ? '+' : ''}
                             {item.distance_to_sell_target.toFixed(1)}%)
-                          </span>
+                          </Text>
                         )}
-                      </span>
+                      </div>
                     ) : (
-                      '—'
+                      <Muted>—</Muted>
                     )}
                   </td>
                   <td className="status-cell">{getTargetStatus(item)}</td>
                   <td className="notes-cell">
                     {item.notes && (
-                      <span title={item.notes}>
+                      <div title={item.notes}>
                         <Caption>
                           {item.notes.length > 30
                             ? item.notes.slice(0, 30) + '...'
                             : item.notes}
                         </Caption>
-                      </span>
+                      </div>
                     )}
                   </td>
                   <td className="actions-cell">
@@ -506,23 +512,30 @@ export function WatchlistView({
                 </div>
 
                 <div className="item-card-price">
-                  <span className="price">
+                  <Text size="lg" weight="semibold">
                     {item.last_price
                       ? formatCurrency(item.last_price, item.currency || 'USD')
                       : '—'}
-                  </span>
-                  <span
-                    className={cn(
-                      'change',
-                      getPriceClass(item.last_price_change_percent)
-                    )}
+                  </Text>
+                  <Text
+                    size="sm"
+                    weight="medium"
+                    color={
+                      item.last_price_change_percent !== null
+                        ? item.last_price_change_percent > 0
+                          ? 'success'
+                          : item.last_price_change_percent < 0
+                          ? 'danger'
+                          : undefined
+                        : undefined
+                    }
                   >
                     {item.last_price_change_percent !== null
                       ? `${
                           item.last_price_change_percent > 0 ? '+' : ''
                         }${item.last_price_change_percent.toFixed(2)}%`
                       : ''}
-                  </span>
+                  </Text>
                 </div>
 
                 <div className="item-card-targets">
@@ -533,18 +546,18 @@ export function WatchlistView({
                         item.at_buy_target && 'target-hit'
                       )}
                     >
-                      <span className="target-label">Buy:</span>
-                      <span className="target-value">
+                      <MetricLabel>Buy:</MetricLabel>
+                      <Text size="sm" weight="medium">
                         {formatCurrency(
                           item.target_buy_price,
                           item.currency || 'USD'
                         )}
-                      </span>
+                      </Text>
                       {item.distance_to_buy_target !== null && (
-                        <span className="target-distance">
+                        <Text size="xs" color="secondary">
                           ({item.distance_to_buy_target > 0 ? '+' : ''}
                           {item.distance_to_buy_target.toFixed(1)}%)
-                        </span>
+                        </Text>
                       )}
                     </div>
                   )}
@@ -555,18 +568,18 @@ export function WatchlistView({
                         item.at_sell_target && 'target-hit'
                       )}
                     >
-                      <span className="target-label">Sell:</span>
-                      <span className="target-value">
+                      <MetricLabel>Sell:</MetricLabel>
+                      <Text size="sm" weight="medium">
                         {formatCurrency(
                           item.target_sell_price,
                           item.currency || 'USD'
                         )}
-                      </span>
+                      </Text>
                       {item.distance_to_sell_target !== null && (
-                        <span className="target-distance">
+                        <Text size="xs" color="secondary">
                           ({item.distance_to_sell_target > 0 ? '+' : ''}
                           {item.distance_to_sell_target.toFixed(1)}%)
-                        </span>
+                        </Text>
                       )}
                     </div>
                   )}

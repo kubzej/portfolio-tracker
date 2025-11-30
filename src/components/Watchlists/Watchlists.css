@@ -264,18 +264,53 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.8125rem;
+  table-layout: fixed;
 }
 
 .watchlist-table th,
 .watchlist-table td {
-  padding: 0.625rem 0.75rem;
+  padding: 0.625rem 0.5rem;
   text-align: left;
   border-bottom: 1px solid var(--border-light);
 }
 
-/* Column widths - removed fixed widths, let table auto-size */
+/* Column widths */
+.watchlist-table th:nth-child(1),
+.watchlist-table td:nth-child(1) {
+  width: 15%;
+}
+
+.watchlist-table th:nth-child(2),
+.watchlist-table td:nth-child(2),
+.watchlist-table th:nth-child(3),
+.watchlist-table td:nth-child(3) {
+  width: 10%;
+}
+
+.watchlist-table th:nth-child(4),
+.watchlist-table td:nth-child(4),
+.watchlist-table th:nth-child(5),
+.watchlist-table td:nth-child(5) {
+  width: 12%;
+}
+
+.watchlist-table th:nth-child(6),
+.watchlist-table td:nth-child(6) {
+  width: 12%;
+}
+
+.watchlist-table th:nth-child(7),
+.watchlist-table td:nth-child(7) {
+  width: 18%;
+}
+
+.watchlist-table th:nth-child(8),
+.watchlist-table td:nth-child(8) {
+  width: 70px;
+  text-align: right;
+}
+
 .watchlist-table .notes-cell {
-  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -357,45 +392,12 @@
   font-size: 1rem;
 }
 
-.positive {
-  color: var(--success);
-}
-
-.negative {
-  color: var(--danger);
-}
-
 /* Dual value display (like dashboard) */
 .dual-value {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 0.125rem;
-}
-
-.dual-value .primary {
-  font-weight: 500;
-}
-
-.dual-value .secondary {
-  font-size: 0.6875rem;
-  color: var(--text-secondary);
-}
-
-.target-hit.buy {
-  color: var(--success);
-  font-weight: 600;
-}
-
-.target-hit.sell {
-  color: var(--danger);
-  font-weight: 600;
-}
-
-.distance {
-  font-size: 0.6875rem;
-  color: var(--text-secondary);
-  margin-left: 0.25rem;
 }
 
 .target-badge {
@@ -418,9 +420,24 @@
 }
 
 .status-cell {
-  display: flex;
-  gap: 0.375rem;
-  flex-wrap: wrap;
+  white-space: nowrap;
+}
+
+.status-cell .badge {
+  display: inline-block;
+  margin-right: 0.25rem;
+  margin-bottom: 0.125rem;
+  font-size: 0.6875rem;
+  padding: 0.125rem 0.375rem;
+}
+
+.change-cell {
+  white-space: nowrap;
+}
+
+.actions-cell {
+  white-space: nowrap;
+  text-align: right;
 }
 
 .notes-cell {
@@ -659,17 +676,6 @@
     margin-bottom: 0.75rem;
   }
 
-  .item-card-price .price {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-
-  .item-card-price .change {
-    font-size: 0.875rem;
-    font-weight: 500;
-  }
-
   .item-card-targets {
     display: flex;
     flex-direction: column;
@@ -681,28 +687,10 @@
     display: flex;
     align-items: baseline;
     gap: 0.375rem;
-    font-size: 0.8125rem;
   }
 
   .target-row.target-hit {
     font-weight: 600;
-  }
-
-  .target-label {
-    color: var(--text-muted);
-    font-size: 0.75rem;
-    min-width: 2.5rem;
-  }
-
-  .target-value {
-    color: var(--text-primary);
-    font-weight: 500;
-    font-size: 0.8125rem;
-  }
-
-  .target-distance {
-    color: var(--text-secondary);
-    font-size: 0.75rem;
   }
 
   .item-card-status {

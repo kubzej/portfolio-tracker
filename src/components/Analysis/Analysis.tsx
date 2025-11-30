@@ -1674,7 +1674,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
               </table>
             </div>
 
-            {/* Mobile Technical Cards */}}
+            {/* Mobile Technical Cards */}
             <div className="technicals-mobile">
               <div className="technicals-cards">
                 {sortedData.map((item) => {
