@@ -8,6 +8,13 @@ import {
   EditIcon,
   TrashIcon,
 } from '@/components/shared';
+import {
+  SectionTitle,
+  CardTitle,
+  Description,
+  MetricValue,
+  MetricLabel,
+} from '@/components/shared/Typography';
 import { WatchlistForm } from './WatchlistForm';
 import './Watchlists.css';
 
@@ -91,7 +98,7 @@ export function WatchlistManager({ onSelectWatchlist }: WatchlistManagerProps) {
   return (
     <div className="watchlists">
       <div className="watchlists-header">
-        <h2>Watchlists</h2>
+        <SectionTitle>Watchlists</SectionTitle>
         <Button variant="primary" onClick={handleCreate}>
           + New Watchlist
         </Button>
@@ -120,51 +127,55 @@ export function WatchlistManager({ onSelectWatchlist }: WatchlistManagerProps) {
                       className="watchlist-card-dot"
                       style={{ backgroundColor: watchlist.color }}
                     />
-                    <h3 className="watchlist-card-name">{watchlist.name}</h3>
+                    <CardTitle>{watchlist.name}</CardTitle>
                   </div>
                   <div className="watchlist-card-actions">
-                    <button
-                      className="watchlist-action-btn"
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={(e) => handleEdit(watchlist, e)}
                       title="Edit watchlist"
                     >
                       <EditIcon size={14} />
-                    </button>
-                    <button
-                      className="watchlist-action-btn danger"
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={(e) => handleDelete(watchlist.id, e)}
                       title="Delete watchlist"
                     >
                       <TrashIcon size={14} />
-                    </button>
+                    </Button>
                   </div>
                 </div>
                 {watchlist.description && (
-                  <p className="watchlist-card-description">
-                    {watchlist.description}
-                  </p>
+                  <div className="watchlist-card-description">
+                    <Description>{watchlist.description}</Description>
+                  </div>
                 )}
                 <div className="watchlist-card-stats">
                   <div className="watchlist-stat">
-                    <span className="stat-value">{watchlist.item_count}</span>
-                    <span className="stat-label">
+                    <MetricValue size="base">
+                      {watchlist.item_count}
+                    </MetricValue>
+                    <MetricLabel>
                       {watchlist.item_count === 1 ? 'stock' : 'stocks'}
-                    </span>
+                    </MetricLabel>
                   </div>
                   {watchlist.items_at_buy_target > 0 && (
                     <div className="watchlist-stat buy-target">
-                      <span className="stat-value">
+                      <MetricValue size="base" sentiment="positive">
                         {watchlist.items_at_buy_target}
-                      </span>
-                      <span className="stat-label">at buy target</span>
+                      </MetricValue>
+                      <MetricLabel>at buy target</MetricLabel>
                     </div>
                   )}
                   {watchlist.items_at_sell_target > 0 && (
                     <div className="watchlist-stat sell-target">
-                      <span className="stat-value">
+                      <MetricValue size="base" sentiment="negative">
                         {watchlist.items_at_sell_target}
-                      </span>
-                      <span className="stat-label">at sell target</span>
+                      </MetricValue>
+                      <MetricLabel>at sell target</MetricLabel>
                     </div>
                   )}
                 </div>

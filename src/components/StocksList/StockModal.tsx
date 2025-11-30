@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { sectorsApi, stocksApi } from '@/services/api';
 import type { Sector, CreateStockInput, StockWithSector } from '@/types';
-import { Modal, Button, Input } from '@/components/shared';
+import { Modal, Button, Input, TextArea } from '@/components/shared';
 import { Label, Hint, Text } from '@/components/shared/Typography';
 import {
   BottomSheetSelect,
@@ -278,14 +278,14 @@ export function StockModal({
 
         <div className="form-group">
           <Label htmlFor="notes">Notes</Label>
-          <textarea
+          <TextArea
             id="notes"
             name="notes"
             value={formData.notes || ''}
             onChange={handleChange}
             placeholder="Any notes about this stock..."
             rows={3}
-            className="stock-modal-textarea"
+            fullWidth
           />
         </div>
 

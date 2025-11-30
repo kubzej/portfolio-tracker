@@ -12,13 +12,6 @@
   margin-bottom: 1.5rem;
 }
 
-.watchlists-header h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-primary, #1a1a2e);
-  margin: 0;
-}
-
 /* Loading & Error States */
 .watchlists-loading {
   display: flex;
@@ -66,17 +59,6 @@
 .watchlists-empty .empty-icon {
   font-size: 3rem;
   margin-bottom: 1rem;
-}
-
-.watchlists-empty h3 {
-  font-size: 1.25rem;
-  color: var(--text-primary, #1a1a2e);
-  margin: 0 0 0.5rem;
-}
-
-.watchlists-empty p {
-  color: var(--text-secondary, #64748b);
-  margin: 0 0 1.5rem;
 }
 
 /* Watchlist Cards Grid */
@@ -235,6 +217,12 @@
   gap: 0.75rem;
 }
 
+.watchlist-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
 .back-btn {
   background: none;
   border: none;
@@ -258,19 +246,6 @@
   flex-shrink: 0;
 }
 
-.watchlist-info h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-primary, #1a1a2e);
-  margin: 0;
-}
-
-.watchlist-info p {
-  font-size: 0.875rem;
-  color: var(--text-secondary, #64748b);
-  margin: 0.25rem 0 0;
-}
-
 .header-actions {
   display: flex;
   gap: 0.5rem;
@@ -289,7 +264,6 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.8125rem;
-  table-layout: fixed;
 }
 
 .watchlist-table th,
@@ -299,23 +273,13 @@
   border-bottom: 1px solid var(--border-light);
 }
 
-/* Column widths */
-.watchlist-table th:nth-child(1),
-.watchlist-table td:nth-child(1) { width: 15%; } /* Ticker */
-.watchlist-table th:nth-child(2),
-.watchlist-table td:nth-child(2) { width: 12%; } /* Price */
-.watchlist-table th:nth-child(3),
-.watchlist-table td:nth-child(3) { width: 10%; } /* Change */
-.watchlist-table th:nth-child(4),
-.watchlist-table td:nth-child(4) { width: 14%; } /* Buy Target */
-.watchlist-table th:nth-child(5),
-.watchlist-table td:nth-child(5) { width: 14%; } /* Sell Target */
-.watchlist-table th:nth-child(6),
-.watchlist-table td:nth-child(6) { width: 12%; } /* Status */
-.watchlist-table th:nth-child(7),
-.watchlist-table td:nth-child(7) { width: 17%; } /* Notes */
-.watchlist-table th:nth-child(8),
-.watchlist-table td:nth-child(8) { width: 6%; } /* Actions */
+/* Column widths - removed fixed widths, let table auto-size */
+.watchlist-table .notes-cell {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .watchlist-table th {
   background: var(--bg-tertiary);
@@ -508,13 +472,6 @@
   border-bottom: 1px solid var(--border-color, #e2e8f0);
 }
 
-.watchlist-form-header h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary, #1a1a2e);
-  margin: 0;
-}
-
 .close-btn {
   background: none;
   border: none;
@@ -547,15 +504,6 @@
   margin-bottom: 1rem;
 }
 
-.form-group label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-primary, #1a1a2e);
-  margin-bottom: 0.375rem;
-}
-
-.form-group input,
 .form-group textarea {
   width: 100%;
   padding: 0.625rem 0.75rem;
@@ -563,31 +511,14 @@
   border-radius: 0.5rem;
   font-size: 1rem;
   transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: var(--primary, #3b82f6);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.form-group input:disabled {
-  background: var(--bg-secondary, #f8fafc);
-  color: var(--text-secondary, #64748b);
-  cursor: not-allowed;
-}
-
-.form-group textarea {
   resize: vertical;
   min-height: 80px;
 }
 
-.form-hint {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--text-secondary, #64748b);
-  margin-top: 0.25rem;
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary, #3b82f6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .form-row {
@@ -601,8 +532,6 @@
   gap: 0.75rem;
   justify-content: flex-end;
   margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-color, #e2e8f0);
 }
 
 /* Color Picker */
@@ -680,11 +609,12 @@
   }
 
   .watchlist-item-card {
-    background: var(--bg-tertiary);
+    background: var(--bg-secondary);
     border-radius: var(--radius-md);
     padding: 1rem;
     transition: all var(--transition-normal);
-    border: 1px solid transparent;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
   }
 
   .watchlist-item-card:hover {

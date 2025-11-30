@@ -7,7 +7,13 @@ import type {
   CreateTransactionInput,
   TransactionType,
 } from '@/types/database';
-import { Modal, Button, Input, ToggleGroup } from '@/components/shared';
+import {
+  Modal,
+  Button,
+  Input,
+  ToggleGroup,
+  TextArea,
+} from '@/components/shared';
 import { Label, Hint, Text, MetricValue } from '@/components/shared/Typography';
 import {
   BottomSheetSelect,
@@ -409,14 +415,14 @@ export function TransactionModal({
 
         <div className="form-group notes-section">
           <Label htmlFor="notes">Notes</Label>
-          <textarea
+          <TextArea
             id="notes"
             name="notes"
             value={formData.notes || ''}
             onChange={handleChange}
             placeholder="Any notes about this transaction..."
             rows={2}
-            className="transaction-modal-textarea"
+            fullWidth
           />
         </div>
 

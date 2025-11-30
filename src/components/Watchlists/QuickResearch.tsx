@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Button } from '@/components/shared';
+import { Button, Input } from '@/components/shared';
+import { CardTitle, Caption } from '@/components/shared/Typography';
 import './QuickResearch.css';
 
 interface QuickResearchProps {
@@ -28,20 +29,18 @@ export function QuickResearch({ onOpenResearch }: QuickResearchProps) {
     <div className="quick-research">
       <div className="quick-research-header">
         <span className="quick-research-icon">Q</span>
-        <h3>Quick Research</h3>
-        <span className="quick-research-desc">
-          Enter any ticker to get detailed analysis
-        </span>
+        <CardTitle>Quick Research</CardTitle>
+        <Caption>Enter any ticker to get detailed analysis</Caption>
       </div>
       <form className="quick-research-form" onSubmit={handleSubmit}>
-        <input
+        <Input
           type="text"
-          className="quick-research-input"
           placeholder="Enter ticker symbol (e.g., AAPL, MSFT)"
           value={ticker}
           onChange={(e) => setTicker(e.target.value.toUpperCase())}
           onKeyDown={handleKeyDown}
           maxLength={10}
+          fullWidth
         />
         <Button type="submit" variant="primary" disabled={!ticker.trim()}>
           Analyze

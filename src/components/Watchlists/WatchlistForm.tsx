@@ -5,7 +5,8 @@ import type {
   UpdateWatchlistInput,
 } from '@/types/database';
 import { watchlistsApi } from '@/services/api';
-import { Button, Modal } from '@/components/shared';
+import { Button, Modal, Input, TextArea } from '@/components/shared';
+import { Label } from '@/components/shared/Typography';
 
 interface WatchlistFormProps {
   watchlist?: WatchlistSummary | null;
@@ -86,30 +87,32 @@ export function WatchlistForm({
         {error && <div className="form-error">{error}</div>}
 
         <div className="form-group">
-          <label htmlFor="watchlist-name">Name *</label>
-          <input
+          <Label htmlFor="watchlist-name">Name *</Label>
+          <Input
             id="watchlist-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g., Tech Stocks to Buy"
             autoFocus
+            fullWidth
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="watchlist-description">Description</label>
-          <textarea
+          <Label htmlFor="watchlist-description">Description</Label>
+          <TextArea
             id="watchlist-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Optional notes about this watchlist..."
             rows={3}
+            fullWidth
           />
         </div>
 
         <div className="form-group">
-          <label>Color</label>
+          <Label>Color</Label>
           <div className="color-picker">
             {PRESET_COLORS.map((c) => (
               <button

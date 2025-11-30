@@ -7,6 +7,8 @@ import type {
 import { watchlistItemsApi } from '@/services/api';
 import { Button } from '@/components/shared/Button';
 import { Modal } from '@/components/shared/Modal';
+import { Input, TextArea } from '@/components/shared/Input';
+import { Label, Hint } from '@/components/shared/Typography';
 
 interface AddStockFormProps {
   watchlistId: string;
@@ -133,8 +135,8 @@ export function AddStockForm({
         {error && <div className="form-error">{error}</div>}
 
         <div className="form-group">
-          <label htmlFor="stock-ticker">Ticker Symbol *</label>
-          <input
+          <Label htmlFor="stock-ticker">Ticker Symbol *</Label>
+          <Input
             id="stock-ticker"
             type="text"
             value={ticker}
@@ -142,25 +144,27 @@ export function AddStockForm({
             placeholder="e.g., AAPL, SAP.DE, 1211.HK"
             autoFocus={!isEditing}
             maxLength={15}
+            fullWidth
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="stock-name">Company Name</label>
-          <input
+          <Label htmlFor="stock-name">Company Name</Label>
+          <Input
             id="stock-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g., Apple Inc."
             maxLength={100}
+            fullWidth
           />
         </div>
 
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="buy-target">Buy Target ($)</label>
-            <input
+            <Label htmlFor="buy-target">Buy Target ($)</Label>
+            <Input
               id="buy-target"
               type="number"
               step="0.01"
@@ -168,13 +172,14 @@ export function AddStockForm({
               value={targetBuyPrice}
               onChange={(e) => setTargetBuyPrice(e.target.value)}
               placeholder="Optional"
+              fullWidth
             />
-            <span className="form-hint">Alert when price drops to this</span>
+            <Hint>Alert when price drops to this</Hint>
           </div>
 
           <div className="form-group">
-            <label htmlFor="sell-target">Sell Target ($)</label>
-            <input
+            <Label htmlFor="sell-target">Sell Target ($)</Label>
+            <Input
               id="sell-target"
               type="number"
               step="0.01"
@@ -182,19 +187,21 @@ export function AddStockForm({
               value={targetSellPrice}
               onChange={(e) => setTargetSellPrice(e.target.value)}
               placeholder="Optional"
+              fullWidth
             />
-            <span className="form-hint">Alert when price rises to this</span>
+            <Hint>Alert when price rises to this</Hint>
           </div>
         </div>
 
         <div className="form-group">
-          <label htmlFor="stock-notes">Notes</label>
-          <textarea
+          <Label htmlFor="stock-notes">Notes</Label>
+          <TextArea
             id="stock-notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Why are you watching this stock? Investment thesis, key metrics to watch..."
             rows={4}
+            fullWidth
           />
         </div>
 
