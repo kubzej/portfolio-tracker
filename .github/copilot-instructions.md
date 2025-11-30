@@ -94,6 +94,26 @@ All scores are 0-100. Main functions:
 - CSS variables for colors in `:root`
 - Mobile-first responsive design
 
+### UI Components (MANDATORY)
+
+**When writing new UI or refactoring existing UI, ALWAYS use our shared components first.**
+
+**DO NOT use raw HTML elements:**
+
+- ❌ `<span>`, `<p>`, `<h1-h6>`, `<label>` → Use Typography components
+- ❌ `<button>` → Use `Button` component
+- ❌ `<input>` → Use `Input` component
+- ❌ `<select>` → Use custom Select/Dropdown component or `ToggleGroup`
+- ❌ `<table>` → Use our table patterns with proper styling
+
+**Exception:** Raw elements are OK for:
+
+- Layout wrappers (`<div>`, `<section>`)
+- Non-text visual elements (color dots, icons)
+- Complex custom components where shared components don't fit
+
+**Always check `@/components/shared` first before creating new UI elements.**
+
 ### Typography System (MANDATORY)
 
 **All text elements MUST use Typography components from `@/components/shared/Typography`.**

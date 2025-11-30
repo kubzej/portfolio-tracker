@@ -207,6 +207,7 @@ export function StockResearch({
       technicalData: technicalData ?? undefined,
       newsArticles: newsArticles,
       insiderTimeRange: 3,
+      isResearch: true,
     });
   }, [analystData, technicalData, newsArticles]);
 
