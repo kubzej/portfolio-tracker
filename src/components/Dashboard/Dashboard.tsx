@@ -404,17 +404,22 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                       className="right"
                     />
                     <SortHeader
-                      label="Avg Price"
-                      sortKeyName="avgPrice"
-                      className="right"
-                    />
-                    <SortHeader
                       label="Current Price"
                       sortKeyName="currentPrice"
                       className="right"
                     />
                     <SortHeader
-                      label="Value (CZK)"
+                      label="Invested"
+                      sortKeyName="invested"
+                      className="right"
+                    />
+                    <SortHeader
+                      label="Avg Price"
+                      sortKeyName="avgPrice"
+                      className="right"
+                    />
+                    <SortHeader
+                      label="Current Value"
                       sortKeyName="current"
                       className="right"
                     />
@@ -479,23 +484,23 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                         </td>
                         <td className="right">
                           <MetricValue>
+                            {formatPrice(holding.current_price)}
+                          </MetricValue>
+                        </td>
+                        <td className="right">
+                          <MetricValue>
+                            {formatCurrency(holding.total_invested_czk)}
+                          </MetricValue>
+                        </td>
+                        <td className="right">
+                          <MetricValue>
                             {formatPrice(holding.avg_buy_price)}
                           </MetricValue>
                         </td>
                         <td className="right">
                           <MetricValue>
-                            {formatPrice(holding.current_price)}
+                            {formatCurrency(holding.current_value_czk)}
                           </MetricValue>
-                        </td>
-                        <td className="right">
-                          <div className="dual-value">
-                            <MetricValue>
-                              {formatCurrency(holding.current_value_czk)}
-                            </MetricValue>
-                            <Text size="xs" color="muted">
-                              inv: {formatCurrency(holding.total_invested_czk)}
-                            </Text>
-                          </div>
                         </td>
                         <td className="right">
                           <div className="dual-value">
