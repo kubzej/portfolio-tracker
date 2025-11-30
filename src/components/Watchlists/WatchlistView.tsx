@@ -77,6 +77,7 @@ export function WatchlistView({
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingItem, setEditingItem] =
     useState<WatchlistItemWithCalculations | null>(null);
+  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
 
   // Value extractor for sorting
   const getItemValue = useCallback(
@@ -175,6 +176,18 @@ export function WatchlistView({
     setShowAddForm(false);
     setEditingItem(null);
     loadData();
+  };
+
+  const toggleNotes = (itemId: string) => {
+    setExpandedNotes((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) {
+        next.delete(itemId);
+      } else {
+        next.add(itemId);
+      }
+      return next;
+    });
   };
 
   const handleRemoveItem = async (itemId: string, ticker: string) => {
@@ -592,7 +605,15 @@ export function WatchlistView({
                 )}
 
                 {item.notes && (
-                  <div className="item-card-notes">{item.notes}</div>
+                  <div
+                    className={cn(
+                      'item-card-notes',
+                      expandedNotes.has(item.id) && 'expanded'
+                    )}
+                    onClick={() => toggleNotes(item.id)}
+                  >
+                    {item.notes}
+                  </div>
                 )}
               </div>
             ))}
