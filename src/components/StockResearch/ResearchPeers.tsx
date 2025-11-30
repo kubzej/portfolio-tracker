@@ -835,8 +835,8 @@ export function ResearchPeers({
                     <Text size="xs" color="muted">
                       #{idx + 1}
                     </Text>
-                    <Ticker>{stock.ticker}</Ticker>
-                    <MetricValue>{score ?? '—'}</MetricValue>
+                    <Ticker size="xs">{stock.ticker}</Ticker>
+                    <MetricValue size="xs">{score ?? '—'}</MetricValue>
                   </div>
                   <div className="valuation-bar-track">
                     <div

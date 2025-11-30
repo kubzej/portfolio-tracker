@@ -23,7 +23,6 @@ import {
 } from '@/components/shared';
 import {
   Ticker,
-  StockName,
   MetricLabel,
   MetricValue,
   Description,
@@ -148,7 +147,7 @@ export function StockResearch({
           // Update load status for debug - check if data is actually present
           setDataLoadStatus({
             analyst: !!(analyst?.currentPrice || analyst?.recommendationKey),
-            technical: !!(technical?.rsi || technical?.macd),
+            technical: !!(technical?.rsi14 || technical?.macd),
             news: !!tickerNews?.articles?.length,
             peers: !!peers?.mainStock,
             rateLimited,
@@ -299,13 +298,10 @@ export function StockResearch({
           )}
         </div>
         <div className="stock-research-header__title">
-          <div className="stock-research-ticker-row">
-            <Ticker size="lg">{analystData.ticker}</Ticker>
-            {!exchangeInfo.isUSStock && (
-              <Badge variant="info">{exchangeInfo.exchangeSuffix}</Badge>
-            )}
-          </div>
-          <StockName size="lg">{analystData.stockName}</StockName>
+          <Ticker size="lg">{analystData.ticker}</Ticker>
+          {!exchangeInfo.isUSStock && (
+            <Badge variant="info">{exchangeInfo.exchangeSuffix}</Badge>
+          )}
         </div>
       </div>
 

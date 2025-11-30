@@ -3,7 +3,7 @@ import './Typography.css';
 interface MetricValueProps {
   children: React.ReactNode;
   sentiment?: 'positive' | 'negative' | 'neutral';
-  size?: 'sm' | 'base' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'base' | 'md' | 'lg' | 'xl';
 }
 
 export function MetricValue({

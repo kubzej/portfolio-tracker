@@ -2,7 +2,7 @@ import './Typography.css';
 
 interface TickerProps {
   children: React.ReactNode;
-  size?: 'sm' | 'base' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'base' | 'lg' | 'xl';
 }
 
 export function Ticker({ children, size = 'base' }: TickerProps) {

@@ -20,20 +20,8 @@
 
 .stock-research-header__title {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.stock-research-ticker-row {
-  display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.stock-research-header__title .stock-name {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-primary);
 }
 
 /* Company Description */

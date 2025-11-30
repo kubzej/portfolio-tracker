@@ -46,6 +46,10 @@
   font-family: inherit;
 }
 
+.ticker--xs {
+  font-size: var(--text-xs);
+}
+
 .ticker--sm {
   font-size: var(--text-sm);
 }
@@ -107,6 +111,10 @@
   font-weight: var(--font-medium);
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
+}
+
+.metric-value--xs {
+  font-size: var(--text-xs);
 }
 
 .metric-value--sm {
