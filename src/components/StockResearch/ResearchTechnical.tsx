@@ -1,7 +1,17 @@
 import type { TechnicalData } from '@/services/api/technical';
 import type { StockRecommendation } from '@/utils/recommendations';
-import { InfoTooltip, ScoreCard } from '@/components/shared';
-import { cn } from '@/utils/cn';
+import {
+  ScoreCard,
+  CardTitle,
+  MetricCard,
+  MetricLabel,
+  MetricValue,
+  Text,
+  Badge,
+  InfoTooltip,
+  IndicatorSignal,
+} from '@/components/shared';
+import type { SignalType } from '@/components/shared';
 import './ResearchTechnical.css';
 
 interface ResearchTechnicalProps {
@@ -28,16 +38,20 @@ export function ResearchTechnical({
       {/* Technical Bias */}
       {recommendation && (
         <section className="technical-section">
-          <h3 className="section-title">Technical Outlook</h3>
+          <CardTitle>Technical Outlook</CardTitle>
           <div className="technical-outlook">
-            <div
-              className={cn(
-                'bias-indicator',
-                recommendation.technicalBias.toLowerCase()
-              )}
+            <Badge
+              variant={
+                recommendation.technicalBias === 'BULLISH'
+                  ? 'buy'
+                  : recommendation.technicalBias === 'BEARISH'
+                  ? 'sell'
+                  : 'hold'
+              }
+              size="lg"
             >
               {recommendation.technicalBias}
-            </div>
+            </Badge>
             <div className="technical-score">
               <ScoreCard
                 label="Technical Score"
@@ -52,21 +66,25 @@ export function ResearchTechnical({
 
       {/* Moving Averages */}
       <section className="technical-section">
-        <h3 className="section-title">Moving Averages</h3>
+        <CardTitle>Moving Averages</CardTitle>
         <div className="metrics-grid">
-          <TechnicalMetric
+          <MetricCard
             label="SMA 50"
             value={tech.sma50 ? `$${tech.sma50.toFixed(2)}` : null}
             sentiment={getSMASentiment(tech.priceVsSma50)}
-            tooltip="50denní klouzavý průměr. Krátkodobý trend - cena nad SMA50 = býčí signál."
+            tooltip={
+              <InfoTooltip text="50denní klouzavý průměr. Krátkodobý trend - cena nad SMA50 = býčí signál." />
+            }
           />
-          <TechnicalMetric
+          <MetricCard
             label="SMA 200"
             value={tech.sma200 ? `$${tech.sma200.toFixed(2)}` : null}
             sentiment={getSMASentiment(tech.priceVsSma200)}
-            tooltip="200denní klouzavý průměr. Dlouhodobý trend - klíčová úroveň pro institucionální investory."
+            tooltip={
+              <InfoTooltip text="200denní klouzavý průměr. Dlouhodobý trend - klíčová úroveň pro institucionální investory." />
+            }
           />
-          <TechnicalMetric
+          <MetricCard
             label="Price vs SMA50"
             value={
               tech.priceVsSma50 !== null
@@ -74,9 +92,11 @@ export function ResearchTechnical({
                 : null
             }
             sentiment={getSMASentiment(tech.priceVsSma50)}
-            tooltip="Vzdálenost ceny od SMA50. Kladné = nad průměrem (býčí), záporné = pod (medvědí)."
+            tooltip={
+              <InfoTooltip text="Vzdálenost ceny od SMA50. Kladné = nad průměrem (býčí), záporné = pod (medvědí)." />
+            }
           />
-          <TechnicalMetric
+          <MetricCard
             label="Price vs SMA200"
             value={
               tech.priceVsSma200 !== null
@@ -84,37 +104,48 @@ export function ResearchTechnical({
                 : null
             }
             sentiment={getSMASentiment(tech.priceVsSma200)}
-            tooltip="Vzdálenost ceny od SMA200. Nad = dlouhodobý uptrend, pod = downtrend."
+            tooltip={
+              <InfoTooltip text="Vzdálenost ceny od SMA200. Nad = dlouhodobý uptrend, pod = downtrend." />
+            }
           />
         </div>
         {tech.priceVsSma50 !== null && tech.priceVsSma200 !== null && (
           <div className="sma-interpretation">
-            {getSMAInterpretation(tech.priceVsSma50, tech.priceVsSma200)}
+            <IndicatorSignal
+              type={getSMASignalType(tech.priceVsSma50, tech.priceVsSma200)}
+            >
+              {getSMAInterpretation(tech.priceVsSma50, tech.priceVsSma200)}
+            </IndicatorSignal>
           </div>
         )}
       </section>
 
       {/* Momentum Indicators */}
       <section className="technical-section">
-        <h3 className="section-title">Momentum Indicators</h3>
+        <CardTitle>Momentum Indicators</CardTitle>
         <div className="momentum-grid">
           {/* RSI */}
           <div className="momentum-card">
             <div className="momentum-header">
-              <span className="momentum-name">
+              <MetricLabel tooltip="Index relativní síly. Měří rychlost a změnu cenových pohybů. Pod 30 = přeprodáno (nákupní příležitost), nad 70 = překoupeno (možná korekce).">
                 RSI (14)
-                <InfoTooltip text="Index relativní síly. Měří rychlost a změnu cenových pohybů. Pod 30 = přeprodáno (nákupní příležitost), nad 70 = překoupeno (možná korekce)." />
-              </span>
-              <span
-                className={cn('momentum-signal', getRSISignalClass(tech.rsi14))}
+              </MetricLabel>
+              <Badge
+                variant={
+                  getRSISignalClass(tech.rsi14) === 'bullish'
+                    ? 'buy'
+                    : getRSISignalClass(tech.rsi14) === 'bearish'
+                    ? 'sell'
+                    : 'hold'
+                }
               >
                 {getRSISignal(tech.rsi14)}
-              </span>
+              </Badge>
             </div>
             <div className="momentum-value-row">
-              <span className="momentum-value">
+              <MetricValue size="lg">
                 {tech.rsi14 !== null ? tech.rsi14.toFixed(1) : '—'}
-              </span>
+              </MetricValue>
               <div className="rsi-bar">
                 <div className="rsi-bar-track">
                   <div className="rsi-zone oversold" />
@@ -136,33 +167,35 @@ export function ResearchTechnical({
           {/* Stochastic */}
           <div className="momentum-card">
             <div className="momentum-header">
-              <span className="momentum-name">
+              <MetricLabel tooltip="Stochastický oscilátor. Porovnává zavírací cenu s cenovým rozpětím. %K je rychlá linie, %D je pomalá. Pod 20 = přeprodáno, nad 80 = překoupeno.">
                 Stochastic
-                <InfoTooltip text="Stochastický oscilátor. Porovnává zavírací cenu s cenovým rozpětím. %K je rychlá linie, %D je pomalá. Pod 20 = přeprodáno, nad 80 = překoupeno." />
-              </span>
-              <span
-                className={cn(
-                  'momentum-signal',
-                  getStochSignalClass(tech.stochasticK)
-                )}
+              </MetricLabel>
+              <Badge
+                variant={
+                  getStochSignalClass(tech.stochasticK) === 'bullish'
+                    ? 'buy'
+                    : getStochSignalClass(tech.stochasticK) === 'bearish'
+                    ? 'sell'
+                    : 'hold'
+                }
               >
                 {tech.stochasticSignal ?? '—'}
-              </span>
+              </Badge>
             </div>
             <div className="momentum-value-row">
               <div className="stoch-values">
-                <span className="stoch-item">
-                  <span className="stoch-label">%K</span>
-                  <span className="stoch-value">
+                <div className="stoch-item">
+                  <MetricLabel>%K</MetricLabel>
+                  <MetricValue size="md">
                     {tech.stochasticK?.toFixed(1) ?? '—'}
-                  </span>
-                </span>
-                <span className="stoch-item">
-                  <span className="stoch-label">%D</span>
-                  <span className="stoch-value">
+                  </MetricValue>
+                </div>
+                <div className="stoch-item">
+                  <MetricLabel>%D</MetricLabel>
+                  <MetricValue size="md">
                     {tech.stochasticD?.toFixed(1) ?? '—'}
-                  </span>
-                </span>
+                  </MetricValue>
+                </div>
               </div>
             </div>
           </div>
@@ -170,46 +203,48 @@ export function ResearchTechnical({
           {/* MACD */}
           <div className="momentum-card">
             <div className="momentum-header">
-              <span className="momentum-name">
+              <MetricLabel tooltip="Klouzavý průměr konvergence/divergence. MACD nad signální linií = býčí, pod = medvědí. Histogram ukazuje sílu trendu.">
                 MACD
-                <InfoTooltip text="Klouzavý průměr konvergence/divergence. MACD nad signální linií = býčí, pod = medvědí. Histogram ukazuje sílu trendu." />
-              </span>
-              <span
-                className={cn(
-                  'momentum-signal',
-                  getMACDSignalClass(tech.macdHistogram)
-                )}
+              </MetricLabel>
+              <Badge
+                variant={
+                  getMACDSignalClass(tech.macdHistogram) === 'bullish'
+                    ? 'buy'
+                    : getMACDSignalClass(tech.macdHistogram) === 'bearish'
+                    ? 'sell'
+                    : 'hold'
+                }
               >
                 {tech.macdTrend ?? '—'}
-              </span>
+              </Badge>
             </div>
             <div className="macd-row">
               <div className="macd-item">
-                <span className="macd-label">MACD</span>
-                <span className="macd-value">
+                <MetricLabel>MACD</MetricLabel>
+                <MetricValue size="sm">
                   {tech.macd?.toFixed(3) ?? '—'}
-                </span>
+                </MetricValue>
               </div>
               <div className="macd-item">
-                <span className="macd-label">Signal</span>
-                <span className="macd-value">
+                <MetricLabel>Signal</MetricLabel>
+                <MetricValue size="sm">
                   {tech.macdSignal?.toFixed(3) ?? '—'}
-                </span>
+                </MetricValue>
               </div>
               <div className="macd-item">
-                <span className="macd-label">Hist</span>
-                <span
-                  className={cn(
-                    'macd-value',
+                <MetricLabel>Hist</MetricLabel>
+                <MetricValue
+                  size="sm"
+                  sentiment={
                     tech.macdHistogram !== null
                       ? tech.macdHistogram > 0
                         ? 'positive'
                         : 'negative'
                       : undefined
-                  )}
+                  }
                 >
                   {tech.macdHistogram?.toFixed(3) ?? '—'}
-                </span>
+                </MetricValue>
               </div>
             </div>
           </div>
@@ -218,64 +253,77 @@ export function ResearchTechnical({
 
       {/* Bollinger Bands */}
       <section className="technical-section">
-        <h3 className="section-title">Bollinger Bands</h3>
+        <CardTitle>Bollinger Bands</CardTitle>
         <div className="metrics-grid">
-          <TechnicalMetric
+          <MetricCard
             label="Upper Band"
             value={
               tech.bollingerUpper ? `$${tech.bollingerUpper.toFixed(2)}` : null
             }
-            tooltip="Horní pásmo. Cena blízko horního pásma = překoupený stav, možná korekce."
+            tooltip={
+              <InfoTooltip text="Horní pásmo. Cena blízko horního pásma = překoupený stav, možná korekce." />
+            }
           />
-          <TechnicalMetric
+          <MetricCard
             label="Middle Band"
             value={
               tech.bollingerMiddle
                 ? `$${tech.bollingerMiddle.toFixed(2)}`
                 : null
             }
-            tooltip="Střední pásmo (SMA 20). Slouzí jako dynamická podpora/rezistence."
+            tooltip={
+              <InfoTooltip text="Střední pásmo (SMA 20). Slouzí jako dynamická podpora/rezistence." />
+            }
           />
-          <TechnicalMetric
+          <MetricCard
             label="Lower Band"
             value={
               tech.bollingerLower ? `$${tech.bollingerLower.toFixed(2)}` : null
             }
-            tooltip="Spodní pásmo. Cena blízko spodního pásma = přeprodaný stav, možný odraz."
+            tooltip={
+              <InfoTooltip text="Spodní pásmo. Cena blízko spodního pásma = přeprodaný stav, možný odraz." />
+            }
           />
-          <TechnicalMetric
+          <MetricCard
             label="Position"
             value={
               tech.bollingerPosition !== null
                 ? `${tech.bollingerPosition.toFixed(0)}%`
                 : null
             }
-            tooltip="Pozice v pásmech (0-100%). Pod 20% = přeprodáno, nad 80% = překoupeno."
+            tooltip={
+              <InfoTooltip text="Pozice v pásmech (0-100%). Pod 20% = přeprodáno, nad 80% = překoupeno." />
+            }
             sentiment={getBollingerSentiment(tech.bollingerPosition)}
           />
         </div>
         {tech.bollingerSignal && (
           <div className="bollinger-signal-row">
-            <span
-              className={cn(
-                'bollinger-badge',
-                getBollingerSignalClass(tech.bollingerSignal)
-              )}
+            <Badge
+              variant={
+                getBollingerSignalClass(tech.bollingerSignal) === 'bullish'
+                  ? 'buy'
+                  : getBollingerSignalClass(tech.bollingerSignal) === 'bearish'
+                  ? 'sell'
+                  : 'hold'
+              }
             >
               {tech.bollingerSignal}
-            </span>
+            </Badge>
           </div>
         )}
       </section>
 
       {/* Trend & Volume */}
       <section className="technical-section">
-        <h3 className="section-title">Trend & Volume</h3>
+        <CardTitle>Trend & Volume</CardTitle>
         <div className="metrics-grid">
-          <TechnicalMetric
+          <MetricCard
             label="ADX"
             value={tech.adx?.toFixed(1) ?? null}
-            tooltip="Síla trendu. Pod 20 = slabý/žádný trend, 20-25 = vznikající, nad 25 = silný trend."
+            tooltip={
+              <InfoTooltip text="Síla trendu. Pod 20 = slabý/žádný trend, 20-25 = vznikající, nad 25 = silný trend." />
+            }
             sentiment={
               tech.adx !== null
                 ? tech.adx > 25
@@ -284,29 +332,37 @@ export function ResearchTechnical({
                 : undefined
             }
           />
-          <TechnicalMetric
+          <MetricCard
             label="+DI"
             value={tech.plusDI?.toFixed(1) ?? null}
-            tooltip="Pozitivní směrový indikátor. +DI > -DI = býčí tlak, kupující dominují."
+            tooltip={
+              <InfoTooltip text="Pozitivní směrový indikátor. +DI > -DI = býčí tlak, kupující dominují." />
+            }
           />
-          <TechnicalMetric
+          <MetricCard
             label="-DI"
             value={tech.minusDI?.toFixed(1) ?? null}
-            tooltip="Negativní směrový indikátor. -DI > +DI = medvědí tlak, prodávající dominují."
+            tooltip={
+              <InfoTooltip text="Negativní směrový indikátor. -DI > +DI = medvědí tlak, prodávající dominují." />
+            }
           />
-          <TechnicalMetric
+          <MetricCard
             label="ATR"
             value={tech.atr14 ? `$${tech.atr14.toFixed(2)}` : null}
-            tooltip="Průměrné skutečné rozpětí. Měří volatilitu - vyšší = větší cenové výkyvy."
+            tooltip={
+              <InfoTooltip text="Průměrné skutečné rozpětí. Měří volatilitu - vyšší = větší cenové výkyvy." />
+            }
           />
-          <TechnicalMetric
+          <MetricCard
             label="Volume Change"
             value={
               tech.volumeChange !== null
                 ? `${tech.volumeChange.toFixed(0)}%`
                 : null
             }
-            tooltip="Změna objemu vs 20denní průměr. Vysoký objem potvrzuje cenový pohyb."
+            tooltip={
+              <InfoTooltip text="Změna objemu vs 20denní průměr. Vysoký objem potvrzuje cenový pohyb." />
+            }
             sentiment={
               tech.volumeChange !== null
                 ? tech.volumeChange > 50
@@ -323,99 +379,88 @@ export function ResearchTechnical({
       {/* Fibonacci Levels */}
       {tech.fibonacciLevels && (
         <section className="technical-section">
-          <h3 className="section-title">Fibonacci Retracement</h3>
+          <CardTitle>Fibonacci Retracement</CardTitle>
           <div className="metrics-grid">
-            <TechnicalMetric
+            <MetricCard
               label="0% (High)"
               value={
                 tech.fibonacciLevels.level0
                   ? `$${tech.fibonacciLevels.level0.toFixed(2)}`
                   : null
               }
-              tooltip="Nejvyšší bod - začátek měření."
+              tooltip={<InfoTooltip text="Nejvyšší bod - začátek měření." />}
             />
-            <TechnicalMetric
+            <MetricCard
               label="23.6%"
               value={
                 tech.fibonacciLevels.level236
                   ? `$${tech.fibonacciLevels.level236.toFixed(2)}`
                   : null
               }
-              tooltip="Mělká korekce. Silný trend často udrží tuto úroveň."
+              tooltip={
+                <InfoTooltip text="Mělká korekce. Silný trend často udrží tuto úroveň." />
+              }
             />
-            <TechnicalMetric
+            <MetricCard
               label="38.2%"
               value={
                 tech.fibonacciLevels.level382
                   ? `$${tech.fibonacciLevels.level382.toFixed(2)}`
                   : null
               }
-              tooltip="Důležitá supportní úroveň. Častá zóna odrazu."
+              tooltip={
+                <InfoTooltip text="Důležitá supportní úroveň. Častá zóna odrazu." />
+              }
             />
-            <TechnicalMetric
+            <MetricCard
               label="50%"
               value={
                 tech.fibonacciLevels.level500
                   ? `$${tech.fibonacciLevels.level500.toFixed(2)}`
                   : null
               }
-              tooltip="Psychologická úroveň - polovina předchozího pohybu."
+              tooltip={
+                <InfoTooltip text="Psychologická úroveň - polovina předchozího pohybu." />
+              }
             />
-            <TechnicalMetric
+            <MetricCard
               label="61.8%"
               value={
                 tech.fibonacciLevels.level618
                   ? `$${tech.fibonacciLevels.level618.toFixed(2)}`
                   : null
               }
-              tooltip="Zlatý řez - nejdůležitější Fibonacci úroveň. Silný support."
+              tooltip={
+                <InfoTooltip text="Zlatý řez - nejdůležitější Fibonacci úroveň. Silný support." />
+              }
             />
-            <TechnicalMetric
+            <MetricCard
               label="100% (Low)"
               value={
                 tech.fibonacciLevels.level100
                   ? `$${tech.fibonacciLevels.level100.toFixed(2)}`
                   : null
               }
-              tooltip="Nejnižší bod - konec měření. Propad pod = pokračování downtrend."
+              tooltip={
+                <InfoTooltip text="Nejnižší bod - konec měření. Propad pod = pokračování downtrend." />
+              }
             />
           </div>
           {tech.fibonacciLevels.currentLevel && (
             <div className="fib-current">
-              Aktuální cena blízko{' '}
-              <strong>{tech.fibonacciLevels.currentLevel}</strong> úrovně
-              {tech.fibonacciLevels.trend && ` (${tech.fibonacciLevels.trend})`}
+              <Text color="secondary">
+                Aktuální cena blízko{' '}
+                <Text as="span" weight="semibold">
+                  {tech.fibonacciLevels.currentLevel}
+                </Text>{' '}
+                úrovně
+                {tech.fibonacciLevels.trend &&
+                  ` (${tech.fibonacciLevels.trend})`}
+              </Text>
             </div>
           )}
         </section>
       )}
-    </div>
-  );
-}
-
-// Technical Metric component - label on top, value below
-interface TechnicalMetricProps {
-  value: string | null;
-  label: string;
-  tooltip?: string;
-  sentiment?: 'positive' | 'negative' | 'neutral';
-}
-
-function TechnicalMetric({
-  value,
-  label,
-  tooltip,
-  sentiment,
-}: TechnicalMetricProps) {
-  return (
-    <div className="technical-metric">
-      <span className="technical-metric-label">
-        {label}
-        {tooltip && <InfoTooltip text={tooltip} />}
-      </span>
-      <span className={cn('technical-metric-value', sentiment)}>
-        {value ?? '—'}
-      </span>
     </div>
   );
 }
@@ -441,6 +486,16 @@ function getSMAInterpretation(vsSma50: number, vsSma200: number): string {
     return 'Short-term recovery, still below long-term trend';
   }
   return 'Recent weakness, but long-term trend intact';
+}
+
+function getSMASignalType(vsSma50: number, vsSma200: number): SignalType {
+  if (vsSma50 > 0 && vsSma200 > 0) {
+    return 'bullish';
+  }
+  if (vsSma50 < 0 && vsSma200 < 0) {
+    return 'bearish';
+  }
+  return 'neutral';
 }
 
 function getRSISignal(rsi: number | null): string {

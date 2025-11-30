@@ -1,7 +1,12 @@
 import type { AnalystData } from '@/services/api/analysis';
 import type { StockRecommendation } from '@/utils/recommendations';
 import { cn } from '@/utils/cn';
-import { ScoreCard, InfoTooltip, IndicatorSignal } from '@/components/shared';
+import {
+  ScoreCard,
+  InfoTooltip,
+  IndicatorSignal,
+  MetricCard,
+} from '@/components/shared';
 import {
   CardTitle,
   MetricLabel,
@@ -156,59 +161,54 @@ export function ResearchSummary({
                 Current price is in the buy zone
               </IndicatorSignal>
             )}
-            <div className="strategy-cards">
-              <div className="strategy-card">
-                <MetricLabel>Buy Zone</MetricLabel>
-                <MetricValue
-                  sentiment={buyStrategy.inBuyZone ? 'positive' : undefined}
-                >
-                  {buyStrategy.buyZoneLow && buyStrategy.buyZoneHigh
+            <div className="strategy-grid">
+              <MetricCard
+                label="Buy Zone"
+                value={
+                  buyStrategy.buyZoneLow && buyStrategy.buyZoneHigh
                     ? `$${buyStrategy.buyZoneLow.toFixed(
                         2
                       )} – $${buyStrategy.buyZoneHigh.toFixed(2)}`
-                    : '—'}
-                </MetricValue>
-              </div>
-              <div className="strategy-card">
-                <MetricLabel>Support</MetricLabel>
-                <MetricValue>
-                  {buyStrategy.supportPrice
+                    : null
+                }
+                sentiment={buyStrategy.inBuyZone ? 'positive' : undefined}
+              />
+              <MetricCard
+                label="Support"
+                value={
+                  buyStrategy.supportPrice
                     ? `$${buyStrategy.supportPrice.toFixed(2)}`
-                    : '—'}
-                </MetricValue>
-              </div>
-              <div className="strategy-card">
-                <MetricLabel>Risk/Reward</MetricLabel>
-                <MetricValue
-                  sentiment={
-                    buyStrategy.riskRewardRatio
-                      ? buyStrategy.riskRewardRatio >= 2
-                        ? 'positive'
-                        : buyStrategy.riskRewardRatio >= 1
-                        ? 'neutral'
-                        : 'negative'
-                      : undefined
-                  }
-                >
-                  {buyStrategy.riskRewardRatio
+                    : null
+                }
+              />
+              <MetricCard
+                label="Risk/Reward"
+                value={
+                  buyStrategy.riskRewardRatio
                     ? `${buyStrategy.riskRewardRatio}:1`
-                    : '—'}
-                </MetricValue>
-              </div>
-              <div className="strategy-card">
-                <MetricLabel>DCA</MetricLabel>
-                <MetricValue
-                  sentiment={
-                    buyStrategy.dcaRecommendation === 'AGGRESSIVE'
+                    : null
+                }
+                sentiment={
+                  buyStrategy.riskRewardRatio
+                    ? buyStrategy.riskRewardRatio >= 2
                       ? 'positive'
-                      : buyStrategy.dcaRecommendation === 'NO_DCA'
-                      ? 'negative'
-                      : 'neutral'
-                  }
-                >
-                  {buyStrategy.dcaRecommendation || '—'}
-                </MetricValue>
-              </div>
+                      : buyStrategy.riskRewardRatio >= 1
+                      ? 'neutral'
+                      : 'negative'
+                    : undefined
+                }
+              />
+              <MetricCard
+                label="DCA"
+                value={buyStrategy.dcaRecommendation || null}
+                sentiment={
+                  buyStrategy.dcaRecommendation === 'AGGRESSIVE'
+                    ? 'positive'
+                    : buyStrategy.dcaRecommendation === 'NO_DCA'
+                    ? 'negative'
+                    : 'neutral'
+                }
+              />
             </div>
           </div>
         </section>
@@ -237,93 +237,82 @@ export function ResearchSummary({
               </Badge>
               <Text color="secondary">{exitStrategy.holdingReason}</Text>
             </div>
-            <div className="strategy-cards">
-              <div className="strategy-card">
-                <MetricLabel>Take Profit 1</MetricLabel>
-                <MetricValue sentiment="positive">
-                  {exitStrategy.takeProfit1
+            <div className="strategy-grid">
+              <MetricCard
+                label="Take Profit 1"
+                value={
+                  exitStrategy.takeProfit1
                     ? `$${exitStrategy.takeProfit1.toFixed(2)}`
-                    : '—'}
-                  {exitStrategy.takeProfit1 &&
-                    recommendation.currentPrice > 0 && (
-                      <span className="strategy-percent">
-                        {' '}
-                        (+
-                        {(
-                          ((exitStrategy.takeProfit1 -
-                            recommendation.currentPrice) /
-                            recommendation.currentPrice) *
-                          100
-                        ).toFixed(0)}
-                        %)
-                      </span>
-                    )}
-                </MetricValue>
-              </div>
-              <div className="strategy-card">
-                <MetricLabel>Take Profit 2</MetricLabel>
-                <MetricValue sentiment="positive">
-                  {exitStrategy.takeProfit2
+                    : null
+                }
+                subtext={
+                  exitStrategy.takeProfit1 && recommendation.currentPrice > 0
+                    ? `+${(
+                        ((exitStrategy.takeProfit1 -
+                          recommendation.currentPrice) /
+                          recommendation.currentPrice) *
+                        100
+                      ).toFixed(0)}%`
+                    : undefined
+                }
+                sentiment="positive"
+              />
+              <MetricCard
+                label="Take Profit 2"
+                value={
+                  exitStrategy.takeProfit2
                     ? `$${exitStrategy.takeProfit2.toFixed(2)}`
-                    : '—'}
-                  {exitStrategy.takeProfit2 &&
-                    recommendation.currentPrice > 0 && (
-                      <span className="strategy-percent">
-                        {' '}
-                        (+
-                        {(
-                          ((exitStrategy.takeProfit2 -
-                            recommendation.currentPrice) /
-                            recommendation.currentPrice) *
-                          100
-                        ).toFixed(0)}
-                        %)
-                      </span>
-                    )}
-                </MetricValue>
-              </div>
-              <div className="strategy-card">
-                <MetricLabel>Target</MetricLabel>
-                <MetricValue sentiment="positive">
-                  {exitStrategy.takeProfit3
+                    : null
+                }
+                subtext={
+                  exitStrategy.takeProfit2 && recommendation.currentPrice > 0
+                    ? `+${(
+                        ((exitStrategy.takeProfit2 -
+                          recommendation.currentPrice) /
+                          recommendation.currentPrice) *
+                        100
+                      ).toFixed(0)}%`
+                    : undefined
+                }
+                sentiment="positive"
+              />
+              <MetricCard
+                label="Target"
+                value={
+                  exitStrategy.takeProfit3
                     ? `$${exitStrategy.takeProfit3.toFixed(2)}`
-                    : '—'}
-                  {exitStrategy.takeProfit3 &&
-                    recommendation.currentPrice > 0 && (
-                      <span className="strategy-percent">
-                        {' '}
-                        (+
-                        {(
-                          ((exitStrategy.takeProfit3 -
-                            recommendation.currentPrice) /
-                            recommendation.currentPrice) *
-                          100
-                        ).toFixed(0)}
-                        %)
-                      </span>
-                    )}
-                </MetricValue>
-              </div>
-              <div className="strategy-card">
-                <MetricLabel>Stop Loss</MetricLabel>
-                <MetricValue sentiment="negative">
-                  {exitStrategy.stopLoss
+                    : null
+                }
+                subtext={
+                  exitStrategy.takeProfit3 && recommendation.currentPrice > 0
+                    ? `+${(
+                        ((exitStrategy.takeProfit3 -
+                          recommendation.currentPrice) /
+                          recommendation.currentPrice) *
+                        100
+                      ).toFixed(0)}%`
+                    : undefined
+                }
+                sentiment="positive"
+              />
+              <MetricCard
+                label="Stop Loss"
+                value={
+                  exitStrategy.stopLoss
                     ? `$${exitStrategy.stopLoss.toFixed(2)}`
-                    : '—'}
-                  {exitStrategy.stopLoss && recommendation.currentPrice > 0 && (
-                    <span className="strategy-percent">
-                      {' '}
-                      (
-                      {(
+                    : null
+                }
+                subtext={
+                  exitStrategy.stopLoss && recommendation.currentPrice > 0
+                    ? `${(
                         ((exitStrategy.stopLoss - recommendation.currentPrice) /
                           recommendation.currentPrice) *
                         100
-                      ).toFixed(0)}
-                      %)
-                    </span>
-                  )}
-                </MetricValue>
-              </div>
+                      ).toFixed(0)}%`
+                    : undefined
+                }
+                sentiment="negative"
+              />
             </div>
             {exitStrategy.trailingStopPercent && (
               <IndicatorSignal type="info">
@@ -369,57 +358,52 @@ export function ResearchSummary({
             <div className="section-title-row">
               <CardTitle>Insider Sentiment</CardTitle>
             </div>
-            <div className="strategy-cards insider-cards">
-              <div className="strategy-card">
-                <MetricLabel>MSPR (3M)</MetricLabel>
-                <MetricValue
-                  sentiment={
-                    analystData.insiderSentiment.mspr > 15
-                      ? 'positive'
-                      : analystData.insiderSentiment.mspr < -15
-                      ? 'negative'
-                      : 'neutral'
-                  }
-                >
-                  {analystData.insiderSentiment.mspr > 0 ? '+' : ''}
-                  {analystData.insiderSentiment.mspr.toFixed(1)}
-                </MetricValue>
-              </div>
+            <div className="strategy-grid insider-grid">
+              <MetricCard
+                label="MSPR (3M)"
+                value={`${
+                  analystData.insiderSentiment.mspr > 0 ? '+' : ''
+                }${analystData.insiderSentiment.mspr.toFixed(1)}`}
+                sentiment={
+                  analystData.insiderSentiment.mspr > 15
+                    ? 'positive'
+                    : analystData.insiderSentiment.mspr < -15
+                    ? 'negative'
+                    : 'neutral'
+                }
+              />
               {analystData.insiderSentiment.change !== null && (
-                <div className="strategy-card">
-                  <MetricLabel>Net Shares</MetricLabel>
-                  <MetricValue
-                    sentiment={
-                      analystData.insiderSentiment.change > 0
-                        ? 'positive'
-                        : analystData.insiderSentiment.change < 0
-                        ? 'negative'
-                        : 'neutral'
-                    }
-                  >
-                    {analystData.insiderSentiment.change > 0 ? '+' : ''}
-                    {analystData.insiderSentiment.change.toLocaleString()}
-                  </MetricValue>
-                </div>
-              )}
-              <div className="strategy-card">
-                <MetricLabel>Signal</MetricLabel>
-                <MetricValue
+                <MetricCard
+                  label="Net Shares"
+                  value={`${
+                    analystData.insiderSentiment.change > 0 ? '+' : ''
+                  }${analystData.insiderSentiment.change.toLocaleString()}`}
                   sentiment={
-                    analystData.insiderSentiment.mspr > 15
+                    analystData.insiderSentiment.change > 0
                       ? 'positive'
-                      : analystData.insiderSentiment.mspr < -15
+                      : analystData.insiderSentiment.change < 0
                       ? 'negative'
                       : 'neutral'
                   }
-                >
-                  {analystData.insiderSentiment.mspr > 15
+                />
+              )}
+              <MetricCard
+                label="Signal"
+                value={
+                  analystData.insiderSentiment.mspr > 15
                     ? 'Buying'
                     : analystData.insiderSentiment.mspr < -15
                     ? 'Selling'
-                    : 'Neutral'}
-                </MetricValue>
-              </div>
+                    : 'Neutral'
+                }
+                sentiment={
+                  analystData.insiderSentiment.mspr > 15
+                    ? 'positive'
+                    : analystData.insiderSentiment.mspr < -15
+                    ? 'negative'
+                    : 'neutral'
+                }
+              />
             </div>
           </section>
         )}

@@ -1,7 +1,13 @@
 import type { FundamentalMetrics, EarningsData } from '@/services/api/analysis';
-import { InfoTooltip, MetricCard } from '@/components/shared';
-import { CardTitle, Muted } from '@/components/shared/Typography';
-import { cn } from '@/utils/cn';
+import { InfoTooltip, MetricCard, IndicatorSignal } from '@/components/shared';
+import type { SignalType } from '@/components/shared';
+import {
+  CardTitle,
+  Muted,
+  Text,
+  MetricLabel,
+  MetricValue,
+} from '@/components/shared/Typography';
 import { formatPercent } from '@/utils/format';
 import './ResearchFundamentals.css';
 
@@ -221,34 +227,40 @@ export function ResearchFundamentals({
             {earnings.slice(0, 4).map((e, i) => (
               <div key={i} className="earnings-card">
                 <div className="earnings-card-header">
-                  <span className="earnings-quarter">
+                  <Text weight="semibold" size="sm">
                     {formatQuarter(e.period)}
-                  </span>
-                  <span
-                    className={cn(
-                      'earnings-surprise',
-                      getSurpriseClass(e.surprisePercent)
-                    )}
+                  </Text>
+                  <MetricValue
+                    size="sm"
+                    sentiment={
+                      e.surprisePercent !== null
+                        ? e.surprisePercent > 0
+                          ? 'positive'
+                          : e.surprisePercent < 0
+                          ? 'negative'
+                          : 'neutral'
+                        : undefined
+                    }
                   >
                     {e.surprisePercent !== null
                       ? `${
                           e.surprisePercent > 0 ? '+' : ''
                         }${e.surprisePercent.toFixed(1)}%`
                       : '—'}
-                  </span>
+                  </MetricValue>
                 </div>
                 <div className="earnings-card-body">
                   <div className="earnings-stat">
-                    <span className="earnings-label">Actual</span>
-                    <span className="earnings-value">
+                    <MetricLabel>Actual</MetricLabel>
+                    <Text weight="medium" size="sm">
                       ${e.actual?.toFixed(2) ?? '—'}
-                    </span>
+                    </Text>
                   </div>
                   <div className="earnings-stat">
-                    <span className="earnings-label">Est.</span>
-                    <span className="earnings-value">
+                    <MetricLabel>Est.</MetricLabel>
+                    <Text weight="medium" size="sm">
                       ${e.estimate?.toFixed(2) ?? '—'}
-                    </span>
+                    </Text>
                   </div>
                 </div>
               </div>
@@ -270,18 +282,19 @@ function EarningsSummary({ earnings }: EarningsSummaryProps) {
   const beats = earnings.filter((e) => (e.surprisePercent ?? 0) > 0).length;
   const total = earnings.length;
 
+  const signalType: SignalType =
+    beats >= 3 ? 'bullish' : beats <= 1 ? 'bearish' : 'neutral';
+
+  const message =
+    beats === total
+      ? 'Beat expectations in all quarters'
+      : beats === 0
+      ? 'Missed expectations in all quarters'
+      : `Beat expectations ${beats}/${total} quarters`;
+
   return (
-    <div
-      className={cn(
-        'earnings-summary',
-        beats >= 3 ? 'positive' : beats <= 1 ? 'negative' : 'neutral'
-      )}
-    >
-      {beats === total && '✓ Beat expectations in all quarters'}
-      {beats === 0 && '✗ Missed expectations in all quarters'}
-      {beats > 0 &&
-        beats < total &&
-        `Beat expectations ${beats}/${total} quarters`}
+    <div className="earnings-summary-wrapper">
+      <IndicatorSignal type={signalType}>{message}</IndicatorSignal>
     </div>
   );
 }
@@ -294,13 +307,6 @@ function formatQuarter(period: string | null): string {
   const year = date.getFullYear();
   const quarter = Math.ceil((date.getMonth() + 1) / 3);
   return `Q${quarter} ${year}`;
-}
-
-function getSurpriseClass(surprise: number | null): string {
-  if (surprise === null) return '';
-  if (surprise > 0) return 'positive';
-  if (surprise < 0) return 'negative';
-  return '';
 }
 
 function getROESentiment(

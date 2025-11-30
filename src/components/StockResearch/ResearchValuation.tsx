@@ -8,7 +8,6 @@ import {
   Badge,
   Description,
 } from '@/components/shared/Typography';
-import { cn } from '@/utils/cn';
 import './ResearchValuation.css';
 
 interface ResearchValuationProps {

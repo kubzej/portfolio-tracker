@@ -1,7 +1,10 @@
 import './Typography.css';
 
+type TextElement = 'span' | 'p' | 'div';
+
 interface TextProps {
   children: React.ReactNode;
+  as?: TextElement;
   size?: 'xs' | 'sm' | 'base' | 'md' | 'lg';
   weight?: 'normal' | 'medium' | 'semibold' | 'bold';
   color?: 'primary' | 'secondary' | 'muted' | 'success' | 'danger';
@@ -9,6 +12,7 @@ interface TextProps {
 
 export function Text({
   children,
+  as: Component = 'span',
   size = 'base',
   weight = 'normal',
   color = 'primary',
@@ -20,5 +24,5 @@ export function Text({
     `text--${color}`,
   ].join(' ');
 
-  return <span className={classes}>{children}</span>;
+  return <Component className={classes}>{children}</Component>;
 }

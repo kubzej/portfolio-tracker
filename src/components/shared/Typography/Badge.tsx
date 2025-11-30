@@ -21,7 +21,7 @@ type BadgeVariant =
   | 'watch'
   | 'accumulate';
 
-type BadgeSize = 'xs' | 'sm' | 'base';
+type BadgeSize = 'xs' | 'sm' | 'base' | 'lg';
 
 interface BadgeProps {
   children: React.ReactNode;

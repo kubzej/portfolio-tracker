@@ -5,7 +5,10 @@
 }
 
 .valuation-section {
-  padding: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
 }
 
 .valuation-section > .card-title {
@@ -34,8 +37,9 @@
 
 .valuation-method {
   padding: 1rem;
-  background: var(--bg-secondary);
-  border-radius: 0.5rem;
+  background: transparent;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
 }
 
 .method-header {

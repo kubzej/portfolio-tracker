@@ -117,6 +117,10 @@
   font-size: var(--text-base);
 }
 
+.metric-value--md {
+  font-size: var(--text-md);
+}
+
 .metric-value--lg {
   font-size: var(--text-lg);
 }
@@ -168,6 +172,11 @@
 .badge--base {
   font-size: var(--text-sm);
   padding: 4px 8px;
+}
+
+.badge--lg {
+  font-size: var(--text-base);
+  padding: 8px 16px;
 }
 
 /* Variants */

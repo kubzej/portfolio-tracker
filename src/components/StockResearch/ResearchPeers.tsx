@@ -7,6 +7,14 @@ import {
 import { formatNumber, formatPercent, formatLargeNumber } from '@/utils/format';
 import { cn } from '@/utils/cn';
 import { LoadingSpinner, ErrorState, InfoTooltip } from '@/components/shared';
+import {
+  CardTitle,
+  Text,
+  MetricLabel,
+  MetricValue,
+  Ticker,
+  Badge,
+} from '@/components/shared/Typography';
 import { useSortable } from '@/hooks';
 import {
   ResponsiveContainer,
@@ -624,18 +632,21 @@ export function ResearchPeers({
       {/* Header with Overall Ranking */}
       <div className="peers-header">
         <div className="peers-header-main">
-          <h3>Peer Comparison</h3>
-          <p className="peers-subtitle">
+          <CardTitle>Peer Comparison</CardTitle>
+          <Text color="secondary" size="sm">
             Comparing with {data.peers.length} competitors
-          </p>
+          </Text>
         </div>
         {avgRank !== null && (
           <div className="overall-rank">
-            <span className="overall-rank-label">Overall Rank</span>
-            <span className="overall-rank-value">
-              #{Math.round(avgRank)}{' '}
-              <span className="overall-rank-total">of {allStocks.length}</span>
-            </span>
+            <MetricLabel>Overall Rank</MetricLabel>
+            <MetricValue size="lg">
+              #{Math.round(avgRank)}
+              <Text as="span" color="muted" size="sm">
+                {' '}
+                of {allStocks.length}
+              </Text>
+            </MetricValue>
           </div>
         )}
       </div>
@@ -643,24 +654,26 @@ export function ResearchPeers({
       {/* Quick Insights */}
       {insights.length > 0 && (
         <div className="peers-insights">
-          <h4>
+          <CardTitle>
             Key Insights
             <InfoTooltip text="Automaticky generované postřehy na základě porovnání s konkurencí." />
-          </h4>
-          <ul>
+          </CardTitle>
+          <div className="insights-list">
             {insights.map((insight, idx) => (
-              <li key={idx}>{insight}</li>
+              <Text key={idx} size="sm">
+                {insight}
+              </Text>
             ))}
-          </ul>
+          </div>
         </div>
       )}
 
       {/* Radar Chart */}
       <div className="peers-radar">
-        <h4>
+        <CardTitle>
           Performance Profile
           <InfoTooltip text="Vizuální porovnání klíčových metrik s průměrem konkurence. Vyšší = lepší." />
-        </h4>
+        </CardTitle>
         <div className="radar-chart-container">
           <ResponsiveContainer width="100%" height={280}>
             <RadarChart
@@ -703,21 +716,23 @@ export function ResearchPeers({
         <div className="radar-legend-custom">
           <div className="radar-legend-item main">
             <span className="radar-legend-dot"></span>
-            <span>{ticker}</span>
+            <Text size="sm">{ticker}</Text>
           </div>
           <div className="radar-legend-item peer">
             <span className="radar-legend-line"></span>
-            <span>Peer Avg</span>
+            <Text size="sm" color="muted">
+              Peer Avg
+            </Text>
           </div>
         </div>
       </div>
 
       {/* Historical Performance */}
       <div className="peers-performance">
-        <h4>
+        <CardTitle>
           Historical Returns
           <InfoTooltip text="Výkonnost akcií za různá období. Klikni na záhlaví pro řazení." />
-        </h4>
+        </CardTitle>
         <div className="performance-table-wrapper">
           <table className="performance-table">
             <thead>
@@ -796,10 +811,10 @@ export function ResearchPeers({
 
       {/* Valuation Score */}
       <div className="peers-valuation-scores">
-        <h4>
+        <CardTitle>
           Valuation Score
           <InfoTooltip text="Kombinované hodnocení valuace na základě P/E a EV/EBITDA. Vyšší = levnější." />
-        </h4>
+        </CardTitle>
         <div className="valuation-bars">
           {allStocks
             .map((stock) => ({
@@ -815,9 +830,11 @@ export function ResearchPeers({
                   className={cn('valuation-bar-item', isCurrent && 'current')}
                 >
                   <div className="valuation-bar-header">
-                    <span className="valuation-rank">#{idx + 1}</span>
-                    <span className="valuation-ticker">{stock.ticker}</span>
-                    <span className="valuation-score">{score ?? '—'}</span>
+                    <Text size="xs" color="muted">
+                      #{idx + 1}
+                    </Text>
+                    <Ticker>{stock.ticker}</Ticker>
+                    <MetricValue>{score ?? '—'}</MetricValue>
                   </div>
                   <div className="valuation-bar-track">
                     <div
@@ -833,10 +850,10 @@ export function ResearchPeers({
 
       {/* Main Comparison Table */}
       <div className="peers-table-section">
-        <h4>
+        <CardTitle>
           Detailed Comparison
           <InfoTooltip text="Podrobné porovnání všech klíčových metrik." />
-        </h4>
+        </CardTitle>
         <div className="peers-table-wrapper">
           <table className="peers-table">
             <thead>
@@ -850,15 +867,23 @@ export function ResearchPeers({
                       stock.ticker === ticker && 'current'
                     )}
                   >
-                    <span className="stock-ticker">{stock.ticker}</span>
-                    {stock.name && (
-                      <span className="stock-name">{stock.name}</span>
-                    )}
+                    <div className="stock-header">
+                      <Ticker>{stock.ticker}</Ticker>
+                      {stock.name && (
+                        <Text size="xs" color="muted">
+                          {stock.name}
+                        </Text>
+                      )}
+                    </div>
                   </th>
                 ))}
                 <th className="avg-col">
-                  <span className="stock-ticker">Avg</span>
-                  <span className="stock-name">Industry</span>
+                  <div className="stock-header">
+                    <Ticker>Avg</Ticker>
+                    <Text size="xs" color="muted">
+                      Industry
+                    </Text>
+                  </div>
                 </th>
               </tr>
             </thead>
@@ -866,7 +891,7 @@ export function ResearchPeers({
               {/* Price row */}
               <tr className="price-row">
                 <td className="metric-col">
-                  <span className="metric-label">Price</span>
+                  <MetricLabel>Price</MetricLabel>
                 </td>
                 {allStocks.map((stock) => (
                   <td
@@ -877,23 +902,21 @@ export function ResearchPeers({
                     )}
                   >
                     <div className="price-cell">
-                      <span className="price-value">
+                      <MetricValue>
                         {stock.currentPrice !== null
                           ? `$${formatNumber(stock.currentPrice, 2)}`
                           : '—'}
-                      </span>
+                      </MetricValue>
                       {stock.priceChangePercent !== null && (
-                        <span
-                          className={cn(
-                            'price-change',
-                            stock.priceChangePercent >= 0
-                              ? 'positive'
-                              : 'negative'
-                          )}
+                        <Text
+                          size="xs"
+                          color={
+                            stock.priceChangePercent >= 0 ? 'success' : 'danger'
+                          }
                         >
                           {stock.priceChangePercent >= 0 ? '+' : ''}
                           {formatNumber(stock.priceChangePercent, 2)}%
-                        </span>
+                        </Text>
                       )}
                     </div>
                   </td>
@@ -904,10 +927,10 @@ export function ResearchPeers({
               {/* Recommendation row */}
               <tr>
                 <td className="metric-col">
-                  <span className="metric-label">
+                  <MetricLabel>
                     Recommendation
                     <InfoTooltip text="Konsenzus analytiků na základě průzkumu." />
-                  </span>
+                  </MetricLabel>
                 </td>
                 {allStocks.map((stock) => (
                   <td
@@ -917,21 +940,21 @@ export function ResearchPeers({
                       stock.ticker === ticker && 'current'
                     )}
                   >
-                    <span
-                      className={cn(
-                        'recommendation-badge',
-                        stock.consensusScore !== null &&
-                          (stock.consensusScore > 0.5
-                            ? 'positive'
+                    <Badge
+                      variant={
+                        stock.consensusScore !== null
+                          ? stock.consensusScore > 0.5
+                            ? 'buy'
                             : stock.consensusScore < -0.5
-                            ? 'negative'
-                            : 'neutral')
-                      )}
+                            ? 'sell'
+                            : 'hold'
+                          : 'info'
+                      }
                     >
                       {stock.recommendationKey
                         ?.toUpperCase()
                         .replace('_', ' ') ?? '—'}
-                    </span>
+                    </Badge>
                   </td>
                 ))}
                 <td className="avg-col">—</td>
@@ -944,10 +967,10 @@ export function ResearchPeers({
                 return (
                   <tr key={metric.key}>
                     <td className="metric-col">
-                      <span className="metric-label">
+                      <MetricLabel>
                         {metric.label}
                         <InfoTooltip text={metric.tooltip} />
-                      </span>
+                      </MetricLabel>
                     </td>
                     {allStocks.map((stock) => {
                       const value = stock[metric.key];
@@ -963,22 +986,30 @@ export function ResearchPeers({
                           )}
                         >
                           <div className="metric-cell">
-                            <span className="metric-value">
+                            <MetricValue
+                              sentiment={
+                                ranking?.position === 'best'
+                                  ? 'positive'
+                                  : ranking?.position === 'worst'
+                                  ? 'negative'
+                                  : undefined
+                              }
+                            >
                               {metric.format(value)}
-                            </span>
+                            </MetricValue>
                             {ranking && ranking.rank > 0 && (
-                              <span className="metric-rank">
+                              <Text size="xs" color="muted">
                                 #{ranking.rank}
-                              </span>
+                              </Text>
                             )}
                           </div>
                         </td>
                       );
                     })}
                     <td className="avg-col">
-                      <span className="avg-value">
+                      <Text size="sm" color="muted">
                         {metric.format(avg ?? null)}
-                      </span>
+                      </Text>
                     </td>
                   </tr>
                 );
@@ -1012,44 +1043,44 @@ export function ResearchPeers({
             >
               <div className="peer-card-header">
                 <div className="peer-card-title">
-                  <span className="peer-card-ticker">{stock.ticker}</span>
+                  <Ticker>{stock.ticker}</Ticker>
                   {stock.name && (
-                    <span className="peer-card-name">{stock.name}</span>
+                    <Text size="sm" color="muted">
+                      {stock.name}
+                    </Text>
                   )}
-                  <span className={cn('size-badge', sizeInfo.class)}>
-                    {sizeInfo.label}
-                  </span>
+                  <Badge variant="info">{sizeInfo.label}</Badge>
                 </div>
                 <div className="peer-card-price">
-                  <span className="peer-card-price-value">
+                  <MetricValue>
                     {stock.currentPrice !== null
                       ? `$${formatNumber(stock.currentPrice, 2)}`
                       : '—'}
-                  </span>
+                  </MetricValue>
                   {stock.priceChangePercent !== null && (
-                    <span
-                      className={cn(
-                        'peer-card-price-change',
-                        stock.priceChangePercent >= 0 ? 'positive' : 'negative'
-                      )}
+                    <Text
+                      size="sm"
+                      color={
+                        stock.priceChangePercent >= 0 ? 'success' : 'danger'
+                      }
                     >
                       {stock.priceChangePercent >= 0 ? '+' : ''}
                       {formatNumber(stock.priceChangePercent, 2)}%
-                    </span>
+                    </Text>
                   )}
                 </div>
               </div>
 
               {/* Valuation Score Bar */}
               <div className="peer-card-valuation">
-                <span className="valuation-label">Valuation Score</span>
+                <MetricLabel>Valuation Score</MetricLabel>
                 <div className="valuation-mini-bar">
                   <div
                     className="valuation-mini-fill"
                     style={{ width: `${valScore ?? 0}%` }}
                   />
                 </div>
-                <span className="valuation-mini-score">{valScore ?? '—'}</span>
+                <MetricValue size="sm">{valScore ?? '—'}</MetricValue>
               </div>
 
               <div className="peer-card-metrics">
@@ -1065,12 +1096,18 @@ export function ResearchPeers({
                         ranking?.position === 'worst' && 'worst'
                       )}
                     >
-                      <span className="peer-card-metric-label">
-                        {metric.label}
-                      </span>
-                      <span className="peer-card-metric-value">
+                      <MetricLabel>{metric.label}</MetricLabel>
+                      <MetricValue
+                        sentiment={
+                          ranking?.position === 'best'
+                            ? 'positive'
+                            : ranking?.position === 'worst'
+                            ? 'negative'
+                            : undefined
+                        }
+                      >
                         {metric.format(value)}
-                      </span>
+                      </MetricValue>
                     </div>
                   );
                 })}
@@ -1082,56 +1119,44 @@ export function ResearchPeers({
                   const val = stock[m.key];
                   return (
                     <div key={m.key} className="perf-item">
-                      <span className="perf-label">{m.shortLabel}</span>
-                      <span
-                        className={cn(
-                          'perf-val',
-                          val !== null && val > 0 && 'positive',
-                          val !== null && val < 0 && 'negative'
-                        )}
+                      <MetricLabel>{m.shortLabel}</MetricLabel>
+                      <MetricValue
+                        size="sm"
+                        sentiment={
+                          val !== null && val > 0
+                            ? 'positive'
+                            : val !== null && val < 0
+                            ? 'negative'
+                            : undefined
+                        }
                       >
                         {m.format(val)}
-                      </span>
+                      </MetricValue>
                     </div>
                   );
                 })}
               </div>
 
               <div className="peer-card-footer">
-                <span className="peer-card-rec-label">Recommendation</span>
-                <span
-                  className={cn(
-                    'recommendation-badge',
-                    stock.consensusScore !== null &&
-                      (stock.consensusScore > 0.5
-                        ? 'positive'
+                <MetricLabel>Recommendation</MetricLabel>
+                <Badge
+                  variant={
+                    stock.consensusScore !== null
+                      ? stock.consensusScore > 0.5
+                        ? 'buy'
                         : stock.consensusScore < -0.5
-                        ? 'negative'
-                        : 'neutral')
-                  )}
+                        ? 'sell'
+                        : 'hold'
+                      : 'info'
+                  }
                 >
                   {stock.recommendationKey?.toUpperCase().replace('_', ' ') ??
                     '—'}
-                </span>
+                </Badge>
               </div>
             </div>
           );
         })}
-      </div>
-
-      <div className="peers-legend">
-        <span className="legend-item">
-          <span className="legend-swatch best"></span>
-          Best
-        </span>
-        <span className="legend-item">
-          <span className="legend-swatch worst"></span>
-          Worst
-        </span>
-        <span className="legend-item">
-          <span className="legend-swatch current"></span>
-          Your Stock
-        </span>
       </div>
     </div>
   );

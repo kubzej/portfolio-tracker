@@ -14,7 +14,7 @@ interface MetricCardProps {
   subValue?: string | number;
   /** Optional custom subtext (e.g., "/ 2.00", "analysts") - more flexible than subValue */
   subtext?: string;
-  /** Tooltip or other content to display after the label */
+  /** Tooltip element to display after the label */
   tooltip?: ReactNode;
   /** Color sentiment for the value */
   sentiment?: 'positive' | 'negative' | 'neutral';
