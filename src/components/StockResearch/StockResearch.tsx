@@ -40,6 +40,7 @@ import './StockResearch.css';
 // Debug info for data loading status
 interface DataLoadStatus {
   analyst: boolean;
+  fundamentals: boolean;
   technical: boolean;
   news: boolean;
   peers: boolean;
@@ -75,6 +76,7 @@ export function StockResearch({
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [dataLoadStatus, setDataLoadStatus] = useState<DataLoadStatus>({
     analyst: false,
+    fundamentals: false,
     technical: false,
     news: false,
     peers: false,
@@ -105,6 +107,7 @@ export function StockResearch({
       setError(null);
       setDataLoadStatus({
         analyst: false,
+        fundamentals: false,
         technical: false,
         news: false,
         peers: false,
@@ -145,8 +148,14 @@ export function StockResearch({
           }
 
           // Update load status for debug - check if data is actually present
+          const hasFundamentals = !!(
+            analyst?.fundamentals?.peRatio ||
+            analyst?.fundamentals?.roe ||
+            analyst?.fundamentals?.netMargin
+          );
           setDataLoadStatus({
             analyst: !!(analyst?.currentPrice || analyst?.recommendationKey),
+            fundamentals: hasFundamentals,
             technical: !!(technical?.rsi14 || technical?.macd),
             news: !!tickerNews?.articles?.length,
             peers: !!peers?.mainStock,
@@ -246,6 +255,24 @@ export function StockResearch({
   // Get exchange info for non-US stock badges
   const exchangeInfo = getExchangeInfo(ticker);
 
+  // Debug status: critical = analyst, fund, tech, peers. News is optional.
+  const criticalDataOk =
+    dataLoadStatus.analyst &&
+    dataLoadStatus.fundamentals &&
+    dataLoadStatus.technical &&
+    dataLoadStatus.peers;
+  const onlyNewsMissing =
+    dataLoadStatus.analyst &&
+    dataLoadStatus.fundamentals &&
+    dataLoadStatus.technical &&
+    dataLoadStatus.peers &&
+    !dataLoadStatus.news;
+  const debugBgColor = criticalDataOk
+    ? '#d4edda' // green - all critical OK
+    : onlyNewsMissing
+    ? '#f5f5f5' // neutral - only news missing
+    : '#f8d7da'; // red - critical data missing
+
   return (
     <div className="stock-research">
       {/* Debug */}
@@ -253,17 +280,18 @@ export function StockResearch({
         style={{
           fontSize: '9px',
           fontFamily: 'monospace',
-          color: '#666',
+          color: '#333',
           padding: '2px 4px',
           marginBottom: '1rem',
-          background: '#f5f5f5',
+          background: debugBgColor,
           display: 'flex',
           flexWrap: 'wrap',
           gap: '8px',
         }}
       >
         <span>
-          req: {ticker} | analyst: {dataLoadStatus.analyst ? '✓' : '✗'} | tech:{' '}
+          req: {ticker} | analyst: {dataLoadStatus.analyst ? '✓' : '✗'} | fund:{' '}
+          {dataLoadStatus.fundamentals ? '✓' : '✗'} | tech:{' '}
           {dataLoadStatus.technical ? '✓' : '✗'} | news:{' '}
           {dataLoadStatus.news ? '✓' : '✗'} | peers:{' '}
           {dataLoadStatus.peers ? '✓' : '✗'} | desc:{' '}
