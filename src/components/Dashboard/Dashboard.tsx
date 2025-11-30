@@ -216,7 +216,9 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
 
         <div className="summary-card">
           <MetricLabel>Stocks</MetricLabel>
-          <MetricValue size="lg">{totals?.stockCount || 0}</MetricValue>
+          <div className="card-value-with-percent">
+            <MetricValue size="lg">{totals?.stockCount || 0}</MetricValue>
+          </div>
         </div>
       </div>
 
@@ -300,17 +302,18 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                         </Text>
                       </div>
                     </div>
+                    {holding.sector_name && (
+                      <div className="holding-card-sector">
+                        <Text size="xs" color="muted">
+                          {holding.sector_name}
+                        </Text>
+                      </div>
+                    )}
                     <div className="holding-card-stats">
                       <div className="holding-card-stat">
                         <MetricLabel>Shares</MetricLabel>
                         <MetricValue>
                           {formatNumber(holding.total_shares, 4)}
-                        </MetricValue>
-                      </div>
-                      <div className="holding-card-stat">
-                        <MetricLabel>Avg Price</MetricLabel>
-                        <MetricValue>
-                          {formatPrice(holding.avg_buy_price)}
                         </MetricValue>
                       </div>
                       <div className="holding-card-stat">
@@ -323,6 +326,12 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                         <MetricLabel>Invested</MetricLabel>
                         <MetricValue>
                           {formatCurrency(holding.total_invested_czk)}
+                        </MetricValue>
+                      </div>
+                      <div className="holding-card-stat">
+                        <MetricLabel>Avg Price</MetricLabel>
+                        <MetricValue>
+                          {formatPrice(holding.avg_buy_price)}
                         </MetricValue>
                       </div>
                       <div className="holding-card-stat">
@@ -371,12 +380,6 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                             : '—'}
                         </MetricValue>
                       </div>
-                      {holding.sector_name && (
-                        <div className="holding-card-stat">
-                          <MetricLabel>Sector</MetricLabel>
-                          <MetricValue>{holding.sector_name}</MetricValue>
-                        </div>
-                      )}
                     </div>
                   </div>
                 );
@@ -401,17 +404,22 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                       className="right"
                     />
                     <SortHeader
-                      label="Avg Price"
-                      sortKeyName="avgPrice"
-                      className="right"
-                    />
-                    <SortHeader
                       label="Current Price"
                       sortKeyName="currentPrice"
                       className="right"
                     />
                     <SortHeader
-                      label="Value (CZK)"
+                      label="Invested"
+                      sortKeyName="invested"
+                      className="right"
+                    />
+                    <SortHeader
+                      label="Avg Price"
+                      sortKeyName="avgPrice"
+                      className="right"
+                    />
+                    <SortHeader
+                      label="Current Value"
                       sortKeyName="current"
                       className="right"
                     />
@@ -476,23 +484,23 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                         </td>
                         <td className="right">
                           <MetricValue>
+                            {formatPrice(holding.current_price)}
+                          </MetricValue>
+                        </td>
+                        <td className="right">
+                          <MetricValue>
+                            {formatCurrency(holding.total_invested_czk)}
+                          </MetricValue>
+                        </td>
+                        <td className="right">
+                          <MetricValue>
                             {formatPrice(holding.avg_buy_price)}
                           </MetricValue>
                         </td>
                         <td className="right">
                           <MetricValue>
-                            {formatPrice(holding.current_price)}
+                            {formatCurrency(holding.current_value_czk)}
                           </MetricValue>
-                        </td>
-                        <td className="right">
-                          <div className="dual-value">
-                            <MetricValue>
-                              {formatCurrency(holding.current_value_czk)}
-                            </MetricValue>
-                            <Text size="xs" color="muted">
-                              inv: {formatCurrency(holding.total_invested_czk)}
-                            </Text>
-                          </div>
                         </td>
                         <td className="right">
                           <div className="dual-value">
