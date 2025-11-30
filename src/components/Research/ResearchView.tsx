@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { StockResearch } from '@/components/StockResearch';
-import { Button } from '@/components/shared';
+import { Button, Input, SectionTitle, Description } from '@/components/shared';
 import './ResearchView.css';
 
 export function ResearchView() {
@@ -25,14 +25,14 @@ export function ResearchView() {
     <div className="research-view">
       {/* Quick Research Input */}
       <div className="research-search-section">
-        <h2>Stock Research</h2>
-        <p className="research-subtitle">
+        <SectionTitle>Stock Research</SectionTitle>
+        <Description>
           Enter any ticker symbol to get comprehensive analysis
-        </p>
+        </Description>
         <form className="research-search-form" onSubmit={handleSubmit}>
-          <input
+          <Input
             type="text"
-            className="research-search-input"
+            inputSize="lg"
             placeholder="AAPL, MSFT, GOOGL..."
             value={ticker}
             onChange={(e) => setTicker(e.target.value.toUpperCase())}

@@ -14,6 +14,7 @@ import {
   MetricValue,
   Ticker,
   Badge,
+  Muted,
 } from '@/components/shared/Typography';
 import { useSortable } from '@/hooks';
 import {
@@ -611,7 +612,7 @@ export function ResearchPeers({
   if (data.peers.length === 0) {
     return (
       <div className="peers-empty">
-        <p>No peer data available for this ticker.</p>
+        <Muted>No peer data available for this ticker.</Muted>
       </div>
     );
   }

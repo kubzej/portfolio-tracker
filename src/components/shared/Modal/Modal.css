@@ -69,14 +69,7 @@
   background: var(--bg-tertiary);
 }
 
-.modal-title {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.modal-close {
+.modal-close.btn {
   background: none;
   border: none;
   font-size: 1.25rem;
@@ -93,10 +86,7 @@
   height: 2rem;
 }
 
-.modal-close:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-}
+/* Button komponenta řeší hover stavy */
 
 /* Modal Content */
 .modal-content {
@@ -262,9 +252,7 @@
     padding: 0.875rem 1rem;
   }
 
-  .modal-title {
-    font-size: 0.9375rem;
-  }
+  /* CardTitle řeší responsive sizing */
 
   .modal-content {
     padding: 0.875rem 1rem;

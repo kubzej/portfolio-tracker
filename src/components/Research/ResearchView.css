@@ -14,17 +14,13 @@
   text-align: center;
 }
 
-.research-search-section h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 0.5rem 0;
+/* Typography komponenty řeší h2 a subtitle styly */
+.research-search-section > :first-child {
+  margin-bottom: 0.5rem;
 }
 
-.research-subtitle {
-  font-size: 0.9rem;
-  color: var(--text-tertiary);
-  margin: 0 0 1.25rem 0;
+.research-search-section > :nth-child(2) {
+  margin-bottom: 1.25rem;
 }
 
 .research-search-form {
@@ -35,31 +31,15 @@
   margin: 0 auto;
 }
 
-.research-search-input {
+/* Input komponenta - specifické styly pro research */
+.research-search-form .input {
   flex: 1;
-  padding: 0.875rem 1.25rem;
-  font-size: 1.125rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: var(--bg-primary);
-  color: var(--text-primary);
   text-align: center;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  letter-spacing: 0.08em;
 }
 
-.research-search-input::placeholder {
-  font-weight: 400;
+.research-search-form .input::placeholder {
   letter-spacing: normal;
-  color: var(--text-quaternary, rgba(255, 255, 255, 0.3));
-  opacity: 0.6;
-}
-
-.research-search-input:focus {
-  outline: none;
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
 }
 
 /* Research Results */
@@ -86,9 +66,7 @@
     padding: 1.25rem;
   }
 
-  .research-search-section h2 {
-    font-size: 1.25rem;
-  }
+  /* Typography řeší responsive sizing */
 
   .research-search-form {
     flex-direction: column;

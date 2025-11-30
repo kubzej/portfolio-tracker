@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { cn } from '@/utils/cn';
+import { CardTitle } from '@/components/shared/Typography';
+import { Button } from '@/components/shared/Button';
 import './Modal.css';
 
 interface ModalProps {
@@ -57,10 +59,16 @@ export function Modal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
-          <h3 className="modal-title">{title}</h3>
-          <button className="modal-close" onClick={onClose} aria-label="Close">
+          <CardTitle>{title}</CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            aria-label="Close"
+            className="modal-close"
+          >
             ×
-          </button>
+          </Button>
         </div>
         <div className="modal-content">{children}</div>
       </div>
