@@ -94,6 +94,90 @@ All scores are 0-100. Main functions:
 - CSS variables for colors in `:root`
 - Mobile-first responsive design
 
+### UI Components (MANDATORY)
+
+**When writing new UI or refactoring existing UI, ALWAYS use our shared components first.**
+
+**DO NOT use raw HTML elements:**
+
+- ❌ `<span>`, `<p>`, `<h1-h6>`, `<label>` → Use Typography components
+- ❌ `<button>` → Use `Button` component
+- ❌ `<input>` → Use `Input` component
+- ❌ `<select>` → Use custom Select/Dropdown component or `ToggleGroup`
+- ❌ `<table>` → Use our table patterns with proper styling
+
+**Exception:** Raw elements are OK for:
+
+- Layout wrappers (`<div>`, `<section>`)
+- Non-text visual elements (color dots, icons)
+- Complex custom components where shared components don't fit
+
+**Always check `@/components/shared` first before creating new UI elements.**
+
+### Typography System (MANDATORY)
+
+**All text elements MUST use Typography components from `@/components/shared/Typography`.**
+
+#### Available Components:
+
+| Component      | Use Case                                   |
+| -------------- | ------------------------------------------ |
+| `Text`         | Generic text with size/weight/color props  |
+| `Label`        | Form labels (supports `htmlFor`)           |
+| `Title`        | Headings with size variants                |
+| `PageTitle`    | Main page heading                          |
+| `SectionTitle` | Section headings                           |
+| `CardTitle`    | Card/panel headings                        |
+| `Ticker`       | Stock ticker (auto UPPERCASE)              |
+| `StockName`    | Company name (supports truncate)           |
+| `MetricLabel`  | Metric labels (auto UPPERCASE)             |
+| `MetricValue`  | Numeric values with sentiment              |
+| `Badge`        | Status badges (buy/sell/hold/info/warning) |
+| `Tag`          | Peer tags, keywords                        |
+| `Count`        | Notification counts                        |
+| `Description`  | Explanatory paragraphs                     |
+| `Hint`         | Helper text for forms                      |
+| `Caption`      | Small descriptive text                     |
+| `Muted`        | N/A, empty states                          |
+| `Subtext`      | Secondary info (e.g., "/ 20")              |
+| `RecItem`      | Buy/Hold/Sell recommendation counts        |
+| `SortIcon`     | Sort direction indicator                   |
+
+#### Form Components:
+
+| Component | Use Case                         |
+| --------- | -------------------------------- |
+| `Button`  | All buttons (variant/size props) |
+| `Input`   | All inputs (inputSize/fullWidth) |
+
+#### Rules:
+
+1. **NO raw `<span>`, `<p>`, `<h1-h6>`, `<label>` for text** - always use Typography
+2. **NO className on Typography components** - use props only
+3. **NO custom text styles in component CSS** - Typography handles all text styling
+4. **Clean up CSS** after converting to Typography - remove orphaned selectors
+5. **Check responsive styles** - Typography handles mobile adjustments
+
+**Exception:** `<span>` or `<div>` is OK for non-text visual elements (color dots, icons, layout wrappers).
+
+#### Refactoring Checklist:
+
+When editing any component:
+
+- [ ] Replace all `<span>` text with appropriate Typography component
+- [ ] Replace all `<p>` with `Description`, `Text`, or `Hint`
+- [ ] Replace all `<h1-h6>` with `PageTitle`, `SectionTitle`, `CardTitle`, or `Title`
+- [ ] Replace all `<label>` with `Label` (use `htmlFor` prop for form labels)
+- [ ] Replace raw `<input>` with `Input` component
+- [ ] Replace raw `<button>` with `Button` component
+- [ ] Remove orphaned CSS selectors (h1, p, span, label styles)
+- [ ] Remove text-related media queries (Typography handles responsive)
+- [ ] Verify consistent styling between desktop and mobile
+
+#### Debug Screen:
+
+Access `#debug` route on localhost to see all Typography and Form components.
+
 ### UI Guidelines
 
 - **No emojis in UI** - use text labels and CSS styling instead

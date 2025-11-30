@@ -1,4 +1,5 @@
 import { cn } from '@/utils/cn';
+import { Button } from '@/components/shared/Button';
 import './Tabs.css';
 
 export interface TabOption {
@@ -24,15 +25,17 @@ export function Tabs({
   return (
     <div className={cn('tabs', className)}>
       {options.map((option) => (
-        <button
+        <Button
           key={option.value}
-          type="button"
-          className={cn('tab-btn', value === option.value && 'active')}
+          variant="ghost"
+          size="md"
+          className="tab-btn"
+          isActive={value === option.value}
           onClick={() => onChange(option.value)}
           disabled={disabled}
         >
           {option.label}
-        </button>
+        </Button>
       ))}
     </div>
   );

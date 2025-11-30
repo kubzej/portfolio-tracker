@@ -3,7 +3,6 @@ import { stocksApi, transactionsApi } from '@/services/api';
 import type { StockWithSector, Transaction } from '@/types/database';
 import {
   formatCurrency,
-  formatNumber,
   formatPrice,
   formatShares,
   formatDate,
@@ -16,9 +15,17 @@ import {
   EditIcon,
   TrashIcon,
 } from '@/components/shared';
-import { EditTransactionModal } from './EditTransactionModal';
-import { EditStockModal } from './EditStockModal';
-import { AddTransactionModal } from '../StocksList/AddTransactionModal';
+import {
+  Ticker,
+  StockName,
+  MetricLabel,
+  MetricValue,
+  SectionTitle,
+  Description,
+  Badge,
+  Text,
+} from '@/components/shared/Typography';
+import { StockModal, TransactionModal } from '../StocksList';
 import './StockDetail.css';
 
 interface StockDetailProps {
@@ -145,9 +152,9 @@ export function StockDetail({
     <div className="stock-detail">
       {/* Header */}
       <div className="stock-detail-header">
-        <button className="back-btn" onClick={onBack}>
+        <Button variant="secondary" onClick={onBack}>
           ← Back
-        </button>
+        </Button>
         <div className="header-actions">
           <Button variant="secondary" onClick={() => setShowEditStock(true)}>
             Edit
@@ -161,35 +168,35 @@ export function StockDetail({
       {/* Stock Info */}
       <div className="stock-info-card">
         <div className="stock-title">
-          <span className="ticker">{stock.ticker}</span>
-          <span className="name">{stock.name}</span>
+          <Ticker size="lg">{stock.ticker}</Ticker>
+          <StockName>{stock.name}</StockName>
         </div>
         <div className="stock-meta">
           <div className="meta-item">
-            <span className="label">Sector</span>
-            <span className="value">{stock.sector_name || '—'}</span>
+            <MetricLabel>Sector</MetricLabel>
+            <MetricValue>{stock.sector_name || '—'}</MetricValue>
           </div>
           <div className="meta-item">
-            <span className="label">Exchange</span>
-            <span className="value">{stock.exchange || '—'}</span>
+            <MetricLabel>Exchange</MetricLabel>
+            <MetricValue>{stock.exchange || '—'}</MetricValue>
           </div>
           <div className="meta-item">
-            <span className="label">Currency</span>
-            <span className="value">{stock.currency}</span>
+            <MetricLabel>Currency</MetricLabel>
+            <MetricValue>{stock.currency}</MetricValue>
           </div>
           <div className="meta-item">
-            <span className="label">Target Price</span>
-            <span className="value">
+            <MetricLabel>Target Price</MetricLabel>
+            <MetricValue>
               {stock.target_price
                 ? formatPrice(stock.target_price, stock.currency)
                 : '—'}
-            </span>
+            </MetricValue>
           </div>
         </div>
         {stock.notes && (
           <div className="stock-notes">
-            <span className="label">Notes</span>
-            <p>{stock.notes}</p>
+            <MetricLabel>Notes</MetricLabel>
+            <Description>{stock.notes}</Description>
           </div>
         )}
       </div>
@@ -197,27 +204,31 @@ export function StockDetail({
       {/* Summary */}
       <div className="summary-cards">
         <div className="summary-card">
-          <span className="label">Total Shares</span>
-          <span className="value">{formatShares(totalShares)}</span>
+          <MetricLabel>Total Shares</MetricLabel>
+          <MetricValue size="lg">{formatShares(totalShares)}</MetricValue>
         </div>
         <div className="summary-card">
-          <span className="label">Avg. Buy Price</span>
-          <span className="value">{formatPrice(avgPrice, stock.currency)}</span>
+          <MetricLabel>Avg. Buy Price</MetricLabel>
+          <MetricValue size="lg">
+            {formatPrice(avgPrice, stock.currency)}
+          </MetricValue>
         </div>
         <div className="summary-card">
-          <span className="label">Total Invested</span>
-          <span className="value">{formatCurrency(totalInvested, 'CZK')}</span>
+          <MetricLabel>Total Invested (CZK)</MetricLabel>
+          <MetricValue size="lg">
+            {formatCurrency(totalInvested, 'CZK')}
+          </MetricValue>
         </div>
         <div className="summary-card">
-          <span className="label">Transactions</span>
-          <span className="value">{transactions.length}</span>
+          <MetricLabel>Transactions</MetricLabel>
+          <MetricValue size="lg">{transactions.length}</MetricValue>
         </div>
       </div>
 
       {/* Transactions */}
       <div className="transactions-section">
         <div className="section-header">
-          <h3>Transactions</h3>
+          <SectionTitle>Transactions</SectionTitle>
           <Button variant="primary" onClick={() => setShowAddTransaction(true)}>
             + Add Transaction
           </Button>
@@ -232,11 +243,13 @@ export function StockDetail({
               {transactions.map((tx) => (
                 <div key={tx.id} className="transaction-card">
                   <div className="transaction-card-header">
-                    <div>
-                      <span className={`type-badge ${tx.type.toLowerCase()}`}>
+                    <div className="transaction-card-info">
+                      <Badge variant={tx.type === 'BUY' ? 'buy' : 'sell'}>
                         {tx.type}
-                      </span>
-                      <span className="date"> {formatDate(tx.date)}</span>
+                      </Badge>
+                      <Text color="muted" size="sm">
+                        {formatDate(tx.date)}
+                      </Text>
                     </div>
                     <div className="transaction-card-actions">
                       <Button
@@ -260,26 +273,26 @@ export function StockDetail({
                   </div>
                   <div className="transaction-card-body">
                     <div className="transaction-card-stat">
-                      <span className="label">Quantity</span>
-                      <span className="value">{formatShares(tx.quantity)}</span>
+                      <MetricLabel>Quantity</MetricLabel>
+                      <MetricValue>{formatShares(tx.quantity)}</MetricValue>
                     </div>
                     <div className="transaction-card-stat">
-                      <span className="label">Price</span>
-                      <span className="value">
-                        {formatPrice(tx.price_per_share)}
-                      </span>
+                      <MetricLabel>Price</MetricLabel>
+                      <MetricValue>
+                        {formatPrice(tx.price_per_share, stock.currency)}
+                      </MetricValue>
                     </div>
                     <div className="transaction-card-stat">
-                      <span className="label">Total</span>
-                      <span className="value">
-                        {formatNumber(tx.total_amount, 2)}
-                      </span>
+                      <MetricLabel>Total</MetricLabel>
+                      <MetricValue>
+                        {formatPrice(tx.total_amount, stock.currency)}
+                      </MetricValue>
                     </div>
                     <div className="transaction-card-stat">
-                      <span className="label">Total CZK</span>
-                      <span className="value">
+                      <MetricLabel>Total CZK</MetricLabel>
+                      <MetricValue>
                         {formatCurrency(tx.total_amount_czk, 'CZK')}
-                      </span>
+                      </MetricValue>
                     </div>
                   </div>
                 </div>
@@ -306,18 +319,20 @@ export function StockDetail({
                     <tr key={tx.id}>
                       <td>{formatDate(tx.date)}</td>
                       <td>
-                        <span className={`type-badge ${tx.type.toLowerCase()}`}>
+                        <Badge variant={tx.type === 'BUY' ? 'buy' : 'sell'}>
                           {tx.type}
-                        </span>
+                        </Badge>
                       </td>
                       <td className="right">{formatShares(tx.quantity)}</td>
                       <td className="right">
-                        {formatPrice(tx.price_per_share)}
+                        {formatPrice(tx.price_per_share, stock.currency)}
                       </td>
                       <td className="right">
-                        {formatNumber(tx.total_amount, 2)}
+                        {formatPrice(tx.total_amount, stock.currency)}
                       </td>
-                      <td className="right">{formatNumber(tx.fees, 2)}</td>
+                      <td className="right">
+                        {tx.fees ? formatPrice(tx.fees, stock.currency) : '—'}
+                      </td>
                       <td className="right">
                         {formatCurrency(tx.total_amount_czk, 'CZK')}
                       </td>
@@ -352,7 +367,7 @@ export function StockDetail({
       </div>
 
       {/* Edit Stock Modal */}
-      <EditStockModal
+      <StockModal
         isOpen={showEditStock}
         onClose={() => setShowEditStock(false)}
         onSuccess={loadData}
@@ -360,7 +375,7 @@ export function StockDetail({
       />
 
       {/* Edit Transaction Modal */}
-      <EditTransactionModal
+      <TransactionModal
         isOpen={editingTransaction !== null}
         onClose={handleEditModalClose}
         onSuccess={handleEditModalSuccess}
@@ -368,7 +383,7 @@ export function StockDetail({
       />
 
       {/* Add Transaction Modal */}
-      <AddTransactionModal
+      <TransactionModal
         isOpen={showAddTransaction}
         onClose={() => setShowAddTransaction(false)}
         onSuccess={loadData}

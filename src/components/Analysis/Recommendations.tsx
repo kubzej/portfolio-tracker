@@ -2,10 +2,35 @@ import { useState, useMemo, useEffect } from 'react';
 import type { StockRecommendation, SignalType } from '@/utils/recommendations';
 import { SIGNAL_CONFIG } from '@/utils/signals';
 import { formatDateShort, formatReturn, getReturnClass } from '@/utils/format';
-import { InfoTooltip } from '@/components/shared/InfoTooltip';
 import { Tabs } from '@/components/shared/Tabs';
 import { Button } from '@/components/shared/Button';
-import { LoadingSpinner, EmptyState, SignalBadge } from '@/components/shared';
+import {
+  ToggleGroup,
+  type ToggleOption,
+} from '@/components/shared/ToggleGroup';
+import {
+  BottomSheetSelect,
+  type SelectOption,
+} from '@/components/shared/BottomSheet';
+import {
+  LoadingSpinner,
+  EmptyState,
+  SignalBadge,
+  MetricCard,
+} from '@/components/shared';
+import {
+  SectionTitle,
+  CardTitle,
+  Text,
+  Badge,
+  Count,
+  Ticker,
+  StockName,
+  MetricLabel,
+  MetricValue,
+  Caption,
+  Muted,
+} from '@/components/shared/Typography';
 import {
   logMultipleSignals,
   getRecentSignals,
@@ -187,6 +212,41 @@ export function Recommendations({
     };
   }, [recommendations]);
 
+  // Filter options for ToggleGroup
+  const filterOptions: ToggleOption[] = useMemo(
+    () => [
+      { value: 'all', label: 'All', count: stats.total, color: 'default' },
+      { value: 'dips', label: 'DIP', count: stats.dips, color: 'success' },
+      {
+        value: 'conviction',
+        label: 'Conviction',
+        count: stats.conviction,
+        color: 'purple',
+      },
+      {
+        value: 'momentum',
+        label: 'Momentum',
+        count: stats.momentum,
+        color: 'info',
+      },
+      {
+        value: 'accumulate',
+        label: 'Accumulate',
+        count: stats.accumulate,
+        color: 'cyan',
+      },
+      {
+        value: 'target',
+        label: 'Near Target',
+        count: stats.target,
+        color: 'warning',
+      },
+      { value: 'watch', label: 'Watch', count: stats.watch, color: 'orange' },
+      { value: 'trim', label: 'Trim', count: stats.trim, color: 'danger' },
+    ],
+    [stats]
+  );
+
   if (loading) {
     return <LoadingSpinner text="Analyzing portfolio..." />;
   }
@@ -205,10 +265,8 @@ export function Recommendations({
       {/* Header */}
       <div className="rec-header">
         <div className="rec-header-left">
-          <h3>Smart Insights</h3>
-          {autoLogStatus && (
-            <span className="auto-log-badge">{autoLogStatus}</span>
-          )}
+          <SectionTitle>Smart Insights</SectionTitle>
+          {autoLogStatus && <Badge variant="buy">{autoLogStatus}</Badge>}
         </div>
         <div className="rec-header-right">
           <Button
@@ -225,84 +283,13 @@ export function Recommendations({
       {/* Filters - only show when not in history mode */}
       {!showHistory && (
         <div className="rec-filters">
-          <div className="filter-tabs">
-            <button
-              className={`filter-tab ${filter === 'all' ? 'active' : ''}`}
-              onClick={() => setFilter('all')}
-            >
-              All <span className="count">{stats.total}</span>
-            </button>
-            {stats.dips > 0 && (
-              <button
-                className={`filter-tab dip ${
-                  filter === 'dips' ? 'active' : ''
-                }`}
-                onClick={() => setFilter('dips')}
-              >
-                DIP <span className="count">{stats.dips}</span>
-              </button>
-            )}
-            {stats.conviction > 0 && (
-              <button
-                className={`filter-tab conviction ${
-                  filter === 'conviction' ? 'active' : ''
-                }`}
-                onClick={() => setFilter('conviction')}
-              >
-                Conviction <span className="count">{stats.conviction}</span>
-              </button>
-            )}
-            {stats.momentum > 0 && (
-              <button
-                className={`filter-tab momentum ${
-                  filter === 'momentum' ? 'active' : ''
-                }`}
-                onClick={() => setFilter('momentum')}
-              >
-                Momentum <span className="count">{stats.momentum}</span>
-              </button>
-            )}
-            {stats.accumulate > 0 && (
-              <button
-                className={`filter-tab accumulate ${
-                  filter === 'accumulate' ? 'active' : ''
-                }`}
-                onClick={() => setFilter('accumulate')}
-              >
-                Accumulate <span className="count">{stats.accumulate}</span>
-              </button>
-            )}
-            {stats.target > 0 && (
-              <button
-                className={`filter-tab target ${
-                  filter === 'target' ? 'active' : ''
-                }`}
-                onClick={() => setFilter('target')}
-              >
-                Near Target <span className="count">{stats.target}</span>
-              </button>
-            )}
-            {stats.watch > 0 && (
-              <button
-                className={`filter-tab watch ${
-                  filter === 'watch' ? 'active' : ''
-                }`}
-                onClick={() => setFilter('watch')}
-              >
-                Watch <span className="count">{stats.watch}</span>
-              </button>
-            )}
-            {stats.trim > 0 && (
-              <button
-                className={`filter-tab trim ${
-                  filter === 'trim' ? 'active' : ''
-                }`}
-                onClick={() => setFilter('trim')}
-              >
-                Trim <span className="count">{stats.trim}</span>
-              </button>
-            )}
-          </div>
+          <ToggleGroup
+            value={filter}
+            onChange={(value) => setFilter(value as FilterType)}
+            options={filterOptions}
+            variant="signal"
+            hideEmpty
+          />
 
           <div className="filter-options">
             <Tabs
@@ -330,13 +317,13 @@ export function Recommendations({
               <div key={groupName} className="rec-group">
                 {groupBy !== 'none' && (
                   <div className="group-header">
-                    <span className="group-name">
+                    <Text weight="semibold">
                       {groupBy === 'signal'
                         ? SIGNAL_CONFIG[groupName as SignalType]?.label ||
                           groupName
                         : groupName}
-                    </span>
-                    <span className="group-count">{recs.length}</span>
+                    </Text>
+                    <Count>{recs.length}</Count>
                   </div>
                 )}
                 <div className="stock-grid">
@@ -381,83 +368,84 @@ function StockTile({ rec, onClick }: StockTileProps) {
     <div className="stock-tile" onClick={onClick}>
       {/* Signal Header */}
       <div className={`tile-signal-header ${signalInfo.class}`}>
-        <span className="signal-label">{signalInfo.label}</span>
-        <span className="signal-strength">
+        <Text size="sm" weight="semibold">
+          {signalInfo.label}
+        </Text>
+        <Text size="sm" weight="medium">
           {rec.primarySignal.strength.toFixed(0)}%
-        </span>
+        </Text>
       </div>
 
-      {/* Stock Info */}
+      {/* Tile Body */}
       <div className="tile-body">
         <div className="tile-main">
           <div className="tile-stock">
-            <span className="tile-ticker">{rec.ticker}</span>
-            <span className="tile-name">{rec.stockName}</span>
+            <Ticker size="lg">{rec.ticker}</Ticker>
+            <StockName truncate>{rec.stockName}</StockName>
           </div>
           <div className="tile-performance">
-            <span
-              className={`perf-value ${
-                rec.gainPercentage >= 0 ? 'positive' : 'negative'
-              }`}
+            <MetricValue
+              sentiment={rec.gainPercentage >= 0 ? 'positive' : 'negative'}
             >
               {rec.gainPercentage >= 0 ? '+' : ''}
               {rec.gainPercentage.toFixed(1)}%
-            </span>
-            <span className="perf-label">P/L</span>
+            </MetricValue>
+            <MetricLabel>P/L</MetricLabel>
           </div>
         </div>
 
         {/* Metrics Grid */}
         <div className="tile-metrics">
           <div className="metric">
-            <span className="metric-value">{rec.weight.toFixed(1)}%</span>
-            <span className="metric-label">Weight</span>
+            <MetricValue>{rec.weight.toFixed(1)}%</MetricValue>
+            <MetricLabel>Weight</MetricLabel>
           </div>
           <div className="metric">
-            <span
-              className={`metric-value ${getScoreClass(rec.compositeScore)}`}
+            <MetricValue
+              sentiment={
+                rec.compositeScore >= 70
+                  ? 'positive'
+                  : rec.compositeScore >= 50
+                  ? 'neutral'
+                  : 'negative'
+              }
             >
               {rec.compositeScore}
-            </span>
-            <span className="metric-label">Score</span>
+            </MetricValue>
+            <MetricLabel>Score</MetricLabel>
           </div>
           <div className="metric">
-            <span
-              className={`metric-value conviction-${rec.convictionLevel.toLowerCase()}`}
+            <Badge
+              variant={
+                rec.convictionLevel === 'HIGH'
+                  ? 'buy'
+                  : rec.convictionLevel === 'MEDIUM'
+                  ? 'hold'
+                  : 'sell'
+              }
             >
               {rec.convictionLevel}
-            </span>
-            <span className="metric-label">Conviction</span>
+            </Badge>
+            <MetricLabel>Conviction</MetricLabel>
           </div>
         </div>
 
         {/* Target Price Row */}
         {rec.targetPrice !== null && rec.targetUpside !== null && (
-          <div className="tile-metrics target-row">
+          <div className="tile-metrics tile-metrics--2col">
             <div className="metric">
-              <span className="metric-value">
-                ${rec.targetPrice.toFixed(0)}
-              </span>
-              <span className="metric-label">Target</span>
+              <MetricValue>${rec.targetPrice.toFixed(0)}</MetricValue>
+              <MetricLabel>Target</MetricLabel>
             </div>
             <div className="metric">
-              <span
-                className={`metric-value ${
-                  rec.targetUpside >= 0 ? 'positive' : 'negative'
-                }`}
+              <MetricValue
+                sentiment={rec.targetUpside >= 0 ? 'positive' : 'negative'}
               >
                 {rec.targetUpside >= 0 ? '+' : ''}
                 {rec.targetUpside.toFixed(0)}%
-              </span>
-              <span className="metric-label">Upside</span>
+              </MetricValue>
+              <MetricLabel>Upside</MetricLabel>
             </div>
-          </div>
-        )}
-
-        {/* Quick Insight */}
-        {rec.actionItems.length > 0 && (
-          <div className="tile-insight">
-            <span>{rec.actionItems[0]}</span>
           </div>
         )}
       </div>
@@ -484,119 +472,134 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
         {/* Signal Banner */}
         <div className={`modal-banner ${signalInfo.class}`}>
           <div className="banner-signal">
-            <span className="banner-label">{signalInfo.label}</span>
-            <span className="banner-strength">
+            <Text size="lg" weight="bold">
+              {signalInfo.label}
+            </Text>
+            <Text size="md" weight="medium">
               {rec.primarySignal.strength.toFixed(0)}%
-            </span>
+            </Text>
           </div>
-          <button className="close-btn-light" onClick={onClose}>
-            ×
-          </button>
+          <Button variant="ghost" size="lg" icon onClick={onClose}>
+            X
+          </Button>
         </div>
 
         {/* Header */}
         <div className="modal-header">
           <div className="modal-title">
-            <h3>{rec.ticker}</h3>
-            <span className="modal-subtitle">{rec.stockName}</span>
+            <Ticker size="xl">{rec.ticker}</Ticker>
+            <StockName size="lg">{rec.stockName}</StockName>
           </div>
-          <div
-            className={`conviction-badge ${rec.convictionLevel.toLowerCase()}`}
+          <Badge
+            variant={
+              rec.convictionLevel === 'HIGH'
+                ? 'buy'
+                : rec.convictionLevel === 'MEDIUM'
+                ? 'hold'
+                : 'sell'
+            }
           >
             {rec.convictionLevel}
-          </div>
+          </Badge>
         </div>
 
         {/* Quick Stats */}
         <div className="modal-stats">
           <div className="stat-box">
-            <span className="stat-label">Score</span>
-            <span
-              className={`stat-value score-${getScoreClass(
-                rec.compositeScore
-              )}`}
+            <MetricLabel>Score</MetricLabel>
+            <MetricValue
+              sentiment={
+                rec.compositeScore >= 70
+                  ? 'positive'
+                  : rec.compositeScore >= 50
+                  ? 'neutral'
+                  : 'negative'
+              }
             >
               {rec.compositeScore}
-            </span>
+            </MetricValue>
           </div>
           <div className="stat-box">
-            <span className="stat-label">Technical</span>
-            <span className={`stat-value ${rec.technicalBias.toLowerCase()}`}>
+            <MetricLabel>Technical</MetricLabel>
+            <Badge
+              variant={
+                rec.technicalBias === 'BULLISH'
+                  ? 'buy'
+                  : rec.technicalBias === 'BEARISH'
+                  ? 'sell'
+                  : 'hold'
+              }
+            >
               {rec.technicalBias}
-            </span>
+            </Badge>
           </div>
         </div>
 
         {/* Signal Description */}
         <div className="modal-section signal-section">
-          <p className="signal-description">{signalInfo.description}</p>
+          <Text color="muted">{signalInfo.description}</Text>
         </div>
 
         {/* Key Metrics - unified grid */}
         <div className="modal-section">
           <div className="section-header">
-            <h4>Key Metrics</h4>
+            <CardTitle>Key Metrics</CardTitle>
           </div>
           <div className="metrics-grid">
             <div className="metric-cell">
-              <span className="metric-label">Weight</span>
-              <span className="metric-value">{rec.weight.toFixed(1)}%</span>
+              <MetricLabel>Weight</MetricLabel>
+              <MetricValue>{rec.weight.toFixed(1)}%</MetricValue>
             </div>
             <div className="metric-cell">
-              <span className="metric-label">Current</span>
-              <span className="metric-value">
-                ${rec.currentPrice.toFixed(2)}
-              </span>
+              <MetricLabel>Current</MetricLabel>
+              <MetricValue>${rec.currentPrice.toFixed(2)}</MetricValue>
             </div>
             <div className="metric-cell">
-              <span className="metric-label">Avg Buy</span>
-              <span className="metric-value">
-                ${rec.avgBuyPrice.toFixed(2)}
-              </span>
+              <MetricLabel>Avg Buy</MetricLabel>
+              <MetricValue>${rec.avgBuyPrice.toFixed(2)}</MetricValue>
             </div>
             <div className="metric-cell">
-              <span className="metric-label">P/L</span>
-              <span
-                className={`metric-value ${
-                  rec.distanceFromAvg >= 0 ? 'positive' : 'negative'
-                }`}
+              <MetricLabel>P/L</MetricLabel>
+              <MetricValue
+                sentiment={rec.distanceFromAvg >= 0 ? 'positive' : 'negative'}
               >
                 {rec.distanceFromAvg >= 0 ? '+' : ''}
                 {rec.distanceFromAvg.toFixed(1)}%
-              </span>
+              </MetricValue>
             </div>
             {rec.targetPrice !== null && rec.targetUpside !== null && (
               <div className="metric-cell">
-                <span className="metric-label">Target</span>
-                <span className="metric-value">
+                <MetricLabel>Target</MetricLabel>
+                <MetricValue>
                   ${rec.targetPrice.toFixed(0)}
-                  <span
-                    className={`metric-sub ${
-                      rec.targetUpside >= 0 ? 'positive' : 'negative'
-                    }`}
+                  <Text
+                    size="xs"
+                    color={rec.targetUpside >= 0 ? 'success' : 'danger'}
                   >
+                    {' '}
                     ({rec.targetUpside >= 0 ? '+' : ''}
                     {rec.targetUpside.toFixed(0)}%)
-                  </span>
-                </span>
+                  </Text>
+                </MetricValue>
               </div>
             )}
             {rec.buyStrategy.buyZoneLow !== null &&
               rec.buyStrategy.buyZoneHigh !== null && (
                 <div className="metric-cell">
-                  <span className="metric-label">Entry Zone</span>
-                  <span className="metric-value">
+                  <MetricLabel>Entry Zone</MetricLabel>
+                  <MetricValue>
                     ${rec.buyStrategy.buyZoneLow.toFixed(0)} – $
                     {rec.buyStrategy.buyZoneHigh.toFixed(0)}
-                  </span>
+                  </MetricValue>
                 </div>
               )}
             {rec.buyStrategy.supportPrice !== null && (
               <div className="metric-cell">
-                <span className="metric-label">Support</span>
-                <span className="metric-value">
+                <MetricLabel>Support</MetricLabel>
+                <MetricValue>
                   ${rec.buyStrategy.supportPrice.toFixed(0)}
-                  <span className="metric-sub negative">
+                  <Text size="xs" color="danger">
+                    {' '}
                     (
                     {(
                       ((rec.currentPrice - rec.buyStrategy.supportPrice) /
@@ -604,65 +607,83 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                       -100
                     ).toFixed(0)}
                     %)
-                  </span>
-                </span>
+                  </Text>
+                </MetricValue>
               </div>
             )}
             {rec.buyStrategy.riskRewardRatio !== null && (
               <div className="metric-cell">
-                <span className="metric-label">Risk/Reward</span>
-                <span
-                  className={`metric-value ${
+                <MetricLabel>Risk/Reward</MetricLabel>
+                <MetricValue
+                  sentiment={
                     rec.buyStrategy.riskRewardRatio >= 2
                       ? 'positive'
                       : rec.buyStrategy.riskRewardRatio >= 1
                       ? 'neutral'
                       : 'negative'
-                  }`}
+                  }
                 >
                   {rec.buyStrategy.riskRewardRatio}:1
-                </span>
+                </MetricValue>
               </div>
             )}
-            <div className="metric-cell">
-              <span className="metric-label">DCA</span>
-              <span
-                className={`dca-badge ${rec.buyStrategy.dcaRecommendation
-                  .toLowerCase()
-                  .replace('_', '-')}`}
-              >
-                {rec.buyStrategy.dcaRecommendation === 'NO_DCA'
-                  ? 'Hold'
-                  : rec.buyStrategy.dcaRecommendation}
-              </span>
+            <div className="metric-cell metric-cell--full">
+              <MetricLabel>DCA</MetricLabel>
+              <div className="dca-content">
+                <Badge
+                  variant={
+                    rec.buyStrategy.dcaRecommendation === 'AGGRESSIVE'
+                      ? 'buy'
+                      : rec.buyStrategy.dcaRecommendation === 'NORMAL'
+                      ? 'hold'
+                      : 'info'
+                  }
+                >
+                  {rec.buyStrategy.dcaRecommendation === 'NO_DCA'
+                    ? 'Hold'
+                    : rec.buyStrategy.dcaRecommendation}
+                </Badge>
+                {rec.buyStrategy.dcaReason && (
+                  <Badge variant="info">{rec.buyStrategy.dcaReason}</Badge>
+                )}
+              </div>
             </div>
           </div>
-          <p className="metrics-note">{rec.buyStrategy.dcaReason}</p>
 
           {/* Exit Strategy */}
           {rec.exitStrategy && (
             <div className="exit-strategy-section">
+              <div className="section-header">
+                <CardTitle>Exit Strategy</CardTitle>
+              </div>
               <div className="exit-header">
-                <span
-                  className={`holding-badge ${rec.exitStrategy.holdingPeriod.toLowerCase()}`}
+                <Badge
+                  variant={
+                    rec.exitStrategy.holdingPeriod === 'SWING'
+                      ? 'warning'
+                      : rec.exitStrategy.holdingPeriod === 'MEDIUM'
+                      ? 'hold'
+                      : 'buy'
+                  }
                 >
                   {rec.exitStrategy.holdingPeriod === 'SWING'
                     ? 'Swing'
                     : rec.exitStrategy.holdingPeriod === 'MEDIUM'
                     ? 'Medium'
                     : 'Long'}
-                </span>
-                <span className="holding-reason">
+                </Badge>
+                <Text size="sm" color="muted">
                   {rec.exitStrategy.holdingReason}
-                </span>
+                </Text>
               </div>
               <div className="metrics-grid">
                 {rec.exitStrategy.takeProfit1 !== null && (
                   <div className="metric-cell">
-                    <span className="metric-label">TP1</span>
-                    <span className="metric-value positive">
+                    <MetricLabel>TP1</MetricLabel>
+                    <MetricValue sentiment="positive">
                       ${rec.exitStrategy.takeProfit1.toFixed(0)}
-                      <span className="metric-sub positive">
+                      <Text size="xs" color="success">
+                        {' '}
                         (+
                         {(
                           ((rec.exitStrategy.takeProfit1 - rec.currentPrice) /
@@ -670,16 +691,17 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                           100
                         ).toFixed(0)}
                         %)
-                      </span>
-                    </span>
+                      </Text>
+                    </MetricValue>
                   </div>
                 )}
                 {rec.exitStrategy.takeProfit2 !== null && (
                   <div className="metric-cell">
-                    <span className="metric-label">TP2</span>
-                    <span className="metric-value positive">
+                    <MetricLabel>TP2</MetricLabel>
+                    <MetricValue sentiment="positive">
                       ${rec.exitStrategy.takeProfit2.toFixed(0)}
-                      <span className="metric-sub positive">
+                      <Text size="xs" color="success">
+                        {' '}
                         (+
                         {(
                           ((rec.exitStrategy.takeProfit2 - rec.currentPrice) /
@@ -687,16 +709,17 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                           100
                         ).toFixed(0)}
                         %)
-                      </span>
-                    </span>
+                      </Text>
+                    </MetricValue>
                   </div>
                 )}
                 {rec.exitStrategy.takeProfit3 !== null && (
                   <div className="metric-cell">
-                    <span className="metric-label">Target</span>
-                    <span className="metric-value positive">
+                    <MetricLabel>Target</MetricLabel>
+                    <MetricValue sentiment="positive">
                       ${rec.exitStrategy.takeProfit3.toFixed(0)}
-                      <span className="metric-sub positive">
+                      <Text size="xs" color="success">
+                        {' '}
                         (+
                         {(
                           ((rec.exitStrategy.takeProfit3 - rec.currentPrice) /
@@ -704,16 +727,17 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                           100
                         ).toFixed(0)}
                         %)
-                      </span>
-                    </span>
+                      </Text>
+                    </MetricValue>
                   </div>
                 )}
                 {rec.exitStrategy.stopLoss !== null && (
                   <div className="metric-cell">
-                    <span className="metric-label">Stop Loss</span>
-                    <span className="metric-value negative">
+                    <MetricLabel>Stop Loss</MetricLabel>
+                    <MetricValue sentiment="negative">
                       ${rec.exitStrategy.stopLoss.toFixed(0)}
-                      <span className="metric-sub negative">
+                      <Text size="xs" color="danger">
+                        {' '}
                         (
                         {(
                           ((rec.exitStrategy.stopLoss - rec.currentPrice) /
@@ -721,16 +745,16 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                           100
                         ).toFixed(0)}
                         %)
-                      </span>
-                    </span>
+                      </Text>
+                    </MetricValue>
                   </div>
                 )}
               </div>
               {rec.exitStrategy.trailingStopPercent && (
-                <p className="metrics-note">
+                <Caption>
                   Consider {rec.exitStrategy.trailingStopPercent}% trailing stop
                   after TP1
-                </p>
+                </Caption>
               )}
             </div>
           )}
@@ -739,18 +763,18 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
           {rec.fiftyTwoWeekHigh !== null && rec.fiftyTwoWeekLow !== null && (
             <div className="week-range">
               <div className="range-header">
-                <span className="range-label">52-Week Range</span>
+                <MetricLabel>52-Week Range</MetricLabel>
                 {rec.distanceFrom52wHigh !== null && (
-                  <span className="range-distance">
+                  <Text size="xs" color="muted">
                     {rec.distanceFrom52wHigh.toFixed(0)}% below high
-                  </span>
+                  </Text>
                 )}
               </div>
               <div className="range-visual">
-                <span className="range-low">
+                <Text size="sm" weight="semibold" color="muted">
                   ${rec.fiftyTwoWeekLow.toFixed(0)}
-                </span>
-                <div className="range-bar">
+                </Text>
+                <div className="week-range-bar">
                   <div
                     className="range-marker"
                     style={{
@@ -766,9 +790,9 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                     }}
                   />
                 </div>
-                <span className="range-high">
+                <Text size="sm" weight="semibold" color="muted">
                   ${rec.fiftyTwoWeekHigh.toFixed(0)}
-                </span>
+                </Text>
               </div>
             </div>
           )}
@@ -777,17 +801,25 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
         {/* Score Breakdown */}
         <div className="modal-section">
           <div className="section-header">
-            <h4>Score Breakdown</h4>
-            <InfoTooltip text="Weighted combination of fundamental, technical, analyst, news, insider, and portfolio metrics" />
+            <CardTitle>Score Breakdown</CardTitle>
           </div>
           <div className="breakdown-list">
             {rec.breakdown.map((b) => (
               <div key={b.category} className="breakdown-item">
                 <div className="breakdown-header">
-                  <span className="breakdown-name">{b.category}</span>
-                  <span className={`breakdown-score ${b.sentiment}`}>
+                  <Text weight="semibold">{b.category}</Text>
+                  <Text
+                    weight="bold"
+                    color={
+                      b.sentiment === 'bullish'
+                        ? 'success'
+                        : b.sentiment === 'bearish'
+                        ? 'danger'
+                        : 'secondary'
+                    }
+                  >
                     {b.percent.toFixed(0)}%
-                  </span>
+                  </Text>
                 </div>
                 <div className="breakdown-bar">
                   <div
@@ -796,11 +828,13 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                   />
                 </div>
                 {b.details.length > 0 && (
-                  <ul className="breakdown-details">
+                  <div className="breakdown-details">
                     {b.details.slice(0, 3).map((d, i) => (
-                      <li key={i}>{d}</li>
+                      <Text key={i} size="sm" color="muted">
+                        {d}
+                      </Text>
                     ))}
-                  </ul>
+                  </div>
                 )}
               </div>
             ))}
@@ -811,14 +845,16 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
         {(rec.strengths.length > 0 || rec.concerns.length > 0) && (
           <div className="modal-section">
             <div className="section-header">
-              <h4>Analysis</h4>
+              <CardTitle>Analysis</CardTitle>
             </div>
             <div className="two-col">
               {rec.strengths.length > 0 && (
                 <div className="points-card strengths">
                   <div className="points-header">
-                    <span className="points-icon">✓</span>
-                    <h4>Strengths</h4>
+                    <Text color="success" weight="bold">
+                      ✓
+                    </Text>
+                    <CardTitle>Strengths</CardTitle>
                   </div>
                   <ul>
                     {rec.strengths.map((s, i) => (
@@ -830,8 +866,10 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
               {rec.concerns.length > 0 && (
                 <div className="points-card concerns">
                   <div className="points-header">
-                    <span className="points-icon">!</span>
-                    <h4>Concerns</h4>
+                    <Text color="danger" weight="bold">
+                      !
+                    </Text>
+                    <CardTitle>Concerns</CardTitle>
                   </div>
                   <ul>
                     {rec.concerns.map((c, i) => (
@@ -848,13 +886,16 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
         {rec.actionItems.length > 0 && (
           <div className="modal-section">
             <div className="section-header">
-              <h4>Action Items</h4>
+              <CardTitle>Action Items</CardTitle>
             </div>
-            <ul className="action-list">
+            <div className="action-list">
               {rec.actionItems.map((a, i) => (
-                <li key={i}>{a}</li>
+                <div key={i} className="action-item">
+                  <span className="action-bullet">→</span>
+                  <Text>{a}</Text>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         )}
 
@@ -862,7 +903,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
         {rec.signals.length > 1 && (
           <div className="modal-section">
             <div className="section-header">
-              <h4>Other Signals</h4>
+              <CardTitle>Other Signals</CardTitle>
             </div>
             <div className="other-signals">
               {rec.signals.slice(1).map((sig, i) => (
@@ -951,6 +992,25 @@ function SignalHistoryPanel({
     return { total: filteredHistory.length, avgReturn1w, winRate };
   }, [filteredHistory]);
 
+  // Ticker options for filter dropdown
+  const tickerOptions: SelectOption[] = useMemo(() => {
+    return [
+      { value: '', label: 'All Tickers' },
+      ...uniqueTickers.map((t) => ({ value: t, label: t })),
+    ];
+  }, [uniqueTickers]);
+
+  // Signal options for filter dropdown
+  const signalOptions: SelectOption[] = useMemo(() => {
+    return [
+      { value: 'all', label: 'All Signals' },
+      ...Object.entries(SIGNAL_CONFIG).map(([key, val]) => ({
+        value: key,
+        label: val.label,
+      })),
+    ];
+  }, []);
+
   if (loading) {
     return (
       <div className="history-fullscreen">
@@ -964,74 +1024,56 @@ function SignalHistoryPanel({
       {/* Header */}
       <div className="history-header">
         <div className="history-title">
-          <h3>Signal History</h3>
-          <span className="history-count">{stats.total} signals</span>
+          <SectionTitle>Signal History</SectionTitle>
+          <Muted>{stats.total} signals</Muted>
         </div>
-        <button className="close-btn" onClick={onClose}>
+        <Button variant="ghost" size="sm" icon onClick={onClose}>
           ×
-        </button>
+        </Button>
       </div>
 
       {/* Stats Bar */}
       <div className="history-stats">
-        <div className="history-stat">
-          <span className="stat-value">{stats.total}</span>
-          <span className="stat-label">Total Signals</span>
-        </div>
-        <div className="history-stat">
-          <span
-            className={`stat-value ${
-              stats.avgReturn1w >= 0 ? 'positive' : 'negative'
-            }`}
-          >
-            {stats.avgReturn1w >= 0 ? '+' : ''}
-            {stats.avgReturn1w.toFixed(1)}%
-          </span>
-          <span className="stat-label">Avg 1W Return</span>
-        </div>
-        <div className="history-stat">
-          <span
-            className={`stat-value ${
-              stats.winRate >= 50 ? 'positive' : 'negative'
-            }`}
-          >
-            {stats.winRate.toFixed(0)}%
-          </span>
-          <span className="stat-label">Win Rate (1W)</span>
-        </div>
+        <MetricCard label="Total Signals" value={stats.total} size="sm" />
+        <MetricCard
+          label="Avg 1W Return"
+          value={`${
+            stats.avgReturn1w >= 0 ? '+' : ''
+          }${stats.avgReturn1w.toFixed(1)}`}
+          suffix="%"
+          sentiment={stats.avgReturn1w >= 0 ? 'positive' : 'negative'}
+          size="sm"
+        />
+        <MetricCard
+          label="Win Rate (1W)"
+          value={stats.winRate.toFixed(0)}
+          suffix="%"
+          sentiment={stats.winRate >= 50 ? 'positive' : 'negative'}
+          size="sm"
+        />
       </div>
 
       {/* Filters */}
       <div className="history-filters">
-        <select
+        <BottomSheetSelect
           value={tickerFilter}
-          onChange={(e) => setTickerFilter(e.target.value)}
-          className="history-select"
-        >
-          <option value="">All Tickers</option>
-          {uniqueTickers.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-        <select
+          onChange={setTickerFilter}
+          options={tickerOptions}
+          placeholder="All Tickers"
+          title="Filter by Ticker"
+        />
+        <BottomSheetSelect
           value={signalFilter}
-          onChange={(e) => setSignalFilter(e.target.value)}
-          className="history-select"
-        >
-          <option value="all">All Signals</option>
-          {Object.entries(SIGNAL_CONFIG).map(([key, val]) => (
-            <option key={key} value={key}>
-              {val.label}
-            </option>
-          ))}
-        </select>
+          onChange={setSignalFilter}
+          options={signalOptions}
+          placeholder="All Signals"
+          title="Filter by Signal"
+        />
       </div>
 
       {/* Table */}
       {filteredHistory.length === 0 ? (
-        <p className="no-data">No signals match your filters.</p>
+        <Muted>No signals match your filters.</Muted>
       ) : (
         <>
           <div className="history-table-wrapper">
@@ -1051,7 +1093,9 @@ function SignalHistoryPanel({
                 {paginatedHistory.map((sig) => (
                   <tr key={sig.id}>
                     <td>{formatDateShort(sig.created_at)}</td>
-                    <td className="ticker">{sig.ticker}</td>
+                    <td>
+                      <Ticker>{sig.ticker}</Ticker>
+                    </td>
                     <td>
                       <SignalBadge type={sig.signal_type} size="sm" />
                     </td>
@@ -1089,35 +1133,31 @@ function SignalHistoryPanel({
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="history-pagination">
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="page-btn"
               >
                 ← Prev
-              </button>
-              <span className="page-info">
+              </Button>
+              <Text size="sm" color="muted">
                 Page {currentPage} of {totalPages}
-              </span>
-              <button
+              </Text>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() =>
                   setCurrentPage((p) => Math.min(totalPages, p + 1))
                 }
                 disabled={currentPage === totalPages}
-                className="page-btn"
               >
                 Next →
-              </button>
+              </Button>
             </div>
           )}
         </>
       )}
     </div>
   );
-}
-
-function getScoreClass(score: number): string {
-  if (score >= 70) return 'high';
-  if (score >= 50) return 'medium';
-  return 'low';
 }

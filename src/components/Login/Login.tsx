@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/shared/Button';
+import { Input } from '@/components/shared/Input';
+import {
+  PageTitle,
+  Description,
+  Label,
+  Text,
+} from '@/components/shared/Typography';
 import './Login.css';
 
 export function Login() {
@@ -27,18 +34,24 @@ export function Login() {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <h1>Portfolio Tracker</h1>
-          <p>Sign in to continue</p>
+          <PageTitle>Portfolio Tracker</PageTitle>
+          <Description>Sign in to continue</Description>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
-          {error && <div className="login-error">{error}</div>}
+          {error && (
+            <div className="login-error">
+              <Text color="primary">{error}</Text>
+            </div>
+          )}
 
           <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
+            <Label htmlFor="email">Email</Label>
+            <Input
               id="email"
               type="email"
+              inputSize="lg"
+              fullWidth
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
@@ -48,10 +61,12 @@ export function Login() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
+            <Label htmlFor="password">Password</Label>
+            <Input
               id="password"
               type="password"
+              inputSize="lg"
+              fullWidth
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"

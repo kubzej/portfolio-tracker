@@ -1,4 +1,5 @@
 import { formatCurrency, formatPercent } from '@/utils/format';
+import { MetricValue, Muted } from '../Typography';
 import { cn } from '@/utils/cn';
 import './PriceDisplay.css';
 
@@ -22,17 +23,19 @@ export function PriceDisplay({
   inline = false,
 }: PriceDisplayProps) {
   if (price === null) {
-    return <span className="price-display price-display--empty">—</span>;
+    return <Muted>—</Muted>;
   }
 
-  const changeClass =
+  const sentiment: 'positive' | 'negative' | undefined =
     changePercent !== null && changePercent !== undefined
       ? changePercent > 0
         ? 'positive'
         : changePercent < 0
         ? 'negative'
-        : ''
-      : '';
+        : undefined
+      : undefined;
+
+  const metricSize = size === 'lg' ? 'lg' : size === 'sm' ? 'sm' : 'base';
 
   return (
     <div
@@ -42,21 +45,23 @@ export function PriceDisplay({
         inline && 'price-display--inline'
       )}
     >
-      <span className="price-display-value">
+      <MetricValue size={metricSize}>
         {formatCurrency(price, currency)}
-      </span>
+      </MetricValue>
       {showChange && changePercent !== null && changePercent !== undefined && (
-        <span className={cn('price-display-change', changeClass)}>
-          {change !== null && change !== undefined && (
-            <span className="price-display-change-value">
-              {change > 0 ? '+' : ''}
-              {formatCurrency(change, currency)}
+        <span className="price-display-change">
+          <MetricValue size="sm" sentiment={sentiment}>
+            {change !== null && change !== undefined && (
+              <span className="price-display-change-value">
+                {change > 0 ? '+' : ''}
+                {formatCurrency(change, currency)}
+              </span>
+            )}
+            <span className="price-display-change-percent">
+              ({changePercent > 0 ? '+' : ''}
+              {formatPercent(changePercent, 2)})
             </span>
-          )}
-          <span className="price-display-change-percent">
-            ({changePercent > 0 ? '+' : ''}
-            {formatPercent(changePercent, 2)})
-          </span>
+          </MetricValue>
         </span>
       )}
     </div>

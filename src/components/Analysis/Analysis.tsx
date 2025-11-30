@@ -17,13 +17,28 @@ import {
   LoadingSpinner,
   EmptyState,
   ErrorState,
+  MobileSortControl,
+  MetricCard,
+  type SortField,
 } from '@/components/shared';
+import {
+  SectionTitle,
+  CardTitle,
+  Description,
+  Ticker,
+  StockName,
+  MetricLabel,
+  MetricValue,
+  Muted,
+  Text,
+  RecItem,
+  Badge,
+  SortIcon,
+  Tag,
+} from '@/components/shared/Typography';
 import { Tabs } from '@/components/shared/Tabs';
 import { holdingsApi } from '@/services/api';
-import {
-  BottomSheetSelect,
-  type SelectOption,
-} from '@/components/shared/BottomSheet';
+import { type SelectOption } from '@/components/shared/BottomSheet';
 import {
   getAllIndicators,
   getUserViews,
@@ -130,6 +145,15 @@ export function Analysis({ portfolioId }: AnalysisProps) {
       .filter((opt): opt is SelectOption => opt !== null);
     return [...baseOptions, ...indicatorOptions];
   }, [selectedColumns, indicators]);
+
+  // Sort fields for MobileSortControl
+  const sortFields = useMemo((): SortField[] => {
+    return sortOptions.map((opt) => ({
+      value: opt.value,
+      label: opt.label,
+      defaultDirection: 'desc' as const,
+    }));
+  }, [sortOptions]);
 
   useEffect(() => {
     loadData();
@@ -424,9 +448,9 @@ export function Analysis({ portfolioId }: AnalysisProps) {
     return typeof value === 'number' ? value : null;
   };
 
-  const SortIcon = ({ column }: { column: SortKey }) => {
-    if (sortKey !== column) return <span className="sort-icon">↕</span>;
-    return <span className="sort-icon active">{sortAsc ? '↑' : '↓'}</span>;
+  const SortIconComponent = ({ column }: { column: SortKey }) => {
+    if (sortKey !== column) return <SortIcon direction="none" />;
+    return <SortIcon direction={sortAsc ? 'asc' : 'desc'} active />;
   };
 
   // Helper functions - must be defined before any returns that use them
@@ -519,15 +543,15 @@ export function Analysis({ portfolioId }: AnalysisProps) {
           gap: '8px',
         }}
       >
-        <span>
+        <Text size="sm" color="muted">
           stocks: {analystData.length} | tech: {technicalData.length} | news:{' '}
           {newsArticles.length} | recs: {recommendations.length}
-        </span>
+        </Text>
       </div>
 
       <div className="analysis-header">
-        <h2>Analysis</h2>
-        <Button variant="outline" onClick={loadData}>
+        <SectionTitle>Analysis</SectionTitle>
+        <Button variant="outline" size="sm" onClick={loadData}>
           <svg
             width="14"
             height="14"
@@ -564,32 +588,32 @@ export function Analysis({ portfolioId }: AnalysisProps) {
       {activeTab === 'analysts' && (
         <>
           <section className="analysis-section">
-            <h3>Analyst Recommendations</h3>
-            <p className="section-description">
+            <SectionTitle>Analyst Recommendations</SectionTitle>
+            <Description>
               Analyst ratings and earnings surprises from Finnhub (FREE tier).
-            </p>
+            </Description>
 
             <div className="analysis-table-wrapper">
               <table className="analysis-table">
                 <thead>
                   <tr>
                     <th onClick={() => handleSort('ticker')}>
-                      Stock <SortIcon column="ticker" />
+                      Stock <SortIconComponent column="ticker" />
                     </th>
                     <th className="right" onClick={() => handleSort('weight')}>
-                      Weight <SortIcon column="weight" />
+                      Weight <SortIconComponent column="weight" />
                     </th>
                     <th
                       className="right"
                       onClick={() => handleSort('currentPrice')}
                     >
-                      Price <SortIcon column="currentPrice" />
+                      Price <SortIconComponent column="currentPrice" />
                     </th>
                     <th
                       className="right"
                       onClick={() => handleSort('priceChangePercent')}
                     >
-                      Change <SortIcon column="priceChangePercent" />
+                      Change <SortIconComponent column="priceChangePercent" />
                     </th>
                     <th className="center">Rating</th>
                     <th
@@ -597,20 +621,20 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                       onClick={() => handleSort('consensusScore')}
                     >
                       Score{' '}
-                      <InfoTooltip text="CO TO JE: Consensus Score = váž ené skóre doporučení analytiků. STUPNICE: -2 (Strong Sell) → 0 (Hold) → +2 (Strong Buy). JAK ČÍST: Kladné číslo (+) = analytici doporučují nákup. Záporné číslo (-) = analytici doporučují prodej. Blízko 0 = držet. IDEÁLNÍ: Nad +0.5 je dobré, nad +1 je výborné." />{' '}
-                      <SortIcon column="consensusScore" />
+                      <InfoTooltip text="**Consensus Score** | Vážené skóre doporučení analytiků na stupnici -2 až +2. | • -2 = Strong Sell (silný prodej) | • 0 = Hold (držet) | • +2 = Strong Buy (silný nákup) | Nad +0.5 je dobré, nad +1 výborné." />{' '}
+                      <SortIconComponent column="consensusScore" />
                     </th>
                     <th className="center">Breakdown</th>
                     <th
                       className="center"
                       onClick={() => handleSort('numberOfAnalysts')}
                     >
-                      Analysts <SortIcon column="numberOfAnalysts" />
+                      Analysts <SortIconComponent column="numberOfAnalysts" />
                     </th>
                     <th className="center">Earnings (4Q)</th>
                     <th className="center">
                       Updated{' '}
-                      <InfoTooltip text="CO TO JE: Datum poslední aktualizace dat od Finnhub. PROČ JE TO DŮLEŽITÉ: Starší data mohou být méně relevantní. Ideálně by měla být data aktualizována v posledních 1-2 měsících. Pokud je datum staré (více než 3 měsíce), berte doporučení s rezervou." />
+                      <InfoTooltip text="**Datum aktualizace** | Poslední aktualizace dat od Finnhub. | • Data starší než 3 měsíce berte s rezervou | • Ideálně aktualizováno v posledních 1-2 měsících" />
                     </th>
                   </tr>
                 </thead>
@@ -619,8 +643,8 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     <tr key={item.ticker}>
                       <td>
                         <div className="stock-cell">
-                          <span className="ticker">{item.ticker}</span>
-                          <span className="name">{item.stockName}</span>
+                          <Ticker>{item.ticker}</Ticker>
+                          <StockName truncate>{item.stockName}</StockName>
                         </div>
                       </td>
                       <td className="right">
@@ -632,79 +656,82 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                             } as React.CSSProperties
                           }
                         >
-                          {item.weight.toFixed(1)}%
+                          <Text size="sm">{item.weight.toFixed(1)}%</Text>
                         </span>
                       </td>
                       <td className="right">
-                        {formatNumber(item.currentPrice)}
+                        <Text size="sm">{formatNumber(item.currentPrice)}</Text>
                       </td>
-                      <td
-                        className={`right ${
-                          (item.priceChangePercent ?? 0) >= 0
-                            ? 'positive'
-                            : 'negative'
-                        }`}
-                      >
-                        {formatPercent(item.priceChangePercent)}
+                      <td className="right">
+                        <MetricValue
+                          sentiment={
+                            (item.priceChangePercent ?? 0) >= 0
+                              ? 'positive'
+                              : 'negative'
+                          }
+                        >
+                          {formatPercent(item.priceChangePercent)}
+                        </MetricValue>
                       </td>
                       <td className="center">
-                        <span
-                          className={`recommendation-badge ${getRecommendationClass(
-                            item.recommendationKey
-                          )}`}
+                        <Badge
+                          variant={
+                            item.recommendationKey === 'strong_buy' ||
+                            item.recommendationKey === 'buy'
+                              ? 'buy'
+                              : item.recommendationKey === 'sell' ||
+                                item.recommendationKey === 'underperform'
+                              ? 'sell'
+                              : 'hold'
+                          }
                         >
                           {getRecommendationLabel(item.recommendationKey)}
-                        </span>
+                        </Badge>
                       </td>
                       <td className="center">
                         {item.consensusScore !== null ? (
-                          <span
-                            className={`consensus-score ${
+                          <MetricValue
+                            sentiment={
                               item.consensusScore > 0.5
                                 ? 'positive'
                                 : item.consensusScore < -0.5
                                 ? 'negative'
                                 : 'neutral'
-                            }`}
-                            title="Score from -2 (Strong Sell) to +2 (Strong Buy)"
+                            }
                           >
                             {item.consensusScore > 0 ? '+' : ''}
                             {item.consensusScore.toFixed(2)}
-                          </span>
+                          </MetricValue>
                         ) : (
-                          <span className="muted">—</span>
+                          <Muted>—</Muted>
                         )}
                       </td>
                       <td className="center">
                         {item.numberOfAnalysts ? (
                           <div className="recommendations-breakdown">
-                            <span
-                              className="rec-item strong-buy"
-                              title="Strong Buy"
-                            >
+                            <RecItem variant="strong-buy" title="Strong Buy">
                               {item.strongBuy || 0}
-                            </span>
-                            <span className="rec-item buy" title="Buy">
+                            </RecItem>
+                            <RecItem variant="buy" title="Buy">
                               {item.buy || 0}
-                            </span>
-                            <span className="rec-item hold" title="Hold">
+                            </RecItem>
+                            <RecItem variant="hold" title="Hold">
                               {item.hold || 0}
-                            </span>
-                            <span className="rec-item sell" title="Sell">
+                            </RecItem>
+                            <RecItem variant="sell" title="Sell">
                               {item.sell || 0}
-                            </span>
-                            <span
-                              className="rec-item strong-sell"
-                              title="Strong Sell"
-                            >
+                            </RecItem>
+                            <RecItem variant="strong-sell" title="Strong Sell">
                               {item.strongSell || 0}
-                            </span>
+                            </RecItem>
                           </div>
                         ) : (
-                          <span className="muted">—</span>
+                          <Muted>—</Muted>
                         )}
                       </td>
-                      <td className="center">{item.numberOfAnalysts || '—'}</td>
+                      <td className="center">
+                        <Text size="sm">{item.numberOfAnalysts || '—'}</Text>
+                      </td>
                       <td className="center">
                         {item.earnings && item.earnings.length > 0 ? (
                           <div className="earnings-surprises">
@@ -737,7 +764,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                               ))}
                           </div>
                         ) : (
-                          <span className="muted">—</span>
+                          <Muted>—</Muted>
                         )}
                       </td>
                       <td className="center muted">
@@ -762,8 +789,8 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 <div key={item.ticker} className="analyst-card">
                   <div className="analyst-card-header">
                     <div className="analyst-card-title">
-                      <span className="ticker">{item.ticker}</span>
-                      <span className="name">{item.stockName}</span>
+                      <Ticker>{item.ticker}</Ticker>
+                      <StockName truncate>{item.stockName}</StockName>
                     </div>
                     <div className="analyst-card-rating">
                       <span
@@ -777,56 +804,58 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                   </div>
                   <div className="analyst-card-stats">
                     <div className="analyst-card-stat">
-                      <span className="label">Price</span>
-                      <span className="value">
+                      <MetricLabel>Price</MetricLabel>
+                      <Text size="sm" weight="medium">
                         {formatNumber(item.currentPrice)}
-                      </span>
+                      </Text>
                     </div>
                     <div className="analyst-card-stat">
-                      <span className="label">Change</span>
-                      <span
-                        className={`value ${
+                      <MetricLabel>Change</MetricLabel>
+                      <MetricValue
+                        sentiment={
                           (item.priceChangePercent ?? 0) >= 0
                             ? 'positive'
                             : 'negative'
-                        }`}
+                        }
                       >
                         {formatPercent(item.priceChangePercent)}
-                      </span>
+                      </MetricValue>
                     </div>
                     <div className="analyst-card-stat">
-                      <span className="label">Weight</span>
-                      <span className="value">{item.weight.toFixed(1)}%</span>
+                      <MetricLabel>Weight</MetricLabel>
+                      <Text size="sm" weight="medium">
+                        {item.weight.toFixed(1)}%
+                      </Text>
                     </div>
                     <div className="analyst-card-stat">
-                      <span className="label">Score</span>
-                      <span
-                        className={`value ${
+                      <MetricLabel>Score</MetricLabel>
+                      <MetricValue
+                        sentiment={
                           item.consensusScore !== null
                             ? item.consensusScore > 0.5
                               ? 'positive'
                               : item.consensusScore < -0.5
                               ? 'negative'
-                              : ''
-                            : ''
-                        }`}
+                              : 'neutral'
+                            : 'neutral'
+                        }
                       >
                         {item.consensusScore !== null
                           ? `${
                               item.consensusScore > 0 ? '+' : ''
                             }${item.consensusScore.toFixed(2)}`
                           : '—'}
-                      </span>
+                      </MetricValue>
                     </div>
                     <div className="analyst-card-stat">
-                      <span className="label">Analysts</span>
-                      <span className="value">
+                      <MetricLabel>Analysts</MetricLabel>
+                      <Text size="sm" weight="medium">
                         {item.numberOfAnalysts || '—'}
-                      </span>
+                      </Text>
                     </div>
                     <div className="analyst-card-stat">
-                      <span className="label">Earnings</span>
-                      <span className="value">
+                      <MetricLabel>Earnings</MetricLabel>
+                      <Text size="sm" weight="medium">
                         {item.earnings && item.earnings.length > 0 ? (
                           <span className="earnings-surprises">
                             {item.earnings
@@ -860,33 +889,27 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                         ) : (
                           '—'
                         )}
-                      </span>
+                      </Text>
                     </div>
                     {item.numberOfAnalysts && (
                       <div className="analyst-card-breakdown">
-                        <span className="label">Breakdown:</span>
+                        <MetricLabel>Breakdown:</MetricLabel>
                         <div className="recommendations-breakdown">
-                          <span
-                            className="rec-item strong-buy"
-                            title="Strong Buy"
-                          >
+                          <RecItem variant="strong-buy" title="Strong Buy">
                             {item.strongBuy || 0}
-                          </span>
-                          <span className="rec-item buy" title="Buy">
+                          </RecItem>
+                          <RecItem variant="buy" title="Buy">
                             {item.buy || 0}
-                          </span>
-                          <span className="rec-item hold" title="Hold">
+                          </RecItem>
+                          <RecItem variant="hold" title="Hold">
                             {item.hold || 0}
-                          </span>
-                          <span className="rec-item sell" title="Sell">
+                          </RecItem>
+                          <RecItem variant="sell" title="Sell">
                             {item.sell || 0}
-                          </span>
-                          <span
-                            className="rec-item strong-sell"
-                            title="Strong Sell"
-                          >
+                          </RecItem>
+                          <RecItem variant="strong-sell" title="Strong Sell">
                             {item.strongSell || 0}
-                          </span>
+                          </RecItem>
                         </div>
                       </div>
                     )}
@@ -898,38 +921,12 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
           {/* Analyst Summary */}
           <section className="analysis-section">
-            <h3>Analyst Insights</h3>
+            <SectionTitle>Analyst Insights</SectionTitle>
             <div className="insights-grid">
-              <div className="insight-card">
-                <span className="insight-label">
-                  Avg Consensus Score{' '}
-                  <InfoTooltip text="CO TO JE: Průměrné skóre doporučení analytiků přes celé portfolio. STUPNICE: -2 (Strong Sell = silný prodej) → 0 (Hold = držet) → +2 (Strong Buy = silný nákup). JAK ČÍST: Nad 0 = analytici jsou celkově optimističtí. Pod 0 = analytici jsou celkově pesimističtí. IDEÁLNÍ: Nad +0.5 značí zdravé portfolio z pohledu analytiků." />
-                </span>
-                <span
-                  className={`insight-value ${
-                    analystData.filter((d) => d.consensusScore !== null)
-                      .length > 0
-                      ? analystData.reduce(
-                          (sum, d) => sum + (d.consensusScore ?? 0),
-                          0
-                        ) /
-                          analystData.filter((d) => d.consensusScore !== null)
-                            .length >
-                        0.5
-                        ? 'positive'
-                        : analystData.reduce(
-                            (sum, d) => sum + (d.consensusScore ?? 0),
-                            0
-                          ) /
-                            analystData.filter((d) => d.consensusScore !== null)
-                              .length <
-                          -0.5
-                        ? 'negative'
-                        : ''
-                      : ''
-                  }`}
-                >
-                  {analystData.filter((d) => d.consensusScore !== null).length >
+              <MetricCard
+                label="Avg Consensus Score"
+                value={
+                  analystData.filter((d) => d.consensusScore !== null).length >
                   0
                     ? (
                         analystData.reduce(
@@ -939,77 +936,83 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                         analystData.filter((d) => d.consensusScore !== null)
                           .length
                       ).toFixed(2)
-                    : '—'}
-                  <span className="insight-subtext"> / 2.00</span>
-                </span>
-              </div>
-              <div className="insight-card">
-                <span className="insight-label">Stocks with Buy Rating</span>
-                <span className="insight-value positive">
-                  {
-                    analystData.filter(
-                      (d) =>
-                        d.recommendationKey === 'buy' ||
-                        d.recommendationKey === 'strong_buy'
-                    ).length
-                  }
-                  <span className="insight-subtext">
-                    / {analystData.length}
-                  </span>
-                </span>
-              </div>
-              <div className="insight-card">
-                <span className="insight-label">Stocks with Sell Rating</span>
-                <span className="insight-value negative">
-                  {
-                    analystData.filter(
-                      (d) =>
-                        d.recommendationKey === 'sell' ||
-                        d.recommendationKey === 'underperform'
-                    ).length
-                  }
-                  <span className="insight-subtext">
-                    / {analystData.length}
-                  </span>
-                </span>
-              </div>
-              <div className="insight-card">
-                <span className="insight-label">Total Analyst Coverage</span>
-                <span className="insight-value">
-                  {analystData.reduce(
-                    (sum, d) => sum + (d.numberOfAnalysts || 0),
-                    0
-                  )}
-                  <span className="insight-subtext"> analysts</span>
-                </span>
-              </div>
-              <div className="insight-card">
-                <span className="insight-label">Beat Earnings (Last Q)</span>
-                <span className="insight-value positive">
-                  {
-                    analystData.filter(
-                      (d) =>
-                        d.earnings &&
-                        d.earnings.length > 0 &&
-                        d.earnings[0]?.surprisePercent !== null &&
-                        d.earnings[0]?.surprisePercent !== undefined &&
-                        d.earnings[0].surprisePercent > 0
-                    ).length
-                  }
-                  <span className="insight-subtext">
-                    /{' '}
-                    {
-                      analystData.filter(
-                        (d) =>
-                          d.earnings &&
-                          d.earnings.length > 0 &&
-                          d.earnings[0]?.surprisePercent !== null &&
-                          d.earnings[0]?.surprisePercent !== undefined
-                      ).length
-                    }
-                  </span>
-                </span>
-              </div>
+                    : null
+                }
+                subtext="/ 2.00"
+                size="lg"
+                sentiment={(() => {
+                  const validData = analystData.filter(
+                    (d) => d.consensusScore !== null
+                  );
+                  if (validData.length === 0) return undefined;
+                  const avg =
+                    analystData.reduce(
+                      (sum, d) => sum + (d.consensusScore ?? 0),
+                      0
+                    ) / validData.length;
+                  if (avg > 0.5) return 'positive';
+                  if (avg < -0.5) return 'negative';
+                  return 'neutral';
+                })()}
+                tooltip={
+                  <InfoTooltip text="**Průměrné skóre analytiků** | Průměr consensus scores všech akcií v portfoliu. | • Nad 0 = analytici jsou optimističtí | • Pod 0 = analytici jsou pesimističtí | Nad +0.5 značí zdravé portfolio." />
+                }
+              />
+              <MetricCard
+                label="Stocks with Buy Rating"
+                value={
+                  analystData.filter(
+                    (d) =>
+                      d.recommendationKey === 'buy' ||
+                      d.recommendationKey === 'strong_buy'
+                  ).length
+                }
+                subValue={analystData.length}
+                size="lg"
+                sentiment="positive"
+              />
+              <MetricCard
+                label="Stocks with Sell Rating"
+                value={
+                  analystData.filter(
+                    (d) =>
+                      d.recommendationKey === 'sell' ||
+                      d.recommendationKey === 'underperform'
+                  ).length
+                }
+                subValue={analystData.length}
+                size="lg"
+                sentiment="negative"
+              />
+              <MetricCard
+                label="Total Analyst Coverage"
+                value={analystData.reduce(
+                  (sum, d) => sum + (d.numberOfAnalysts || 0),
+                  0
+                )}
+                subtext="analysts"
+                size="lg"
+              />
+              <MetricCard
+                label="Beat Earnings (Last Q)"
+                value={
+                  analystData.filter(
+                    (d) =>
+                      d.earnings?.length > 0 &&
+                      (d.earnings[0]?.surprisePercent ?? 0) > 0
+                  ).length
+                }
+                subValue={
+                  analystData.filter(
+                    (d) =>
+                      d.earnings?.length > 0 &&
+                      d.earnings[0]?.surprisePercent !== null &&
+                      d.earnings[0]?.surprisePercent !== undefined
+                  ).length
+                }
+                size="lg"
+                sentiment="positive"
+              />
             </div>
           </section>
         </>
@@ -1021,15 +1024,13 @@ export function Analysis({ portfolioId }: AnalysisProps) {
           <section className="analysis-section">
             <div className="section-header-row">
               <div>
-                <h3>Fundamental Metrics</h3>
-                <p className="section-description">
+                <SectionTitle>Fundamental Metrics</SectionTitle>
+                <Description>
                   Customize columns to show the metrics you care about. Data
                   from Finnhub (FREE tier).
-                </p>
+                </Description>
               </div>
-              {currentView && (
-                <div className="current-view-badge">📋 {currentView.name}</div>
-              )}
+              {currentView && <Badge variant="info">{currentView.name}</Badge>}
             </div>
 
             {/* Column Picker */}
@@ -1052,10 +1053,10 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 <thead>
                   <tr>
                     <th onClick={() => handleSort('ticker')}>
-                      Stock <SortIcon column="ticker" />
+                      Stock <SortIconComponent column="ticker" />
                     </th>
                     <th className="right" onClick={() => handleSort('weight')}>
-                      Weight <SortIcon column="weight" />
+                      Weight <SortIconComponent column="weight" />
                     </th>
                     {selectedColumns.map((key) => {
                       const indicator = getIndicatorByKey(key);
@@ -1068,7 +1069,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                         >
                           {indicator.short_name}
                           <InfoTooltip text={indicator.description} />
-                          <SortIcon column={key} />
+                          <SortIconComponent column={key} />
                         </th>
                       );
                     })}
@@ -1081,8 +1082,8 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                       <tr key={item.ticker}>
                         <td>
                           <div className="stock-cell">
-                            <span className="ticker">{item.ticker}</span>
-                            <span className="name">{item.stockName}</span>
+                            <Ticker>{item.ticker}</Ticker>
+                            <StockName truncate>{item.stockName}</StockName>
                           </div>
                         </td>
                         <td className="right">
@@ -1124,24 +1125,16 @@ export function Analysis({ portfolioId }: AnalysisProps) {
             {/* Mobile Fundamentals Cards */}
             <div className="fundamentals-mobile">
               {/* Mobile Sort Selector */}
-              <div className="mobile-sort-row">
-                <BottomSheetSelect
-                  label="Sort by"
-                  value={sortKey}
-                  onChange={(value) => {
-                    setSortKey(value);
-                    setSortAsc(false);
-                  }}
-                  options={sortOptions}
-                />
-                <button
-                  className="mobile-sort-dir"
-                  onClick={() => setSortAsc(!sortAsc)}
-                  title={sortAsc ? 'Ascending' : 'Descending'}
-                >
-                  {sortAsc ? '↑' : '↓'}
-                </button>
-              </div>
+              <MobileSortControl
+                fields={sortFields}
+                selectedField={sortKey}
+                direction={sortAsc ? 'asc' : 'desc'}
+                onFieldChange={(field) => {
+                  setSortKey(field);
+                  setSortAsc(false);
+                }}
+                onDirectionChange={(dir) => setSortAsc(dir === 'asc')}
+              />
 
               {/* Mobile Cards */}
               <div className="fundamentals-cards">
@@ -1151,22 +1144,31 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     <div key={item.ticker} className="fundamentals-card">
                       <div className="fundamentals-card-header">
                         <div className="fundamentals-card-title">
-                          <span className="ticker">{item.ticker}</span>
-                          <span className="name">{item.stockName}</span>
+                          <Ticker>{item.ticker}</Ticker>
+                          <StockName truncate>{item.stockName}</StockName>
                         </div>
-                        <span className="fundamentals-card-weight">
+                        <Text size="sm" weight="semibold">
                           {item.weight.toFixed(1)}%
-                        </span>
+                        </Text>
                       </div>
                       <div className="fundamentals-card-metrics">
                         {selectedColumns.map((key) => {
                           const indicator = getIndicatorByKey(key);
                           if (!indicator) return null;
                           const value = getMetricValue(f, key);
+                          const valueClass = getIndicatorValueClass(
+                            value,
+                            indicator
+                          );
+                          const sentiment =
+                            valueClass === 'positive'
+                              ? 'positive'
+                              : valueClass === 'negative'
+                              ? 'negative'
+                              : 'neutral';
                           return (
                             <div key={key} className="fundamentals-metric">
-                              <span
-                                className="metric-label"
+                              <MetricLabel
                                 onClick={() =>
                                   setMobileTooltip({
                                     title: indicator.name,
@@ -1176,15 +1178,10 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                               >
                                 {indicator.short_name}
                                 <span className="metric-info-icon">ⓘ</span>
-                              </span>
-                              <span
-                                className={`metric-value ${getIndicatorValueClass(
-                                  value,
-                                  indicator
-                                )}`}
-                              >
+                              </MetricLabel>
+                              <MetricValue sentiment={sentiment}>
                                 {formatIndicatorValue(value, indicator)}
-                              </span>
+                              </MetricValue>
                             </div>
                           );
                         })}
@@ -1200,28 +1197,23 @@ export function Analysis({ portfolioId }: AnalysisProps) {
           <section className="analysis-section">
             <div className="insider-section-header">
               <div className="insider-title-row">
-                <h3>Insider Sentiment</h3>
-                <InfoTooltip text="CO TO JE: Insider Sentiment = nálada insiderů (vedení firmy). Sleduje nákupy a prodeje akcií managementem a řediteli (Form 4 filings). PROČ JE TO DŮLEŽITÉ: Vysoký nákup insiderů často signalizuje důvěru ve firmu. MSPR: Monthly Share Purchase Ratio (-100 až +100). Kladné = nákup, záporné = prodej. Net Shares: Celkový počet akcií nakoupených minus prodaných." />
+                <SectionTitle>Insider Sentiment</SectionTitle>
+                <InfoTooltip text="**Insider Sentiment** | Nálada insiderů (vedení firmy) - nákupy a prodeje akcií managementem. | • **MSPR** = Monthly Share Purchase Ratio (-100 až +100) | • Kladné = nákup, záporné = prodej | • Vysoký nákup insiderů signalizuje důvěru ve firmu" />
               </div>
               <div className="insider-time-filter">
                 {INSIDER_TIME_RANGES.map((range) => (
-                  <button
+                  <Button
                     key={range.value}
-                    className={`time-range-btn ${
-                      insiderTimeRange === range.value ? 'active' : ''
-                    }`}
+                    variant="ghost"
+                    size="sm"
+                    isActive={insiderTimeRange === range.value}
                     onClick={() => setInsiderTimeRange(range.value)}
                   >
                     {range.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
-            <p className="section-description">
-              Bars show monthly MSPR trend.{' '}
-              <span className="positive-text">Green</span> = buying,{' '}
-              <span className="negative-text">Red</span> = selling.
-            </p>
 
             <div className="insider-grid">
               {sortedData.map((item) => {
@@ -1246,47 +1238,57 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     className={`insider-card ${!hasData ? 'no-data' : ''}`}
                   >
                     <div className="insider-header">
-                      <span className="ticker">{item.ticker}</span>
-                      <span className={`insider-badge ${sentiment.class}`}>
-                        {sentiment.label}
-                      </span>
+                      <Ticker>{item.ticker}</Ticker>
+                      {sentiment.label && (
+                        <Badge
+                          variant={
+                            sentiment.class === 'positive'
+                              ? 'buy'
+                              : sentiment.class === 'negative'
+                              ? 'sell'
+                              : 'hold'
+                          }
+                        >
+                          {sentiment.label}
+                        </Badge>
+                      )}
                     </div>
                     {hasData ? (
                       <>
                         <div className="insider-details">
                           <div className="insider-stat">
-                            <span className="stat-label">MSPR</span>
-                            <span
-                              className={`stat-value ${
+                            <MetricLabel>MSPR</MetricLabel>
+                            <MetricValue
+                              sentiment={
                                 (filteredSentiment.mspr ?? 0) >= 0
                                   ? 'positive'
                                   : 'negative'
-                              }`}
+                              }
                             >
                               {(filteredSentiment.mspr ?? 0) >= 0 ? '+' : ''}
                               {filteredSentiment.mspr?.toFixed(1)}
-                            </span>
+                            </MetricValue>
                           </div>
                           <div className="insider-stat">
-                            <span className="stat-label">Net Shares</span>
-                            <span
-                              className={`stat-value ${
+                            <MetricLabel>Net Shares</MetricLabel>
+                            <MetricValue
+                              sentiment={
                                 (filteredSentiment.change ?? 0) >= 0
                                   ? 'positive'
                                   : 'negative'
-                              }`}
+                              }
                             >
                               {(filteredSentiment.change ?? 0) >= 0 ? '+' : ''}
                               {filteredSentiment.change?.toLocaleString()}
-                            </span>
+                            </MetricValue>
                           </div>
                         </div>
                         {/* Mini MSPR Chart - Left=Oldest, Right=Newest */}
                         {chartData.length > 1 && (
                           <div className="insider-chart">
                             <div className="chart-labels">
-                              <span className="chart-label-old">Older</span>
-                              <span className="chart-label-new">Recent</span>
+                              <MetricLabel>Older</MetricLabel>
+                              <MetricLabel>Recent</MetricLabel>
                             </div>
                             <div className="chart-bars">
                               {chartData.map((d, i) => {
@@ -1340,7 +1342,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                       </>
                     ) : (
                       <div className="insider-no-data">
-                        <span>No insider data</span>
+                        <Muted>No insider data</Muted>
                       </div>
                     )}
                   </div>
@@ -1351,195 +1353,173 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
           {/* Fundamental Summary */}
           <section className="analysis-section">
-            <h3>Fundamental Insights</h3>
-            <p className="section-description">
+            <SectionTitle>Fundamental Insights</SectionTitle>
+            <Description>
               Portfolio-weighted averages and key metrics across your holdings.
-            </p>
+            </Description>
 
             {/* Valuation Row */}
             <div className="insights-category">
-              <span className="category-label">Valuation</span>
+              <Text weight="medium">Valuation</Text>
               <div className="insights-grid">
-                <div className="insight-card">
-                  <span className="insight-label">
-                    Avg P/E{' '}
-                    <InfoTooltip text="CO TO JE: Price-to-Earnings = poměr ceny akcie k zisku na akcii. Udává, kolik let by trvalo, než se investice 'vrátí' ze zisků. JAK ČÍST: Nížší P/E = akcie může být levnější (podhodnocená). Vyšší P/E = investori očekávají růst. TYPICKÉ HODNOTY: Pod 15 = levné, 15-25 = normální, Nad 25 = drahé nebo růstové." />
-                  </span>
-                  <span className="insight-value">
-                    {getWeightedAverage('peRatio').toFixed(1)}x
-                  </span>
-                </div>
-                <div className="insight-card">
-                  <span className="insight-label">
-                    Avg Fwd P/E{' '}
-                    <InfoTooltip text="CO TO JE: Forward P/E = P/E založené na ODHADOVANÝCH budoucích ziskách (následující rok). JAK ČÍST: Porovnejte s běžným P/E. Fwd P/E NIŽŠÍ než P/E = analytici očekávají růst zisků. Fwd P/E VYŠŠÍ než P/E = analytici očekávají pokles zisků." />
-                  </span>
-                  <span className="insight-value">
-                    {getWeightedAverage('forwardPe').toFixed(1)}x
-                  </span>
-                </div>
-                <div className="insight-card">
-                  <span className="insight-label">
-                    Avg P/B{' '}
-                    <InfoTooltip text="CO TO JE: Price-to-Book = poměr ceny akcie k účetní hodnotě (aktiva - dluhy). JAK ČÍST: P/B pod 1 = akcie se obchoduje pod hodnotou majetku (potenciálně levná). P/B nad 3 = akcie je drahá nebo má velkou hodnotu značky/technologií. POZOR: Tech firmy mají běžně vysoké P/B." />
-                  </span>
-                  <span className="insight-value">
-                    {getWeightedAverage('pbRatio').toFixed(2)}x
-                  </span>
-                </div>
-                <div className="insight-card">
-                  <span className="insight-label">
-                    Avg EV/EBITDA{' '}
-                    <InfoTooltip text="CO TO JE: Enterprise Value / EBITDA = hodnota firmy dělená provozním ziskem. Lepší než P/E pro porovnání firem s různým zadlužením. JAK ČÍST: Nižší = levnější. TYPICKÉ HODNOTY: Pod 10 = levné, 10-15 = normální, Nad 15 = drahé nebo růstové." />
-                  </span>
-                  <span className="insight-value">
-                    {getWeightedAverage('evEbitda').toFixed(1)}x
-                  </span>
-                </div>
+                <MetricCard
+                  label="Avg P/E"
+                  value={getWeightedAverage('peRatio').toFixed(1)}
+                  suffix="x"
+                  tooltip={
+                    <InfoTooltip text="**Price-to-Earnings (P/E)** | Poměr ceny akcie k zisku na akcii. | • Pod 15 = levné | • 15-25 = normální | • Nad 25 = drahé nebo růstové | Nižší P/E může znamenat podhodnocenou akcii." />
+                  }
+                />
+                <MetricCard
+                  label="Avg Fwd P/E"
+                  value={getWeightedAverage('forwardPe').toFixed(1)}
+                  suffix="x"
+                  tooltip={
+                    <InfoTooltip text="**Forward P/E** | P/E založené na očekávaných budoucích ziscích. | • Fwd P/E < P/E = očekává se růst zisků | • Fwd P/E > P/E = očekává se pokles zisků" />
+                  }
+                />
+                <MetricCard
+                  label="Avg P/B"
+                  value={getWeightedAverage('pbRatio').toFixed(2)}
+                  suffix="x"
+                  tooltip={
+                    <InfoTooltip text="**Price-to-Book (P/B)** | Poměr ceny akcie k účetní hodnotě. | • Pod 1 = akcie pod hodnotou majetku | • Nad 3 = drahá nebo velká hodnota značky | Tech firmy mají běžně vysoké P/B." />
+                  }
+                />
+                <MetricCard
+                  label="Avg EV/EBITDA"
+                  value={getWeightedAverage('evEbitda').toFixed(1)}
+                  suffix="x"
+                  tooltip={
+                    <InfoTooltip text="**EV/EBITDA** | Hodnota firmy dělená provozním ziskem. | • Pod 10 = levné | • 10-15 = normální | • Nad 15 = drahé | Lepší pro srovnání firem s různým zadlužením." />
+                  }
+                />
               </div>
             </div>
 
             {/* Profitability Row */}
             <div className="insights-category">
-              <span className="category-label">Profitability</span>
+              <Text weight="medium">Profitability</Text>
               <div className="insights-grid">
-                <div className="insight-card">
-                  <span className="insight-label">
-                    Avg ROE{' '}
-                    <InfoTooltip text="CO TO JE: Return on Equity = návratnost vlastního kapitálu. Ukazuje, jak efektivně firma využívá peníze akcionářů k tvorbě zisku. JAK ČÍST: Vyšší = lepší. Nad 15% je obecně dobré. Nad 20% je výborné. Pod 10% je slabé. IDEÁLNÍ: Co nejvyšší ROE." />
-                  </span>
-                  <span
-                    className={`insight-value ${
-                      getWeightedAverage('roe') > 15 ? 'positive' : ''
-                    }`}
-                  >
-                    {getWeightedAverage('roe').toFixed(1)}%
-                  </span>
-                </div>
-                <div className="insight-card">
-                  <span className="insight-label">
-                    Avg Net Margin{' '}
-                    <InfoTooltip text="CO TO JE: Net Profit Margin = čistá zisková marže. Kolik procent z tržeb zůstane jako čistý zisk. JAK ČÍST: Vyšší = lepší. Nad 10% je dobré. Nad 20% je výborné. Závisí na odvětví - tech firmy mají vyšší marže než maloobchod." />
-                  </span>
-                  <span
-                    className={`insight-value ${
-                      getWeightedAverage('netMargin') > 10 ? 'positive' : ''
-                    }`}
-                  >
-                    {getWeightedAverage('netMargin').toFixed(1)}%
-                  </span>
-                </div>
-                <div className="insight-card">
-                  <span className="insight-label">
-                    Avg Gross Margin{' '}
-                    <InfoTooltip text="CO TO JE: Gross Margin = hrubá marže. Tržby minus náklady na výrobu/služby. JAK ČÍST: Vyšší = větší cenová síla a konkurenceschopnost. Nad 40% je dobré. Nad 60% značí silné konkurencenční výhody (jako Apple, Microsoft)." />
-                  </span>
-                  <span className="insight-value">
-                    {getWeightedAverage('grossMargin').toFixed(1)}%
-                  </span>
-                </div>
-                <div className="insight-card">
-                  <span className="insight-label">
-                    Dividend Payers{' '}
-                    <InfoTooltip text="CO TO JE: Počet akcií ve vašem portfoliu, které vyplácejí dividendy. Dividendy = pravidelný příjem z drž ení akcií. JAK ČÍST: Více dividendových akcií = stabilnější příjem, ale možná nižší růst. Růstové firmy často dividendy nevyplácejí a raději reinvestují." />
-                  </span>
-                  <span className="insight-value">
-                    {
-                      analystData.filter(
-                        (d) => (d.fundamentals?.dividendYield ?? 0) > 0
-                      ).length
-                    }
-                    <span className="insight-subtext">
-                      / {analystData.length}
-                    </span>
-                  </span>
-                </div>
+                <MetricCard
+                  label="Avg ROE"
+                  value={getWeightedAverage('roe').toFixed(1)}
+                  suffix="%"
+                  sentiment={
+                    getWeightedAverage('roe') > 15 ? 'positive' : undefined
+                  }
+                  tooltip={
+                    <InfoTooltip text="**Return on Equity (ROE)** | Návratnost vlastního kapitálu. | • Nad 15% = dobré | • Nad 20% = výborné | • Pod 10% = slabé | Ukazuje efektivitu využití peněz akcionářů." />
+                  }
+                />
+                <MetricCard
+                  label="Avg Net Margin"
+                  value={getWeightedAverage('netMargin').toFixed(1)}
+                  suffix="%"
+                  sentiment={
+                    getWeightedAverage('netMargin') > 10
+                      ? 'positive'
+                      : undefined
+                  }
+                  tooltip={
+                    <InfoTooltip text="**Čistá zisková marže** | Kolik procent tržeb zůstane jako čistý zisk. | • Nad 10% = dobré | • Nad 20% = výborné | Závisí na odvětví - tech firmy mají vyšší marže." />
+                  }
+                />
+                <MetricCard
+                  label="Avg Gross Margin"
+                  value={getWeightedAverage('grossMargin').toFixed(1)}
+                  suffix="%"
+                  tooltip={
+                    <InfoTooltip text="**Hrubá marže** | Tržby minus náklady na výrobu/služby. | • Nad 40% = dobré | • Nad 60% = silné konkurenční výhody | Vyšší = větší cenová síla." />
+                  }
+                />
+                <MetricCard
+                  label="Dividend Payers"
+                  value={
+                    analystData.filter(
+                      (d) => (d.fundamentals?.dividendYield ?? 0) > 0
+                    ).length
+                  }
+                  subValue={analystData.length}
+                  tooltip={
+                    <InfoTooltip text="**Dividendové akcie** | Počet akcií v portfoliu, které vyplácejí dividendy. | • Více dividend = stabilnější příjem | • Růstové firmy často dividendy nevyplácejí" />
+                  }
+                />
               </div>
             </div>
 
             {/* Risk & Growth Row */}
             <div className="insights-category">
-              <span className="category-label">Risk & Growth</span>
+              <Text weight="medium">Risk & Growth</Text>
               <div className="insights-grid">
-                <div className="insight-card">
-                  <span className="insight-label">
-                    Avg Beta{' '}
-                    <InfoTooltip text="CO TO JE: Beta = míra volatility (kolísavosti) ve srovnání s trhem (S&P 500). JAK ČÍST: Beta = 1 znamená pohyb s trhem. Beta > 1 = větší výkyvy než trh (riskantnější). Beta < 1 = menší výkyvy (stabilnější). Beta < 0 = pohyb opačně než trh. IDEÁLNÍ: Záleží na vaší toleranci k riziku. Konzervativní investori preferují Beta pod 1." />
-                  </span>
-                  <span
-                    className={`insight-value ${
-                      getWeightedAverage('beta') > 1.3
-                        ? 'negative'
-                        : getWeightedAverage('beta') < 0.8
-                        ? 'positive'
-                        : ''
-                    }`}
-                  >
-                    {getWeightedAverage('beta').toFixed(2)}
-                  </span>
-                </div>
-                <div className="insight-card">
-                  <span className="insight-label">
-                    Avg D/E{' '}
-                    <InfoTooltip text="CO TO JE: Debt-to-Equity = poměr dluhu k vlastnímu kapitálu. Ukazuje, jak moc je firma zadlužená. JAK ČÍST: Nižší = bezpečnější. Pod 0.5 = nízký dluh (výborné). 0.5-2 = normální. Nad 2 = vysoký dluh (rizikovejší). POZOR: Některá odvětví (banky, reality) mají přirozeně vyšší D/E." />
-                  </span>
-                  <span
-                    className={`insight-value ${
-                      getWeightedAverage('debtToEquity') > 2
-                        ? 'negative'
-                        : getWeightedAverage('debtToEquity') < 0.5
-                        ? 'positive'
-                        : ''
-                    }`}
-                  >
-                    {getWeightedAverage('debtToEquity').toFixed(2)}
-                  </span>
-                </div>
-                <div className="insight-card">
-                  <span className="insight-label">
-                    Avg Revenue Growth{' '}
-                    <InfoTooltip text="CO TO JE: Revenue Growth = růst tržeb za poslední rok. JAK ČÍST: Kladné číslo (+) = firma roste. Záporné číslo (-) = tržby klesají. TYPICKÉ HODNOTY: Růstové firmy: +15% a více. Stabilní firmy: 0-10%. Pokles tržeb: varovný signál. IDEÁLNÍ: Kladný růst, ideelně nad 10%." />
-                  </span>
-                  <span
-                    className={`insight-value ${
-                      getWeightedAverage('revenueGrowth') > 0
-                        ? 'positive'
-                        : getWeightedAverage('revenueGrowth') < 0
-                        ? 'negative'
-                        : ''
-                    }`}
-                  >
-                    {getWeightedAverage('revenueGrowth') >= 0 ? '+' : ''}
-                    {getWeightedAverage('revenueGrowth').toFixed(1)}%
-                  </span>
-                </div>
-                <div className="insight-card">
-                  <span className="insight-label">
-                    Insider Buying ({insiderTimeRange}M){' '}
-                    <InfoTooltip text="CO TO JE: Počet akcií, kde ředitelé a manažeři firmy NAKUPUJÍ vlastní akcie. PROČ JE TO DŮLEŽITÉ: Když insideri nakupují, věří v budoucnost firmy - to je pozitivní signál. Když prodávají, nemusí to být špatné (mohou potřebovat hotovost). JAK ČÍST: Více firem s insider buying = dobré znamení pro portfolio." />
-                  </span>
-                  <span className="insight-value positive">
-                    {
-                      analystData.filter(
-                        (d) =>
-                          getFilteredInsiderSentiment(d, insiderTimeRange)
-                            .mspr !== null &&
-                          (getFilteredInsiderSentiment(d, insiderTimeRange)
-                            .mspr ?? 0) > 0
-                      ).length
-                    }
-                    <span className="insight-subtext">
-                      /{' '}
-                      {
-                        analystData.filter(
-                          (d) =>
-                            getFilteredInsiderSentiment(d, insiderTimeRange)
-                              .mspr !== null
-                        ).length
-                      }
-                    </span>
-                  </span>
-                </div>
+                <MetricCard
+                  label="Avg Beta"
+                  value={getWeightedAverage('beta').toFixed(2)}
+                  sentiment={
+                    getWeightedAverage('beta') > 1.3
+                      ? 'negative'
+                      : getWeightedAverage('beta') < 0.8
+                      ? 'positive'
+                      : undefined
+                  }
+                  tooltip={
+                    <InfoTooltip text="**Beta** | Míra volatility ve srovnání s trhem (S&P 500). | • Beta = 1 = pohyb s trhem | • Beta > 1 = větší výkyvy (riskantnejší) | • Beta < 1 = menší výkyvy (stabilnější)" />
+                  }
+                />
+                <MetricCard
+                  label="Avg D/E"
+                  value={getWeightedAverage('debtToEquity').toFixed(2)}
+                  sentiment={
+                    getWeightedAverage('debtToEquity') > 2
+                      ? 'negative'
+                      : getWeightedAverage('debtToEquity') < 0.5
+                      ? 'positive'
+                      : undefined
+                  }
+                  tooltip={
+                    <InfoTooltip text="**Debt-to-Equity (D/E)** | Poměr dluhu k vlastnímu kapitálu. | • Pod 0.5 = nízký dluh (výborné) | • 0.5-2 = normální | • Nad 2 = vysoký dluh (rizikovější)" />
+                  }
+                />
+                <MetricCard
+                  label="Avg Revenue Growth"
+                  value={`${
+                    getWeightedAverage('revenueGrowth') >= 0 ? '+' : ''
+                  }${getWeightedAverage('revenueGrowth').toFixed(1)}`}
+                  suffix="%"
+                  sentiment={
+                    getWeightedAverage('revenueGrowth') > 0
+                      ? 'positive'
+                      : getWeightedAverage('revenueGrowth') < 0
+                      ? 'negative'
+                      : undefined
+                  }
+                  tooltip={
+                    <InfoTooltip text="**Růst tržeb** | Meziroční změna tržeb. | • Kladné = firma roste | • Záporné = tržby klesají | Růstové firmy: +15% a více. Pokles = varovný signál." />
+                  }
+                />
+                <MetricCard
+                  label={`Insider Buying (${insiderTimeRange}M)`}
+                  value={
+                    analystData.filter(
+                      (d) =>
+                        getFilteredInsiderSentiment(d, insiderTimeRange)
+                          .mspr !== null &&
+                        (getFilteredInsiderSentiment(d, insiderTimeRange)
+                          .mspr ?? 0) > 0
+                    ).length
+                  }
+                  subValue={
+                    analystData.filter(
+                      (d) =>
+                        getFilteredInsiderSentiment(d, insiderTimeRange)
+                          .mspr !== null
+                    ).length
+                  }
+                  sentiment="positive"
+                  tooltip={
+                    <InfoTooltip text="**Insider nákupy** | Počet akcií, kde vedenie nakupuje vlastní akcie. | • Nákup insiderů = pozitivní signál | • Prodej nemusí být negativní (potřeba hotovosti) | Více firem s insider buying = dobré znamení." />
+                  }
+                />
               </div>
             </div>
           </section>
@@ -1550,40 +1530,40 @@ export function Analysis({ portfolioId }: AnalysisProps) {
       {activeTab === 'technicals' && (
         <>
           <section className="analysis-section">
-            <h3>Price Analysis</h3>
-            <p className="section-hint">Click row for chart detail</p>
+            <SectionTitle>Price Analysis</SectionTitle>
+            <Description>Click row for chart detail</Description>
 
             <div className="analysis-table-wrapper">
               <table className="analysis-table technicals-table">
                 <thead>
                   <tr>
                     <th onClick={() => handleSort('ticker')}>
-                      Stock <SortIcon column="ticker" />
+                      Stock <SortIconComponent column="ticker" />
                     </th>
                     <th className="right" onClick={() => handleSort('weight')}>
-                      Weight <SortIcon column="weight" />
+                      Weight <SortIconComponent column="weight" />
                     </th>
                     <th
                       className="right"
                       onClick={() => handleSort('currentPrice')}
                     >
-                      Price <SortIcon column="currentPrice" />
+                      Price <SortIconComponent column="currentPrice" />
                     </th>
                     <th
                       className="right"
                       onClick={() => handleSort('priceChangePercent')}
                     >
-                      Change <SortIcon column="priceChangePercent" />
+                      Change <SortIconComponent column="priceChangePercent" />
                     </th>
                     <th className="right">52W Low</th>
                     <th className="right">52W High</th>
                     <th className="center">
                       52W Range Position{' '}
-                      <InfoTooltip text="CO TO JE: Pozice aktuální ceny v rámci 52týdenního (ročního) rozpětí. 0% = na ročním minimu, 100% = na ročním maximu. JAK ČÍST: Nad 80% = blízko maximům (silné momentum NEBO překoupená). Pod 20% = blízko minimům (slabé momentum NEBO příležitost k nákupu). 40-60% = střed rozpětí. POZOR: Vysoká pozice může znamenat buď sílu, nebo že je akcie drahá." />
+                      <InfoTooltip text="**52W Range Position** | Pozice ceny v rámci ročního rozpětí. | • 0% = roční minimum | • 100% = roční maximum | • Nad 80% = silné momentum nebo překoupená | • Pod 20% = slabé momentum nebo příležitost" />
                     </th>
                     <th className="left">
                       Peers{' '}
-                      <InfoTooltip text="CO TO JE: Konkurenti a podobné firmy ve stejném odvětví. PROČ JE TO DŮLEŽITÉ: Můžete porovnat metriky vaší akcie s konkurenty. Pomáhá zjistit, zda je akcie lepší nebo horší než obdobné firmy." />
+                      <InfoTooltip text="**Peers** | Konkurenti ve stejném odvětví. | Můžete porovnat metriky s konkurenty a zjistit, zda je akcie lepší nebo horší." />
                     </th>
                   </tr>
                 </thead>
@@ -1619,8 +1599,8 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                       >
                         <td>
                           <div className="stock-cell">
-                            <span className="ticker">{item.ticker}</span>
-                            <span className="name">{item.stockName}</span>
+                            <Ticker>{item.ticker}</Ticker>
+                            <StockName truncate>{item.stockName}</StockName>
                           </div>
                         </td>
                         <td className="right">
@@ -1668,9 +1648,9 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                                   style={{ left: `${rangePosition}%` }}
                                 />
                               </div>
-                              <span className="range-percent">
+                              <Text size="sm" color="muted">
                                 {rangePosition.toFixed(0)}%
-                              </span>
+                              </Text>
                             </div>
                           ) : (
                             '—'
@@ -1680,13 +1660,11 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                           {item.peers && item.peers.length > 0 ? (
                             <div className="peers-list">
                               {item.peers.map((peer: string, i: number) => (
-                                <span key={i} className="peer-tag">
-                                  {peer}
-                                </span>
+                                <Tag key={i}>{peer}</Tag>
                               ))}
                             </div>
                           ) : (
-                            <span className="muted">—</span>
+                            <Muted>—</Muted>
                           )}
                         </td>
                       </tr>
@@ -1725,12 +1703,10 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     >
                       <div className="technicals-card-header">
                         <div className="technicals-card-title">
-                          <span className="ticker">{item.ticker}</span>
-                          <span className="name">{item.stockName}</span>
+                          <Ticker>{item.ticker}</Ticker>
+                          <StockName truncate>{item.stockName}</StockName>
                         </div>
-                        <span className="technicals-card-weight">
-                          {item.weight.toFixed(1)}%
-                        </span>
+                        <Text weight="semibold">{item.weight.toFixed(1)}%</Text>
                       </div>
 
                       {/* 52W Range Visualization */}
@@ -1783,9 +1759,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                             {item.peers
                               .slice(0, 5)
                               .map((peer: string, i: number) => (
-                                <span key={i} className="peer-tag">
-                                  {peer}
-                                </span>
+                                <Tag key={i}>{peer}</Tag>
                               ))}
                           </div>
                         </div>
@@ -1793,7 +1767,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
                       {hasTechnicalData && (
                         <div className="technicals-card-hint">
-                          Tap for chart →
+                          <Muted>Tap for chart →</Muted>
                         </div>
                       )}
                     </div>
@@ -1820,50 +1794,36 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
           {/* Technical Summary */}
           <section className="analysis-section">
-            <h3>Technical Insights</h3>
+            <SectionTitle>Technical Insights</SectionTitle>
             <div className="insights-grid">
-              <div className="insight-card">
-                <span className="insight-label">Near 52W High (&gt;80%)</span>
-                <span className="insight-value">
-                  {countNear52WeekHigh()}
-                  <span className="insight-subtext">
-                    / {analystData.length}
-                  </span>
-                </span>
-              </div>
-              <div className="insight-card">
-                <span className="insight-label">Near 52W Low (&lt;20%)</span>
-                <span className="insight-value">
-                  {countNear52WeekLow()}
-                  <span className="insight-subtext">
-                    / {analystData.length}
-                  </span>
-                </span>
-              </div>
-              <div className="insight-card">
-                <span className="insight-label">Positive Today</span>
-                <span className="insight-value positive">
-                  {
-                    analystData.filter((d) => (d.priceChangePercent ?? 0) > 0)
-                      .length
-                  }
-                  <span className="insight-subtext">
-                    / {analystData.length}
-                  </span>
-                </span>
-              </div>
-              <div className="insight-card">
-                <span className="insight-label">Negative Today</span>
-                <span className="insight-value negative">
-                  {
-                    analystData.filter((d) => (d.priceChangePercent ?? 0) < 0)
-                      .length
-                  }
-                  <span className="insight-subtext">
-                    / {analystData.length}
-                  </span>
-                </span>
-              </div>
+              <MetricCard
+                label="Near 52W High (>80%)"
+                value={countNear52WeekHigh()}
+                subValue={analystData.length}
+              />
+              <MetricCard
+                label="Near 52W Low (<20%)"
+                value={countNear52WeekLow()}
+                subValue={analystData.length}
+              />
+              <MetricCard
+                label="Positive Today"
+                value={
+                  analystData.filter((d) => (d.priceChangePercent ?? 0) > 0)
+                    .length
+                }
+                subValue={analystData.length}
+                sentiment="positive"
+              />
+              <MetricCard
+                label="Negative Today"
+                value={
+                  analystData.filter((d) => (d.priceChangePercent ?? 0) < 0)
+                    .length
+                }
+                subValue={analystData.length}
+                sentiment="negative"
+              />
             </div>
           </section>
         </>
@@ -1893,10 +1853,16 @@ export function Analysis({ portfolioId }: AnalysisProps) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mobile-tooltip-header">
-              <h4>{mobileTooltip.title}</h4>
-              <button onClick={() => setMobileTooltip(null)}>×</button>
+              <CardTitle>{mobileTooltip.title}</CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setMobileTooltip(null)}
+              >
+                ×
+              </Button>
             </div>
-            <p>{mobileTooltip.text}</p>
+            <Description>{mobileTooltip.text}</Description>
           </div>
         </div>
       )}

@@ -4,6 +4,16 @@ import type {
   UserAnalysisView,
 } from '@/services/api/indicators';
 import { Button } from '@/components/shared/Button';
+import { Input } from '@/components/shared/Input';
+import { stripTooltipMarkdown } from '@/components/shared/InfoTooltip';
+import {
+  CardTitle,
+  SectionTitle,
+  Caption,
+  Text,
+  Muted,
+  Tag,
+} from '@/components/shared/Typography';
 import './ColumnPicker.css';
 
 interface ColumnPickerProps {
@@ -203,11 +213,14 @@ export function ColumnPicker({
   return (
     <div className="column-picker" ref={dropdownRef}>
       <div className="column-picker-header">
-        <button className="picker-trigger" onClick={() => setIsOpen(!isOpen)}>
-          <span className="trigger-icon">⚙</span>
-          <span>Columns ({selectedKeys.length})</span>
+        <Button
+          variant="ghost"
+          className="picker-trigger"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <Text>⚙ Columns ({selectedKeys.length})</Text>
           <span className={`dropdown-arrow ${isOpen ? 'open' : ''}`}>▼</span>
-        </button>
+        </Button>
 
         {onSaveView && (
           <Button
@@ -216,7 +229,7 @@ export function ColumnPicker({
             onClick={() => setShowSaveDialog(true)}
             title="Save current column configuration as a view"
           >
-            💾 Save View
+            Save View
           </Button>
         )}
       </div>
@@ -224,7 +237,7 @@ export function ColumnPicker({
       {/* Views Selector */}
       {views.length > 0 && (
         <div className="views-row">
-          <span className="views-label">Views:</span>
+          <Caption>Views:</Caption>
           <div className="views-list">
             {views.map((view) => (
               <div
@@ -234,7 +247,9 @@ export function ColumnPicker({
                 }`}
               >
                 {onSetDefaultView && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className={`view-chip-star ${
                       view.is_default ? 'is-default' : ''
                     }`}
@@ -249,16 +264,20 @@ export function ColumnPicker({
                     }
                   >
                     {view.is_default ? '★' : '☆'}
-                  </button>
+                  </Button>
                 )}
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="view-chip-name"
                   onClick={() => onSelectView?.(view)}
                 >
                   {view.name}
-                </button>
+                </Button>
                 {onDeleteView && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className="view-chip-delete"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -269,7 +288,7 @@ export function ColumnPicker({
                     title="Delete view"
                   >
                     ×
-                  </button>
+                  </Button>
                 )}
               </div>
             ))}
@@ -284,24 +303,32 @@ export function ColumnPicker({
           onClick={() => setShowSaveDialog(false)}
         >
           <div className="save-dialog" onClick={(e) => e.stopPropagation()}>
-            <h4>Save View</h4>
-            <input
+            <CardTitle>Save View</CardTitle>
+            <Input
               type="text"
               placeholder="View name..."
               value={viewName}
               onChange={(e) => setViewName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSaveView()}
               autoFocus
+              fullWidth
             />
             <div className="dialog-actions">
-              <button onClick={() => setShowSaveDialog(false)}>Cancel</button>
-              <button
-                className="primary"
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowSaveDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={handleSaveView}
                 disabled={!viewName.trim()}
               >
                 Save
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -310,7 +337,7 @@ export function ColumnPicker({
       {/* Selected Columns Preview - Drag & Drop (Desktop only) */}
       {!isMobile && (
         <div className="selected-columns">
-          <span className="columns-hint">Drag to reorder:</span>
+          <Caption>Drag to reorder:</Caption>
           {selectedKeys.map((key, index) => {
             const indicator = getIndicatorByKey(key);
             if (!indicator) return null;
@@ -327,14 +354,16 @@ export function ColumnPicker({
                 onDragLeave={handleDragLeave}
                 title={indicator.description}
               >
-                <span className="drag-handle">⠿</span>
-                <span className="tag-name">{indicator.short_name}</span>
-                <button
+                <Text size="xs">⠿</Text>
+                <Text size="sm">{indicator.short_name}</Text>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="remove-btn"
                   onClick={() => toggleColumn(key)}
                 >
                   ×
-                </button>
+                </Button>
               </div>
             );
           })}
@@ -348,10 +377,16 @@ export function ColumnPicker({
             const indicator = getIndicatorByKey(key);
             if (!indicator) return null;
             return (
-              <span key={key} className="mobile-column-chip">
-                {indicator.short_name}
-                <button onClick={() => toggleColumn(key)}>×</button>
-              </span>
+              <div key={key} className="mobile-column-chip">
+                <Text size="sm">{indicator.short_name}</Text>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => toggleColumn(key)}
+                >
+                  ×
+                </Button>
+              </div>
             );
           })}
         </div>
@@ -361,7 +396,7 @@ export function ColumnPicker({
       {isOpen && !isMobile && (
         <div className="picker-dropdown">
           <div className="picker-search">
-            <input
+            <Input
               type="text"
               placeholder="Search indicators..."
               value={searchTerm}
@@ -370,46 +405,53 @@ export function ColumnPicker({
                 if (e.target.value) setActiveCategory(null);
               }}
               autoFocus
+              fullWidth
             />
           </div>
 
           <div className="picker-content">
-            {/* Category Tabs */}
-            <div className="category-tabs">
-              {categoryOrder.map((cat) => (
-                <button
-                  key={cat}
-                  className={`category-tab ${
-                    activeCategory === cat ? 'active' : ''
-                  }`}
-                  onClick={() => {
-                    setActiveCategory(activeCategory === cat ? null : cat);
-                    setSearchTerm('');
-                  }}
-                >
-                  {categoryLabels[cat] || cat}
-                  <span className="count">
-                    {
-                      (categories[cat] || []).filter((i) =>
-                        selectedKeys.includes(i.key)
-                      ).length
-                    }
-                    /{(categories[cat] || []).length}
-                  </span>
-                </button>
-              ))}
+            {/* Category Sidebar */}
+            <div className="category-sidebar">
+              {categoryOrder.map((cat) => {
+                const count = (categories[cat] || []).filter((i) =>
+                  selectedKeys.includes(i.key)
+                ).length;
+                const total = (categories[cat] || []).length;
+                return (
+                  <Button
+                    key={cat}
+                    variant="ghost"
+                    className={`category-item ${
+                      activeCategory === cat ? 'active' : ''
+                    }`}
+                    onClick={() => {
+                      setActiveCategory(activeCategory === cat ? null : cat);
+                      setSearchTerm('');
+                    }}
+                  >
+                    <Text size="sm" weight="medium">
+                      {categoryLabels[cat]}
+                    </Text>
+                    <Muted>
+                      {count}/{total}
+                    </Muted>
+                  </Button>
+                );
+              })}
             </div>
 
             {/* Indicator List */}
             <div className="indicator-list">
               {(searchTerm || activeCategory) &&
                 filteredIndicators.length === 0 && (
-                  <div className="no-results">No indicators found</div>
+                  <div className="indicator-empty">
+                    <Muted>No indicators found</Muted>
+                  </div>
                 )}
 
               {!searchTerm && !activeCategory && (
-                <div className="select-category-hint">
-                  Select a category or search to add columns
+                <div className="indicator-empty">
+                  <Muted>Select a category or search</Muted>
                 </div>
               )}
 
@@ -420,19 +462,21 @@ export function ColumnPicker({
                     selectedKeys.includes(ind.key) ? 'selected' : ''
                   }`}
                 >
-                  <input
-                    type="checkbox"
-                    checked={selectedKeys.includes(ind.key)}
-                    onChange={() => toggleColumn(ind.key)}
-                  />
+                  <div className="indicator-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={selectedKeys.includes(ind.key)}
+                      onChange={() => toggleColumn(ind.key)}
+                    />
+                  </div>
                   <div className="indicator-info">
-                    <span className="indicator-name">
-                      {ind.name}
-                      <span className="indicator-short">
-                        ({ind.short_name})
-                      </span>
-                    </span>
-                    <span className="indicator-desc">{ind.description}</span>
+                    <div className="indicator-header">
+                      <Text size="sm" weight="medium">
+                        {ind.name}
+                      </Text>
+                      <Tag>{ind.short_name}</Tag>
+                    </div>
+                    <Caption>{stripTooltipMarkdown(ind.description)}</Caption>
                   </div>
                 </label>
               ))}
@@ -460,8 +504,12 @@ export function ColumnPicker({
           <div className="mobile-picker-backdrop" onClick={handleClose} />
           <div className="mobile-picker-sheet">
             <div className="mobile-picker-header">
-              <h3>Select Columns</h3>
-              <button className="mobile-picker-close" onClick={handleClose}>
+              <SectionTitle>Select Columns</SectionTitle>
+              <Button
+                variant="ghost"
+                className="mobile-picker-close"
+                onClick={handleClose}
+              >
                 <svg
                   width="24"
                   height="24"
@@ -472,23 +520,26 @@ export function ColumnPicker({
                 >
                   <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
-              </button>
+              </Button>
             </div>
 
             <div className="mobile-picker-search">
-              <input
+              <Input
                 type="text"
                 placeholder="Search indicators..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                fullWidth
               />
               {searchTerm && (
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="search-clear"
                   onClick={() => setSearchTerm('')}
                 >
                   ×
-                </button>
+                </Button>
               )}
             </div>
 
@@ -497,7 +548,7 @@ export function ColumnPicker({
               {mobileFilteredIndicators && (
                 <div className="mobile-search-results">
                   {mobileFilteredIndicators.length === 0 ? (
-                    <div className="no-results">No indicators found</div>
+                    <Muted>No indicators found</Muted>
                   ) : (
                     mobileFilteredIndicators.map((ind) => (
                       <div
@@ -508,12 +559,10 @@ export function ColumnPicker({
                         onClick={() => toggleColumn(ind.key)}
                       >
                         <div className="mobile-indicator-info">
-                          <span className="mobile-indicator-name">
+                          <Text size="base" weight="medium">
                             {ind.name}
-                          </span>
-                          <span className="mobile-indicator-short">
-                            {ind.short_name}
-                          </span>
+                          </Text>
+                          <Muted>{ind.short_name}</Muted>
                         </div>
                         <div
                           className={`mobile-toggle ${
@@ -542,24 +591,19 @@ export function ColumnPicker({
 
                     return (
                       <div key={cat} className="mobile-category">
-                        <button
+                        <Button
+                          variant="ghost"
                           className={`mobile-category-header ${
                             isExpanded ? 'expanded' : ''
                           }`}
                           onClick={() => toggleCategory(cat)}
                         >
-                          <span className="category-icon">
-                            {categoryLabels[cat]?.split(' ')[0] || ''}
-                          </span>
-                          <span className="category-name">
-                            {categoryLabels[cat]
-                              ?.split(' ')
-                              .slice(1)
-                              .join(' ') || cat}
-                          </span>
-                          <span className="category-count">
+                          <Text size="base" weight="medium">
+                            {categoryLabels[cat] || cat}
+                          </Text>
+                          <Muted>
                             {selectedCount}/{catIndicators.length}
-                          </span>
+                          </Muted>
                           <span
                             className={`category-arrow ${
                               isExpanded ? 'expanded' : ''
@@ -576,7 +620,7 @@ export function ColumnPicker({
                               <path d="M6 9l6 6 6-6" />
                             </svg>
                           </span>
-                        </button>
+                        </Button>
 
                         {isExpanded && (
                           <div className="mobile-category-items">
@@ -591,12 +635,12 @@ export function ColumnPicker({
                                 onClick={() => toggleColumn(ind.key)}
                               >
                                 <div className="mobile-indicator-info">
-                                  <span className="mobile-indicator-name">
+                                  <Text size="base" weight="medium">
                                     {ind.name}
-                                  </span>
-                                  <span className="mobile-indicator-desc">
-                                    {ind.description}
-                                  </span>
+                                  </Text>
+                                  <Muted>
+                                    {stripTooltipMarkdown(ind.description)}
+                                  </Muted>
                                 </div>
                                 <div
                                   className={`mobile-toggle ${

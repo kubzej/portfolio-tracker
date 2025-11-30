@@ -1,0 +1,104 @@
+.indicator-value-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.indicator-value-label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.indicator-value-content {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.indicator-values-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+}
+
+/* Signal badges */
+.indicator-signal-badge {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-tertiary);
+  text-align: center;
+}
+
+.indicator-signal-badge.bullish,
+.indicator-signal-badge.positive,
+.indicator-signal-badge.oversold,
+.indicator-signal-badge.strong {
+  background: var(--color-success-bg);
+}
+
+.indicator-signal-badge.bearish,
+.indicator-signal-badge.negative,
+.indicator-signal-badge.overbought,
+.indicator-signal-badge.high {
+  background: var(--color-danger-bg);
+}
+
+.indicator-signal-badge.moderate,
+.indicator-signal-badge.normal {
+  background: var(--color-warning-bg);
+}
+
+.indicator-signal-badge.neutral,
+.indicator-signal-badge.weak,
+.indicator-signal-badge.low,
+.indicator-signal-badge.no-trend {
+  background: var(--color-neutral-bg);
+}
+
+.indicator-signal-badge.info {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.indicator-signal-badge.variant-highlight {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+/* Zone badges */
+.zones-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.zone-badge-item {
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.zone-badge-item.overbought {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-negative);
+}
+
+.zone-badge-item.neutral {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.zone-badge-item.oversold {
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--color-positive);
+}
+
+@media (max-width: 768px) {
+  .indicator-values-row {
+    gap: 1rem;
+  }
+
+  .indicator-signal-badge {
+    padding: 0.375rem 0.625rem;
+  }
+}

@@ -11,16 +11,25 @@ const corsHeaders = {
 };
 
 const FINNHUB_API_KEY = Deno.env.get('FINNHUB_API_KEY') ?? '';
+const ALPHA_VANTAGE_API_KEY = Deno.env.get('ALPHA_VANTAGE_API_KEY') ?? '';
 
 // Rate limit tracking
-let rateLimitInfo = { finnhub: false, yahoo: false };
+let rateLimitInfo = { finnhub: false, yahoo: false, alpha: false };
 
-// Safe fetch with rate limit detection
+// Safe fetch with rate limit detection and proper headers
 async function safeFetch(
   url: string,
   source: 'finnhub' | 'yahoo'
 ): Promise<Response> {
-  const response = await fetch(url);
+  const headers: Record<string, string> = {};
+
+  // Yahoo requires User-Agent header
+  if (source === 'yahoo') {
+    headers['User-Agent'] =
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36';
+  }
+
+  const response = await fetch(url, { headers });
   if (response.status === 429) {
     rateLimitInfo[source] = true;
     console.warn(`Rate limited by ${source}: ${url}`);
@@ -123,6 +132,8 @@ interface AnalystData {
   peers: string[];
   // Company profile
   industry: string | null;
+  description: string | null;
+  descriptionSource: 'alpha' | null; // Where description came from
   // Error tracking
   error?: string;
 }
@@ -197,6 +208,8 @@ async function fetchAnalystData(
     insiderSentiment: null,
     peers: [],
     industry: null,
+    description: null,
+    descriptionSource: null,
   };
 
   try {
@@ -369,8 +382,8 @@ async function fetchAnalystData(
 
       if (yahooSummaryRes.ok) {
         const summaryData = await yahooSummaryRes.json();
-        const financialData =
-          summaryData?.quoteSummary?.result?.[0]?.financialData;
+        const result = summaryData?.quoteSummary?.result?.[0];
+        const financialData = result?.financialData;
 
         if (financialData) {
           // Use targetMeanPrice (average of all analyst targets)
@@ -381,7 +394,47 @@ async function fetchAnalystData(
         }
       }
     } catch (targetError) {
-      console.error(`Yahoo target price failed for ${ticker}:`, targetError);
+      console.error(`Yahoo summary failed for ${ticker}:`, targetError);
+    }
+
+    // Fetch company description from Alpha Vantage (US stocks only)
+    let description: string | null = null;
+    let descriptionSource: 'alpha' | null = null;
+    console.log(
+      `Alpha Vantage: key=${
+        ALPHA_VANTAGE_API_KEY ? 'present' : 'missing'
+      }, ticker=${ticker}`
+    );
+    if (ALPHA_VANTAGE_API_KEY) {
+      try {
+        const alphaSymbol = yahooToAlphaVantageTicker(ticker);
+        const alphaUrl = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${encodeURIComponent(
+          alphaSymbol
+        )}&apikey=${ALPHA_VANTAGE_API_KEY}`;
+        console.log(`Fetching Alpha Vantage: ${alphaSymbol}`);
+        const alphaRes = await fetch(alphaUrl);
+
+        if (alphaRes.ok) {
+          const alphaData = await alphaRes.json();
+          console.log(
+            `Alpha Vantage response: keys=${
+              Object.keys(alphaData).length
+            }, data=${JSON.stringify(alphaData).substring(0, 200)}`
+          );
+          if (alphaData?.Description && !alphaData?.Note) {
+            description = alphaData.Description;
+            descriptionSource = 'alpha';
+            console.log(`Got description: ${description?.substring(0, 50)}...`);
+          } else if (alphaData?.Information) {
+            console.log(`Alpha Vantage rate limited: ${alphaData.Information}`);
+            rateLimitInfo.alpha = true;
+          }
+        } else {
+          console.log(`Alpha Vantage failed: ${alphaRes.status}`);
+        }
+      } catch (alphaError) {
+        console.error(`Alpha Vantage error for ${ticker}:`, alphaError);
+      }
     }
 
     // Get latest recommendation (first item in array is most recent)
@@ -567,7 +620,7 @@ async function fetchAnalystData(
           .slice(0, 5)
       : [];
 
-    // Parse industry from profile
+    // Parse industry from Finnhub profile (description comes from Yahoo above)
     const industry = profileData?.finnhubIndustry ?? null;
 
     return {
@@ -593,6 +646,8 @@ async function fetchAnalystData(
       insiderSentiment,
       peers,
       industry,
+      description,
+      descriptionSource,
     };
   } catch (error) {
     console.error(`Error fetching ${ticker}:`, error);
@@ -656,6 +711,49 @@ function yahooToFinnhubTicker(yahooTicker: string): string {
   return yahooTicker;
 }
 
+// Convert Yahoo Finance ticker to Alpha Vantage ticker
+// Alpha Vantage uses different exchange suffixes
+function yahooToAlphaVantageTicker(yahooTicker: string): string {
+  // German stocks: ZAL.DE -> ZAL.FRK (Frankfurt)
+  if (yahooTicker.endsWith('.DE')) {
+    return yahooTicker.replace('.DE', '.FRK');
+  }
+  // London stocks: LLOY.L -> LLOY.LON
+  if (yahooTicker.endsWith('.L')) {
+    return yahooTicker.replace('.L', '.LON');
+  }
+  // Paris stocks: BNP.PA -> BNP.PAR
+  if (yahooTicker.endsWith('.PA')) {
+    return yahooTicker.replace('.PA', '.PAR');
+  }
+  // Amsterdam: ASML.AS -> ASML.AMS
+  if (yahooTicker.endsWith('.AS')) {
+    return yahooTicker.replace('.AS', '.AMS');
+  }
+  // Swiss: NESN.SW -> Not well supported, try without suffix
+  if (yahooTicker.endsWith('.SW')) {
+    return yahooTicker.replace('.SW', '');
+  }
+  // Milan: ENI.MI -> ENI.MIL
+  if (yahooTicker.endsWith('.MI')) {
+    return yahooTicker.replace('.MI', '.MIL');
+  }
+  // Madrid: SAN.MC -> Not well supported
+  if (yahooTicker.endsWith('.MC')) {
+    return yahooTicker.replace('.MC', '');
+  }
+  // Toronto: TD.TO -> TD.TRT
+  if (yahooTicker.endsWith('.TO')) {
+    return yahooTicker.replace('.TO', '.TRT');
+  }
+  // Hong Kong: Not well supported
+  if (yahooTicker.endsWith('.HK')) {
+    return yahooTicker.replace('.HK', '');
+  }
+  // US stocks - no change needed
+  return yahooTicker;
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -688,7 +786,7 @@ serve(async (req) => {
           data: [data],
           errors: data.error ? [data.error] : [],
           rateLimited:
-            rateLimitInfo.finnhub || rateLimitInfo.yahoo
+            rateLimitInfo.finnhub || rateLimitInfo.yahoo || rateLimitInfo.alpha
               ? rateLimitInfo
               : undefined,
         }),
@@ -771,7 +869,7 @@ serve(async (req) => {
         data: results,
         errors,
         rateLimited:
-          rateLimitInfo.finnhub || rateLimitInfo.yahoo
+          rateLimitInfo.finnhub || rateLimitInfo.yahoo || rateLimitInfo.alpha
             ? rateLimitInfo
             : undefined,
       }),

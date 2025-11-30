@@ -11,35 +11,47 @@ import {
   ErrorState,
   EditIcon,
   TrashIcon,
+  MobileSortControl,
+  type SortField as MobileSortField,
 } from '@/components/shared';
 import {
-  BottomSheetSelect,
-  type SelectOption,
-} from '@/components/shared/BottomSheet';
+  SectionTitle,
+  Ticker,
+  StockName,
+  Caption,
+  Description,
+  Badge,
+  Text,
+  Muted,
+  MetricLabel,
+} from '@/components/shared/Typography';
 import { useSortable } from '@/hooks';
 import { AddStockForm } from './AddStockForm';
 import { formatCurrency } from '@/utils/format';
 import { cn } from '@/utils/cn';
 import './Watchlists.css';
 
-type SortField =
+type SortFieldKey =
   | 'ticker'
   | 'last_price'
   | 'last_price_change_percent'
   | 'target_buy_price'
   | 'target_sell_price';
 
-const SORT_OPTIONS: SelectOption[] = [
-  { value: 'ticker-asc', label: 'Ticker (A-Z)' },
-  { value: 'ticker-desc', label: 'Ticker (Z-A)' },
-  { value: 'last_price-desc', label: 'Price (High-Low)' },
-  { value: 'last_price-asc', label: 'Price (Low-High)' },
-  { value: 'last_price_change_percent-desc', label: 'Change (Best)' },
-  { value: 'last_price_change_percent-asc', label: 'Change (Worst)' },
-  { value: 'target_buy_price-asc', label: 'Buy Target (Low-High)' },
-  { value: 'target_buy_price-desc', label: 'Buy Target (High-Low)' },
-  { value: 'target_sell_price-desc', label: 'Sell Target (High-Low)' },
-  { value: 'target_sell_price-asc', label: 'Sell Target (Low-High)' },
+const SORT_FIELDS: MobileSortField[] = [
+  { value: 'ticker', label: 'Ticker', defaultDirection: 'asc' },
+  { value: 'last_price', label: 'Price', defaultDirection: 'desc' },
+  {
+    value: 'last_price_change_percent',
+    label: 'Change',
+    defaultDirection: 'desc',
+  },
+  { value: 'target_buy_price', label: 'Buy Target', defaultDirection: 'asc' },
+  {
+    value: 'target_sell_price',
+    label: 'Sell Target',
+    defaultDirection: 'desc',
+  },
 ];
 
 interface WatchlistViewProps {
@@ -68,7 +80,7 @@ export function WatchlistView({
 
   // Value extractor for sorting
   const getItemValue = useCallback(
-    (item: WatchlistItemWithCalculations, field: SortField) => {
+    (item: WatchlistItemWithCalculations, field: SortFieldKey) => {
       switch (field) {
         case 'ticker':
           return item.ticker;
@@ -89,12 +101,13 @@ export function WatchlistView({
 
   const {
     sortedData: sortedItems,
-    sortValue,
+    sortField,
+    sortDirection,
     handleSort,
-    setSortFromValue,
+    setSort,
     getSortIndicator,
     isSorted,
-  } = useSortable<WatchlistItemWithCalculations, SortField>(
+  } = useSortable<WatchlistItemWithCalculations, SortFieldKey>(
     items,
     getItemValue,
     {
@@ -177,29 +190,22 @@ export function WatchlistView({
     }
   };
 
-  const getPriceClass = (change: number | null) => {
-    if (change === null) return '';
-    if (change > 0) return 'positive';
-    if (change < 0) return 'negative';
-    return '';
-  };
-
   const getTargetStatus = (item: WatchlistItemWithCalculations) => {
     const badges: React.ReactNode[] = [];
 
     if (item.at_buy_target) {
       badges.push(
-        <span key="buy" className="target-badge buy">
-          ✓ Buy Target
-        </span>
+        <Badge key="buy" variant="positive" size="sm">
+          ✓ Buy
+        </Badge>
       );
     }
 
     if (item.at_sell_target) {
       badges.push(
-        <span key="sell" className="target-badge sell">
-          ✓ Sell Target
-        </span>
+        <Badge key="sell" variant="negative" size="sm">
+          ✓ Sell
+        </Badge>
       );
     }
 
@@ -226,16 +232,14 @@ export function WatchlistView({
     <div className="watchlist-view">
       <div className="watchlist-view-header">
         <div className="header-left">
-          <button className="back-btn" onClick={onBack}>
+          <Button variant="ghost" size="sm" onClick={onBack}>
             ← Back
-          </button>
-          <div
-            className="watchlist-color-dot"
-            style={{ backgroundColor: watchlist.color }}
-          />
+          </Button>
           <div className="watchlist-info">
-            <h2>{watchlist.name}</h2>
-            {watchlist.description && <p>{watchlist.description}</p>}
+            <SectionTitle>{watchlist.name}</SectionTitle>
+            {watchlist.description && (
+              <Description>{watchlist.description}</Description>
+            )}
           </div>
         </div>
         <div className="header-actions">
@@ -264,11 +268,18 @@ export function WatchlistView({
         <div className="watchlist-items">
           {/* Mobile sort controls */}
           <div className="mobile-sort-controls">
-            <BottomSheetSelect
-              label="Sort by"
-              options={SORT_OPTIONS}
-              value={sortValue}
-              onChange={setSortFromValue}
+            <MobileSortControl
+              fields={SORT_FIELDS}
+              selectedField={sortField}
+              direction={sortDirection}
+              onFieldChange={(field) => {
+                const fieldConfig = SORT_FIELDS.find((f) => f.value === field);
+                setSort(
+                  field as SortFieldKey,
+                  fieldConfig?.defaultDirection || 'desc'
+                );
+              }}
+              onDirectionChange={(dir) => setSort(sortField, dir)}
             />
           </div>
 
@@ -342,108 +353,120 @@ export function WatchlistView({
                       }
                       title="Open research"
                     >
-                      {item.ticker}
+                      <Ticker>{item.ticker}</Ticker>
                     </button>
-                    {item.name && (
-                      <span className="stock-name">{item.name}</span>
-                    )}
+                    {item.name && <StockName truncate>{item.name}</StockName>}
                   </td>
                   <td className="text-right">
                     {item.last_price
                       ? formatCurrency(item.last_price, item.currency || 'USD')
                       : '—'}
                   </td>
-                  <td
-                    className={cn(
-                      'text-right',
-                      getPriceClass(item.last_price_change_percent)
-                    )}
-                  >
+                  <td className="text-right change-cell">
                     {item.last_price_change_percent !== null ? (
                       <div className="dual-value">
-                        <span className="primary">
+                        <Text
+                          weight="medium"
+                          color={
+                            item.last_price_change_percent > 0
+                              ? 'success'
+                              : item.last_price_change_percent < 0
+                              ? 'danger'
+                              : undefined
+                          }
+                        >
                           {item.last_price_change_percent > 0 ? '+' : ''}
                           {item.last_price_change_percent.toFixed(2)}%
-                        </span>
+                        </Text>
                         {item.last_price_change !== null && (
-                          <span className="secondary">
+                          <Text size="xs" color="secondary">
                             {item.last_price_change > 0 ? '+' : ''}
                             {formatCurrency(
                               item.last_price_change,
                               item.currency || 'USD'
                             )}
-                          </span>
+                          </Text>
                         )}
                       </div>
                     ) : (
-                      '—'
+                      <Muted>—</Muted>
                     )}
                   </td>
                   <td className="text-right">
                     {item.target_buy_price ? (
-                      <span
-                        className={item.at_buy_target ? 'target-hit buy' : ''}
-                      >
-                        {formatCurrency(
-                          item.target_buy_price,
-                          item.currency || 'USD'
-                        )}
+                      <div className="dual-value">
+                        <Text
+                          weight={item.at_buy_target ? 'semibold' : 'medium'}
+                          color={item.at_buy_target ? 'success' : undefined}
+                        >
+                          {formatCurrency(
+                            item.target_buy_price,
+                            item.currency || 'USD'
+                          )}
+                        </Text>
                         {item.distance_to_buy_target !== null && (
-                          <span className="distance">
+                          <Text size="xs" color="secondary">
                             ({item.distance_to_buy_target > 0 ? '+' : ''}
                             {item.distance_to_buy_target.toFixed(1)}%)
-                          </span>
+                          </Text>
                         )}
-                      </span>
+                      </div>
                     ) : (
-                      '—'
+                      <Muted>—</Muted>
                     )}
                   </td>
                   <td className="text-right">
                     {item.target_sell_price ? (
-                      <span
-                        className={item.at_sell_target ? 'target-hit sell' : ''}
-                      >
-                        {formatCurrency(
-                          item.target_sell_price,
-                          item.currency || 'USD'
-                        )}
+                      <div className="dual-value">
+                        <Text
+                          weight={item.at_sell_target ? 'semibold' : 'medium'}
+                          color={item.at_sell_target ? 'danger' : undefined}
+                        >
+                          {formatCurrency(
+                            item.target_sell_price,
+                            item.currency || 'USD'
+                          )}
+                        </Text>
                         {item.distance_to_sell_target !== null && (
-                          <span className="distance">
+                          <Text size="xs" color="secondary">
                             ({item.distance_to_sell_target > 0 ? '+' : ''}
                             {item.distance_to_sell_target.toFixed(1)}%)
-                          </span>
+                          </Text>
                         )}
-                      </span>
+                      </div>
                     ) : (
-                      '—'
+                      <Muted>—</Muted>
                     )}
                   </td>
                   <td className="status-cell">{getTargetStatus(item)}</td>
                   <td className="notes-cell">
                     {item.notes && (
-                      <span className="notes-preview" title={item.notes}>
-                        {item.notes.length > 30
-                          ? item.notes.slice(0, 30) + '...'
-                          : item.notes}
-                      </span>
+                      <div title={item.notes}>
+                        <Caption>
+                          {item.notes.length > 30
+                            ? item.notes.slice(0, 30) + '...'
+                            : item.notes}
+                        </Caption>
+                      </div>
                     )}
                   </td>
                   <td className="actions-cell">
-                    <button
-                      className="item-action-btn"
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => handleEditItem(item)}
                       title="Edit"
                     >
                       <EditIcon size={14} />
-                    </button>
-                    <button
-                      className="item-action-btn danger"
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => handleRemoveItem(item.id, item.ticker)}
                       title="Remove"
                     >
                       <TrashIcon size={14} />
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -466,46 +489,53 @@ export function WatchlistView({
                         )
                       }
                     >
-                      {item.ticker}
+                      <Ticker size="lg">{item.ticker}</Ticker>
                     </button>
-                    {item.name && (
-                      <span className="stock-name">{item.name}</span>
-                    )}
+                    {item.name && <StockName truncate>{item.name}</StockName>}
                   </div>
                   <div className="item-card-actions">
-                    <button
-                      className="item-action-btn"
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => handleEditItem(item)}
                     >
                       <EditIcon size={14} />
-                    </button>
-                    <button
-                      className="item-action-btn danger"
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => handleRemoveItem(item.id, item.ticker)}
                     >
                       <TrashIcon size={14} />
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
                 <div className="item-card-price">
-                  <span className="price">
+                  <Text size="lg" weight="semibold">
                     {item.last_price
                       ? formatCurrency(item.last_price, item.currency || 'USD')
                       : '—'}
-                  </span>
-                  <span
-                    className={cn(
-                      'change',
-                      getPriceClass(item.last_price_change_percent)
-                    )}
+                  </Text>
+                  <Text
+                    size="sm"
+                    weight="medium"
+                    color={
+                      item.last_price_change_percent !== null
+                        ? item.last_price_change_percent > 0
+                          ? 'success'
+                          : item.last_price_change_percent < 0
+                          ? 'danger'
+                          : undefined
+                        : undefined
+                    }
                   >
                     {item.last_price_change_percent !== null
                       ? `${
                           item.last_price_change_percent > 0 ? '+' : ''
                         }${item.last_price_change_percent.toFixed(2)}%`
                       : ''}
-                  </span>
+                  </Text>
                 </div>
 
                 <div className="item-card-targets">
@@ -516,18 +546,18 @@ export function WatchlistView({
                         item.at_buy_target && 'target-hit'
                       )}
                     >
-                      <span className="target-label">Buy:</span>
-                      <span className="target-value">
+                      <MetricLabel>Buy:</MetricLabel>
+                      <Text size="sm" weight="medium">
                         {formatCurrency(
                           item.target_buy_price,
                           item.currency || 'USD'
                         )}
-                      </span>
+                      </Text>
                       {item.distance_to_buy_target !== null && (
-                        <span className="target-distance">
+                        <Text size="xs" color="secondary">
                           ({item.distance_to_buy_target > 0 ? '+' : ''}
                           {item.distance_to_buy_target.toFixed(1)}%)
-                        </span>
+                        </Text>
                       )}
                     </div>
                   )}
@@ -538,18 +568,18 @@ export function WatchlistView({
                         item.at_sell_target && 'target-hit'
                       )}
                     >
-                      <span className="target-label">Sell:</span>
-                      <span className="target-value">
+                      <MetricLabel>Sell:</MetricLabel>
+                      <Text size="sm" weight="medium">
                         {formatCurrency(
                           item.target_sell_price,
                           item.currency || 'USD'
                         )}
-                      </span>
+                      </Text>
                       {item.distance_to_sell_target !== null && (
-                        <span className="target-distance">
+                        <Text size="xs" color="secondary">
                           ({item.distance_to_sell_target > 0 ? '+' : ''}
                           {item.distance_to_sell_target.toFixed(1)}%)
-                        </span>
+                        </Text>
                       )}
                     </div>
                   )}

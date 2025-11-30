@@ -279,6 +279,8 @@ consensusScore =
 
 **Vážený průměr všech kategorií:**
 
+### Holdings View (s portfolio kontextem)
+
 ```typescript
 const SCORE_WEIGHTS = {
   fundamental: 0.2, // 20%
@@ -297,6 +299,28 @@ compositeScore =
   insiderScore * 0.1 +
   portfolioScore * 0.2;
 ```
+
+### Research View (bez portfolio kontextu)
+
+```typescript
+const SCORE_WEIGHTS_RESEARCH = {
+  fundamental: 0.25, // 25%
+  technical: 0.3, // 30%
+  analyst: 0.2, // 20%
+  news: 0.1, // 10%
+  insider: 0.15, // 15%
+  // portfolio: 0%    // Vynechané!
+};
+
+compositeScore =
+  fundamentalScore * 0.25 +
+  technicalScore * 0.3 +
+  analystScore * 0.2 +
+  newsScore * 0.1 +
+  insiderScore * 0.15;
+```
+
+**Poznámka:** V Research view je `portfolioScore = null` a není zahrnut v breakdown.
 
 ### Interpretace Composite Score
 
@@ -501,6 +525,16 @@ riskRewardRatio = (targetPrice - currentPrice) / (currentPrice - supportPrice);
 
 ## 9. Rozdíly Holdings vs Research
 
+### Klíčové rozdíly
+
+| Aspekt             | Holdings View      | Research View                        |
+| ------------------ | ------------------ | ------------------------------------ |
+| Portfolio Score    | Zahrnut (20% váha) | **Vynechan (0%)**                    |
+| `portfolioScore`   | number             | **null**                             |
+| Váhy přerozděleny  | Ne                 | **Ano** (viz SCORE_WEIGHTS_RESEARCH) |
+| `targetPrice`      | Z DB (osobní)      | null                                 |
+| `isResearch` param | false (default)    | **true**                             |
+
 ### Klíčový rozdíl: Target Price
 
 | View     | targetPrice   | analystTargetPrice | Výsledek                    |
@@ -609,6 +643,15 @@ interface EnrichedAnalystData extends AnalystData {
 ### Hlavní funkce
 
 ```typescript
+// Input pro generování doporučení
+interface RecommendationInput {
+  analystData: EnrichedAnalystData;
+  technicalData?: TechnicalData;
+  newsArticles?: NewsArticle[];
+  insiderTimeRange: InsiderTimeRange;
+  isResearch?: boolean; // Pokud true, portfolio score se vynechá
+}
+
 // Generuje doporučení pro jednu akcii
 function generateRecommendation(
   input: RecommendationInput
@@ -654,7 +697,7 @@ interface StockRecommendation {
   analystScore: number;
   newsScore: number;
   insiderScore: number;
-  portfolioScore: number;
+  portfolioScore: number | null; // null pro Research view
 
   // Conviction
   convictionScore: number;
@@ -703,9 +746,10 @@ interface StockRecommendation {
 
 ## Changelog
 
-| Verze | Datum      | Změny                 |
-| ----- | ---------- | --------------------- |
-| 1.0   | 28.11.2025 | Initial documentation |
+| Verze | Datum      | Změny                                              |
+| ----- | ---------- | -------------------------------------------------- |
+| 1.1   | 30.11.2025 | Research view: portfolio score vynechán, nové váhy |
+| 1.0   | 28.11.2025 | Initial documentation                              |
 
 ---
 

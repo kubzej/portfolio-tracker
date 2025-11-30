@@ -1,0 +1,60 @@
+.chart-section {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.chart-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.chart-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.chart-section-title .card-title {
+  display: flex;
+  align-items: center;
+}
+
+.chart-section-title .info-tooltip {
+  display: flex;
+  align-items: center;
+}
+
+.chart-section-header .info-tooltip {
+  margin-left: 0;
+}
+
+.chart-section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.chart-no-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+@media (max-width: 768px) {
+  .chart-section {
+    padding: 1rem;
+    border-radius: var(--radius-md);
+  }
+
+  .chart-section-header {
+    gap: 0.5rem;
+  }
+}

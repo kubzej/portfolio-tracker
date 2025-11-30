@@ -1,0 +1,36 @@
+.time-range-selector {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--bg-tertiary);
+  padding: 0.25rem;
+  border-radius: var(--radius-md);
+}
+
+.time-range-btn {
+  padding: 0.25rem 0.5rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+}
+
+.time-range-btn:hover:not(.active) {
+  background: var(--bg-secondary);
+}
+
+.time-range-btn.active {
+  background: var(--bg-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .time-range-selector {
+    gap: 0.125rem;
+    padding: 0.125rem;
+  }
+
+  .time-range-btn {
+    padding: 0.375rem 0.625rem;
+  }
+}

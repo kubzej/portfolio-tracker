@@ -101,6 +101,7 @@ export interface Holding {
 // Portfolio summary view (holdings + current prices)
 export interface PortfolioSummary {
   portfolio_id: string;
+  portfolio_name: string;
   stock_id: string;
   ticker: string;
   stock_name: string;

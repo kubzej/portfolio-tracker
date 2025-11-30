@@ -7,12 +7,25 @@ import {
   type NewsArticle,
 } from '@/services/api/news';
 import { formatRelativeTime } from '@/utils/format';
-import { getSentimentColor, getSentimentLabel } from '@/utils/sentiment';
-import { InfoTooltip } from '@/components/shared/InfoTooltip';
+import { getSentimentLabel } from '@/utils/sentiment';
 import { Button } from '@/components/shared/Button';
+import { Input } from '@/components/shared/Input';
 import { Tabs } from '@/components/shared/Tabs';
 import { BottomSheetSelect } from '@/components/shared/BottomSheet';
-import { LoadingSpinner, ErrorState } from '@/components/shared';
+import { LoadingSpinner, ErrorState, MetricCard } from '@/components/shared';
+import {
+  SectionTitle,
+  CardTitle,
+  Ticker,
+  MetricValue,
+  MetricLabel,
+  Caption,
+  Description,
+  Muted,
+  Tag,
+  Text,
+  Badge,
+} from '@/components/shared/Typography';
 import './News.css';
 
 // Market topics - must match backend labels for proper filtering
@@ -126,6 +139,17 @@ const MARKET_TOPICS = [
       'chatgpt',
       'openai',
       'machine learning',
+      'claude',
+      'anthropic',
+      'gemini',
+      'llama',
+      'meta ai',
+      'copilot',
+      'grok',
+      'deepseek',
+      'mistral',
+      'llm',
+      'large language model',
     ],
   },
   {
@@ -413,15 +437,14 @@ export function News({ portfolioId }: NewsProps) {
       {/* Header */}
       <div className="news-header">
         <div className="news-title-section">
-          <h2>
+          <SectionTitle>
             {newsMode === 'market'
               ? 'Market News'
               : newsMode === 'stock'
               ? 'Stock News'
               : 'Portfolio News'}
             {newsMode === 'stock' && searchedTicker && ` - ${searchedTicker}`}
-          </h2>
-          <InfoTooltip text="Portfolio = zprávy o akciích ve vašem portfoliu. Market = obecné zprávy z trhu. Stock = vyhledej zprávy pro konkrétní ticker." />
+          </SectionTitle>
         </div>
         <div className="news-header-actions">
           <Tabs
@@ -451,14 +474,14 @@ export function News({ portfolioId }: NewsProps) {
       {newsMode === 'stock' && (
         <div className="stock-search-section">
           <div className="stock-search-input-group">
-            <input
+            <Input
               type="text"
               value={searchTicker}
               onChange={(e) => setSearchTicker(e.target.value.toUpperCase())}
               onKeyDown={handleKeyDown}
               placeholder="Enter ticker (e.g. AAPL, MSFT, TSLA)"
-              className="stock-search-input"
               maxLength={10}
+              fullWidth
             />
             <Button
               variant="primary"
@@ -469,10 +492,10 @@ export function News({ portfolioId }: NewsProps) {
             </Button>
           </div>
           {searchedTicker && newsData && (
-            <div className="stock-search-result">
+            <Caption>
               Found {newsData.stats.totalArticles} articles for{' '}
-              <strong>{searchedTicker}</strong>
-            </div>
+              <Ticker>{searchedTicker}</Ticker>
+            </Caption>
           )}
         </div>
       )}
@@ -480,35 +503,37 @@ export function News({ portfolioId }: NewsProps) {
       {/* Stats Overview - hidden on mobile */}
       {newsData && (
         <div className="news-stats desktop-only">
-          <div className="stat-card">
-            <span className="stat-value">{newsData.stats.totalArticles}</span>
-            <span className="stat-label">Total Articles</span>
-          </div>
-          <div className="stat-card">
-            <span className="stat-value">
-              {newsMode === 'market'
+          <MetricCard
+            label="Total Articles"
+            value={newsData.stats.totalArticles}
+          />
+          <MetricCard
+            label={newsMode === 'market' ? 'Topics Tracked' : 'Stocks Covered'}
+            value={
+              newsMode === 'market'
                 ? MARKET_TOPICS.length
-                : uniqueTickers.length}
-            </span>
-            <span className="stat-label">
-              {newsMode === 'market' ? 'Topics Tracked' : 'Stocks Covered'}
-            </span>
-          </div>
-          <div className="stat-card">
-            <span
-              className="stat-value"
-              style={{
-                color: getSentimentColor(newsData.stats.overallSentiment),
-              }}
-            >
-              {newsData.stats.overallSentiment !== null
+                : uniqueTickers.length
+            }
+          />
+          <MetricCard
+            label="Avg Sentiment"
+            value={
+              newsData.stats.overallSentiment !== null
                 ? (newsData.stats.overallSentiment > 0 ? '+' : '') +
                   (newsData.stats.overallSentiment * 100).toFixed(0) +
                   '%'
-                : 'N/A'}
-            </span>
-            <span className="stat-label">Avg Sentiment</span>
-          </div>
+                : 'N/A'
+            }
+            sentiment={
+              newsData.stats.overallSentiment !== null
+                ? newsData.stats.overallSentiment > 0.1
+                  ? 'positive'
+                  : newsData.stats.overallSentiment < -0.1
+                  ? 'negative'
+                  : 'neutral'
+                : undefined
+            }
+          />
         </div>
       )}
 
@@ -551,7 +576,7 @@ export function News({ portfolioId }: NewsProps) {
         <div className="market-topics-compact">
           {TOPIC_CATEGORIES.map((category) => (
             <div key={category} className="topic-row">
-              <span className="topic-row-label">{category}</span>
+              <MetricLabel>{category}</MetricLabel>
               <div className="topic-chips">
                 {MARKET_TOPICS.filter((t) => t.category === category).map(
                   (topic) => {
@@ -569,20 +594,23 @@ export function News({ portfolioId }: NewsProps) {
                     }).length;
                     const isActive = filterTopic === topic.id;
                     return (
-                      <button
+                      <Button
                         key={topic.id}
-                        className={`topic-chip ${isActive ? 'active' : ''} ${
-                          count === 0 ? 'empty' : ''
-                        }`}
+                        variant="ghost"
+                        size="sm"
+                        isActive={isActive}
                         onClick={() =>
                           setFilterTopic(isActive ? 'all' : topic.id)
                         }
+                        className={`topic-chip ${count === 0 ? 'empty' : ''}`}
                       >
                         {topic.label}
                         {count > 0 && (
-                          <span className="chip-count">{count}</span>
+                          <Text size="xs" color="secondary" as="span">
+                            {count}
+                          </Text>
                         )}
-                      </button>
+                      </Button>
                     );
                   }
                 )}
@@ -597,16 +625,18 @@ export function News({ portfolioId }: NewsProps) {
         newsData &&
         newsData.stats.byTicker.length > 0 && (
           <div className="ticker-sentiment-section">
-            <button
-              className="topics-toggle mobile-only"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setShowTopics(!showTopics)}
+              className="topics-toggle mobile-only"
             >
-              <span>
+              <Text size="sm" weight="semibold">
                 Stocks (
                 {newsData.stats.byTicker.filter((t) => t.count > 0).length})
-              </span>
-              <span className="toggle-icon">{showTopics ? '▲' : '▼'}</span>
-            </button>
+              </Text>
+              <Muted>{showTopics ? '▲' : '▼'}</Muted>
+            </Button>
             <div
               className={`ticker-sentiment-grid ${
                 showTopics ? 'expanded' : ''
@@ -622,20 +652,26 @@ export function News({ portfolioId }: NewsProps) {
                     onClick={() => setFilterTicker(ticker.ticker)}
                     style={{ cursor: 'pointer' }}
                   >
-                    <span className="ticker-name">{ticker.ticker}</span>
-                    <span
-                      className="ticker-sentiment"
-                      style={{ color: getSentimentColor(ticker.avgSentiment) }}
+                    <Ticker size="sm">{ticker.ticker}</Ticker>
+                    <MetricValue
+                      size="base"
+                      sentiment={
+                        ticker.avgSentiment !== null
+                          ? ticker.avgSentiment > 0.1
+                            ? 'positive'
+                            : ticker.avgSentiment < -0.1
+                            ? 'negative'
+                            : 'neutral'
+                          : undefined
+                      }
                     >
                       {ticker.avgSentiment !== null
                         ? (ticker.avgSentiment > 0 ? '+' : '') +
                           (ticker.avgSentiment * 100).toFixed(0) +
                           '%'
                         : 'N/A'}
-                    </span>
-                    <span className="ticker-count">
-                      {ticker.count} articles
-                    </span>
+                    </MetricValue>
+                    <Caption>{ticker.count} articles</Caption>
                   </div>
                 ))}
             </div>
@@ -646,7 +682,7 @@ export function News({ portfolioId }: NewsProps) {
       <div className="articles-list">
         {filteredArticles.length === 0 ? (
           <div className="no-articles">
-            <p>No articles found matching your filters.</p>
+            <Muted>No articles found matching your filters.</Muted>
           </div>
         ) : (
           filteredArticles.map((article) => (
@@ -678,35 +714,31 @@ function ArticleCard({
       )}
       <div className="article-content">
         <div className="article-meta">
-          {article.ticker && (
-            <span className="article-ticker">{article.ticker}</span>
-          )}
-          <span className="article-source">{article.source}</span>
-          <span className="article-time">
-            {formatRelativeTime(article.publishedAt)}
-          </span>
+          {article.ticker && <Ticker size="sm">{article.ticker}</Ticker>}
+          <Caption>{article.source}</Caption>
+          <Muted>{formatRelativeTime(article.publishedAt)}</Muted>
           {article.sentiment && (
-            <span
-              className={`article-sentiment ${
-                article.sentiment.label || 'neutral'
-              }`}
-              style={{ color: getSentimentColor(article.sentiment.score) }}
+            <Badge
+              size="sm"
+              variant={
+                article.sentiment.label === 'positive'
+                  ? 'positive'
+                  : article.sentiment.label === 'negative'
+                  ? 'negative'
+                  : 'neutral'
+              }
             >
               {getSentimentLabel(article.sentiment.label)}
-            </span>
+            </Badge>
           )}
         </div>
-        <h3 className="article-title">{article.title}</h3>
-        {article.summary && (
-          <p className="article-summary">{article.summary}</p>
-        )}
+        <CardTitle>{article.title}</CardTitle>
+        {article.summary && <Description>{article.summary}</Description>}
         {article.sentiment?.keywords &&
           article.sentiment.keywords.length > 0 && (
             <div className="article-keywords">
               {article.sentiment.keywords.slice(0, 5).map((keyword, idx) => (
-                <span key={idx} className="keyword-tag">
-                  {keyword}
-                </span>
+                <Tag key={idx}>{keyword}</Tag>
               ))}
             </div>
           )}
@@ -714,5 +746,3 @@ function ArticleCard({
     </a>
   );
 }
-
-export default News;

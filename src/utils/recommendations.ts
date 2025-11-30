@@ -83,7 +83,7 @@ export interface StockRecommendation {
   analystScore: number;
   newsScore: number;
   insiderScore: number;
-  portfolioScore: number;
+  portfolioScore: number | null; // null for Research view
 
   // Conviction score (0-100) - long-term quality
   convictionScore: number;
@@ -158,13 +158,15 @@ export interface RecommendationInput {
   technicalData?: TechnicalData;
   newsArticles?: NewsArticle[];
   insiderTimeRange: InsiderTimeRange;
+  /** If true, portfolio score is excluded (for Research view) */
+  isResearch?: boolean;
 }
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-/** Weight distribution for composite score */
+/** Weight distribution for composite score (Holdings view) */
 const SCORE_WEIGHTS = {
   fundamental: 0.2,
   technical: 0.25,
@@ -172,6 +174,15 @@ const SCORE_WEIGHTS = {
   news: 0.1,
   insider: 0.1,
   portfolio: 0.2,
+};
+
+/** Weight distribution for Research view (no portfolio context) */
+const SCORE_WEIGHTS_RESEARCH = {
+  fundamental: 0.25,
+  technical: 0.3,
+  analyst: 0.2,
+  news: 0.1,
+  insider: 0.15,
 };
 
 /** Signal priorities (lower = higher priority) */
@@ -1730,6 +1741,7 @@ export function generateRecommendation(
     technicalData: tech,
     newsArticles,
     insiderTimeRange,
+    isResearch = false,
   } = input;
 
   // Calculate all score components
@@ -1738,17 +1750,25 @@ export function generateRecommendation(
   const analystComponent = calculateAnalystScore(item);
   const newsComponent = calculateNewsScore(item.ticker, newsArticles);
   const insiderComponent = calculateInsiderScore(item, insiderTimeRange);
-  const portfolioComponent = calculatePortfolioScore(item);
+  const portfolioComponent = isResearch ? null : calculatePortfolioScore(item);
 
-  // Calculate composite score
-  const compositeScore = Math.round(
-    fundamentalComponent.percent * SCORE_WEIGHTS.fundamental +
-      technicalComponent.percent * SCORE_WEIGHTS.technical +
-      analystComponent.percent * SCORE_WEIGHTS.analyst +
-      newsComponent.percent * SCORE_WEIGHTS.news +
-      insiderComponent.percent * SCORE_WEIGHTS.insider +
-      portfolioComponent.percent * SCORE_WEIGHTS.portfolio
-  );
+  // Calculate composite score - use different weights for Research vs Holdings
+  const compositeScore = isResearch
+    ? Math.round(
+        fundamentalComponent.percent * SCORE_WEIGHTS_RESEARCH.fundamental +
+          technicalComponent.percent * SCORE_WEIGHTS_RESEARCH.technical +
+          analystComponent.percent * SCORE_WEIGHTS_RESEARCH.analyst +
+          newsComponent.percent * SCORE_WEIGHTS_RESEARCH.news +
+          insiderComponent.percent * SCORE_WEIGHTS_RESEARCH.insider
+      )
+    : Math.round(
+        fundamentalComponent.percent * SCORE_WEIGHTS.fundamental +
+          technicalComponent.percent * SCORE_WEIGHTS.technical +
+          analystComponent.percent * SCORE_WEIGHTS.analyst +
+          newsComponent.percent * SCORE_WEIGHTS.news +
+          insiderComponent.percent * SCORE_WEIGHTS.insider +
+          portfolioComponent!.percent * SCORE_WEIGHTS.portfolio
+      );
 
   // Calculate DIP score
   const dipResult = calculateDipScore(tech, item);
@@ -1797,7 +1817,7 @@ export function generateRecommendation(
     analystComponent.percent,
     newsComponent.percent,
     insiderComponent.percent,
-    portfolioComponent.percent,
+    portfolioComponent?.percent ?? 0,
     dipResult.score,
     dipQuality.passes,
     conviction.score,
@@ -1885,7 +1905,7 @@ export function generateRecommendation(
     analystScore: analystComponent.percent,
     newsScore: newsComponent.percent,
     insiderScore: insiderComponent.percent,
-    portfolioScore: portfolioComponent.percent,
+    portfolioScore: portfolioComponent?.percent ?? null,
 
     convictionScore: conviction.score,
     convictionLevel: conviction.level,
@@ -1894,14 +1914,22 @@ export function generateRecommendation(
     isDip: dipResult.score >= 50,
     dipQualityCheck: dipQuality.passes,
 
-    breakdown: [
-      fundamentalComponent,
-      technicalComponent,
-      analystComponent,
-      newsComponent,
-      insiderComponent,
-      portfolioComponent,
-    ],
+    breakdown: isResearch
+      ? [
+          fundamentalComponent,
+          technicalComponent,
+          analystComponent,
+          newsComponent,
+          insiderComponent,
+        ]
+      : [
+          fundamentalComponent,
+          technicalComponent,
+          analystComponent,
+          newsComponent,
+          insiderComponent,
+          portfolioComponent!,
+        ],
 
     signals,
     primarySignal,

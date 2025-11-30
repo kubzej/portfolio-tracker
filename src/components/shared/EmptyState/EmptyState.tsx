@@ -1,4 +1,5 @@
 import { Button } from '../Button';
+import { CardTitle, Description } from '../Typography';
 import './EmptyState.css';
 
 interface EmptyStateProps {
@@ -13,8 +14,12 @@ interface EmptyStateProps {
 export function EmptyState({ title, description, action }: EmptyStateProps) {
   return (
     <div className="empty-state">
-      <h3 className="empty-state-title">{title}</h3>
-      {description && <p className="empty-state-description">{description}</p>}
+      <CardTitle>{title}</CardTitle>
+      {description && (
+        <div className="empty-state-description">
+          <Description>{description}</Description>
+        </div>
+      )}
       {action && (
         <Button variant="primary" onClick={action.onClick}>
           {action.label}

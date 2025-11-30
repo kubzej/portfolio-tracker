@@ -1,4 +1,5 @@
 import { Button } from '../Button';
+import { Text } from '../Typography';
 import './ErrorState.css';
 
 interface ErrorStateProps {
@@ -9,10 +10,10 @@ interface ErrorStateProps {
 export function ErrorState({ message, onRetry }: ErrorStateProps) {
   return (
     <div className="error-state">
-      <span className="error-state-icon">!</span>
-      <p className="error-state-message">{message}</p>
+      <div className="error-state-icon">!</div>
+      <Text color="danger">{message}</Text>
       {onRetry && (
-        <Button variant="outline" onClick={onRetry}>
+        <Button variant="outline" size="sm" onClick={onRetry}>
           Try Again
         </Button>
       )}

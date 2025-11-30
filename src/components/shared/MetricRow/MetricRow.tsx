@@ -1,5 +1,5 @@
 import { InfoTooltip } from '../InfoTooltip';
-import { cn } from '@/utils/cn';
+import { Label, MetricValue, Muted } from '../Typography';
 import './MetricRow.css';
 
 interface MetricRowProps {
@@ -19,9 +19,9 @@ export function MetricRow({
   suffix = '',
   prefix = '',
 }: MetricRowProps) {
-  const displayValue =
+  const formattedValue =
     value === null || value === undefined
-      ? '—'
+      ? null
       : `${prefix}${
           typeof value === 'number' ? value.toLocaleString('cs-CZ') : value
         }${suffix}`;
@@ -29,10 +29,14 @@ export function MetricRow({
   return (
     <div className="metric-row">
       <span className="metric-row-label">
-        {label}
+        <Label size="sm">{label}</Label>
         {tooltip && <InfoTooltip text={tooltip} />}
       </span>
-      <span className={cn('metric-row-value', sentiment)}>{displayValue}</span>
+      {formattedValue !== null ? (
+        <MetricValue sentiment={sentiment}>{formattedValue}</MetricValue>
+      ) : (
+        <Muted>—</Muted>
+      )}
     </div>
   );
 }

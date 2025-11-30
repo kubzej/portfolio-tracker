@@ -6,17 +6,12 @@
   border: 2px dashed var(--border-light);
 }
 
-.empty-state-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 0.5rem;
+.empty-state .card-title {
+  margin-bottom: 0.5rem;
 }
 
 .empty-state-description {
-  color: var(--text-muted);
-  font-size: 0.875rem;
-  margin: 0 0 1.5rem;
+  margin-bottom: 1.5rem;
   max-width: 300px;
   margin-left: auto;
   margin-right: auto;

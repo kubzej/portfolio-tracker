@@ -1,6 +1,13 @@
 import type { FundamentalMetrics, EarningsData } from '@/services/api/analysis';
-import { InfoTooltip } from '@/components/shared';
-import { cn } from '@/utils/cn';
+import { InfoTooltip, MetricCard, IndicatorSignal } from '@/components/shared';
+import type { SignalType } from '@/components/shared';
+import {
+  CardTitle,
+  Muted,
+  Text,
+  MetricLabel,
+  MetricValue,
+} from '@/components/shared/Typography';
 import { formatPercent } from '@/utils/format';
 import './ResearchFundamentals.css';
 
@@ -18,7 +25,9 @@ export function ResearchFundamentals({
   if (!f) {
     return (
       <div className="research-fundamentals">
-        <div className="no-data">No fundamental data available</div>
+        <div className="no-data">
+          <Muted>No fundamental data available</Muted>
+        </div>
       </div>
     );
   }
@@ -27,42 +36,52 @@ export function ResearchFundamentals({
     <div className="research-fundamentals">
       {/* Profitability */}
       <section className="fundamentals-section">
-        <h3 className="section-title">Profitability</h3>
+        <CardTitle>Profitability</CardTitle>
         <div className="metrics-grid">
-          <FundamentalMetric
-            value={f.roe !== null ? formatPercent(f.roe, 1) : null}
+          <MetricCard
             label="ROE"
-            tooltip="Rentabilita vlastního kapitálu. Kolik zisku firma vydělá na každou korunu vloženého kapitálu akcionářů. Nad 15 % je výborné."
+            value={f.roe !== null ? formatPercent(f.roe, 1) : null}
+            tooltip={
+              <InfoTooltip text="**ROE** | Návratnost vlastního kapitálu. | • Nad 15% = dobré | • Nad 20% = výborné | • Pod 10% = slabé" />
+            }
             sentiment={getROESentiment(f.roe)}
           />
-          <FundamentalMetric
-            value={f.roa !== null ? formatPercent(f.roa, 1) : null}
+          <MetricCard
             label="ROA"
-            tooltip="Rentabilita aktiv. Jak efektivně firma využívá svá aktiva k tvorbě zisku. Nad 10 % je velmi dobré."
+            value={f.roa !== null ? formatPercent(f.roa, 1) : null}
+            tooltip={
+              <InfoTooltip text="**ROA** | Návratnost aktiv. | • Nad 5% = dobré | • Nad 10% = výborné | Závisí na odvětví." />
+            }
             sentiment={getROASentiment(f.roa)}
           />
-          <FundamentalMetric
+          <MetricCard
+            label="Gross Margin"
             value={
               f.grossMargin !== null ? formatPercent(f.grossMargin, 1) : null
             }
-            label="Gross Margin"
-            tooltip="Hrubá marže. Podíl zisku po odečtení přímých nákladů na výrobu. Vyšší = lepší cenová síla."
+            tooltip={
+              <InfoTooltip text="**Hrubá marže** | Tržby minus náklady na výrobu. | • Nad 40% = dobré | • Nad 60% = silné konkurenční výhody" />
+            }
             sentiment={getMarginSentiment(f.grossMargin, 40)}
           />
-          <FundamentalMetric
+          <MetricCard
+            label="Operating Margin"
             value={
               f.operatingMargin !== null
                 ? formatPercent(f.operatingMargin, 1)
                 : null
             }
-            label="Operating Margin"
-            tooltip="Provozní marže. Zisk z běžné činnosti jako % tržeb. Ukazuje efektivitu provozu. Nad 15 % je dobré."
+            tooltip={
+              <InfoTooltip text="**Provozní marže** | Zisk z provozu jako procento tržeb. | • Nad 15% = dobré | • Nad 25% = výborné" />
+            }
             sentiment={getMarginSentiment(f.operatingMargin, 15)}
           />
-          <FundamentalMetric
-            value={f.netMargin !== null ? formatPercent(f.netMargin, 1) : null}
+          <MetricCard
             label="Net Margin"
-            tooltip="Čistá marže. Kolik z každé koruny tržeb zůstane jako čistý zisk. Nad 10 % je zdravé."
+            value={f.netMargin !== null ? formatPercent(f.netMargin, 1) : null}
+            tooltip={
+              <InfoTooltip text="**Čistá marže** | Kolik procent z tržeb zůstane jako zisk. | • Nad 10% = dobré | • Nad 20% = výborné" />
+            }
             sentiment={getMarginSentiment(f.netMargin, 10)}
           />
         </div>
@@ -70,40 +89,48 @@ export function ResearchFundamentals({
 
       {/* Growth */}
       <section className="fundamentals-section">
-        <h3 className="section-title">Growth</h3>
+        <CardTitle>Growth</CardTitle>
         <div className="metrics-grid">
-          <FundamentalMetric
+          <MetricCard
+            label="Revenue Growth"
             value={
               f.revenueGrowth !== null
                 ? formatPercent(f.revenueGrowth, 1)
                 : null
             }
-            label="Revenue Growth"
-            tooltip="Meziroční růst tržeb. Ukazuje, jak rychle firma roste. Kladné hodnoty = firma expanduje."
+            tooltip={
+              <InfoTooltip text="**Růst tržeb** | Meziroční změna tržeb. | • Kladné = firma roste | • Záporné = tržby klesají | • Nad 10% = zdravý růst" />
+            }
             sentiment={getGrowthSentiment(f.revenueGrowth)}
           />
-          <FundamentalMetric
+          <MetricCard
+            label="Revenue 5Y CAGR"
             value={
               f.revenueGrowth5Y !== null
                 ? formatPercent(f.revenueGrowth5Y, 1)
                 : null
             }
-            label="Revenue 5Y CAGR"
-            tooltip="Průměrný roční růst tržeb za 5 let (CAGR). Lépe ukazuje dlouhodobý trend než jednorázový skok."
+            tooltip={
+              <InfoTooltip text="**5Y CAGR tržeb** | Průměrný roční růst tržeb za 5 let. | Lépe ukazuje dlouhodobý trend než jednorázový skok." />
+            }
             sentiment={getGrowthSentiment(f.revenueGrowth5Y)}
           />
-          <FundamentalMetric
-            value={f.epsGrowth !== null ? formatPercent(f.epsGrowth, 1) : null}
+          <MetricCard
             label="EPS Growth"
-            tooltip="Meziroční růst zisku na akcii. Klíčový ukazatel pro akcionáře - roste-li zisk, měla by růst i cena."
+            value={f.epsGrowth !== null ? formatPercent(f.epsGrowth, 1) : null}
+            tooltip={
+              <InfoTooltip text="**Růst zisku** | Meziroční změna zisku na akcii. | • Kladné = zisky rostou | • Záporné = zisky klesají" />
+            }
             sentiment={getGrowthSentiment(f.epsGrowth)}
           />
-          <FundamentalMetric
+          <MetricCard
+            label="EPS 5Y CAGR"
             value={
               f.epsGrowth5Y !== null ? formatPercent(f.epsGrowth5Y, 1) : null
             }
-            label="EPS 5Y CAGR"
-            tooltip="Průměrný roční růst zisku na akcii za 5 let. Stabilní růst nad 10 % ročně je skvělý."
+            tooltip={
+              <InfoTooltip text="**5Y CAGR zisku** | Průměrný roční růst zisku za 5 let. | Stabilní růst nad 10% ročně je skvělý." />
+            }
             sentiment={getGrowthSentiment(f.epsGrowth5Y)}
           />
         </div>
@@ -111,30 +138,38 @@ export function ResearchFundamentals({
 
       {/* Financial Health */}
       <section className="fundamentals-section">
-        <h3 className="section-title">Financial Health</h3>
+        <CardTitle>Financial Health</CardTitle>
         <div className="metrics-grid">
-          <FundamentalMetric
-            value={f.debtToEquity?.toFixed(2) ?? null}
+          <MetricCard
             label="Debt/Equity"
-            tooltip="Poměr dluhu k vlastnímu kapitálu. Pod 0,5 = konzervativní, nad 2 = vyšší riziko. Záleží na odvětví."
+            value={f.debtToEquity?.toFixed(2) ?? null}
+            tooltip={
+              <InfoTooltip text="**Debt-to-Equity** | Poměr dluhu k vlastnímu kapitálu. | • Pod 0.5 = nízký dluh | • 0.5-2 = normální | • Nad 2 = vysoký dluh" />
+            }
             sentiment={getDebtSentiment(f.debtToEquity)}
           />
-          <FundamentalMetric
-            value={f.currentRatio?.toFixed(2) ?? null}
+          <MetricCard
             label="Current Ratio"
-            tooltip="Běžná likvidita. Schopnost splatit krátkodobé závazky. Nad 1,5 je zdravé, pod 1 může signalizovat problémy."
+            value={f.currentRatio?.toFixed(2) ?? null}
+            tooltip={
+              <InfoTooltip text="**Current Ratio** | Schopnost splácet krátkodobé dluhy. | • Nad 1 = může pokrýt závazky | • Nad 1.5 = zdravé | • Pod 1 = problémy" />
+            }
             sentiment={getCurrentRatioSentiment(f.currentRatio)}
           />
-          <FundamentalMetric
-            value={f.quickRatio?.toFixed(2) ?? null}
+          <MetricCard
             label="Quick Ratio"
-            tooltip="Pohotová likvidita. Jako Current Ratio, ale bez zásob. Přísnější test platební schopnosti."
+            value={f.quickRatio?.toFixed(2) ?? null}
+            tooltip={
+              <InfoTooltip text="**Quick Ratio** | Rychlá likvidita (bez zásob). | • Nad 1 = dobrá likvidita | • Pod 1 = možné problémy" />
+            }
             sentiment={getCurrentRatioSentiment(f.quickRatio)}
           />
-          <FundamentalMetric
-            value={f.beta?.toFixed(2) ?? null}
+          <MetricCard
             label="Beta"
-            tooltip="Volatilita vůči trhu. 1 = jako trh, >1 = volatilnější, <1 = stabilnější. Pod 0,5 = defenzivní akcie."
+            value={f.beta?.toFixed(2) ?? null}
+            tooltip={
+              <InfoTooltip text="**Beta** | Volatilita ve srovnání s trhem. | • Beta = 1 = pohyb s trhem | • Beta > 1 = větší výkyvy | • Beta < 1 = stabilnější" />
+            }
           />
         </div>
       </section>
@@ -142,16 +177,18 @@ export function ResearchFundamentals({
       {/* Dividends (if applicable) */}
       {(f.dividendYield !== null || f.payoutRatio !== null) && (
         <section className="fundamentals-section">
-          <h3 className="section-title">Dividends</h3>
+          <CardTitle>Dividends</CardTitle>
           <div className="metrics-grid">
-            <FundamentalMetric
+            <MetricCard
+              label="Dividend Yield"
               value={
                 f.dividendYield !== null
                   ? formatPercent(f.dividendYield, 2)
                   : null
               }
-              label="Dividend Yield"
-              tooltip="Dividendový výnos. Roční dividenda / cena akcie. Nad 3 % je atraktivní pro příjmové investory."
+              tooltip={
+                <InfoTooltip text="**Dividendový výnos** | Roční dividenda jako procento ceny. | • 2-4% = normální | • Nad 5% = vysoký výnos | • 0% = nevyplácí dividendy" />
+              }
               sentiment={
                 f.dividendYield !== null
                   ? f.dividendYield > 3
@@ -160,12 +197,14 @@ export function ResearchFundamentals({
                   : undefined
               }
             />
-            <FundamentalMetric
+            <MetricCard
+              label="Payout Ratio"
               value={
                 f.payoutRatio !== null ? formatPercent(f.payoutRatio, 1) : null
               }
-              label="Payout Ratio"
-              tooltip="Výplatní poměr. Kolik % zisku jde na dividendy. Pod 60 % je udržitelné, nad 80 % může být rizikové."
+              tooltip={
+                <InfoTooltip text="**Payout Ratio** | Kolik procent zisku jde na dividendy. | • Pod 50% = udržitelné | • 50-75% = normální | • Nad 100% = neudržitelné" />
+              }
               sentiment={
                 f.payoutRatio !== null
                   ? f.payoutRatio < 60
@@ -183,39 +222,45 @@ export function ResearchFundamentals({
       {/* Earnings History */}
       {earnings && earnings.length > 0 && (
         <section className="fundamentals-section">
-          <h3 className="section-title">Recent Earnings</h3>
+          <CardTitle>Recent Earnings</CardTitle>
           <div className="earnings-grid">
             {earnings.slice(0, 4).map((e, i) => (
               <div key={i} className="earnings-card">
                 <div className="earnings-card-header">
-                  <span className="earnings-quarter">
+                  <Text weight="semibold" size="sm">
                     {formatQuarter(e.period)}
-                  </span>
-                  <span
-                    className={cn(
-                      'earnings-surprise',
-                      getSurpriseClass(e.surprisePercent)
-                    )}
+                  </Text>
+                  <MetricValue
+                    size="sm"
+                    sentiment={
+                      e.surprisePercent !== null
+                        ? e.surprisePercent > 0
+                          ? 'positive'
+                          : e.surprisePercent < 0
+                          ? 'negative'
+                          : 'neutral'
+                        : undefined
+                    }
                   >
                     {e.surprisePercent !== null
                       ? `${
                           e.surprisePercent > 0 ? '+' : ''
                         }${e.surprisePercent.toFixed(1)}%`
                       : '—'}
-                  </span>
+                  </MetricValue>
                 </div>
                 <div className="earnings-card-body">
                   <div className="earnings-stat">
-                    <span className="earnings-label">Actual</span>
-                    <span className="earnings-value">
+                    <MetricLabel>Actual</MetricLabel>
+                    <Text weight="medium" size="sm">
                       ${e.actual?.toFixed(2) ?? '—'}
-                    </span>
+                    </Text>
                   </div>
                   <div className="earnings-stat">
-                    <span className="earnings-label">Est.</span>
-                    <span className="earnings-value">
+                    <MetricLabel>Est.</MetricLabel>
+                    <Text weight="medium" size="sm">
                       ${e.estimate?.toFixed(2) ?? '—'}
-                    </span>
+                    </Text>
                   </div>
                 </div>
               </div>
@@ -224,33 +269,6 @@ export function ResearchFundamentals({
           <EarningsSummary earnings={earnings.slice(0, 4)} />
         </section>
       )}
-    </div>
-  );
-}
-
-// Fundamental Metric component - value on top, label below
-interface FundamentalMetricProps {
-  value: string | null;
-  label: string;
-  tooltip?: string;
-  sentiment?: 'positive' | 'negative' | 'neutral';
-}
-
-function FundamentalMetric({
-  value,
-  label,
-  tooltip,
-  sentiment,
-}: FundamentalMetricProps) {
-  return (
-    <div className="fundamental-metric">
-      <span className="fundamental-metric-label">
-        {label}
-        {tooltip && <InfoTooltip text={tooltip} />}
-      </span>
-      <span className={cn('fundamental-metric-value', sentiment)}>
-        {value ?? '—'}
-      </span>
     </div>
   );
 }
@@ -264,18 +282,19 @@ function EarningsSummary({ earnings }: EarningsSummaryProps) {
   const beats = earnings.filter((e) => (e.surprisePercent ?? 0) > 0).length;
   const total = earnings.length;
 
+  const signalType: SignalType =
+    beats >= 3 ? 'bullish' : beats <= 1 ? 'bearish' : 'neutral';
+
+  const message =
+    beats === total
+      ? 'Beat expectations in all quarters'
+      : beats === 0
+      ? 'Missed expectations in all quarters'
+      : `Beat expectations ${beats}/${total} quarters`;
+
   return (
-    <div
-      className={cn(
-        'earnings-summary',
-        beats >= 3 ? 'positive' : beats <= 1 ? 'negative' : 'neutral'
-      )}
-    >
-      {beats === total && '✓ Beat expectations in all quarters'}
-      {beats === 0 && '✗ Missed expectations in all quarters'}
-      {beats > 0 &&
-        beats < total &&
-        `Beat expectations ${beats}/${total} quarters`}
+    <div className="earnings-summary-wrapper">
+      <IndicatorSignal type={signalType}>{message}</IndicatorSignal>
     </div>
   );
 }
@@ -288,13 +307,6 @@ function formatQuarter(period: string | null): string {
   const year = date.getFullYear();
   const quarter = Math.ceil((date.getMonth() + 1) / 3);
   return `Q${quarter} ${year}`;
-}
-
-function getSurpriseClass(surprise: number | null): string {
-  if (surprise === null) return '';
-  if (surprise > 0) return 'positive';
-  if (surprise < 0) return 'negative';
-  return '';
 }
 
 function getROESentiment(

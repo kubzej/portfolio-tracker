@@ -6,19 +6,21 @@
 
 /* Section */
 .summary-section {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 0.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
   padding: 1.25rem;
 }
 
-.section-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 0 0 0.75rem;
+.summary-section > .card-title {
+  margin-bottom: 1rem;
+}
+
+.section-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 /* Score Overview */
@@ -26,19 +28,24 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  align-items: center;
 }
 
 .dual-scores {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+  width: 100%;
+  max-width: 400px;
 }
 
 .score-item {
   display: flex;
   flex-direction: column;
-  padding: 1rem;
-  background: var(--bg-secondary);
+  align-items: center;
+  text-align: center;
+  padding: 1.25rem 1rem;
+  background: var(--bg-tertiary);
   border-radius: 0.75rem;
   border-left: 3px solid var(--border-color);
 }
@@ -58,89 +65,34 @@
 .score-label {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.25rem;
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
 }
 
-.score-value {
-  font-size: 1.75rem;
+/* Score value styling */
+.score-item .metric-value {
+  font-size: 2.25rem;
   font-weight: 700;
-  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 0.75rem;
 }
 
-.score-badges {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.score-circle.score-high .score-value {
+.score-item.score-high .metric-value {
   color: var(--success);
 }
 
-.score-circle.score-medium .score-value {
+.score-item.score-medium .metric-value {
   color: var(--warning);
 }
 
-.score-circle.score-low .score-value {
+.score-item.score-low .metric-value {
   color: var(--danger);
 }
 
-.score-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-.conviction-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.conviction-badge.high {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--success);
-}
-
-.conviction-badge.medium {
-  background: rgba(245, 158, 11, 0.15);
-  color: var(--warning);
-}
-
-.conviction-badge.low {
-  background: rgba(239, 68, 68, 0.15);
-  color: var(--danger);
-}
-
-.technical-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.technical-badge.bullish {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--success);
-}
-
-.technical-badge.bearish {
-  background: rgba(239, 68, 68, 0.15);
-  color: var(--danger);
-}
-
-.technical-badge.neutral {
-  background: rgba(100, 116, 139, 0.15);
-  color: var(--text-secondary);
+/* Badge inside score-item */
+.score-item .badge {
+  margin-top: auto;
 }
 
 /* Score Breakdown Grid */
@@ -192,24 +144,21 @@
   color: var(--danger);
 }
 
-.points-card h4 {
-  margin: 0;
+.points-card .card-title {
   font-size: 0.75rem;
-  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.points-card.strengths h4 {
+.points-card.strengths .card-title {
   color: var(--success);
 }
 
-.points-card.concerns h4 {
+.points-card.concerns .card-title {
   color: var(--danger);
 }
 
 .points-list {
-  list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
@@ -217,17 +166,10 @@
   gap: 0.5rem;
 }
 
-.points-list li {
+.points-list-item {
   font-size: 0.875rem;
   color: var(--text-primary);
   line-height: 1.4;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.points-list li:last-child {
-  padding-bottom: 0;
-  border-bottom: none;
 }
 
 .no-points {
@@ -244,60 +186,15 @@
   gap: 1rem;
 }
 
-.in-buy-zone-alert {
-  background: rgba(16, 185, 129, 0.08);
-  color: var(--success);
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  text-align: center;
-}
-
-.strategy-cards {
+/* Strategy Grid - uses MetricCard component */
+.strategy-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
-.strategy-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.75rem 1rem;
-  background: var(--bg-secondary);
-  border-radius: 0.5rem;
-}
-
-.strategy-label {
-  font-size: 0.7rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-}
-
-.strategy-value {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.strategy-value.positive {
-  color: var(--success);
-}
-
-.strategy-value.negative {
-  color: var(--danger);
-}
-
-.strategy-value.neutral {
-  color: var(--text-secondary);
-}
-
-.strategy-percent {
-  font-weight: 400;
-  font-size: 0.875rem;
+.insider-grid {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 /* Exit Strategy - Holding Period */
@@ -336,14 +233,6 @@
 .period-reason {
   font-size: 0.8125rem;
   color: var(--text-secondary);
-}
-
-.trailing-stop-note {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
-  padding: 0.5rem 0.75rem;
-  background: rgba(59, 130, 246, 0.05);
-  border-radius: 0.375rem;
 }
 
 /* Analyst Consensus */
@@ -410,17 +299,6 @@
   font-size: 1.25rem;
 }
 
-/* Insider Sentiment */
-.insider-cards {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-@media (max-width: 640px) {
-  .insider-cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 /* Mobile */
 @media (max-width: 640px) {
   .summary-section {
@@ -436,40 +314,25 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .strategy-cards {
+  .strategy-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .insider-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .strategy-card {
-    padding: 0.625rem 0.75rem;
-  }
-
-  .strategy-label {
-    font-size: 0.625rem;
-  }
-
-  .strategy-value {
-    font-size: 0.875rem;
-  }
-
-  .strategy-percent {
-    font-size: 0.75rem;
-  }
-
   .dual-scores {
-    grid-template-columns: 1fr 1fr;
+    max-width: 100%;
     gap: 0.75rem;
   }
 
   .score-item {
-    padding: 0.75rem;
+    padding: 1rem 0.75rem;
   }
 
-  .score-value {
-    font-size: 1.5rem;
-  }
-
-  .strategy-grid {
-    grid-template-columns: 1fr;
+  .score-item .metric-value {
+    font-size: 1.75rem;
   }
 }

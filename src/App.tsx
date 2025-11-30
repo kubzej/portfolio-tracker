@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { Dashboard } from './components/Dashboard';
 import {
   StocksList,
-  AddStockModal,
-  AddTransactionModal,
+  StockModal,
+  TransactionModal,
 } from './components/StocksList';
 import { StockDetail } from './components/StockDetail';
 import { StockResearch } from './components/StockResearch';
@@ -13,7 +13,10 @@ import { Analysis } from './components/Analysis';
 import { News } from './components/News';
 import { WatchlistManager, WatchlistView } from './components/Watchlists';
 import { Login } from './components/Login';
+import { DebugShowcase } from './components/Debug';
 import { Button } from './components/shared/Button';
+import { Title, MetricLabel } from './components/shared/Typography';
+import { LoadingSpinner } from './components/shared/LoadingSpinner';
 import { useAuth } from './contexts/AuthContext';
 import { refreshAllPrices } from './services/api';
 import type { Portfolio } from './types/database';
@@ -28,7 +31,8 @@ type View =
   | 'analysis'
   | 'news'
   | 'watchlists'
-  | 'watchlist-detail';
+  | 'watchlist-detail'
+  | 'debug';
 
 // Valid views for URL persistence
 const VALID_VIEWS: View[] = [
@@ -38,6 +42,7 @@ const VALID_VIEWS: View[] = [
   'news',
   'research',
   'watchlists',
+  ...(import.meta.env.DEV ? ['debug' as View] : []),
 ];
 
 // Get initial view from URL hash
@@ -157,8 +162,7 @@ function App() {
   if (loading) {
     return (
       <div className="app-loading">
-        <div className="loading-spinner" />
-        <p>Loading...</p>
+        <LoadingSpinner size="lg" text="Loading..." />
       </div>
     );
   }
@@ -186,9 +190,13 @@ function App() {
         <div className="portfolio-color-bar" />
         <div className="header-top">
           <div className="header-title">
-            <h1>{headerTitle}</h1>
+            <Title size="xl" as="h1">
+              {headerTitle}
+            </Title>
             {selectedPortfolio && (
-              <span className="header-subtitle">Portfolio Tracker</span>
+              <div className="header-subtitle">
+                <MetricLabel>Portfolio Tracker</MetricLabel>
+              </div>
             )}
           </div>
           <div className="header-actions">
@@ -217,66 +225,73 @@ function App() {
           </div>
         </div>
         <nav className="app-nav">
-          <button
-            className={currentView === 'dashboard' ? 'active' : ''}
+          <Button
+            variant="ghost"
+            isActive={currentView === 'dashboard'}
             onClick={() => setCurrentView('dashboard')}
           >
             Dashboard
-          </button>
-          <button
-            className={
+          </Button>
+          <Button
+            variant="ghost"
+            isActive={
               currentView === 'stocks' || currentView === 'stock-detail'
-                ? 'active'
-                : ''
             }
             onClick={() => setCurrentView('stocks')}
           >
             Stocks
-          </button>
-          <button
-            className={currentView === 'analysis' ? 'active' : ''}
+          </Button>
+          <Button
+            variant="ghost"
+            isActive={currentView === 'analysis'}
             onClick={() => setCurrentView('analysis')}
           >
             Analysis
-          </button>
-          <button
-            className={currentView === 'news' ? 'active' : ''}
+          </Button>
+          <Button
+            variant="ghost"
+            isActive={currentView === 'news'}
             onClick={() => setCurrentView('news')}
           >
             News
-          </button>
-          <button
-            className={
+          </Button>
+          <Button
+            variant="ghost"
+            isActive={
               currentView === 'watchlists' || currentView === 'watchlist-detail'
-                ? 'active'
-                : ''
             }
             onClick={() => setCurrentView('watchlists')}
           >
             Watchlists
-          </button>
-          <button
-            className={
+          </Button>
+          <Button
+            variant="ghost"
+            isActive={
               currentView === 'research' || currentView === 'stock-research'
-                ? 'active'
-                : ''
             }
             onClick={() => setCurrentView('research')}
           >
             Research
-          </button>
-          <button
-            className="add-action"
-            onClick={() => setShowAddStockModal(true)}
-          >
+          </Button>
+          <Button variant="outline" onClick={() => setShowAddStockModal(true)}>
             + Add Stock
-          </button>
-          <button
-            className="add-action"
+          </Button>
+          <Button
+            variant="outline"
             onClick={() => setShowAddTransactionModal(true)}
           >
             + Add Transaction
-          </button>
+          </Button>
+          {import.meta.env.DEV && (
+            <Button
+              variant="ghost"
+              isActive={currentView === 'debug'}
+              onClick={() => setCurrentView('debug')}
+              className="debug-nav-btn"
+            >
+              Debug
+            </Button>
+          )}
         </nav>
       </header>
 
@@ -329,6 +344,7 @@ function App() {
             onBack={handleBackFromResearch}
           />
         )}
+        {currentView === 'debug' && <DebugShowcase />}
         {currentView === 'stock-detail' && selectedStockId && (
           <StockDetail
             stockId={selectedStockId}
@@ -340,12 +356,12 @@ function App() {
       </main>
 
       {/* Modals */}
-      <AddStockModal
+      <StockModal
         isOpen={showAddStockModal}
         onClose={() => setShowAddStockModal(false)}
         onSuccess={() => setRefreshKey((k) => k + 1)}
       />
-      <AddTransactionModal
+      <TransactionModal
         isOpen={showAddTransactionModal}
         onClose={() => setShowAddTransactionModal(false)}
         onSuccess={() => setRefreshKey((k) => k + 1)}

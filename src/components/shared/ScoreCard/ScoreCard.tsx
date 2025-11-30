@@ -1,3 +1,4 @@
+import { MetricLabel, MetricValue, Muted } from '../Typography';
 import { cn } from '@/utils/cn';
 import './ScoreCard.css';
 
@@ -26,10 +27,10 @@ export function ScoreCard({
   sentiment = 'auto',
   thresholds,
 }: ScoreCardProps) {
-  const getSentimentClass = (): string => {
-    if (value === null) return '';
+  const getSentiment = (): 'positive' | 'negative' | 'neutral' | undefined => {
+    if (value === null) return undefined;
     if (sentiment !== 'auto') return sentiment;
-    if (!thresholds) return '';
+    if (!thresholds) return undefined;
 
     const { good, bad, higherIsBetter = true } = thresholds;
 
@@ -43,20 +44,28 @@ export function ScoreCard({
     return 'neutral';
   };
 
-  const sentimentClass = getSentimentClass();
+  const valueSentiment = getSentiment();
   const percentage =
     value !== null ? Math.min((value / maxValue) * 100, 100) : 0;
 
   return (
     <div className={cn('score-card', `score-card--${size}`)}>
-      <span className="score-card-label">{label}</span>
-      <span className={cn('score-card-value', sentimentClass)}>
-        {value !== null ? `${value.toFixed(0)}${suffix}` : '—'}
-      </span>
+      <MetricLabel>{label}</MetricLabel>
+      {value !== null ? (
+        <MetricValue
+          size={size === 'lg' ? 'lg' : 'base'}
+          sentiment={valueSentiment}
+        >
+          {value.toFixed(0)}
+          {suffix}
+        </MetricValue>
+      ) : (
+        <Muted>—</Muted>
+      )}
       {showBar && value !== null && (
         <div className="score-card-bar">
           <div
-            className={cn('score-card-bar-fill', sentimentClass)}
+            className={cn('score-card-bar-fill', valueSentiment)}
             style={{ width: `${percentage}%` }}
           />
         </div>

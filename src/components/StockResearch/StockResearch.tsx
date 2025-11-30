@@ -12,7 +12,6 @@ import {
   type EnrichedAnalystData,
   type StockRecommendation,
 } from '@/utils/recommendations';
-import { cn } from '@/utils/cn';
 import { getExchangeInfo } from '@/utils/format';
 import {
   LoadingSpinner,
@@ -20,7 +19,16 @@ import {
   PriceDisplay,
   SignalBadge,
   InfoTooltip,
+  Button,
 } from '@/components/shared';
+import {
+  Ticker,
+  MetricLabel,
+  MetricValue,
+  Description,
+  Badge,
+  Text,
+} from '@/components/shared/Typography';
 import { Tabs } from '@/components/shared/Tabs';
 import { ResearchSummary } from './ResearchSummary';
 import { ResearchValuation } from './ResearchValuation';
@@ -64,6 +72,7 @@ export function StockResearch({
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('summary');
   const [retryCount, setRetryCount] = useState(0);
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [dataLoadStatus, setDataLoadStatus] = useState<DataLoadStatus>({
     analyst: false,
     technical: false,
@@ -135,10 +144,10 @@ export function StockResearch({
             setNewsArticles(tickerNews.articles.map((a) => ({ ...a, ticker })));
           }
 
-          // Update load status for debug
+          // Update load status for debug - check if data is actually present
           setDataLoadStatus({
-            analyst: !!analyst,
-            technical: !!technical,
+            analyst: !!(analyst?.currentPrice || analyst?.recommendationKey),
+            technical: !!(technical?.rsi14 || technical?.macd),
             news: !!tickerNews?.articles?.length,
             peers: !!peers?.mainStock,
             rateLimited,
@@ -198,6 +207,7 @@ export function StockResearch({
       technicalData: technicalData ?? undefined,
       newsArticles: newsArticles,
       insiderTimeRange: 3,
+      isResearch: true,
     });
   }, [analystData, technicalData, newsArticles]);
 
@@ -245,6 +255,7 @@ export function StockResearch({
           fontFamily: 'monospace',
           color: '#666',
           padding: '2px 4px',
+          marginBottom: '1rem',
           background: '#f5f5f5',
           display: 'flex',
           flexWrap: 'wrap',
@@ -255,12 +266,14 @@ export function StockResearch({
           req: {ticker} | analyst: {dataLoadStatus.analyst ? '✓' : '✗'} | tech:{' '}
           {dataLoadStatus.technical ? '✓' : '✗'} | news:{' '}
           {dataLoadStatus.news ? '✓' : '✗'} | peers:{' '}
-          {dataLoadStatus.peers ? '✓' : '✗'}
+          {dataLoadStatus.peers ? '✓' : '✗'} | desc:{' '}
+          {analystData.descriptionSource ?? '✗'}
         </span>
         {dataLoadStatus.rateLimited && (
           <span style={{ color: '#c00', fontWeight: 'bold' }}>
-            RATE LIMITED: {dataLoadStatus.rateLimited.finnhub && 'Finnhub'}{' '}
-            {dataLoadStatus.rateLimited.yahoo && 'Yahoo'}
+            RATE LIMITED: {dataLoadStatus.rateLimited.finnhub && 'Finnhub '}
+            {dataLoadStatus.rateLimited.yahoo && 'Yahoo '}
+            {dataLoadStatus.rateLimited.alpha && 'Alpha'}
           </span>
         )}
         {(ticker !== analystData.ticker ||
@@ -271,27 +284,47 @@ export function StockResearch({
 
       {/* Header */}
       <div className="stock-research-header">
-        <button className="back-btn" onClick={onBack}>
-          ← Back
-        </button>
-        <div className="stock-research-title">
-          <span className="ticker">{analystData.ticker}</span>
-          <span className="name">{analystData.stockName}</span>
-          {!exchangeInfo.isUSStock && (
-            <span className="exchange-badge">
-              {exchangeInfo.exchangeSuffix}
-            </span>
+        <div className="stock-research-header__top">
+          <Button variant="ghost" size="sm" onClick={onBack}>
+            ← Back
+          </Button>
+          {onAddToWatchlist && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => onAddToWatchlist(ticker)}
+            >
+              + Watchlist
+            </Button>
           )}
         </div>
-        {onAddToWatchlist && (
-          <button
-            className="add-to-watchlist-btn"
-            onClick={() => onAddToWatchlist(ticker)}
-          >
-            + Watchlist
-          </button>
-        )}
+        <div className="stock-research-header__title">
+          <Ticker size="lg">{analystData.ticker}</Ticker>
+          {!exchangeInfo.isUSStock && (
+            <Badge variant="info">{exchangeInfo.exchangeSuffix}</Badge>
+          )}
+        </div>
       </div>
+
+      {/* Company Description */}
+      {analystData.description && (
+        <div
+          className={`stock-research-description${
+            !descriptionExpanded ? ' stock-research-description--collapsed' : ''
+          }`}
+        >
+          <Text size="sm" color="secondary">
+            {analystData.description}
+          </Text>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setDescriptionExpanded(!descriptionExpanded)}
+          >
+            {descriptionExpanded ? 'Show less' : 'Show more'}
+          </Button>
+        </div>
+      )}
 
       {/* Price & Signal */}
       <div className="stock-research-price-bar">
@@ -304,9 +337,9 @@ export function StockResearch({
         {recommendation && (
           <div className="stock-research-signal">
             <SignalBadge type={recommendation.primarySignal.type} size="md" />
-            <span className="signal-description">
+            <Description>
               {recommendation.primarySignal.description}
-            </span>
+            </Description>
           </div>
         )}
       </div>
@@ -398,11 +431,11 @@ interface QuickStatProps {
 function QuickStat({ label, value, sentiment, tooltip }: QuickStatProps) {
   return (
     <div className="quick-stat">
-      <span className="quick-stat-label">
-        {label}
+      <div className="quick-stat-label">
+        <MetricLabel>{label}</MetricLabel>
         {tooltip && <InfoTooltip text={tooltip} />}
-      </span>
-      <span className={cn('quick-stat-value', sentiment)}>{value}</span>
+      </div>
+      <MetricValue sentiment={sentiment}>{value}</MetricValue>
     </div>
   );
 }
