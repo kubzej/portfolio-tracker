@@ -6,14 +6,11 @@
 
 /* Section */
 .summary-section {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 0.75rem;
-  padding: 1.25rem;
+  padding: 0;
 }
 
 .summary-section > .card-title {
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .section-title-row {

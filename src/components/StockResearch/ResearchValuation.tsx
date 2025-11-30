@@ -1,6 +1,13 @@
 import type { FundamentalMetrics } from '@/services/api/analysis';
 import type { StockRecommendation } from '@/utils/recommendations';
-import { InfoTooltip } from '@/components/shared';
+import { InfoTooltip, MetricCard } from '@/components/shared';
+import {
+  CardTitle,
+  Muted,
+  Text,
+  Badge,
+  Description,
+} from '@/components/shared/Typography';
 import { cn } from '@/utils/cn';
 import './ResearchValuation.css';
 
@@ -18,7 +25,9 @@ export function ResearchValuation({
   if (!f) {
     return (
       <div className="research-valuation">
-        <div className="no-data">No valuation data available</div>
+        <div className="no-data">
+          <Muted>No valuation data available</Muted>
+        </div>
       </div>
     );
   }
@@ -30,42 +39,54 @@ export function ResearchValuation({
     <div className="research-valuation">
       {/* Valuation Multiples */}
       <section className="valuation-section">
-        <h3 className="section-title">Valuation Multiples</h3>
+        <CardTitle>Valuation Multiples</CardTitle>
         <div className="metrics-grid">
-          <ValuationMetric
+          <MetricCard
             label="P/E Ratio"
             value={f.peRatio?.toFixed(2) ?? null}
-            tooltip="Poměr ceny k zisku. Kolik korun platíte za 1 korunu ročního zisku. Nižší = levnější, ale záleží na odvětví."
+            tooltip={
+              <InfoTooltip text="Poměr ceny k zisku. Kolik korun platíte za 1 korunu ročního zisku. Nižší = levnější, ale záleží na odvětví." />
+            }
             sentiment={getPESentiment(f.peRatio)}
           />
-          <ValuationMetric
+          <MetricCard
             label="Forward P/E"
             value={f.forwardPe?.toFixed(2) ?? null}
-            tooltip="P/E na základě očekávaných zisků. Lépe odráží budoucí potenciál než historické P/E."
+            tooltip={
+              <InfoTooltip text="P/E na základě očekávaných zisků. Lépe odráží budoucí potenciál než historické P/E." />
+            }
             sentiment={getPESentiment(f.forwardPe)}
           />
-          <ValuationMetric
+          <MetricCard
             label="PEG Ratio"
             value={f.pegRatio?.toFixed(3) ?? null}
-            tooltip="P/E dělené růstem zisku. Pod 1 = podhodnoceno vzhledem k růstu, nad 2 = drahé."
+            tooltip={
+              <InfoTooltip text="P/E dělené růstem zisku. Pod 1 = podhodnoceno vzhledem k růstu, nad 2 = drahé." />
+            }
             sentiment={getPEGSentiment(f.pegRatio)}
           />
-          <ValuationMetric
+          <MetricCard
             label="P/B Ratio"
             value={f.pbRatio?.toFixed(3) ?? null}
-            tooltip="Poměr ceny k účetní hodnotě. Pod 1 = akcie se obchoduje pod hodnotou aktiv (může být příležitost)."
+            tooltip={
+              <InfoTooltip text="Poměr ceny k účetní hodnotě. Pod 1 = akcie se obchoduje pod hodnotou aktiv (může být příležitost)." />
+            }
             sentiment={getPBSentiment(f.pbRatio)}
           />
-          <ValuationMetric
+          <MetricCard
             label="P/S Ratio"
             value={f.psRatio?.toFixed(2) ?? null}
-            tooltip="Poměr ceny k tržbám. Užitečné pro firmy bez zisku. Pod 2 je levné, nad 10 drahé."
+            tooltip={
+              <InfoTooltip text="Poměr ceny k tržbám. Užitečné pro firmy bez zisku. Pod 2 je levné, nad 10 drahé." />
+            }
             sentiment={getPSSentiment(f.psRatio)}
           />
-          <ValuationMetric
+          <MetricCard
             label="EV/EBITDA"
             value={f.evEbitda?.toFixed(2) ?? null}
-            tooltip="Hodnota firmy / provozní zisk. Lepší pro srovnání firem s různým zadlužením. Pod 10 je atraktivní."
+            tooltip={
+              <InfoTooltip text="Hodnota firmy / provozní zisk. Lepší pro srovnání firem s různým zadlužením. Pod 10 je atraktivní." />
+            }
             sentiment={getEVEBITDASentiment(f.evEbitda)}
           />
         </div>
@@ -74,17 +95,25 @@ export function ResearchValuation({
       {/* Valuation Analysis */}
       {valuationMethods.length > 0 && (
         <section className="valuation-section">
-          <h3 className="section-title">Valuation Analysis</h3>
+          <CardTitle>Valuation Analysis</CardTitle>
           <div className="valuation-analysis">
             {valuationMethods.map((method) => (
               <div key={method.name} className="valuation-method">
                 <div className="method-header">
-                  <span className="method-name">{method.name}</span>
-                  <span className={cn('method-verdict', method.sentiment)}>
+                  <Text weight="semibold">{method.name}</Text>
+                  <Badge
+                    variant={
+                      method.sentiment === 'positive'
+                        ? 'buy'
+                        : method.sentiment === 'negative'
+                        ? 'sell'
+                        : 'hold'
+                    }
+                  >
                     {method.verdict}
-                  </span>
+                  </Badge>
                 </div>
-                <p className="method-description">{method.description}</p>
+                <Description>{method.description}</Description>
               </div>
             ))}
           </div>
@@ -94,64 +123,71 @@ export function ResearchValuation({
       {/* Target Price Analysis */}
       {recommendation && recommendation.targetUpside !== null && (
         <section className="valuation-section">
-          <h3 className="section-title">Analyst Target</h3>
+          <CardTitle>Analyst Target</CardTitle>
           <div className="target-analysis">
-            <div className="target-price">
-              <span className="label">Analyst Target</span>
-              <span className="value">
-                {recommendation.targetPrice
+            <MetricCard
+              label="Analyst Target"
+              value={
+                recommendation.targetPrice
                   ? `$${recommendation.targetPrice.toFixed(2)}`
-                  : '—'}
-              </span>
-            </div>
-            <div className="target-upside">
-              <span className="label">Potential Upside</span>
-              <span
-                className={cn(
-                  'value',
-                  recommendation.targetUpside > 0 ? 'positive' : 'negative'
-                )}
-              >
-                {recommendation.targetUpside > 0 ? '+' : ''}
-                {recommendation.targetUpside.toFixed(1)}%
-              </span>
-            </div>
+                  : null
+              }
+            />
+            <MetricCard
+              label="Potential Upside"
+              value={
+                recommendation.targetUpside !== null
+                  ? `${
+                      recommendation.targetUpside > 0 ? '+' : ''
+                    }${recommendation.targetUpside.toFixed(1)}%`
+                  : null
+              }
+              sentiment={
+                recommendation.targetUpside > 0 ? 'positive' : 'negative'
+              }
+            />
           </div>
         </section>
       )}
 
       {/* 52-Week Context */}
       <section className="valuation-section">
-        <h3 className="section-title">Price Context</h3>
+        <CardTitle>Price Context</CardTitle>
         <div className="metrics-grid">
           {recommendation && (
             <>
-              <ValuationMetric
+              <MetricCard
                 label="52W High"
                 value={
                   recommendation.fiftyTwoWeekHigh
                     ? `$${recommendation.fiftyTwoWeekHigh.toFixed(2)}`
                     : null
                 }
-                tooltip="Nejvyšší cena za posledních 52 týdnů."
+                tooltip={
+                  <InfoTooltip text="Nejvyšší cena za posledních 52 týdnů." />
+                }
               />
-              <ValuationMetric
+              <MetricCard
                 label="52W Low"
                 value={
                   recommendation.fiftyTwoWeekLow
                     ? `$${recommendation.fiftyTwoWeekLow.toFixed(2)}`
                     : null
                 }
-                tooltip="Nejnižší cena za posledních 52 týdnů."
+                tooltip={
+                  <InfoTooltip text="Nejnižší cena za posledních 52 týdnů." />
+                }
               />
-              <ValuationMetric
+              <MetricCard
                 label="Distance from 52W High"
                 value={
                   recommendation.distanceFrom52wHigh !== null
                     ? `${recommendation.distanceFrom52wHigh.toFixed(1)}% below`
                     : null
                 }
-                tooltip="Jak daleko je aktuální cena od 52týdenního maxima. Větší odstup může signalizovat příležitost."
+                tooltip={
+                  <InfoTooltip text="Jak daleko je aktuální cena od 52týdenního maxima. Větší odstup může signalizovat příležitost." />
+                }
                 sentiment={
                   recommendation.distanceFrom52wHigh !== null
                     ? recommendation.distanceFrom52wHigh > 20
@@ -166,33 +202,6 @@ export function ResearchValuation({
           )}
         </div>
       </section>
-    </div>
-  );
-}
-
-// Valuation Metric component - label on top, value below
-interface ValuationMetricProps {
-  value: string | null;
-  label: string;
-  tooltip?: string;
-  sentiment?: 'positive' | 'negative' | 'neutral';
-}
-
-function ValuationMetric({
-  value,
-  label,
-  tooltip,
-  sentiment,
-}: ValuationMetricProps) {
-  return (
-    <div className="valuation-metric">
-      <span className="valuation-metric-label">
-        {label}
-        {tooltip && <InfoTooltip text={tooltip} />}
-      </span>
-      <span className={cn('valuation-metric-value', sentiment)}>
-        {value ?? '—'}
-      </span>
     </div>
   );
 }

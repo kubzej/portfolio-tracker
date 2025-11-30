@@ -5,10 +5,7 @@
 }
 
 .technical-section {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 0.75rem;
-  padding: 1.25rem;
+  padding: 0;
 }
 
 .section-title {
