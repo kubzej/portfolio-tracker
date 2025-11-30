@@ -12,6 +12,7 @@ import {
   Caption,
   Text,
   Muted,
+  Tag,
 } from '@/components/shared/Typography';
 import './ColumnPicker.css';
 
@@ -217,8 +218,7 @@ export function ColumnPicker({
           className="picker-trigger"
           onClick={() => setIsOpen(!isOpen)}
         >
-          <span className="trigger-icon">⚙</span>
-          <Text>Columns ({selectedKeys.length})</Text>
+          <Text>⚙ Columns ({selectedKeys.length})</Text>
           <span className={`dropdown-arrow ${isOpen ? 'open' : ''}`}>▼</span>
         </Button>
 
@@ -247,7 +247,9 @@ export function ColumnPicker({
                 }`}
               >
                 {onSetDefaultView && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className={`view-chip-star ${
                       view.is_default ? 'is-default' : ''
                     }`}
@@ -262,16 +264,20 @@ export function ColumnPicker({
                     }
                   >
                     {view.is_default ? '★' : '☆'}
-                  </button>
+                  </Button>
                 )}
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="view-chip-name"
                   onClick={() => onSelectView?.(view)}
                 >
                   {view.name}
-                </button>
+                </Button>
                 {onDeleteView && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className="view-chip-delete"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -282,7 +288,7 @@ export function ColumnPicker({
                     title="Delete view"
                   >
                     ×
-                  </button>
+                  </Button>
                 )}
               </div>
             ))}
@@ -348,14 +354,16 @@ export function ColumnPicker({
                 onDragLeave={handleDragLeave}
                 title={indicator.description}
               >
-                <span className="drag-handle">⠿</span>
-                <span className="tag-name">{indicator.short_name}</span>
-                <button
+                <Text size="xs">⠿</Text>
+                <Text size="sm">{indicator.short_name}</Text>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="remove-btn"
                   onClick={() => toggleColumn(key)}
                 >
                   ×
-                </button>
+                </Button>
               </div>
             );
           })}
@@ -369,8 +377,8 @@ export function ColumnPicker({
             const indicator = getIndicatorByKey(key);
             if (!indicator) return null;
             return (
-              <span key={key} className="mobile-column-chip">
-                {indicator.short_name}
+              <div key={key} className="mobile-column-chip">
+                <Text size="sm">{indicator.short_name}</Text>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -378,7 +386,7 @@ export function ColumnPicker({
                 >
                   ×
                 </Button>
-              </span>
+              </div>
             );
           })}
         </div>
@@ -410,8 +418,9 @@ export function ColumnPicker({
                 ).length;
                 const total = (categories[cat] || []).length;
                 return (
-                  <button
+                  <Button
                     key={cat}
+                    variant="ghost"
                     className={`category-item ${
                       activeCategory === cat ? 'active' : ''
                     }`}
@@ -420,11 +429,13 @@ export function ColumnPicker({
                       setSearchTerm('');
                     }}
                   >
-                    <span className="category-name">{categoryLabels[cat]}</span>
-                    <span className="category-count">
+                    <Text size="sm" weight="medium">
+                      {categoryLabels[cat]}
+                    </Text>
+                    <Muted>
                       {count}/{total}
-                    </span>
-                  </button>
+                    </Muted>
+                  </Button>
                 );
               })}
             </div>
@@ -463,7 +474,7 @@ export function ColumnPicker({
                       <Text size="sm" weight="medium">
                         {ind.name}
                       </Text>
-                      <span className="indicator-short">{ind.short_name}</span>
+                      <Tag>{ind.short_name}</Tag>
                     </div>
                     <Caption>{stripTooltipMarkdown(ind.description)}</Caption>
                   </div>
@@ -521,12 +532,14 @@ export function ColumnPicker({
                 fullWidth
               />
               {searchTerm && (
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="search-clear"
                   onClick={() => setSearchTerm('')}
                 >
                   ×
-                </button>
+                </Button>
               )}
             </div>
 
@@ -578,7 +591,8 @@ export function ColumnPicker({
 
                     return (
                       <div key={cat} className="mobile-category">
-                        <button
+                        <Button
+                          variant="ghost"
                           className={`mobile-category-header ${
                             isExpanded ? 'expanded' : ''
                           }`}
@@ -606,7 +620,7 @@ export function ColumnPicker({
                               <path d="M6 9l6 6 6-6" />
                             </svg>
                           </span>
-                        </button>
+                        </Button>
 
                         {isExpanded && (
                           <div className="mobile-category-items">
