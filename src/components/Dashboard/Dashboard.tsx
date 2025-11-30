@@ -216,7 +216,9 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
 
         <div className="summary-card">
           <MetricLabel>Stocks</MetricLabel>
-          <MetricValue size="lg">{totals?.stockCount || 0}</MetricValue>
+          <div className="card-value-with-percent">
+            <MetricValue size="lg">{totals?.stockCount || 0}</MetricValue>
+          </div>
         </div>
       </div>
 
