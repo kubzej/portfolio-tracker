@@ -34,6 +34,7 @@ import {
   RecItem,
   Badge,
   SortIcon,
+  Tag,
 } from '@/components/shared/Typography';
 import { Tabs } from '@/components/shared/Tabs';
 import { holdingsApi } from '@/services/api';
@@ -1647,9 +1648,9 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                                   style={{ left: `${rangePosition}%` }}
                                 />
                               </div>
-                              <span className="range-percent">
+                              <Text size="sm" color="muted">
                                 {rangePosition.toFixed(0)}%
-                              </span>
+                              </Text>
                             </div>
                           ) : (
                             '—'
@@ -1659,13 +1660,11 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                           {item.peers && item.peers.length > 0 ? (
                             <div className="peers-list">
                               {item.peers.map((peer: string, i: number) => (
-                                <span key={i} className="peer-tag">
-                                  {peer}
-                                </span>
+                                <Tag key={i}>{peer}</Tag>
                               ))}
                             </div>
                           ) : (
-                            <span className="muted">—</span>
+                            <Muted>—</Muted>
                           )}
                         </td>
                       </tr>
@@ -1675,7 +1674,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
               </table>
             </div>
 
-            {/* Mobile Technical Cards */}
+            {/* Mobile Technical Cards */}}
             <div className="technicals-mobile">
               <div className="technicals-cards">
                 {sortedData.map((item) => {
@@ -1760,9 +1759,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                             {item.peers
                               .slice(0, 5)
                               .map((peer: string, i: number) => (
-                                <span key={i} className="peer-tag">
-                                  {peer}
-                                </span>
+                                <Tag key={i}>{peer}</Tag>
                               ))}
                           </div>
                         </div>

@@ -405,10 +405,10 @@ interface QuickStatProps {
 function QuickStat({ label, value, sentiment, tooltip }: QuickStatProps) {
   return (
     <div className="quick-stat">
-      <span className="quick-stat-label">
+      <div className="quick-stat-label">
         <MetricLabel>{label}</MetricLabel>
         {tooltip && <InfoTooltip text={tooltip} />}
-      </span>
+      </div>
       <MetricValue sentiment={sentiment}>{value}</MetricValue>
     </div>
   );

@@ -9,22 +9,12 @@
   gap: 12px;
 }
 
+/* Button komponenta řeší základní styly, zde jen specifické úpravy */
 .picker-trigger {
-  display: flex;
-  align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--text-primary);
-  transition: all 0.2s;
 }
 
 .picker-trigger:hover {
-  background: var(--bg-tertiary);
   border-color: var(--accent-primary);
 }
 
@@ -42,22 +32,7 @@
   transform: rotate(180deg);
 }
 
-.save-view-btn {
-  padding: 8px 12px;
-  background: transparent;
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--text-secondary);
-  transition: all 0.2s;
-}
-
-.save-view-btn:hover {
-  background: var(--accent-primary);
-  color: white;
-  border-color: var(--accent-primary);
-}
+/* Button komponenta řeší save-view-btn styling */
 
 /* Views Row */
 .views-row {
@@ -191,27 +166,19 @@
   cursor: grab;
 }
 
-.selected-column-tag .tag-name {
-  padding: 0 2px;
-}
+/* Text komponenta řeší tag-name styling */
 
-.selected-column-tag .remove-btn {
+.selected-column-tag .remove-btn.btn {tn {
   width: 18px;
   height: 18px;
+  min-width: 18px;
   padding: 0;
-  border: none;
   background: rgba(255, 255, 255, 0.2);
   color: white;
   border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
 }
 
-.selected-column-tag .remove-btn:hover {
+.selected-column-tag .remove-btn.btn:hover {
   background: rgba(255, 255, 255, 0.4);
 }
 
@@ -443,18 +410,14 @@
     font-weight: 500;
   }
 
-  .mobile-column-chip button {
+  .mobile-column-chip .btn {
     background: rgba(255, 255, 255, 0.2);
-    border: none;
     color: white;
     width: 16px;
     height: 16px;
+    min-width: 16px;
+    padding: 0;
     border-radius: 4px;
-    font-size: 12px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 }
 
@@ -519,13 +482,9 @@
   }
   /* SectionTitle component handles h3 styling */
 
-  .mobile-picker-close {
-    background: transparent;
-    border: none;
+  .mobile-picker-close.btn {
     padding: 8px;
     margin: -8px;
-    color: var(--text-secondary);
-    cursor: pointer;
   }
 
   .mobile-picker-search {

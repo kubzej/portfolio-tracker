@@ -211,11 +211,15 @@ export function ColumnPicker({
   return (
     <div className="column-picker" ref={dropdownRef}>
       <div className="column-picker-header">
-        <button className="picker-trigger" onClick={() => setIsOpen(!isOpen)}>
+        <Button
+          variant="ghost"
+          className="picker-trigger"
+          onClick={() => setIsOpen(!isOpen)}
+        >
           <span className="trigger-icon">⚙</span>
-          <span>Columns ({selectedKeys.length})</span>
+          <Text>Columns ({selectedKeys.length})</Text>
           <span className={`dropdown-arrow ${isOpen ? 'open' : ''}`}>▼</span>
-        </button>
+        </Button>
 
         {onSaveView && (
           <Button
@@ -366,7 +370,13 @@ export function ColumnPicker({
             return (
               <span key={key} className="mobile-column-chip">
                 {indicator.short_name}
-                <button onClick={() => toggleColumn(key)}>×</button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => toggleColumn(key)}
+                >
+                  ×
+                </Button>
               </span>
             );
           })}
@@ -474,7 +484,11 @@ export function ColumnPicker({
           <div className="mobile-picker-sheet">
             <div className="mobile-picker-header">
               <SectionTitle>Select Columns</SectionTitle>
-              <button className="mobile-picker-close" onClick={handleClose}>
+              <Button
+                variant="ghost"
+                className="mobile-picker-close"
+                onClick={handleClose}
+              >
                 <svg
                   width="24"
                   height="24"
@@ -485,7 +499,7 @@ export function ColumnPicker({
                 >
                   <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
-              </button>
+              </Button>
             </div>
 
             <div className="mobile-picker-search">
