@@ -3,9 +3,9 @@ import type { Portfolio } from '@/types/database';
 import { portfoliosApi } from '@/services/api';
 import { PortfolioManager } from '@/components/PortfolioManager';
 import {
-  BottomSheet,
-  BottomSheetOption,
-} from '@/components/shared/BottomSheet';
+  ActionSheet,
+  ActionSheetOption,
+} from '@/components/shared/ActionSheet';
 import { Button } from '@/components/shared/Button';
 import { Text } from '@/components/shared/Typography';
 import './PortfolioSelector.css';
@@ -173,15 +173,15 @@ export function PortfolioSelector({
         </Button>
       </div>
 
-      {/* Mobile bottom sheet picker */}
-      <BottomSheet
+      {/* Mobile action sheet picker */}
+      <ActionSheet
         isOpen={showMobilePicker}
         onClose={() => setShowMobilePicker(false)}
         title="Select Portfolio"
       >
-        <div className="bottom-sheet-options">
+        <div className="action-sheet-options">
           {showAllOption && (
-            <BottomSheetOption
+            <ActionSheetOption
               label="All Portfolios"
               color="#6366f1"
               selected={selectedPortfolioId === null}
@@ -189,7 +189,7 @@ export function PortfolioSelector({
             />
           )}
           {portfolios.map((portfolio) => (
-            <BottomSheetOption
+            <ActionSheetOption
               key={portfolio.id}
               label={portfolio.name}
               suffix={portfolio.is_default ? ' (Default)' : undefined}
@@ -199,7 +199,7 @@ export function PortfolioSelector({
             />
           ))}
         </div>
-      </BottomSheet>
+      </ActionSheet>
 
       {showManager && (
         <PortfolioManager

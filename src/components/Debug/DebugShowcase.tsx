@@ -31,6 +31,10 @@ import {
   BottomSheetOption,
   BottomSheetSelect,
 } from '@/components/shared/BottomSheet';
+import {
+  ActionSheet,
+  ActionSheetOption,
+} from '@/components/shared/ActionSheet';
 import { ToggleGroup } from '@/components/shared/ToggleGroup';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -92,6 +96,7 @@ export function DebugShowcase() {
   const [activeSection, setActiveSection] = useState<Section>('typography');
   const [modalOpen, setModalOpen] = useState(false);
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
+  const [actionSheetOpen, setActionSheetOpen] = useState(false);
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>('1M');
   const [toggleValue, setToggleValue] = useState('all');
   const [tabValue, setTabValue] = useState('tab1');
@@ -137,6 +142,8 @@ export function DebugShowcase() {
             setModalOpen={setModalOpen}
             bottomSheetOpen={bottomSheetOpen}
             setBottomSheetOpen={setBottomSheetOpen}
+            actionSheetOpen={actionSheetOpen}
+            setActionSheetOpen={setActionSheetOpen}
           />
         );
       case 'charts':
@@ -1017,11 +1024,15 @@ function ModalsSection({
   setModalOpen,
   bottomSheetOpen,
   setBottomSheetOpen,
+  actionSheetOpen,
+  setActionSheetOpen,
 }: {
   modalOpen: boolean;
   setModalOpen: (v: boolean) => void;
   bottomSheetOpen: boolean;
   setBottomSheetOpen: (v: boolean) => void;
+  actionSheetOpen: boolean;
+  setActionSheetOpen: (v: boolean) => void;
 }) {
   return (
     <div className="debug-section">
@@ -1055,11 +1066,48 @@ function ModalsSection({
         </Modal>
       </div>
 
-      {/* BottomSheet */}
+      {/* ActionSheet - new optimized component */}
       <div className="debug-subsection">
-        <CardTitle>BottomSheet</CardTitle>
+        <CardTitle>ActionSheet (optimized for mobile)</CardTitle>
+        <Description>
+          Uses native &lt;dialog&gt; element for better mobile performance. No
+          browser freeze issues.
+        </Description>
         <div className="debug-showcase-row">
-          <Button variant="primary" onClick={() => setBottomSheetOpen(true)}>
+          <Button variant="primary" onClick={() => setActionSheetOpen(true)}>
+            Open Action Sheet
+          </Button>
+        </div>
+        <ActionSheet
+          isOpen={actionSheetOpen}
+          onClose={() => setActionSheetOpen(false)}
+          title="Select Portfolio"
+        >
+          <ActionSheetOption
+            label="All Portfolios"
+            color="#6366f1"
+            selected
+            onClick={() => setActionSheetOpen(false)}
+          />
+          <ActionSheetOption
+            label="Growth Portfolio"
+            suffix="(Default)"
+            color="#22c55e"
+            onClick={() => setActionSheetOpen(false)}
+          />
+          <ActionSheetOption
+            label="Dividend Portfolio"
+            color="#f59e0b"
+            onClick={() => setActionSheetOpen(false)}
+          />
+        </ActionSheet>
+      </div>
+
+      {/* BottomSheet - legacy */}
+      <div className="debug-subsection">
+        <CardTitle>BottomSheet (legacy)</CardTitle>
+        <div className="debug-showcase-row">
+          <Button variant="secondary" onClick={() => setBottomSheetOpen(true)}>
             Open Bottom Sheet
           </Button>
         </div>
