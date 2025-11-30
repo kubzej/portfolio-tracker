@@ -300,17 +300,18 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                         </Text>
                       </div>
                     </div>
+                    {holding.sector_name && (
+                      <div className="holding-card-sector">
+                        <Text size="xs" color="muted">
+                          {holding.sector_name}
+                        </Text>
+                      </div>
+                    )}
                     <div className="holding-card-stats">
                       <div className="holding-card-stat">
                         <MetricLabel>Shares</MetricLabel>
                         <MetricValue>
                           {formatNumber(holding.total_shares, 4)}
-                        </MetricValue>
-                      </div>
-                      <div className="holding-card-stat">
-                        <MetricLabel>Avg Price</MetricLabel>
-                        <MetricValue>
-                          {formatPrice(holding.avg_buy_price)}
                         </MetricValue>
                       </div>
                       <div className="holding-card-stat">
@@ -323,6 +324,12 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                         <MetricLabel>Invested</MetricLabel>
                         <MetricValue>
                           {formatCurrency(holding.total_invested_czk)}
+                        </MetricValue>
+                      </div>
+                      <div className="holding-card-stat">
+                        <MetricLabel>Avg Price</MetricLabel>
+                        <MetricValue>
+                          {formatPrice(holding.avg_buy_price)}
                         </MetricValue>
                       </div>
                       <div className="holding-card-stat">
@@ -371,12 +378,6 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                             : '—'}
                         </MetricValue>
                       </div>
-                      {holding.sector_name && (
-                        <div className="holding-card-stat">
-                          <MetricLabel>Sector</MetricLabel>
-                          <MetricValue>{holding.sector_name}</MetricValue>
-                        </div>
-                      )}
                     </div>
                   </div>
                 );
