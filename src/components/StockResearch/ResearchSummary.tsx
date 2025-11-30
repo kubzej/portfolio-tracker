@@ -47,9 +47,20 @@ export function ResearchSummary({
                 <MetricLabel>Score</MetricLabel>
                 <InfoTooltip text="Celkové skóre akcie. Vážený průměr: 25% technická analýza, 20% fundamenty, 20% portfolio kontext, 15% analytici, 10% zprávy, 10% insider aktivita." />
               </div>
-              <span className="score-value">
+              <MetricValue size="xl">
                 {recommendation.compositeScore}
-              </span>
+              </MetricValue>
+              <Badge
+                variant={
+                  recommendation.technicalBias === 'BULLISH'
+                    ? 'buy'
+                    : recommendation.technicalBias === 'BEARISH'
+                    ? 'sell'
+                    : 'hold'
+                }
+              >
+                {recommendation.technicalBias}
+              </Badge>
             </div>
 
             {/* Conviction Score */}
@@ -63,35 +74,21 @@ export function ResearchSummary({
                 <MetricLabel>Conviction</MetricLabel>
                 <InfoTooltip text="Měří dlouhodobou kvalitu akcie pro držení. Zahrnuje stabilitu fundamentů (ROE, marže, růst), tržní pozici (analytici, target price) a momentum (insider aktivita)." />
               </div>
-              <span className="score-value">
+              <MetricValue size="xl">
                 {recommendation.convictionScore}
-              </span>
+              </MetricValue>
+              <Badge
+                variant={
+                  recommendation.convictionLevel === 'HIGH'
+                    ? 'buy'
+                    : recommendation.convictionLevel === 'LOW'
+                    ? 'sell'
+                    : 'hold'
+                }
+              >
+                {recommendation.convictionLevel}
+              </Badge>
             </div>
-          </div>
-
-          <div className="score-badges">
-            <Badge
-              variant={
-                recommendation.technicalBias === 'BULLISH'
-                  ? 'buy'
-                  : recommendation.technicalBias === 'BEARISH'
-                  ? 'sell'
-                  : 'hold'
-              }
-            >
-              Technical: {recommendation.technicalBias}
-            </Badge>
-            <Badge
-              variant={
-                recommendation.convictionLevel === 'HIGH'
-                  ? 'buy'
-                  : recommendation.convictionLevel === 'LOW'
-                  ? 'sell'
-                  : 'hold'
-              }
-            >
-              {recommendation.convictionLevel} Conviction
-            </Badge>
           </div>
         </div>
       </section>
@@ -121,13 +118,13 @@ export function ResearchSummary({
             <CardTitle>Strengths</CardTitle>
           </div>
           {strengths.length > 0 ? (
-            <ul className="points-list">
+            <div className="points-list">
               {strengths.map((s, i) => (
-                <li key={i}>
+                <div key={i} className="points-list-item">
                   <Text>{s}</Text>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           ) : (
             <Muted>No strong positives</Muted>
           )}
@@ -138,13 +135,13 @@ export function ResearchSummary({
             <CardTitle>Concerns</CardTitle>
           </div>
           {concerns.length > 0 ? (
-            <ul className="points-list">
+            <div className="points-list">
               {concerns.map((c, i) => (
-                <li key={i}>
+                <div key={i} className="points-list-item">
                   <Text>{c}</Text>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           ) : (
             <Muted>No major concerns</Muted>
           )}

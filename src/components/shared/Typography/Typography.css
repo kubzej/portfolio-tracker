@@ -125,6 +125,11 @@
   font-size: var(--text-lg);
 }
 
+.metric-value--xl {
+  font-size: 1.75rem;
+  font-weight: var(--font-bold);
+}
+
 .metric-value--positive {
   color: var(--success) !important;
 }

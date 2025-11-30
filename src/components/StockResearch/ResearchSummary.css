@@ -28,19 +28,24 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  align-items: center;
 }
 
 .dual-scores {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+  width: 100%;
+  max-width: 400px;
 }
 
 .score-item {
   display: flex;
   flex-direction: column;
-  padding: 1rem;
-  background: var(--bg-secondary);
+  align-items: center;
+  text-align: center;
+  padding: 1.25rem 1rem;
+  background: var(--bg-tertiary);
   border-radius: 0.75rem;
   border-left: 3px solid var(--border-color);
 }
@@ -60,89 +65,34 @@
 .score-label {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.25rem;
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
 }
 
-.score-value {
-  font-size: 1.75rem;
+/* Score value styling */
+.score-item .metric-value {
+  font-size: 2.25rem;
   font-weight: 700;
-  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 0.75rem;
 }
 
-.score-badges {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.score-circle.score-high .score-value {
+.score-item.score-high .metric-value {
   color: var(--success);
 }
 
-.score-circle.score-medium .score-value {
+.score-item.score-medium .metric-value {
   color: var(--warning);
 }
 
-.score-circle.score-low .score-value {
+.score-item.score-low .metric-value {
   color: var(--danger);
 }
 
-.score-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-.conviction-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.conviction-badge.high {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--success);
-}
-
-.conviction-badge.medium {
-  background: rgba(245, 158, 11, 0.15);
-  color: var(--warning);
-}
-
-.conviction-badge.low {
-  background: rgba(239, 68, 68, 0.15);
-  color: var(--danger);
-}
-
-.technical-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.technical-badge.bullish {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--success);
-}
-
-.technical-badge.bearish {
-  background: rgba(239, 68, 68, 0.15);
-  color: var(--danger);
-}
-
-.technical-badge.neutral {
-  background: rgba(100, 116, 139, 0.15);
-  color: var(--text-secondary);
+/* Badge inside score-item */
+.score-item .badge {
+  margin-top: auto;
 }
 
 /* Score Breakdown Grid */
@@ -209,7 +159,6 @@
 }
 
 .points-list {
-  list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
@@ -217,17 +166,10 @@
   gap: 0.5rem;
 }
 
-.points-list li {
+.points-list-item {
   font-size: 0.875rem;
   color: var(--text-primary);
   line-height: 1.4;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.points-list li:last-child {
-  padding-bottom: 0;
-  border-bottom: none;
 }
 
 .no-points {
@@ -382,15 +324,15 @@
   }
 
   .dual-scores {
-    grid-template-columns: 1fr 1fr;
+    max-width: 100%;
     gap: 0.75rem;
   }
 
   .score-item {
-    padding: 0.75rem;
+    padding: 1rem 0.75rem;
   }
 
-  .score-value {
-    font-size: 1.5rem;
+  .score-item .metric-value {
+    font-size: 1.75rem;
   }
 }
