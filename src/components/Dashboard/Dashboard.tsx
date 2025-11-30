@@ -37,6 +37,7 @@ type SortKey =
   | 'plCzk'
   | 'plPercent'
   | 'portfolio'
+  | 'portfolioName'
   | 'targetPrice'
   | 'distanceToTarget';
 
@@ -59,6 +60,9 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
   const [holdings, setHoldings] = useState<PortfolioSummary[]>([]);
   const [totals, setTotals] = useState<PortfolioTotals | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Show portfolio column when viewing "All Portfolios"
+  const showPortfolioColumn = portfolioId === null;
   const [error, setError] = useState<string | null>(null);
 
   // Value extractor for sorting - needs totals for portfolio percentage calculation
@@ -91,6 +95,8 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
           return totalValue && item.current_value_czk
             ? item.current_value_czk / totalValue
             : -Infinity;
+        case 'portfolioName':
+          return item.portfolio_name.toLowerCase();
         case 'targetPrice':
           return item.target_price ?? -Infinity;
         case 'distanceToTarget':
@@ -260,7 +266,7 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
 
                 return (
                   <div
-                    key={holding.stock_id}
+                    key={`${holding.portfolio_id}-${holding.stock_id}`}
                     className="holding-card"
                     onClick={() => onStockClick?.(holding.stock_id)}
                   >
@@ -268,6 +274,11 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                       <div className="holding-card-title">
                         <Ticker>{holding.ticker}</Ticker>
                         <StockName truncate>{holding.stock_name}</StockName>
+                        {showPortfolioColumn && (
+                          <Text size="xs" color="muted">
+                            {holding.portfolio_name}
+                          </Text>
+                        )}
                       </div>
                       <div className="holding-card-pl">
                         <MetricValue
@@ -378,6 +389,12 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                 <thead>
                   <tr>
                     <SortHeader label="Stock" sortKeyName="ticker" />
+                    {showPortfolioColumn && (
+                      <SortHeader
+                        label="Portfolio"
+                        sortKeyName="portfolioName"
+                      />
+                    )}
                     <SortHeader
                       label="Shares"
                       sortKeyName="shares"
@@ -435,7 +452,7 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
 
                     return (
                       <tr
-                        key={holding.stock_id}
+                        key={`${holding.portfolio_id}-${holding.stock_id}`}
                         className={onStockClick ? 'clickable' : ''}
                         onClick={() => onStockClick?.(holding.stock_id)}
                       >
@@ -445,6 +462,13 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                             <StockName truncate>{holding.stock_name}</StockName>
                           </div>
                         </td>
+                        {showPortfolioColumn && (
+                          <td>
+                            <Text color="secondary">
+                              {holding.portfolio_name}
+                            </Text>
+                          </td>
+                        )}
                         <td className="right">
                           <MetricValue>
                             {formatNumber(holding.total_shares, 4)}
