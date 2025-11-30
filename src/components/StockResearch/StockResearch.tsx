@@ -28,6 +28,7 @@ import {
   MetricValue,
   Description,
   Badge,
+  Text,
 } from '@/components/shared/Typography';
 import { Tabs } from '@/components/shared/Tabs';
 import { ResearchSummary } from './ResearchSummary';
@@ -72,6 +73,7 @@ export function StockResearch({
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('summary');
   const [retryCount, setRetryCount] = useState(0);
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [dataLoadStatus, setDataLoadStatus] = useState<DataLoadStatus>({
     analyst: false,
     technical: false,
@@ -143,10 +145,10 @@ export function StockResearch({
             setNewsArticles(tickerNews.articles.map((a) => ({ ...a, ticker })));
           }
 
-          // Update load status for debug
+          // Update load status for debug - check if data is actually present
           setDataLoadStatus({
-            analyst: !!analyst,
-            technical: !!technical,
+            analyst: !!(analyst?.currentPrice || analyst?.recommendationKey),
+            technical: !!(technical?.rsi || technical?.macd),
             news: !!tickerNews?.articles?.length,
             peers: !!peers?.mainStock,
             rateLimited,
@@ -253,6 +255,7 @@ export function StockResearch({
           fontFamily: 'monospace',
           color: '#666',
           padding: '2px 4px',
+          marginBottom: '1rem',
           background: '#f5f5f5',
           display: 'flex',
           flexWrap: 'wrap',
@@ -263,12 +266,14 @@ export function StockResearch({
           req: {ticker} | analyst: {dataLoadStatus.analyst ? '✓' : '✗'} | tech:{' '}
           {dataLoadStatus.technical ? '✓' : '✗'} | news:{' '}
           {dataLoadStatus.news ? '✓' : '✗'} | peers:{' '}
-          {dataLoadStatus.peers ? '✓' : '✗'}
+          {dataLoadStatus.peers ? '✓' : '✗'} | desc:{' '}
+          {analystData.descriptionSource ?? '✗'}
         </span>
         {dataLoadStatus.rateLimited && (
           <span style={{ color: '#c00', fontWeight: 'bold' }}>
-            RATE LIMITED: {dataLoadStatus.rateLimited.finnhub && 'Finnhub'}{' '}
-            {dataLoadStatus.rateLimited.yahoo && 'Yahoo'}
+            RATE LIMITED: {dataLoadStatus.rateLimited.finnhub && 'Finnhub '}
+            {dataLoadStatus.rateLimited.yahoo && 'Yahoo '}
+            {dataLoadStatus.rateLimited.alpha && 'Alpha'}
           </span>
         )}
         {(ticker !== analystData.ticker ||
@@ -279,26 +284,50 @@ export function StockResearch({
 
       {/* Header */}
       <div className="stock-research-header">
-        <Button variant="ghost" size="sm" onClick={onBack}>
-          ← Back
-        </Button>
-        <div className="stock-research-title">
-          <Ticker size="lg">{analystData.ticker}</Ticker>
-          <StockName>{analystData.stockName}</StockName>
-          {!exchangeInfo.isUSStock && (
-            <Badge variant="info">{exchangeInfo.exchangeSuffix}</Badge>
+        <div className="stock-research-header__top">
+          <Button variant="ghost" size="sm" onClick={onBack}>
+            ← Back
+          </Button>
+          {onAddToWatchlist && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => onAddToWatchlist(ticker)}
+            >
+              + Watchlist
+            </Button>
           )}
         </div>
-        {onAddToWatchlist && (
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => onAddToWatchlist(ticker)}
-          >
-            + Watchlist
-          </Button>
-        )}
+        <div className="stock-research-header__title">
+          <div className="stock-research-ticker-row">
+            <Ticker size="lg">{analystData.ticker}</Ticker>
+            {!exchangeInfo.isUSStock && (
+              <Badge variant="info">{exchangeInfo.exchangeSuffix}</Badge>
+            )}
+          </div>
+          <StockName size="lg">{analystData.stockName}</StockName>
+        </div>
       </div>
+
+      {/* Company Description */}
+      {analystData.description && (
+        <div
+          className={`stock-research-description${
+            !descriptionExpanded ? ' stock-research-description--collapsed' : ''
+          }`}
+        >
+          <Text size="sm" color="secondary">
+            {analystData.description}
+          </Text>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setDescriptionExpanded(!descriptionExpanded)}
+          >
+            {descriptionExpanded ? 'Show less' : 'Show more'}
+          </Button>
+        </div>
+      )}
 
       {/* Price & Signal */}
       <div className="stock-research-price-bar">

@@ -6,19 +6,59 @@
 
 /* Header */
 .stock-research-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
   padding: 1rem 0;
   border-bottom: 1px solid var(--border-color);
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
-.stock-research-title {
-  flex: 1;
+.stock-research-header__top {
   display: flex;
-  align-items: baseline;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.stock-research-header__title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stock-research-ticker-row {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
+}
+
+.stock-research-header__title .stock-name {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Company Description */
+.stock-research-description {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.stock-research-description .text {
+  line-height: 1.6;
+}
+
+.stock-research-description--collapsed .text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.stock-research-description .button {
+  padding-left: 0;
+  padding-top: 0;
 }
 
 /* Limited Data Warning */

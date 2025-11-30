@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 export interface RateLimitInfo {
   finnhub: boolean;
   yahoo: boolean;
+  alpha: boolean;
 }
 
 // Earnings surprise data for a single quarter
@@ -101,6 +102,8 @@ export interface AnalystData {
   peers: string[];
   // Company profile
   industry: string | null;
+  description: string | null;
+  descriptionSource: 'alpha' | null;
   // Error tracking
   error?: string;
 }
