@@ -75,7 +75,8 @@ export type SignalType =
   | 'strong'
   | 'moderate'
   | 'weak'
-  | 'no-trend';
+  | 'no-trend'
+  | 'info';
 
 interface IndicatorSignalProps {
   type: SignalType | null;

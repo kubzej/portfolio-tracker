@@ -1,7 +1,15 @@
 import type { AnalystData } from '@/services/api/analysis';
 import type { StockRecommendation } from '@/utils/recommendations';
 import { cn } from '@/utils/cn';
-import { ScoreCard, InfoTooltip } from '@/components/shared';
+import { ScoreCard, InfoTooltip, IndicatorSignal } from '@/components/shared';
+import {
+  CardTitle,
+  MetricLabel,
+  MetricValue,
+  Text,
+  Muted,
+  Badge,
+} from '@/components/shared/Typography';
 import './ResearchSummary.css';
 
 interface ResearchSummaryProps {
@@ -20,7 +28,7 @@ export function ResearchSummary({
     <div className="research-summary">
       {/* Score Overview - both Conviction and Composite scores */}
       <section className="summary-section">
-        <h3 className="section-title">Overall Rating</h3>
+        <CardTitle>Overall Rating</CardTitle>
         <div className="score-overview">
           <div className="dual-scores">
             {/* Composite Score */}
@@ -31,7 +39,7 @@ export function ResearchSummary({
               )}
             >
               <div className="score-label">
-                Score
+                <MetricLabel>Score</MetricLabel>
                 <InfoTooltip text="Celkové skóre akcie. Vážený průměr: 25% technická analýza, 20% fundamenty, 20% portfolio kontext, 15% analytici, 10% zprávy, 10% insider aktivita." />
               </div>
               <span className="score-value">
@@ -47,7 +55,7 @@ export function ResearchSummary({
               )}
             >
               <div className="score-label">
-                Conviction
+                <MetricLabel>Conviction</MetricLabel>
                 <InfoTooltip text="Měří dlouhodobou kvalitu akcie pro držení. Zahrnuje stabilitu fundamentů (ROE, marže, růst), tržní pozici (analytici, target price) a momentum (insider aktivita)." />
               </div>
               <span className="score-value">
@@ -57,29 +65,35 @@ export function ResearchSummary({
           </div>
 
           <div className="score-badges">
-            <span
-              className={cn(
-                'technical-badge',
-                recommendation.technicalBias.toLowerCase()
-              )}
+            <Badge
+              variant={
+                recommendation.technicalBias === 'BULLISH'
+                  ? 'buy'
+                  : recommendation.technicalBias === 'BEARISH'
+                  ? 'sell'
+                  : 'hold'
+              }
             >
               Technical: {recommendation.technicalBias}
-            </span>
-            <span
-              className={cn(
-                'conviction-badge',
-                recommendation.convictionLevel.toLowerCase()
-              )}
+            </Badge>
+            <Badge
+              variant={
+                recommendation.convictionLevel === 'HIGH'
+                  ? 'buy'
+                  : recommendation.convictionLevel === 'LOW'
+                  ? 'sell'
+                  : 'hold'
+              }
             >
               {recommendation.convictionLevel} Conviction
-            </span>
+            </Badge>
           </div>
         </div>
       </section>
 
       {/* Score Breakdown */}
       <section className="summary-section">
-        <h3 className="section-title">Score Breakdown</h3>
+        <CardTitle>Score Breakdown</CardTitle>
         <div className="score-breakdown-grid">
           {breakdown.map((component) => (
             <ScoreCard
@@ -99,31 +113,35 @@ export function ResearchSummary({
         <div className="points-card strengths">
           <div className="points-header">
             <span className="points-icon">✓</span>
-            <h4>Strengths</h4>
+            <CardTitle>Strengths</CardTitle>
           </div>
           {strengths.length > 0 ? (
             <ul className="points-list">
               {strengths.map((s, i) => (
-                <li key={i}>{s}</li>
+                <li key={i}>
+                  <Text>{s}</Text>
+                </li>
               ))}
             </ul>
           ) : (
-            <p className="no-points">No strong positives</p>
+            <Muted>No strong positives</Muted>
           )}
         </div>
         <div className="points-card concerns">
           <div className="points-header">
             <span className="points-icon">!</span>
-            <h4>Concerns</h4>
+            <CardTitle>Concerns</CardTitle>
           </div>
           {concerns.length > 0 ? (
             <ul className="points-list">
               {concerns.map((c, i) => (
-                <li key={i}>{c}</li>
+                <li key={i}>
+                  <Text>{c}</Text>
+                </li>
               ))}
             </ul>
           ) : (
-            <p className="no-points">No major concerns</p>
+            <Muted>No major concerns</Muted>
           )}
         </div>
       </section>
@@ -131,42 +149,38 @@ export function ResearchSummary({
       {/* Entry Strategy */}
       {buyStrategy && (
         <section className="summary-section">
-          <h3 className="section-title">Entry Strategy</h3>
+          <CardTitle>Entry Strategy</CardTitle>
           <div className="entry-strategy">
             {buyStrategy.inBuyZone && (
-              <div className="in-buy-zone-alert">
+              <IndicatorSignal type="bullish">
                 Current price is in the buy zone
-              </div>
+              </IndicatorSignal>
             )}
             <div className="strategy-cards">
               <div className="strategy-card">
-                <span className="strategy-label">Buy Zone</span>
-                <span
-                  className={cn(
-                    'strategy-value',
-                    buyStrategy.inBuyZone && 'positive'
-                  )}
+                <MetricLabel>Buy Zone</MetricLabel>
+                <MetricValue
+                  sentiment={buyStrategy.inBuyZone ? 'positive' : undefined}
                 >
                   {buyStrategy.buyZoneLow && buyStrategy.buyZoneHigh
                     ? `$${buyStrategy.buyZoneLow.toFixed(
                         2
                       )} – $${buyStrategy.buyZoneHigh.toFixed(2)}`
                     : '—'}
-                </span>
+                </MetricValue>
               </div>
               <div className="strategy-card">
-                <span className="strategy-label">Support</span>
-                <span className="strategy-value">
+                <MetricLabel>Support</MetricLabel>
+                <MetricValue>
                   {buyStrategy.supportPrice
                     ? `$${buyStrategy.supportPrice.toFixed(2)}`
                     : '—'}
-                </span>
+                </MetricValue>
               </div>
               <div className="strategy-card">
-                <span className="strategy-label">Risk/Reward</span>
-                <span
-                  className={cn(
-                    'strategy-value',
+                <MetricLabel>Risk/Reward</MetricLabel>
+                <MetricValue
+                  sentiment={
                     buyStrategy.riskRewardRatio
                       ? buyStrategy.riskRewardRatio >= 2
                         ? 'positive'
@@ -174,27 +188,26 @@ export function ResearchSummary({
                         ? 'neutral'
                         : 'negative'
                       : undefined
-                  )}
+                  }
                 >
                   {buyStrategy.riskRewardRatio
                     ? `${buyStrategy.riskRewardRatio}:1`
                     : '—'}
-                </span>
+                </MetricValue>
               </div>
               <div className="strategy-card">
-                <span className="strategy-label">DCA</span>
-                <span
-                  className={cn(
-                    'strategy-value',
+                <MetricLabel>DCA</MetricLabel>
+                <MetricValue
+                  sentiment={
                     buyStrategy.dcaRecommendation === 'AGGRESSIVE'
                       ? 'positive'
                       : buyStrategy.dcaRecommendation === 'NO_DCA'
                       ? 'negative'
                       : 'neutral'
-                  )}
+                  }
                 >
                   {buyStrategy.dcaRecommendation || '—'}
-                </span>
+                </MetricValue>
               </div>
             </div>
           </div>
@@ -204,29 +217,30 @@ export function ResearchSummary({
       {/* Exit Strategy */}
       {exitStrategy && (
         <section className="summary-section">
-          <h3 className="section-title">Exit Strategy</h3>
+          <CardTitle>Exit Strategy</CardTitle>
           <div className="entry-strategy">
             <div className="holding-period-badge">
-              <span
-                className={cn(
-                  'period-badge',
-                  exitStrategy.holdingPeriod.toLowerCase()
-                )}
+              <Badge
+                variant={
+                  exitStrategy.holdingPeriod === 'LONG'
+                    ? 'buy'
+                    : exitStrategy.holdingPeriod === 'SWING'
+                    ? 'sell'
+                    : 'hold'
+                }
               >
                 {exitStrategy.holdingPeriod === 'SWING'
                   ? 'Swing Trade'
                   : exitStrategy.holdingPeriod === 'MEDIUM'
                   ? 'Medium Term'
                   : 'Long Term Hold'}
-              </span>
-              <span className="period-reason">
-                {exitStrategy.holdingReason}
-              </span>
+              </Badge>
+              <Text color="secondary">{exitStrategy.holdingReason}</Text>
             </div>
             <div className="strategy-cards">
               <div className="strategy-card">
-                <span className="strategy-label">Take Profit 1</span>
-                <span className="strategy-value positive">
+                <MetricLabel>Take Profit 1</MetricLabel>
+                <MetricValue sentiment="positive">
                   {exitStrategy.takeProfit1
                     ? `$${exitStrategy.takeProfit1.toFixed(2)}`
                     : '—'}
@@ -244,11 +258,11 @@ export function ResearchSummary({
                         %)
                       </span>
                     )}
-                </span>
+                </MetricValue>
               </div>
               <div className="strategy-card">
-                <span className="strategy-label">Take Profit 2</span>
-                <span className="strategy-value positive">
+                <MetricLabel>Take Profit 2</MetricLabel>
+                <MetricValue sentiment="positive">
                   {exitStrategy.takeProfit2
                     ? `$${exitStrategy.takeProfit2.toFixed(2)}`
                     : '—'}
@@ -266,11 +280,11 @@ export function ResearchSummary({
                         %)
                       </span>
                     )}
-                </span>
+                </MetricValue>
               </div>
               <div className="strategy-card">
-                <span className="strategy-label">Target</span>
-                <span className="strategy-value positive">
+                <MetricLabel>Target</MetricLabel>
+                <MetricValue sentiment="positive">
                   {exitStrategy.takeProfit3
                     ? `$${exitStrategy.takeProfit3.toFixed(2)}`
                     : '—'}
@@ -288,11 +302,11 @@ export function ResearchSummary({
                         %)
                       </span>
                     )}
-                </span>
+                </MetricValue>
               </div>
               <div className="strategy-card">
-                <span className="strategy-label">Stop Loss</span>
-                <span className="strategy-value negative">
+                <MetricLabel>Stop Loss</MetricLabel>
+                <MetricValue sentiment="negative">
                   {exitStrategy.stopLoss
                     ? `$${exitStrategy.stopLoss.toFixed(2)}`
                     : '—'}
@@ -308,14 +322,14 @@ export function ResearchSummary({
                       %)
                     </span>
                   )}
-                </span>
+                </MetricValue>
               </div>
             </div>
             {exitStrategy.trailingStopPercent && (
-              <div className="trailing-stop-note">
+              <IndicatorSignal type="info">
                 Consider {exitStrategy.trailingStopPercent}% trailing stop after
                 first target
-              </div>
+              </IndicatorSignal>
             )}
           </div>
         </section>
@@ -323,14 +337,14 @@ export function ResearchSummary({
 
       {/* Analyst Consensus - always show */}
       <section className="summary-section">
-        <h3 className="section-title">
-          Analyst Consensus
+        <div className="section-title-row">
+          <CardTitle>Analyst Consensus</CardTitle>
           {analystData.numberOfAnalysts && analystData.numberOfAnalysts > 0 && (
-            <span className="title-meta">
+            <Text color="secondary" size="sm">
               {analystData.numberOfAnalysts} analysts
-            </span>
+            </Text>
           )}
-        </h3>
+        </div>
         <div className="analyst-consensus">
           {analystData.numberOfAnalysts && analystData.numberOfAnalysts > 0 ? (
             <AnalystRatings
@@ -342,8 +356,7 @@ export function ResearchSummary({
             />
           ) : (
             <div className="no-analyst-data">
-              <span className="no-data-icon">—</span>
-              <span>No analyst coverage available</span>
+              <Muted>No analyst coverage available</Muted>
             </div>
           )}
         </div>
@@ -353,63 +366,59 @@ export function ResearchSummary({
       {analystData.insiderSentiment &&
         analystData.insiderSentiment.mspr !== null && (
           <section className="summary-section">
-            <h3 className="section-title">
-              Insider Sentiment
-              <InfoTooltip text="Aktivita insiderů (vedení, ředitelé) za posledních 3 měsíce. MSPR = Monthly Share Purchase Ratio. Kladné = nákupy, záporné = prodeje. Silný nákup insiderů je pozitivní signál důvěry ve firmu." />
-            </h3>
+            <div className="section-title-row">
+              <CardTitle>Insider Sentiment</CardTitle>
+            </div>
             <div className="strategy-cards insider-cards">
               <div className="strategy-card">
-                <span className="strategy-label">MSPR (3M)</span>
-                <span
-                  className={cn(
-                    'strategy-value',
+                <MetricLabel>MSPR (3M)</MetricLabel>
+                <MetricValue
+                  sentiment={
                     analystData.insiderSentiment.mspr > 15
                       ? 'positive'
                       : analystData.insiderSentiment.mspr < -15
                       ? 'negative'
                       : 'neutral'
-                  )}
+                  }
                 >
                   {analystData.insiderSentiment.mspr > 0 ? '+' : ''}
                   {analystData.insiderSentiment.mspr.toFixed(1)}
-                </span>
+                </MetricValue>
               </div>
               {analystData.insiderSentiment.change !== null && (
                 <div className="strategy-card">
-                  <span className="strategy-label">Net Shares</span>
-                  <span
-                    className={cn(
-                      'strategy-value',
+                  <MetricLabel>Net Shares</MetricLabel>
+                  <MetricValue
+                    sentiment={
                       analystData.insiderSentiment.change > 0
                         ? 'positive'
                         : analystData.insiderSentiment.change < 0
                         ? 'negative'
                         : 'neutral'
-                    )}
+                    }
                   >
                     {analystData.insiderSentiment.change > 0 ? '+' : ''}
                     {analystData.insiderSentiment.change.toLocaleString()}
-                  </span>
+                  </MetricValue>
                 </div>
               )}
               <div className="strategy-card">
-                <span className="strategy-label">Signál</span>
-                <span
-                  className={cn(
-                    'strategy-value',
+                <MetricLabel>Signal</MetricLabel>
+                <MetricValue
+                  sentiment={
                     analystData.insiderSentiment.mspr > 15
                       ? 'positive'
                       : analystData.insiderSentiment.mspr < -15
                       ? 'negative'
                       : 'neutral'
-                  )}
+                  }
                 >
                   {analystData.insiderSentiment.mspr > 15
                     ? 'Buying'
                     : analystData.insiderSentiment.mspr < -15
                     ? 'Selling'
                     : 'Neutral'}
-                </span>
+                </MetricValue>
               </div>
             </div>
           </section>
@@ -467,12 +476,14 @@ function AnalystRatings({
             className="rating-dot"
             style={{ backgroundColor: rating.color }}
           />
-          <span className="rating-label-text">{rating.label}</span>
-          <span
-            className={cn('rating-label-count', rating.count === 0 && 'zero')}
+          <Text size="sm">{rating.label}</Text>
+          <Text
+            size="sm"
+            weight="semibold"
+            color={rating.count === 0 ? 'muted' : undefined}
           >
             {rating.count}
-          </span>
+          </Text>
         </div>
       ))}
     </div>

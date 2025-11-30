@@ -12,7 +12,6 @@ import {
   type EnrichedAnalystData,
   type StockRecommendation,
 } from '@/utils/recommendations';
-import { cn } from '@/utils/cn';
 import { getExchangeInfo } from '@/utils/format';
 import {
   LoadingSpinner,
@@ -20,7 +19,16 @@ import {
   PriceDisplay,
   SignalBadge,
   InfoTooltip,
+  Button,
 } from '@/components/shared';
+import {
+  Ticker,
+  StockName,
+  MetricLabel,
+  MetricValue,
+  Description,
+  Badge,
+} from '@/components/shared/Typography';
 import { Tabs } from '@/components/shared/Tabs';
 import { ResearchSummary } from './ResearchSummary';
 import { ResearchValuation } from './ResearchValuation';
@@ -271,25 +279,24 @@ export function StockResearch({
 
       {/* Header */}
       <div className="stock-research-header">
-        <button className="back-btn" onClick={onBack}>
+        <Button variant="ghost" size="sm" onClick={onBack}>
           ← Back
-        </button>
+        </Button>
         <div className="stock-research-title">
-          <span className="ticker">{analystData.ticker}</span>
-          <span className="name">{analystData.stockName}</span>
+          <Ticker size="lg">{analystData.ticker}</Ticker>
+          <StockName>{analystData.stockName}</StockName>
           {!exchangeInfo.isUSStock && (
-            <span className="exchange-badge">
-              {exchangeInfo.exchangeSuffix}
-            </span>
+            <Badge variant="info">{exchangeInfo.exchangeSuffix}</Badge>
           )}
         </div>
         {onAddToWatchlist && (
-          <button
-            className="add-to-watchlist-btn"
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => onAddToWatchlist(ticker)}
           >
             + Watchlist
-          </button>
+          </Button>
         )}
       </div>
 
@@ -304,9 +311,9 @@ export function StockResearch({
         {recommendation && (
           <div className="stock-research-signal">
             <SignalBadge type={recommendation.primarySignal.type} size="md" />
-            <span className="signal-description">
+            <Description>
               {recommendation.primarySignal.description}
-            </span>
+            </Description>
           </div>
         )}
       </div>
@@ -399,10 +406,10 @@ function QuickStat({ label, value, sentiment, tooltip }: QuickStatProps) {
   return (
     <div className="quick-stat">
       <span className="quick-stat-label">
-        {label}
+        <MetricLabel>{label}</MetricLabel>
         {tooltip && <InfoTooltip text={tooltip} />}
       </span>
-      <span className={cn('quick-stat-value', sentiment)}>{value}</span>
+      <MetricValue sentiment={sentiment}>{value}</MetricValue>
     </div>
   );
 }
