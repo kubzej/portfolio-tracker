@@ -746,5 +746,3 @@ function ArticleCard({
     </a>
   );
 }
-
-export default News;

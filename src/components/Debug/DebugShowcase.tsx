@@ -1057,5 +1057,3 @@ export function DebugShowcase() {
     </div>
   );
 }
-
-export default DebugShowcase;

@@ -292,8 +292,6 @@
   color: var(--danger);
 }
 
-/* REMOVED: .sort-icon styles - Now using SortIcon component */
-
 /* Stock Cell */
 .stock-cell {
   display: flex;
@@ -2009,8 +2007,6 @@
   margin-bottom: 0;
 }
 
-/* REMOVED: .trend-signal styles - Now using TrendSignal component */
-
 /* Technical Explanations Section */
 .tech-explanations {
   margin-top: 2rem;
@@ -2216,10 +2212,6 @@
   font-size: 0.875rem;
 }
 
-/* REMOVED: .usage-item strong, .usage-item span - Now using Text components */
-
-/* REMOVED: .tech-summary-section - Now using ChartSection component */
-
 /* Mobile adjustments for new elements */
 @media (max-width: 600px) {
   .chart-legend-info {
@@ -2243,12 +2235,8 @@
 }
 
 /* ============================================
-   LEGACY INDICATOR STYLES - REMOVED
-   Now using IndicatorValue, IndicatorSignal components
-   from @/components/shared/IndicatorValue
+   Position block for Bollinger
    ============================================ */
-
-/* Position block for Bollinger - KEEP */
 .indicator-position-block {
   display: flex;
   flex-direction: column;
@@ -2262,8 +2250,6 @@
   justify-content: space-between;
   align-items: center;
 }
-
-/* REMOVED: .position-label, .position-value - Now using MetricLabel, MetricValue */
 
 .position-bar {
   position: relative;
@@ -2299,17 +2285,9 @@
   letter-spacing: 0.02em;
 }
 
-/* REMOVED: .zone-label, .zone-label.zone-* - Now using Text components */
-
-/* REMOVED: .indicator-zones-row, .zone-badge - Now using ZonesRow, ZoneBadge components */
-
-/* REMOVED: .indicator-signal and all variants - Now using IndicatorSignal component */
-
-/* REMOVED: .no-data-message - Now using ChartNoData component */
-
-/* REMOVED: .obv-section, .adx-section, .fibonacci-section - No longer needed */
-
-/* Fibonacci Visual - KEEP (special layout) */
+/* ============================================
+   Fibonacci Visual
+   ============================================ */
 .fibonacci-visual {
   position: relative;
   margin: 1.5rem 0;
