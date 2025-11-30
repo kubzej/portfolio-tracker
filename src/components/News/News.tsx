@@ -7,8 +7,7 @@ import {
   type NewsArticle,
 } from '@/services/api/news';
 import { formatRelativeTime } from '@/utils/format';
-import { getSentimentColor, getSentimentLabel } from '@/utils/sentiment';
-import { InfoTooltip } from '@/components/shared/InfoTooltip';
+import { getSentimentLabel } from '@/utils/sentiment';
 import { Button } from '@/components/shared/Button';
 import { Input } from '@/components/shared/Input';
 import { Tabs } from '@/components/shared/Tabs';
@@ -19,7 +18,6 @@ import {
   CardTitle,
   Ticker,
   MetricValue,
-  MetricLabel,
   Caption,
   Description,
   Muted,
@@ -596,9 +594,9 @@ export function News({ portfolioId }: NewsProps) {
                       >
                         {topic.label}
                         {count > 0 && (
-                          <Text size="xs" className="chip-count">
-                            {count}
-                          </Text>
+                          <span className="chip-count">
+                            <Text size="xs">{count}</Text>
+                          </span>
                         )}
                       </Button>
                     );
@@ -625,9 +623,7 @@ export function News({ portfolioId }: NewsProps) {
                 Stocks (
                 {newsData.stats.byTicker.filter((t) => t.count > 0).length})
               </Text>
-              <Text size="xs" color="muted">
-                {showTopics ? '▲' : '▼'}
-              </Text>
+              <Muted>{showTopics ? '▲' : '▼'}</Muted>
             </Button>
             <div
               className={`ticker-sentiment-grid ${
@@ -646,7 +642,7 @@ export function News({ portfolioId }: NewsProps) {
                   >
                     <Ticker size="sm">{ticker.ticker}</Ticker>
                     <MetricValue
-                      size="md"
+                      size="base"
                       sentiment={
                         ticker.avgSentiment !== null
                           ? ticker.avgSentiment > 0.1
@@ -707,35 +703,36 @@ function ArticleCard({
       <div className="article-content">
         <div className="article-meta">
           {article.ticker && (
-            <Ticker size="sm" className="article-ticker">
-              {article.ticker}
-            </Ticker>
+            <span className="article-ticker">
+              <Ticker size="sm">{article.ticker}</Ticker>
+            </span>
           )}
           <Caption>{article.source}</Caption>
-          <Caption color="muted">
-            {formatRelativeTime(article.publishedAt)}
-          </Caption>
+          <Muted>{formatRelativeTime(article.publishedAt)}</Muted>
           {article.sentiment && (
-            <Badge
-              size="sm"
-              variant={
-                article.sentiment.label === 'positive'
-                  ? 'positive'
-                  : article.sentiment.label === 'negative'
-                  ? 'negative'
-                  : 'neutral'
-              }
-              className="article-sentiment"
-            >
-              {getSentimentLabel(article.sentiment.label)}
-            </Badge>
+            <span className="article-sentiment">
+              <Badge
+                size="sm"
+                variant={
+                  article.sentiment.label === 'positive'
+                    ? 'positive'
+                    : article.sentiment.label === 'negative'
+                    ? 'negative'
+                    : 'neutral'
+                }
+              >
+                {getSentimentLabel(article.sentiment.label)}
+              </Badge>
+            </span>
           )}
         </div>
-        <CardTitle className="article-title">{article.title}</CardTitle>
+        <div className="article-title">
+          <CardTitle>{article.title}</CardTitle>
+        </div>
         {article.summary && (
-          <Description className="article-summary">
-            {article.summary}
-          </Description>
+          <div className="article-summary">
+            <Description>{article.summary}</Description>
+          </div>
         )}
         {article.sentiment?.keywords &&
           article.sentiment.keywords.length > 0 && (
