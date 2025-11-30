@@ -70,8 +70,7 @@ const METRICS: MetricConfig[] = [
   {
     key: 'peRatio',
     label: 'P/E',
-    tooltip:
-      'Price-to-Earnings ratio. Nižší = levnější valuace (pokud je zisková).',
+    tooltip: '**P/E Ratio** | Poměr ceny k zisku. | • Nižší = levnější valuace',
     format: (v) => (v !== null ? formatNumber(v, 1) : '—'),
     higherIsBetter: false,
     lowerIsBetterIfPositive: true,
@@ -80,7 +79,8 @@ const METRICS: MetricConfig[] = [
   {
     key: 'evEbitda',
     label: 'EV/EBITDA',
-    tooltip: 'Enterprise Value to EBITDA. Nižší = levnější valuace.',
+    tooltip:
+      '**EV/EBITDA** | Hodnota firmy / provozní zisk. | • Nižší = levnější',
     format: (v) => (v !== null ? formatNumber(v, 1) : '—'),
     higherIsBetter: false,
     lowerIsBetterIfPositive: true,
@@ -89,8 +89,7 @@ const METRICS: MetricConfig[] = [
   {
     key: 'roe',
     label: 'ROE',
-    tooltip:
-      'Return on Equity - rentabilita vlastního kapitálu. Vyšší = lepší.',
+    tooltip: '**ROE** | Návratnost vlastního kapitálu. | • Vyšší = lepší',
     format: (v) => (v !== null ? formatPercent(v) : '—'),
     higherIsBetter: true,
     category: 'profitability',
@@ -98,7 +97,8 @@ const METRICS: MetricConfig[] = [
   {
     key: 'netMargin',
     label: 'Margin',
-    tooltip: 'Čistá zisková marže. Vyšší = vyšší profitabilita.',
+    tooltip:
+      '**Čistá marže** | Kolik % tržeb zůstane jako zisk. | • Vyšší = lepší',
     format: (v) => (v !== null ? formatPercent(v) : '—'),
     higherIsBetter: true,
     category: 'profitability',
@@ -107,7 +107,8 @@ const METRICS: MetricConfig[] = [
     key: 'revenueGrowth',
     label: 'Rev Growth',
     shortLabel: 'Growth',
-    tooltip: 'Meziroční růst tržeb. Vyšší = rychlejší růst.',
+    tooltip:
+      '**Růst tržeb** | Meziroční změna tržeb. | • Vyšší = rychlejší růst',
     format: (v) => (v !== null ? formatPercent(v) : '—'),
     higherIsBetter: true,
     category: 'growth',
@@ -115,7 +116,7 @@ const METRICS: MetricConfig[] = [
   {
     key: 'targetUpside',
     label: 'Upside',
-    tooltip: 'Potenciální růst k cílovému kurzu analytiků.',
+    tooltip: '**Upside** | Potenciální růst k cílovému kurzu analytiků.',
     format: (v) =>
       v !== null ? `${v > 0 ? '+' : ''}${formatNumber(v, 1)}%` : '—',
     higherIsBetter: true,
@@ -125,7 +126,7 @@ const METRICS: MetricConfig[] = [
     key: 'return1M',
     label: '1M Return',
     shortLabel: '1M',
-    tooltip: 'Výnos za poslední měsíc.',
+    tooltip: '**1M výnos** | Výkonnost za poslední měsíc.',
     format: (v) =>
       v !== null ? `${v > 0 ? '+' : ''}${formatNumber(v, 1)}%` : '—',
     higherIsBetter: true,
@@ -135,7 +136,7 @@ const METRICS: MetricConfig[] = [
     key: 'return3M',
     label: '3M Return',
     shortLabel: '3M',
-    tooltip: 'Výnos za poslední 3 měsíce.',
+    tooltip: '**3M výnos** | Výkonnost za poslední 3 měsíce.',
     format: (v) =>
       v !== null ? `${v > 0 ? '+' : ''}${formatNumber(v, 1)}%` : '—',
     higherIsBetter: true,
@@ -145,7 +146,7 @@ const METRICS: MetricConfig[] = [
     key: 'return6M',
     label: '6M Return',
     shortLabel: '6M',
-    tooltip: 'Výnos za posledních 6 měsíců.',
+    tooltip: '**6M výnos** | Výkonnost za posledních 6 měsíců.',
     format: (v) =>
       v !== null ? `${v > 0 ? '+' : ''}${formatNumber(v, 1)}%` : '—',
     higherIsBetter: true,
@@ -155,7 +156,7 @@ const METRICS: MetricConfig[] = [
     key: 'return1Y',
     label: '1Y Return',
     shortLabel: '1Y',
-    tooltip: 'Výnos za poslední rok.',
+    tooltip: '**1Y výnos** | Výkonnost za poslední rok.',
     format: (v) =>
       v !== null ? `${v > 0 ? '+' : ''}${formatNumber(v, 1)}%` : '—',
     higherIsBetter: true,
@@ -164,7 +165,7 @@ const METRICS: MetricConfig[] = [
   {
     key: 'marketCap',
     label: 'Market Cap',
-    tooltip: 'Tržní kapitalizace společnosti.',
+    tooltip: '**Tržní kapitalizace** | Celková hodnota všech akcií.',
     format: (v) => (v !== null ? formatLargeNumber(v) : '—'),
     higherIsBetter: false,
     category: 'size',
@@ -657,7 +658,7 @@ export function ResearchPeers({
         <div className="peers-insights">
           <CardTitle>
             Key Insights
-            <InfoTooltip text="Automaticky generované postřehy na základě porovnání s konkurencí." />
+            <InfoTooltip text="**Klíčové poznatky** | Automaticky generované postřehy na základě porovnání s konkurencí." />
           </CardTitle>
           <div className="insights-list">
             {insights.map((insight, idx) => (
@@ -673,7 +674,7 @@ export function ResearchPeers({
       <div className="peers-radar">
         <CardTitle>
           Performance Profile
-          <InfoTooltip text="Vizuální porovnání klíčových metrik s průměrem konkurence. Vyšší = lepší." />
+          <InfoTooltip text="**Výkonnostní profil** | Vizuální porovnání klíčových metrik s průměrem konkurence. | Vyšší = lepší." />
         </CardTitle>
         <div className="radar-chart-container">
           <ResponsiveContainer width="100%" height={280}>
@@ -732,7 +733,7 @@ export function ResearchPeers({
       <div className="peers-performance">
         <CardTitle>
           Historical Returns
-          <InfoTooltip text="Výkonnost akcií za různá období. Klikni na záhlaví pro řazení." />
+          <InfoTooltip text="**Historické výnosy** | Výkonnost akcií za různá období. | Klikni na záhlaví pro řazení." />
         </CardTitle>
         <div className="performance-table-wrapper">
           <table className="performance-table">
@@ -814,7 +815,7 @@ export function ResearchPeers({
       <div className="peers-valuation-scores">
         <CardTitle>
           Valuation Score
-          <InfoTooltip text="Kombinované hodnocení valuace na základě P/E a EV/EBITDA. Vyšší = levnější." />
+          <InfoTooltip text="**Valuační skóre** | Kombinované hodnocení valuace na základě P/E a EV/EBITDA. | Vyšší = levnější." />
         </CardTitle>
         <div className="valuation-bars">
           {allStocks
@@ -853,7 +854,7 @@ export function ResearchPeers({
       <div className="peers-table-section">
         <CardTitle>
           Detailed Comparison
-          <InfoTooltip text="Podrobné porovnání všech klíčových metrik." />
+          <InfoTooltip text="**Detailní porovnání** | Podrobné porovnání všech klíčových metrik." />
         </CardTitle>
         <div className="peers-table-wrapper">
           <table className="peers-table">
@@ -930,7 +931,7 @@ export function ResearchPeers({
                 <td className="metric-col">
                   <MetricLabel>
                     Recommendation
-                    <InfoTooltip text="Konsenzus analytiků na základě průzkumu." />
+                    <InfoTooltip text="**Doporučení** | Konsenzus analytiků na základě průzkumu." />
                   </MetricLabel>
                 </td>
                 {allStocks.map((stock) => (

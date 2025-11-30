@@ -44,7 +44,7 @@ export function ResearchValuation({
             label="P/E Ratio"
             value={f.peRatio?.toFixed(2) ?? null}
             tooltip={
-              <InfoTooltip text="Poměr ceny k zisku. Kolik korun platíte za 1 korunu ročního zisku. Nižší = levnější, ale záleží na odvětví." />
+              <InfoTooltip text="**P/E Ratio** | Poměr ceny k zisku na akcii. | • Pod 15 = levné | • 15-25 = normální | • Nad 25 = drahé nebo růstové" />
             }
             sentiment={getPESentiment(f.peRatio)}
           />
@@ -52,7 +52,7 @@ export function ResearchValuation({
             label="Forward P/E"
             value={f.forwardPe?.toFixed(2) ?? null}
             tooltip={
-              <InfoTooltip text="P/E na základě očekávaných zisků. Lépe odráží budoucí potenciál než historické P/E." />
+              <InfoTooltip text="**Forward P/E** | P/E na základě očekávaných zisků. | • Fwd P/E < P/E = očekávaný růst zisků | • Fwd P/E > P/E = očekávaný pokles zisků" />
             }
             sentiment={getPESentiment(f.forwardPe)}
           />
@@ -60,7 +60,7 @@ export function ResearchValuation({
             label="PEG Ratio"
             value={f.pegRatio?.toFixed(3) ?? null}
             tooltip={
-              <InfoTooltip text="P/E dělené růstem zisku. Pod 1 = podhodnoceno vzhledem k růstu, nad 2 = drahé." />
+              <InfoTooltip text="**PEG Ratio** | P/E dělené růstem zisku. | • Pod 1 = podhodnoceno vzhledem k růstu | • 1-1.5 = férová hodnota | • Nad 2 = drahé" />
             }
             sentiment={getPEGSentiment(f.pegRatio)}
           />
@@ -68,7 +68,7 @@ export function ResearchValuation({
             label="P/B Ratio"
             value={f.pbRatio?.toFixed(3) ?? null}
             tooltip={
-              <InfoTooltip text="Poměr ceny k účetní hodnotě. Pod 1 = akcie se obchoduje pod hodnotou aktiv (může být příležitost)." />
+              <InfoTooltip text="**P/B Ratio** | Poměr ceny k účetní hodnotě. | • Pod 1 = potenciálně levná | • 1-3 = normální | • Nad 3 = drahá nebo silná značka" />
             }
             sentiment={getPBSentiment(f.pbRatio)}
           />
@@ -76,7 +76,7 @@ export function ResearchValuation({
             label="P/S Ratio"
             value={f.psRatio?.toFixed(2) ?? null}
             tooltip={
-              <InfoTooltip text="Poměr ceny k tržbám. Užitečné pro firmy bez zisku. Pod 2 je levné, nad 10 drahé." />
+              <InfoTooltip text="**P/S Ratio** | Poměr ceny k tržbám. | • Pod 2 = levné | • 2-5 = normální | • Nad 10 = drahé | Užitečné pro firmy bez zisku." />
             }
             sentiment={getPSSentiment(f.psRatio)}
           />
@@ -84,7 +84,7 @@ export function ResearchValuation({
             label="EV/EBITDA"
             value={f.evEbitda?.toFixed(2) ?? null}
             tooltip={
-              <InfoTooltip text="Hodnota firmy / provozní zisk. Lepší pro srovnání firem s různým zadlužením. Pod 10 je atraktivní." />
+              <InfoTooltip text="**EV/EBITDA** | Hodnota firmy dělená provozním ziskem. | • Pod 10 = levné | • 10-15 = normální | • Nad 15 = drahé" />
             }
             sentiment={getEVEBITDASentiment(f.evEbitda)}
           />
@@ -163,7 +163,7 @@ export function ResearchValuation({
                     : null
                 }
                 tooltip={
-                  <InfoTooltip text="Nejvyšší cena za posledních 52 týdnů." />
+                  <InfoTooltip text="**52W Maximum** | Nejvyšší cena za poslední rok." />
                 }
               />
               <MetricCard
@@ -174,7 +174,7 @@ export function ResearchValuation({
                     : null
                 }
                 tooltip={
-                  <InfoTooltip text="Nejnižší cena za posledních 52 týdnů." />
+                  <InfoTooltip text="**52W Minimum** | Nejnižší cena za poslední rok." />
                 }
               />
               <MetricCard
@@ -185,7 +185,7 @@ export function ResearchValuation({
                     : null
                 }
                 tooltip={
-                  <InfoTooltip text="Jak daleko je aktuální cena od 52týdenního maxima. Větší odstup může signalizovat příležitost." />
+                  <InfoTooltip text="**Vzdálenost od maxima** | Jak daleko je cena od ročního maxima. | • Větší odstup může signalizovat příležitost | • Malý odstup = blízko maximům" />
                 }
                 sentiment={
                   recommendation.distanceFrom52wHigh !== null

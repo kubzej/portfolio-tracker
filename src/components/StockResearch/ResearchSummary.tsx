@@ -45,7 +45,7 @@ export function ResearchSummary({
             >
               <div className="score-label">
                 <MetricLabel>Score</MetricLabel>
-                <InfoTooltip text="Celkové skóre akcie. Vážený průměr: 25% technická analýza, 20% fundamenty, 20% portfolio kontext, 15% analytici, 10% zprávy, 10% insider aktivita." />
+                <InfoTooltip text="**Celkové skóre akcie** | Vážený průměr všech analytických faktorů: | • 25% technická analýza | • 20% fundamenty | • 20% portfolio kontext | • 15% analytici | • 10% zprávy | • 10% insider aktivita" />
               </div>
               <MetricValue size="xl">
                 {recommendation.compositeScore}
@@ -72,7 +72,7 @@ export function ResearchSummary({
             >
               <div className="score-label">
                 <MetricLabel>Conviction</MetricLabel>
-                <InfoTooltip text="Měří dlouhodobou kvalitu akcie pro držení. Zahrnuje stabilitu fundamentů (ROE, marže, růst), tržní pozici (analytici, target price) a momentum (insider aktivita)." />
+                <InfoTooltip text="**Conviction Score** | Dlouhodobá kvalita akcie pro držení. | Zahrnuje stabilitu fundamentů (ROE, marže, růst), tržní pozici a momentum." />
               </div>
               <MetricValue size="xl">
                 {recommendation.convictionScore}

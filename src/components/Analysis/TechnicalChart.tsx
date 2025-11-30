@@ -478,7 +478,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             {/* Section 1: Trend Signal Overview */}
             <ChartSection
               title="Trend Signal"
-              tooltip="CO TO JE: Souhrnné hodnocení trendu akcie na základě klouzavých průměrů (Moving Averages). JAK ČÍST: 🟢 Strong Bullish = silný růstový trend, ideální pro držení/nákup. 🟢 Bullish = růstový trend. 🔴 Bearish = klesající trend, opatrnost. 🔴 Strong Bearish = silný pokles, zvážit prodej. ⚪ Mixed = nejasný signál, vyčkat."
+              tooltip="**Trend Signál** | Souhrnné hodnocení trendu na základě klouzavých průměrů. | • Strong Bullish = silný růst, ideální pro držení | • Bullish = růstový trend | • Bearish = klesající, opatrnost | • Strong Bearish = silný pokles | • Mixed = nejasný signál, vyčkat"
             >
               <TrendSignal
                 signal={trendSignal.signal}
@@ -490,7 +490,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             {/* Section 2: Price Chart with Moving Averages */}
             <ChartSection
               title="Price & Moving Averages"
-              tooltip="CO TO JE: Graf ceny za poslední rok s klouzavými průměry (Moving Averages). Klouzavý průměr vyhlazuje denní výkyvy a ukazuje skutečný trend. JAK ČÍST: Když je CENA NAD průměry = akcie roste (bullish). Když je CENA POD průměry = akcie klesá (bearish). IDEÁLNÍ STAV PRO NÁKUP: Cena nad oběma čárami (50 DMA i 200 DMA)."
+              tooltip="**Cena a klouzavé průměry** | Graf ceny za poslední rok s klouzavými průměry. | • Cena NAD průměry = akcie roste (bullish) | • Cena POD průměry = akcie klesá (bearish) | Ideál pro nákup: cena nad 50 DMA i 200 DMA."
               timeRange={priceTimeRange}
               onTimeRangeChange={setPriceTimeRange}
               timeRangeOptions={TIME_RANGES_LONG}
@@ -599,7 +599,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             {/* Section 3: Moving Average Analysis */}
             <ChartSection
               title="Moving Average Analysis"
-              tooltip="CO TO JE: Porovnání aktuální ceny s klouzavými průměry. JAK ČÍST: Procenta ukazují, o kolik je cena NAD (↑ zelená = dobře) nebo POD (↓ červená = špatně) průměrem. GOLDEN CROSS: 50 DMA je NAD 200 DMA = silný nákupní signál, akcie pravděpodobně poroste. DEATH CROSS: 50 DMA je POD 200 DMA = varovný signál, akcie může klesat."
+              tooltip="**Analýza klouzavých průměrů** | Porovnání ceny s průměry. | • Procenta = o kolik je cena nad/pod průměrem | • Golden Cross = 50 DMA nad 200 DMA (nákupní signál) | • Death Cross = 50 DMA pod 200 DMA (varovný signál)"
             >
               <MACardsRow>
                 <MACard
@@ -613,7 +613,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                         : ' below'
                       : undefined
                   }
-                  tooltip="CO TO JE: 50 Day Moving Average = průměrná cena za posledních 50 obchodních dnů. Ukazuje krátkodobý až střednědobý trend. JAK ČÍST: Cena NAD 50 DMA = krátkodobě roste (dobré). Cena POD 50 DMA = krátkodobě klesá (opatrnost). IDEÁLNÍ: Být co nejvíce NAD touto hodnotou."
+                  tooltip="**50 DMA** | Průměrná cena za 50 dní (krátkodobý trend). | • Cena NAD = krátkodobě roste (dobré) | • Cena POD = krátkodobě klesá (opatrnost)"
                 />
                 <MACard
                   label="200 DMA"
@@ -626,7 +626,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                         : ' below'
                       : undefined
                   }
-                  tooltip="CO TO JE: 200 Day Moving Average = průměrná cena za posledních 200 obchodních dnů (~1 rok). Nejdůležitější dlouhodobý ukazatel, který sledují velcí investoři. JAK ČÍST: Cena NAD 200 DMA = dlouhodobý růstový trend (velmi dobré). Cena POD 200 DMA = dlouhodobý klesající trend (varovné). IDEÁLNÍ: Být NAD touto hodnotou."
+                  tooltip="**200 DMA** | Průměrná cena za 200 dní (dlouhodobý trend). | • Cena NAD = dlouhodobý růst (velmi dobré) | • Cena POD = dlouhodobý pokles (varovné)"
                 />
                 <MACard
                   label="Cross Signal"
@@ -638,7 +638,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                         : 'death'
                       : null
                   }
-                  tooltip="CO TO JE: Signál křížení klouzavých průměrů - jeden z nejspolehlivějších indikátorů. GOLDEN CROSS (Zlatý kříž): 50 DMA překříží 200 DMA směrem NAHORU = silný nákupní signál, očekává se růst. DEATH CROSS (Kříž smrti): 50 DMA překříží 200 DMA směrem DOLŮ = varovný signál, očekává se pokles. IDEÁLNÍ: Golden Cross."
+                  tooltip="**Cross Signál** | Křížení klouzavých průměrů. | • Golden Cross = 50 DMA nad 200 DMA (nákupní signál) | • Death Cross = 50 DMA pod 200 DMA (varovný signál)"
                 />
               </MACardsRow>
             </ChartSection>
@@ -646,7 +646,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             {/* Section 4: RSI Indicator */}
             <ChartSection
               title="RSI (Relative Strength Index)"
-              tooltip="CO TO JE: Relative Strength Index = Index relativní síly. Měří rychlost a změnu cenových pohybů na stupnici 0-100. Pomáhá určit, zda je akcie 'překoupená' nebo 'přeprodaná'. JAK ČÍST: RSI > 70 = Overbought (překoupená) - cena možná příliš vyrostla, může přijít pokles. RSI < 30 = Oversold (přeprodaná) - cena možná příliš klesla, může přijít růst. RSI 30-70 = Neutral (normální stav). IDEÁLNÍ PRO NÁKUP: RSI kolem 30-50 (levnější)."
+              tooltip="**RSI** | Index relativní síly (0-100). | • RSI > 70 = překoupená, může klesnout | • RSI < 30 = přeprodaná, může růst | • RSI 30-70 = neutrální | Ideál pro nákup: RSI kolem 30-50."
             >
               <div className="rsi-display">
                 <div className="rsi-gauge">
@@ -703,7 +703,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                     <Text size="xs" color="secondary">
                       Potential pullback ahead
                     </Text>
-                    <InfoTooltip text="OVERBOUGHT (překoupená): RSI nad 70 znamená, že akcie v poslední době hodně rostla a může být 'drahá'. Mnoho investorů už nakoupilo a tlak na růst slábne. CO TO ZNAMENÁ: Možná není nejlepší čas na nákup - cena může brzy klesnout. Pokud akcie držíte, zvažte částečný prodej." />
+                    <InfoTooltip text="**Překoupená (>70)** | Akcie hodně rostla a může být drahá. | • Možná není nejlepší čas na nákup | • Cena může brzy klesnout" />
                   </div>
                   <div className="rsi-info-card">
                     <Text size="sm" weight="semibold" color="secondary">
@@ -712,7 +712,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                     <Text size="xs" color="secondary">
                       Normal momentum
                     </Text>
-                    <InfoTooltip text="NEUTRAL (neutrální zóna): RSI mezi 30-70 znamená normální obchodní podmínky. Akcie není ani překoupená, ani přeprodaná. CO TO ZNAMENÁ: Můžete nakupovat nebo prodávat podle jiných faktorů. Sledujte směr - roste RSI k 70 nebo klesá k 30?" />
+                    <InfoTooltip text="**Neutrální (30-70)** | Normální obchodní podmínky. | • Můžete nakupovat/prodávat dle jiných faktorů | • Sledujte směr RSI" />
                   </div>
                   <div className="rsi-info-card">
                     <Text size="sm" weight="semibold" color="success">
@@ -721,7 +721,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                     <Text size="xs" color="secondary">
                       Potential bounce ahead
                     </Text>
-                    <InfoTooltip text="OVERSOLD (přeprodaná): RSI pod 30 znamená, že akcie v poslední době hodně klesala a může být 'levná'. Mnoho investorů už prodalo a tlak na pokles slábne. CO TO ZNAMENÁ: Může být dobrá příležitost k nákupu - cena může brzy vzrůst. Ale pozor - někdy akcie klesá z dobrého důvodu!" />
+                    <InfoTooltip text="**Přeprodaná (<30)** | Akcie hodně klesala a může být levná. | • Možná dobrá příležitost k nákupu | • Pozor - někdy klesá z dobrého důvodu" />
                   </div>
                 </div>
                 <div className="rsi-current">
@@ -748,7 +748,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             {/* Section 5: MACD */}
             <ChartSection
               title="MACD (Moving Average Convergence Divergence)"
-              tooltip="CO TO JE: Moving Average Convergence Divergence = ukazatel směru trendu a síly momentum (hybnosti). Skládá se z: MACD linie (modrá), Signal linie (oranžová) a Histogramu (sloupce). JAK ČÍST: Modrá PŘEKŘÍŽÍ oranžovou NAHORU = nákupní signál (bullish). Modrá PŘEKŘÍŽÍ oranžovou DOLŮ = prodejní signál (bearish). HISTOGRAM zelený = momentum roste. HISTOGRAM červený = momentum klesá. IDEÁLNÍ: MACD nad Signal linií + zelený histogram."
+              tooltip="**MACD** | Ukazatel směru a síly momenta. | • MACD nad Signal = bullish (nákupní) | • MACD pod Signal = bearish (prodejní) | • Zelený histogram = momentum roste | • Červený histogram = momentum klesá"
               timeRange={macdTimeRange}
               onTimeRangeChange={setMacdTimeRange}
             >
@@ -873,7 +873,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             {/* Section 6: Bollinger Bands */}
             <ChartSection
               title="Bollinger Bands"
-              tooltip="CO TO JE: Bollingerova pásma = ukazatel volatility (kolísavosti) ceny. Tři linie: Upper Band (horní), Middle (střední = 20denní průměr), Lower Band (dolní). JAK ČÍST: Cena u HORNÍHO pásma = možná překoupená (overbought), může klesnout. Cena u DOLNÍHO pásma = možná přeprodaná (oversold), může vzrůst. Cena u STŘEDU = normální stav. ŠIROKÁ pásma = vysoká volatilita. ÚZKÁ pásma = nízká volatilita, možná přijde velký pohyb. IDEÁLNÍ PRO NÁKUP: Cena blízko dolního pásma (20-30%)."
+              tooltip="**Bollingerova pásma** | Ukazatel volatility ceny. | • Cena u horního pásma = možná překoupená | • Cena u dolního pásma = možná přeprodaná | • Široká pásma = vysoká volatilita | • Úzká pásma = nízká, čeká se pohyb"
               timeRange={bollingerTimeRange}
               onTimeRangeChange={setBollingerTimeRange}
               timeRangeOptions={TIME_RANGES_LONG}
@@ -1022,7 +1022,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             {/* Section 7: Stochastic Oscillator */}
             <ChartSection
               title="Stochastic Oscillator"
-              tooltip="CO TO JE: Stochastic Oscillator = momentum indikátor porovnávající zavírací cenu s cenovým rozsahem za určité období (14 dní). Má dvě linie: %K (rychlá, modrá) a %D (pomalá, oranžová = průměr %K). JAK ČÍST: Hodnoty 0-100. NAD 80 = Overbought (překoupená), může přijít pokles. POD 20 = Oversold (přeprodaná), může přijít růst. SIGNÁLY: %K kříží %D zespoda = nákupní signál. %K kříží %D shora = prodejní signál. IDEÁLNÍ PRO NÁKUP: %K a %D pod 20, %K kříží %D nahoru."
+              tooltip="**Stochastic** | Momentum indikátor (0-100). | • Nad 80 = překoupená | • Pod 20 = přeprodaná | • %K kříží %D zespoda = nákupní signál | • %K kříží %D shora = prodejní signál"
               timeRange={stochasticTimeRange}
               onTimeRangeChange={setStochasticTimeRange}
             >
@@ -1147,7 +1147,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             {/* Section 8: Volume Analysis */}
             <ChartSection
               title="Volume Analysis"
-              tooltip="CO TO JE: Volume (objem) = počet akcií zobchodovaných za den. Je klíčový pro potvrzení cenových pohybů. JAK ČÍST: VYSOKÝ objem při růstu ceny = silný nákupní zájem, růst je pravděpodobně udržitelný. VYSOKÝ objem při poklesu = silný prodejní tlak, pokles může pokračovat. NÍZKÝ objem = slabý pohyb, může se rychle obrátit. IDEÁLNÍ: Růst ceny s rostoucím objemem. Oranžová čára = 20denní průměr objemu."
+              tooltip="**Objem obchodů** | Počet akcií zobchodovaných za den. | • Vysoký při růstu = silný zájem | • Vysoký při poklesu = prodejní tlak | • Nízký = slabý pohyb | Oranžová čára = 20denní průměr."
               timeRange={volumeTimeRange}
               onTimeRangeChange={setVolumeTimeRange}
             >
@@ -1267,7 +1267,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             {/* Section 9: ATR (Average True Range) */}
             <ChartSection
               title="ATR (Average True Range)"
-              tooltip="CO TO JE: Average True Range (ATR) = měří volatilitu (kolísavost) akcie za posledních 14 dní. Ukazuje průměrný denní rozsah pohybu ceny. JAK ČÍST: VYSOKÝ ATR = vysoká volatilita, větší cenové výkyvy, vyšší riziko i potenciální zisk. NÍZKÝ ATR = nízká volatilita, stabilnější cena, menší riziko. ATR% = ATR jako procento ceny. Pod 2% = nízká volatilita. 2-5% = normální. Nad 5% = vysoká volatilita. VYUŽITÍ: Nastavení stop-loss (např. 2× ATR pod vstupní cenou)."
+              tooltip="**ATR** | Měří volatilitu akcie (14 dní). | • Vysoký ATR = větší výkyvy, vyšší riziko | • Nízký ATR = stabilnější cena | • ATR% pod 2% = nízká volatilita | • ATR% nad 5% = vysoká volatilita"
               timeRange={atrTimeRange}
               onTimeRangeChange={setAtrTimeRange}
             >
@@ -1404,7 +1404,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             {/* Section 10: OBV - On-Balance Volume */}
             <ChartSection
               title="On-Balance Volume (OBV)"
-              tooltip="OBV měří kumulativní tok objemu. Když cena roste, objem se přičítá; když klesá, odečítá se. Rostoucí OBV signalizuje akumulaci (nákup), klesající OBV signalizuje distribuci (prodej). Divergence mezi OBV a cenou může předpovídat obrat trendu."
+              tooltip="**OBV** | Kumulativní tok objemu. | • Rostoucí OBV = akumulace (nákup) | • Klesající OBV = distribuce (prodej) | Divergence s cenou předpovídá obrat."
               timeRange={obvTimeRange}
               onTimeRangeChange={setObvTimeRange}
             >
@@ -1531,7 +1531,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             {/* Section 11: ADX - Average Directional Index */}
             <ChartSection
               title="ADX (Average Directional Index)"
-              tooltip="ADX měří SÍLU trendu (ne směr!). Hodnoty: pod 20 = slabý/žádný trend, 20-25 = trend se formuje, 25-40 = silný trend, nad 40 = velmi silný trend. +DI nad -DI = bullish trend, -DI nad +DI = bearish trend. Používejte ADX k rozhodnutí zda obchodovat trendy nebo range."
+              tooltip="**ADX** | Měří SÍLU trendu (ne směr). | • Pod 20 = slabý trend | • 20-25 = vznikající | • Nad 25 = silný trend | +DI > -DI = bullish, -DI > +DI = bearish"
               timeRange={adxTimeRange}
               onTimeRangeChange={setAdxTimeRange}
             >
@@ -1676,7 +1676,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             {/* Section 12: Fibonacci Retracement */}
             <ChartSection
               title="Fibonacci Retracement"
-              tooltip="Fibonacci retracementy identifikují klíčové úrovně podpory/odporu na základě poměrů (23.6%, 38.2%, 50%, 61.8%, 78.6%). Tyto úrovně často fungují jako body obratu při korekcích. 38.2% a 61.8% jsou nejdůležitější úrovně. Pokud cena prorazí 61.8%, je pravděpodobný pokračující trend."
+              tooltip="**Fibonacci** | Klíčové úrovně podpory/odporu. | • 38.2% a 61.8% = nejdůležitější | • Proražení 61.8% = pokračování trendu | Fungují jako body obratu při korekcích."
             >
               {data.fibonacciLevels ? (
                 <>
@@ -1815,7 +1815,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
             {/* Section 13: What These Indicators Tell You */}
             <ChartSection
               title="How to use this analysis"
-              tooltip="DŮLEŽITÉ: Technická analýza není 100% spolehlivá! Používejte ji jako JEDEN z nástrojů, ne jako jediný důvod k nákupu/prodeji. NEJLEPŠÍ VÝSLEDKY: Kombinujte více indikátorů. Když většina ukazuje stejný směr (bullish nebo bearish), signál je silnější. ZLATÉ PRAVIDLO: Nikdy neinvestujte jen na základě jednoho indikátoru."
+              tooltip="**Důležité** | Technická analýza není 100% spolehlivá. | • Používejte jako JEDEN z nástrojů | • Kombinujte více indikátorů | • Nikdy neinvestujte jen na základě jednoho indikátoru"
             >
               <div className="usage-guide">
                 <div className="usage-item">

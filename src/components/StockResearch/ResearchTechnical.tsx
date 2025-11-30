@@ -73,7 +73,7 @@ export function ResearchTechnical({
             value={tech.sma50 ? `$${tech.sma50.toFixed(2)}` : null}
             sentiment={getSMASentiment(tech.priceVsSma50)}
             tooltip={
-              <InfoTooltip text="50denní klouzavý průměr. Krátkodobý trend - cena nad SMA50 = býčí signál." />
+              <InfoTooltip text="**SMA 50** | 50denní klouzavý průměr. | • Cena NAD = krátkodobě roste | • Cena POD = krátkodobě klesá" />
             }
           />
           <MetricCard
@@ -81,7 +81,7 @@ export function ResearchTechnical({
             value={tech.sma200 ? `$${tech.sma200.toFixed(2)}` : null}
             sentiment={getSMASentiment(tech.priceVsSma200)}
             tooltip={
-              <InfoTooltip text="200denní klouzavý průměr. Dlouhodobý trend - klíčová úroveň pro institucionální investory." />
+              <InfoTooltip text="**SMA 200** | 200denní klouzavý průměr. | • Cena NAD = dlouhodobý růst | • Cena POD = dlouhodobý pokles" />
             }
           />
           <MetricCard
@@ -93,7 +93,7 @@ export function ResearchTechnical({
             }
             sentiment={getSMASentiment(tech.priceVsSma50)}
             tooltip={
-              <InfoTooltip text="Vzdálenost ceny od SMA50. Kladné = nad průměrem (býčí), záporné = pod (medvědí)." />
+              <InfoTooltip text="**Cena vs SMA50** | Vzdálenost ceny od 50denního průměru. | • Kladné = nad průměrem (býčí) | • Záporné = pod (medvědí)" />
             }
           />
           <MetricCard
@@ -105,7 +105,7 @@ export function ResearchTechnical({
             }
             sentiment={getSMASentiment(tech.priceVsSma200)}
             tooltip={
-              <InfoTooltip text="Vzdálenost ceny od SMA200. Nad = dlouhodobý uptrend, pod = downtrend." />
+              <InfoTooltip text="**Cena vs SMA200** | Vzdálenost ceny od 200denního průměru. | • Nad = dlouhodobý uptrend | • Pod = downtrend" />
             }
           />
         </div>
@@ -127,7 +127,7 @@ export function ResearchTechnical({
           {/* RSI */}
           <div className="momentum-card">
             <div className="momentum-header">
-              <MetricLabel tooltip="Index relativní síly. Měří rychlost a změnu cenových pohybů. Pod 30 = přeprodáno (nákupní příležitost), nad 70 = překoupeno (možná korekce).">
+              <MetricLabel tooltip="**RSI** | Index relativní síly (0-100). | • Pod 30 = přeprodaná | • Nad 70 = překoupená | • 30-70 = neutrální">
                 RSI (14)
               </MetricLabel>
               <Badge
@@ -167,7 +167,7 @@ export function ResearchTechnical({
           {/* Stochastic */}
           <div className="momentum-card">
             <div className="momentum-header">
-              <MetricLabel tooltip="Stochastický oscilátor. Porovnává zavírací cenu s cenovým rozpětím. %K je rychlá linie, %D je pomalá. Pod 20 = přeprodáno, nad 80 = překoupeno.">
+              <MetricLabel tooltip="**Stochastic** | Momentum indikátor (0-100). | • Pod 20 = přeprodaná | • Nad 80 = překoupená | %K = rychlá, %D = pomalá linie">
                 Stochastic
               </MetricLabel>
               <Badge
@@ -203,7 +203,7 @@ export function ResearchTechnical({
           {/* MACD */}
           <div className="momentum-card">
             <div className="momentum-header">
-              <MetricLabel tooltip="Klouzavý průměr konvergence/divergence. MACD nad signální linií = býčí, pod = medvědí. Histogram ukazuje sílu trendu.">
+              <MetricLabel tooltip="**MACD** | Ukazatel směru a síly momenta. | • MACD nad Signal = bullish | • MACD pod Signal = bearish | Histogram = síla trendu">
                 MACD
               </MetricLabel>
               <Badge
@@ -261,7 +261,7 @@ export function ResearchTechnical({
               tech.bollingerUpper ? `$${tech.bollingerUpper.toFixed(2)}` : null
             }
             tooltip={
-              <InfoTooltip text="Horní pásmo. Cena blízko horního pásma = překoupený stav, možná korekce." />
+              <InfoTooltip text="**Horní pásmo** | Cena blízko horního pásma = překoupený stav, možná korekce." />
             }
           />
           <MetricCard
@@ -272,7 +272,7 @@ export function ResearchTechnical({
                 : null
             }
             tooltip={
-              <InfoTooltip text="Střední pásmo (SMA 20). Slouzí jako dynamická podpora/rezistence." />
+              <InfoTooltip text="**Střední pásmo** | SMA 20, slouží jako dynamická podpora/rezistence." />
             }
           />
           <MetricCard
@@ -281,7 +281,7 @@ export function ResearchTechnical({
               tech.bollingerLower ? `$${tech.bollingerLower.toFixed(2)}` : null
             }
             tooltip={
-              <InfoTooltip text="Spodní pásmo. Cena blízko spodního pásma = přeprodaný stav, možný odraz." />
+              <InfoTooltip text="**Spodní pásmo** | Cena blízko spodního pásma = přeprodaný stav, možný odraz." />
             }
           />
           <MetricCard
@@ -292,7 +292,7 @@ export function ResearchTechnical({
                 : null
             }
             tooltip={
-              <InfoTooltip text="Pozice v pásmech (0-100%). Pod 20% = přeprodáno, nad 80% = překoupeno." />
+              <InfoTooltip text="**Pozice v pásmech** | 0-100% v rámci Bollinger Bands. | • Pod 20% = přeprodáno | • Nad 80% = překoupeno" />
             }
             sentiment={getBollingerSentiment(tech.bollingerPosition)}
           />
@@ -322,7 +322,7 @@ export function ResearchTechnical({
             label="ADX"
             value={tech.adx?.toFixed(1) ?? null}
             tooltip={
-              <InfoTooltip text="Síla trendu. Pod 20 = slabý/žádný trend, 20-25 = vznikající, nad 25 = silný trend." />
+              <InfoTooltip text="**ADX** | Síla trendu. | • Pod 20 = slabý/žádný trend | • 20-25 = vznikající | • Nad 25 = silný trend" />
             }
             sentiment={
               tech.adx !== null
@@ -336,21 +336,21 @@ export function ResearchTechnical({
             label="+DI"
             value={tech.plusDI?.toFixed(1) ?? null}
             tooltip={
-              <InfoTooltip text="Pozitivní směrový indikátor. +DI > -DI = býčí tlak, kupující dominují." />
+              <InfoTooltip text="**+DI** | Pozitivní směrový indikátor. | +DI > -DI = býčí tlak, kupující dominují." />
             }
           />
           <MetricCard
             label="-DI"
             value={tech.minusDI?.toFixed(1) ?? null}
             tooltip={
-              <InfoTooltip text="Negativní směrový indikátor. -DI > +DI = medvědí tlak, prodávající dominují." />
+              <InfoTooltip text="**-DI** | Negativní směrový indikátor. | -DI > +DI = medvědí tlak, prodávající dominují." />
             }
           />
           <MetricCard
             label="ATR"
             value={tech.atr14 ? `$${tech.atr14.toFixed(2)}` : null}
             tooltip={
-              <InfoTooltip text="Průměrné skutečné rozpětí. Měří volatilitu - vyšší = větší cenové výkyvy." />
+              <InfoTooltip text="**ATR** | Průměrné skutečné rozpětí. | Měří volatilitu - vyšší = větší cenové výkyvy." />
             }
           />
           <MetricCard
@@ -361,7 +361,7 @@ export function ResearchTechnical({
                 : null
             }
             tooltip={
-              <InfoTooltip text="Změna objemu vs 20denní průměr. Vysoký objem potvrzuje cenový pohyb." />
+              <InfoTooltip text="**Změna objemu** | Objem vs 20denní průměr. | Vysoký objem potvrzuje cenový pohyb." />
             }
             sentiment={
               tech.volumeChange !== null
@@ -388,7 +388,9 @@ export function ResearchTechnical({
                   ? `$${tech.fibonacciLevels.level0.toFixed(2)}`
                   : null
               }
-              tooltip={<InfoTooltip text="Nejvyšší bod - začátek měření." />}
+              tooltip={
+                <InfoTooltip text="**0% (High)** | Nejvyšší bod - začátek měření." />
+              }
             />
             <MetricCard
               label="23.6%"
@@ -398,7 +400,7 @@ export function ResearchTechnical({
                   : null
               }
               tooltip={
-                <InfoTooltip text="Mělká korekce. Silný trend často udrží tuto úroveň." />
+                <InfoTooltip text="**23.6%** | Mělká korekce. Silný trend často udrží tuto úroveň." />
               }
             />
             <MetricCard
@@ -409,7 +411,7 @@ export function ResearchTechnical({
                   : null
               }
               tooltip={
-                <InfoTooltip text="Důležitá supportní úroveň. Častá zóna odrazu." />
+                <InfoTooltip text="**38.2%** | Důležitá supportní úroveň. Častá zóna odrazu." />
               }
             />
             <MetricCard
@@ -420,7 +422,7 @@ export function ResearchTechnical({
                   : null
               }
               tooltip={
-                <InfoTooltip text="Psychologická úroveň - polovina předchozího pohybu." />
+                <InfoTooltip text="**50%** | Psychologická úroveň - polovina předchozího pohybu." />
               }
             />
             <MetricCard
@@ -431,7 +433,7 @@ export function ResearchTechnical({
                   : null
               }
               tooltip={
-                <InfoTooltip text="Zlatý řez - nejdůležitější Fibonacci úroveň. Silný support." />
+                <InfoTooltip text="**61.8%** | Zlatý řez - nejdůležitější Fibonacci úroveň. Silný support." />
               }
             />
             <MetricCard
@@ -442,7 +444,7 @@ export function ResearchTechnical({
                   : null
               }
               tooltip={
-                <InfoTooltip text="Nejnižší bod - konec měření. Propad pod = pokračování downtrend." />
+                <InfoTooltip text="**100% (Low)** | Nejnižší bod - konec měření. Propad pod = pokračování downtrend." />
               }
             />
           </div>

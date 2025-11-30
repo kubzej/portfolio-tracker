@@ -42,7 +42,7 @@ export function ResearchFundamentals({
             label="ROE"
             value={f.roe !== null ? formatPercent(f.roe, 1) : null}
             tooltip={
-              <InfoTooltip text="Rentabilita vlastního kapitálu. Kolik zisku firma vydělá na každou korunu vloženého kapitálu akcionářů. Nad 15 % je výborné." />
+              <InfoTooltip text="**ROE** | Návratnost vlastního kapitálu. | • Nad 15% = dobré | • Nad 20% = výborné | • Pod 10% = slabé" />
             }
             sentiment={getROESentiment(f.roe)}
           />
@@ -50,7 +50,7 @@ export function ResearchFundamentals({
             label="ROA"
             value={f.roa !== null ? formatPercent(f.roa, 1) : null}
             tooltip={
-              <InfoTooltip text="Rentabilita aktiv. Jak efektivně firma využívá svá aktiva k tvorbě zisku. Nad 10 % je velmi dobré." />
+              <InfoTooltip text="**ROA** | Návratnost aktiv. | • Nad 5% = dobré | • Nad 10% = výborné | Závisí na odvětví." />
             }
             sentiment={getROASentiment(f.roa)}
           />
@@ -60,7 +60,7 @@ export function ResearchFundamentals({
               f.grossMargin !== null ? formatPercent(f.grossMargin, 1) : null
             }
             tooltip={
-              <InfoTooltip text="Hrubá marže. Podíl zisku po odečtení přímých nákladů na výrobu. Vyšší = lepší cenová síla." />
+              <InfoTooltip text="**Hrubá marže** | Tržby minus náklady na výrobu. | • Nad 40% = dobré | • Nad 60% = silné konkurenční výhody" />
             }
             sentiment={getMarginSentiment(f.grossMargin, 40)}
           />
@@ -72,7 +72,7 @@ export function ResearchFundamentals({
                 : null
             }
             tooltip={
-              <InfoTooltip text="Provozní marže. Zisk z běžné činnosti jako % tržeb. Ukazuje efektivitu provozu. Nad 15 % je dobré." />
+              <InfoTooltip text="**Provozní marže** | Zisk z provozu jako procento tržeb. | • Nad 15% = dobré | • Nad 25% = výborné" />
             }
             sentiment={getMarginSentiment(f.operatingMargin, 15)}
           />
@@ -80,7 +80,7 @@ export function ResearchFundamentals({
             label="Net Margin"
             value={f.netMargin !== null ? formatPercent(f.netMargin, 1) : null}
             tooltip={
-              <InfoTooltip text="Čistá marže. Kolik z každé koruny tržeb zůstane jako čistý zisk. Nad 10 % je zdravé." />
+              <InfoTooltip text="**Čistá marže** | Kolik procent z tržeb zůstane jako zisk. | • Nad 10% = dobré | • Nad 20% = výborné" />
             }
             sentiment={getMarginSentiment(f.netMargin, 10)}
           />
@@ -99,7 +99,7 @@ export function ResearchFundamentals({
                 : null
             }
             tooltip={
-              <InfoTooltip text="Meziroční růst tržeb. Ukazuje, jak rychle firma roste. Kladné hodnoty = firma expanduje." />
+              <InfoTooltip text="**Růst tržeb** | Meziroční změna tržeb. | • Kladné = firma roste | • Záporné = tržby klesají | • Nad 10% = zdravý růst" />
             }
             sentiment={getGrowthSentiment(f.revenueGrowth)}
           />
@@ -111,7 +111,7 @@ export function ResearchFundamentals({
                 : null
             }
             tooltip={
-              <InfoTooltip text="Průměrný roční růst tržeb za 5 let (CAGR). Lépe ukazuje dlouhodobý trend než jednorázový skok." />
+              <InfoTooltip text="**5Y CAGR tržeb** | Průměrný roční růst tržeb za 5 let. | Lépe ukazuje dlouhodobý trend než jednorázový skok." />
             }
             sentiment={getGrowthSentiment(f.revenueGrowth5Y)}
           />
@@ -119,7 +119,7 @@ export function ResearchFundamentals({
             label="EPS Growth"
             value={f.epsGrowth !== null ? formatPercent(f.epsGrowth, 1) : null}
             tooltip={
-              <InfoTooltip text="Meziroční růst zisku na akcii. Klíčový ukazatel pro akcionáře - roste-li zisk, měla by růst i cena." />
+              <InfoTooltip text="**Růst zisku** | Meziroční změna zisku na akcii. | • Kladné = zisky rostou | • Záporné = zisky klesají" />
             }
             sentiment={getGrowthSentiment(f.epsGrowth)}
           />
@@ -129,7 +129,7 @@ export function ResearchFundamentals({
               f.epsGrowth5Y !== null ? formatPercent(f.epsGrowth5Y, 1) : null
             }
             tooltip={
-              <InfoTooltip text="Průměrný roční růst zisku na akcii za 5 let. Stabilní růst nad 10 % ročně je skvělý." />
+              <InfoTooltip text="**5Y CAGR zisku** | Průměrný roční růst zisku za 5 let. | Stabilní růst nad 10% ročně je skvělý." />
             }
             sentiment={getGrowthSentiment(f.epsGrowth5Y)}
           />
@@ -144,7 +144,7 @@ export function ResearchFundamentals({
             label="Debt/Equity"
             value={f.debtToEquity?.toFixed(2) ?? null}
             tooltip={
-              <InfoTooltip text="Poměr dluhu k vlastnímu kapitálu. Pod 0,5 = konzervativní, nad 2 = vyšší riziko. Záleží na odvětví." />
+              <InfoTooltip text="**Debt-to-Equity** | Poměr dluhu k vlastnímu kapitálu. | • Pod 0.5 = nízký dluh | • 0.5-2 = normální | • Nad 2 = vysoký dluh" />
             }
             sentiment={getDebtSentiment(f.debtToEquity)}
           />
@@ -152,7 +152,7 @@ export function ResearchFundamentals({
             label="Current Ratio"
             value={f.currentRatio?.toFixed(2) ?? null}
             tooltip={
-              <InfoTooltip text="Běžná likvidita. Schopnost splatit krátkodobé závazky. Nad 1,5 je zdravé, pod 1 může signalizovat problémy." />
+              <InfoTooltip text="**Current Ratio** | Schopnost splácet krátkodobé dluhy. | • Nad 1 = může pokrýt závazky | • Nad 1.5 = zdravé | • Pod 1 = problémy" />
             }
             sentiment={getCurrentRatioSentiment(f.currentRatio)}
           />
@@ -160,7 +160,7 @@ export function ResearchFundamentals({
             label="Quick Ratio"
             value={f.quickRatio?.toFixed(2) ?? null}
             tooltip={
-              <InfoTooltip text="Pohotová likvidita. Jako Current Ratio, ale bez zásob. Přísnější test platební schopnosti." />
+              <InfoTooltip text="**Quick Ratio** | Rychlá likvidita (bez zásob). | • Nad 1 = dobrá likvidita | • Pod 1 = možné problémy" />
             }
             sentiment={getCurrentRatioSentiment(f.quickRatio)}
           />
@@ -168,7 +168,7 @@ export function ResearchFundamentals({
             label="Beta"
             value={f.beta?.toFixed(2) ?? null}
             tooltip={
-              <InfoTooltip text="Volatilita vůči trhu. 1 = jako trh, >1 = volatilnější, <1 = stabilnější. Pod 0,5 = defenzivní akcie." />
+              <InfoTooltip text="**Beta** | Volatilita ve srovnání s trhem. | • Beta = 1 = pohyb s trhem | • Beta > 1 = větší výkyvy | • Beta < 1 = stabilnější" />
             }
           />
         </div>
@@ -187,7 +187,7 @@ export function ResearchFundamentals({
                   : null
               }
               tooltip={
-                <InfoTooltip text="Dividendový výnos. Roční dividenda / cena akcie. Nad 3 % je atraktivní pro příjmové investory." />
+                <InfoTooltip text="**Dividendový výnos** | Roční dividenda jako procento ceny. | • 2-4% = normální | • Nad 5% = vysoký výnos | • 0% = nevyplácí dividendy" />
               }
               sentiment={
                 f.dividendYield !== null
@@ -203,7 +203,7 @@ export function ResearchFundamentals({
                 f.payoutRatio !== null ? formatPercent(f.payoutRatio, 1) : null
               }
               tooltip={
-                <InfoTooltip text="Výplatní poměr. Kolik % zisku jde na dividendy. Pod 60 % je udržitelné, nad 80 % může být rizikové." />
+                <InfoTooltip text="**Payout Ratio** | Kolik procent zisku jde na dividendy. | • Pod 50% = udržitelné | • 50-75% = normální | • Nad 100% = neudržitelné" />
               }
               sentiment={
                 f.payoutRatio !== null

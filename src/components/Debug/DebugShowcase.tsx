@@ -778,32 +778,38 @@ function UIComponentsSection() {
       <div className="debug-group">
         <CardTitle>{'<InfoTooltip>'}</CardTitle>
         <code className="debug-code">
-          {'<InfoTooltip text="Explanation text" />'}
+          {'<InfoTooltip text="**Bold** text | New line | • Bullet point" />'}
         </code>
         <div
           className="debug-row"
-          style={{ alignItems: 'center', gap: '1rem' }}
+          style={{ alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}
         >
           <span
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
           >
-            <Text>Simple text</Text>
-            <InfoTooltip text="This is a simple tooltip explanation." />
+            <Text>Simple</Text>
+            <InfoTooltip text="Jednoduchý vysvětlující text bez formátování." />
           </span>
           <span
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
           >
-            <Text>Rich content</Text>
+            <Text>Bold + breaks</Text>
+            <InfoTooltip text="**RSI (Relative Strength Index)** | Měří sílu trendu na škále 0-100. | • Pod 30 = přeprodaná akcie | • Nad 70 = překoupená akcie | • 40-60 = neutrální zóna" />
+          </span>
+          <span
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Text>Rich JSX</Text>
             <InfoTooltip>
               <p>
-                <strong>RSI (Relative Strength Index)</strong>
+                <strong>Custom JSX content</strong>
               </p>
-              <p>Hodnota 0-100. Pod 30 = přeprodaná akcie.</p>
+              <p>Pro komplexní obsah použij children prop.</p>
             </InfoTooltip>
           </span>
         </div>
         <Description size="sm">
-          Tooltips use Czech text per project convention.
+          Supports **bold**, line breaks (| or \n), and • bullet points.
         </Description>
       </div>
 
