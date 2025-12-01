@@ -76,6 +76,16 @@ interface TechnicalData {
   // Historical data for charts
   historicalPrices: {
     date: string;
+    open: number;
+    close: number;
+    high: number;
+    low: number;
+    volume: number;
+  }[];
+  // 5Y weekly data for long-term chart
+  historicalPricesWeekly: {
+    date: string;
+    open: number;
     close: number;
     high: number;
     low: number;
@@ -426,6 +436,7 @@ async function fetchTechnicalData(
     adxTrend: null,
     fibonacciLevels: null,
     historicalPrices: [],
+    historicalPricesWeekly: [],
     sma50History: [],
     sma200History: [],
     macdHistory: [],
@@ -465,17 +476,20 @@ async function fetchTechnicalData(
     // Build historical price array (most recent first)
     const historicalPrices: {
       date: string;
+      open: number;
       close: number;
       high: number;
       low: number;
       volume: number;
     }[] = [];
     const closePrices: number[] = [];
+    const openPrices: number[] = [];
     const highPrices: number[] = [];
     const lowPrices: number[] = [];
     const volumes: number[] = [];
 
     for (let i = timestamps.length - 1; i >= 0; i--) {
+      const open = quotes.open[i];
       const close = quotes.close[i];
       const high = quotes.high[i];
       const low = quotes.low[i];
@@ -483,13 +497,15 @@ async function fetchTechnicalData(
       if (
         close !== null &&
         close !== undefined &&
+        open !== null &&
         high !== null &&
         low !== null &&
         volume !== null
       ) {
         const date = new Date(timestamps[i] * 1000).toISOString().split('T')[0];
-        historicalPrices.push({ date, close, high, low, volume });
+        historicalPrices.push({ date, open, close, high, low, volume });
         closePrices.push(close);
+        openPrices.push(open);
         highPrices.push(high);
         lowPrices.push(low);
         volumes.push(volume);
@@ -1098,6 +1114,65 @@ async function fetchTechnicalData(
       }
     }
 
+    // ============ Fetch 5Y Weekly Data for Long-term Chart ============
+    let historicalPricesWeekly: {
+      date: string;
+      open: number;
+      close: number;
+      high: number;
+      low: number;
+      volume: number;
+    }[] = [];
+
+    try {
+      const yahooWeeklyUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
+        ticker
+      )}?interval=1wk&range=5y`;
+
+      const weeklyResponse = await fetch(yahooWeeklyUrl);
+      if (weeklyResponse.ok) {
+        const weeklyData = await weeklyResponse.json();
+        const weeklyResult = weeklyData?.chart?.result?.[0];
+
+        if (weeklyResult?.timestamp && weeklyResult?.indicators?.quote?.[0]) {
+          const weeklyTimestamps = weeklyResult.timestamp;
+          const weeklyQuotes = weeklyResult.indicators.quote[0];
+
+          // Build weekly price array (chronological order - oldest first)
+          for (let i = 0; i < weeklyTimestamps.length; i++) {
+            const open = weeklyQuotes.open[i];
+            const close = weeklyQuotes.close[i];
+            const high = weeklyQuotes.high[i];
+            const low = weeklyQuotes.low[i];
+            const volume = weeklyQuotes.volume[i];
+
+            if (
+              close !== null &&
+              close !== undefined &&
+              open !== null &&
+              high !== null &&
+              low !== null
+            ) {
+              const date = new Date(weeklyTimestamps[i] * 1000)
+                .toISOString()
+                .split('T')[0];
+              historicalPricesWeekly.push({
+                date,
+                open: Math.round(open * 100) / 100,
+                close: Math.round(close * 100) / 100,
+                high: Math.round(high * 100) / 100,
+                low: Math.round(low * 100) / 100,
+                volume: volume || 0,
+              });
+            }
+          }
+        }
+      }
+    } catch (weeklyError) {
+      console.error(`Error fetching weekly data for ${ticker}:`, weeklyError);
+      // Continue without weekly data - not critical
+    }
+
     return {
       ticker,
       stockName,
@@ -1140,6 +1215,7 @@ async function fetchTechnicalData(
       fibonacciLevels,
       // All in chronological order (oldest to newest)
       historicalPrices: chronologicalPrices,
+      historicalPricesWeekly,
       sma50History,
       sma200History,
       macdHistory,

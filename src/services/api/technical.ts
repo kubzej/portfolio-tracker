@@ -1,12 +1,18 @@
 import { supabase } from '@/lib/supabase';
 
-// Historical price point for charts
+// Historical price point for charts (daily)
 export interface PricePoint {
   date: string;
+  open: number;
   close: number;
   high: number;
   low: number;
   volume: number;
+}
+
+// Intraday price point (includes timestamp for 1D/1W charts)
+export interface IntradayPricePoint extends PricePoint {
+  timestamp: number;
 }
 
 // SMA data point for charts
@@ -132,8 +138,9 @@ export interface TechnicalData {
   adxTrend: 'bullish' | 'bearish' | 'neutral' | null;
   // Fibonacci Retracement
   fibonacciLevels: FibonacciLevels | null;
-  // Historical data for charts
-  historicalPrices: PricePoint[];
+  // Historical data for charts (chronological - oldest first)
+  historicalPrices: PricePoint[]; // 1Y daily
+  historicalPricesWeekly: PricePoint[]; // 5Y weekly
   sma50History: SMAPoint[];
   sma200History: SMAPoint[];
   macdHistory: MACDPoint[];
@@ -191,4 +198,57 @@ export async function fetchSingleTechnicalData(
 
   const result = data as TechnicalResult;
   return result.data.length > 0 ? result.data[0] : null;
+}
+
+// Time range type for charts
+export type TimeRange = '1d' | '1w' | '1m' | '3m' | '6m' | '1y' | '5y';
+
+// Intraday response from edge function
+export interface IntradayResponse {
+  ticker: string;
+  range: '1d' | '1w';
+  interval: string;
+  currency: string;
+  previousClose: number | null;
+  prices: IntradayPricePoint[];
+  error?: string;
+}
+
+/**
+ * Fetch intraday price data for 1D/1W charts (lazy loaded)
+ */
+export async function fetchIntradayData(
+  ticker: string,
+  range: '1d' | '1w'
+): Promise<IntradayResponse> {
+  const { data, error } = await supabase.functions.invoke(
+    'fetch-price-intraday',
+    {
+      body: { ticker, range },
+    }
+  );
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  // Normalize the response (edge function uses 'data', we use 'prices')
+  const response = data as {
+    ticker: string;
+    range: '1d' | '1w';
+    interval: string;
+    currency: string;
+    previousClose: number | null;
+    data: IntradayPricePoint[];
+    error?: string;
+  };
+  return {
+    ticker: response.ticker,
+    range: response.range,
+    interval: response.interval,
+    currency: response.currency,
+    previousClose: response.previousClose,
+    prices: response.data || [],
+    error: response.error,
+  };
 }

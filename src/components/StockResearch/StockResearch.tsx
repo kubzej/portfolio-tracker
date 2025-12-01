@@ -433,6 +433,7 @@ export function StockResearch({
           <ResearchTechnical
             technicalData={technicalData}
             recommendation={recommendation}
+            ticker={ticker}
           />
         )}
 
