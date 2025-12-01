@@ -19,12 +19,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Timeout fallback - if auth check takes too long, stop loading
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn('Auth check timeout - forcing loading to false');
+        setLoading(false);
+      }
+    }, 5000);
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data: { session }, error }) => {
+        if (error) {
+          console.error('Auth session error:', error);
+        }
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Auth getSession failed:', err);
+        setLoading(false);
+      });
 
     // Listen for auth changes
     const {
@@ -35,7 +52,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
