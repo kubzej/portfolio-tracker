@@ -496,8 +496,8 @@ export function PriceChart({
                 />
               )}
 
-              {/* Current price line with badge (desktop only) */}
-              {!isMobile && priceLabels && (
+              {/* Current price line with badge */}
+              {priceLabels && (
                 <ReferenceLine
                   y={priceLabels.current}
                   stroke={priceChange.color}
@@ -507,21 +507,23 @@ export function PriceChart({
                   <Label
                     content={({ viewBox }) => {
                       const { x, y } = viewBox as { x: number; y: number };
+                      const badgeWidth = isMobile ? 40 : 45;
+                      const fontSize = isMobile ? 9 : 10;
                       return (
                         <g>
                           <rect
                             x={x + 5}
                             y={y - 9}
-                            width={45}
+                            width={badgeWidth}
                             height={18}
                             rx={4}
                             fill={priceChange.color}
                           />
                           <text
-                            x={x + 27}
+                            x={x + 5 + badgeWidth / 2}
                             y={y + 4}
                             fill="white"
-                            fontSize={10}
+                            fontSize={fontSize}
                             fontWeight={600}
                             textAnchor="middle"
                           >
@@ -700,17 +702,22 @@ export function PriceChart({
                   radius={[2, 2, 0, 0]}
                   cursor="pointer"
                 >
-                  {chartData.map((entry, index) => (
-                    <Cell
-                      key={`volume-${index}`}
-                      fill={
-                        entry.close >= entry.open
-                          ? 'var(--chart-positive)'
-                          : 'var(--chart-negative)'
-                      }
-                      fillOpacity={0.6}
-                    />
-                  ))}
+                  {chartData.map((entry, index) => {
+                    const isActive = activeIndex === index;
+                    const baseColor =
+                      entry.close >= entry.open
+                        ? 'var(--chart-positive)'
+                        : 'var(--chart-negative)';
+                    return (
+                      <Cell
+                        key={`volume-${index}`}
+                        fill={baseColor}
+                        fillOpacity={isActive ? 1 : 0.4}
+                        stroke={isActive ? baseColor : 'none'}
+                        strokeWidth={isActive ? 2 : 0}
+                      />
+                    );
+                  })}
                 </Bar>
               </ComposedChart>
             </ResponsiveContainer>
