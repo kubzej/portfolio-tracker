@@ -107,6 +107,7 @@ export interface TechnicalData {
   macdSignal: number | null;
   macdHistogram: number | null;
   macdTrend: 'bullish' | 'bearish' | 'neutral' | null;
+  macdDivergence: 'bullish' | 'bearish' | null; // v3.1: MACD divergence detection
   // Bollinger Bands
   bollingerUpper: number | null;
   bollingerMiddle: number | null;

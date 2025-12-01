@@ -42,6 +42,10 @@ export interface ScoreComponent {
   percent: number;
   details: string[];
   sentiment: 'bullish' | 'bearish' | 'neutral';
+  /** Raw score before normalization (v3.1: tracks actual point values) */
+  rawScore?: number;
+  /** Raw max score before normalization (v3.1: e.g., 140b, 120b, 80b, 60b) */
+  rawMaxScore?: number;
 }
 
 /** Signal types that can be generated */
@@ -49,10 +53,12 @@ export type SignalType =
   | 'DIP_OPPORTUNITY' // Oversold + fundamentals OK
   | 'MOMENTUM' // Technical bullish trend
   | 'CONVICTION_HOLD' // Long-term strong metrics
+  | 'QUALITY_CORE' // High fundamentals + positive analysts
   | 'NEAR_TARGET' // Close to analyst target price
   | 'WATCH_CLOSELY' // Something is changing
   | 'CONSIDER_TRIM' // Overbought + high weight + near target
   | 'ACCUMULATE' // Good stock, wait for better price
+  | 'STEADY_HOLD' // Solid stock, no action needed
   | 'NEUTRAL'; // No strong signal
 
 /** A single insight/signal for a stock */
@@ -166,23 +172,38 @@ export interface RecommendationInput {
 // CONSTANTS
 // ============================================================================
 
-/** Weight distribution for composite score (Holdings view) */
+/**
+ * Weight distribution for composite score (v3.1)
+ *
+ * Holdings view (500 points total):
+ * - Fundamental: 140b = 28%
+ * - Technical: 120b = 24%
+ * - Analyst: 80b = 16%
+ * - News+Insider: 60b = 12%
+ * - Portfolio: 100b = 20%
+ */
 const SCORE_WEIGHTS = {
-  fundamental: 0.2,
-  technical: 0.25,
-  analyst: 0.15,
-  news: 0.1,
-  insider: 0.1,
+  fundamental: 0.28,
+  technical: 0.24,
+  analyst: 0.16,
+  newsInsider: 0.12,
   portfolio: 0.2,
 };
 
-/** Weight distribution for Research view (no portfolio context) */
+/**
+ * Weight distribution for Research view (v3.1)
+ *
+ * Research view (400 points total, no portfolio):
+ * - Fundamental: 140b = 35%
+ * - Technical: 120b = 30%
+ * - Analyst: 80b = 20%
+ * - News+Insider: 60b = 15%
+ */
 const SCORE_WEIGHTS_RESEARCH = {
-  fundamental: 0.25,
+  fundamental: 0.35,
   technical: 0.3,
   analyst: 0.2,
-  news: 0.1,
-  insider: 0.15,
+  newsInsider: 0.15,
 };
 
 /** Signal priorities (lower = higher priority) */
@@ -190,11 +211,68 @@ const SIGNAL_PRIORITIES: Record<SignalType, number> = {
   DIP_OPPORTUNITY: 1,
   MOMENTUM: 2,
   CONVICTION_HOLD: 3,
-  NEAR_TARGET: 4,
-  CONSIDER_TRIM: 5,
-  WATCH_CLOSELY: 6,
-  ACCUMULATE: 7,
+  QUALITY_CORE: 4,
+  NEAR_TARGET: 5,
+  ACCUMULATE: 6,
+  STEADY_HOLD: 7,
+  WATCH_CLOSELY: 8,
+  CONSIDER_TRIM: 9,
   NEUTRAL: 10,
+};
+
+/**
+ * v3.1 Signal Thresholds (% scale)
+ * All thresholds are expressed as percentages (0-100)
+ *
+ * Technical (max 120b normalized to 0-100):
+ * - TECH_STRONG: ≥70% = bullish momentum
+ * - TECH_WEAK: <40% = bearish concerns
+ *
+ * Fundamental (max 140b normalized to 0-100):
+ * - FUND_STRONG: ≥50% = solid fundamentals
+ * - FUND_WATCH_HIGH: <35% = deteriorating
+ * - FUND_WATCH_LOW: <20% = very weak
+ *
+ * News/Insider:
+ * - INSIDER_WEAK: <35% = selling pressure
+ * - NEWS_WATCH_HIGH: <50% = negative sentiment
+ * - NEWS_WATCH_LOW: <25% = very negative
+ */
+const SIGNAL_THRESHOLDS = {
+  // Technical thresholds
+  TECH_STRONG: 60, // Lowered from 70 for more MOMENTUM signals
+  TECH_MODERATE: 35, // For STEADY_HOLD
+  TECH_WEAK: 40,
+
+  // Fundamental thresholds
+  FUND_QUALITY: 60, // For QUALITY_CORE
+  FUND_STRONG: 50,
+  FUND_MODERATE: 40, // For STEADY_HOLD
+  FUND_WATCH_HIGH: 35,
+  FUND_WATCH_LOW: 20,
+
+  // Analyst thresholds
+  ANALYST_QUALITY: 55, // For QUALITY_CORE
+
+  // Insider thresholds
+  INSIDER_WEAK: 35,
+
+  // News thresholds
+  NEWS_WATCH_HIGH: 50,
+  NEWS_WATCH_LOW: 25,
+
+  // DIP thresholds
+  DIP_TRIGGER: 50,
+  DIP_ACCUMULATE_MIN: 15, // Lowered from 20 for wider range
+  DIP_ACCUMULATE_MAX: 50, // Raised from 40 for wider range
+
+  // Position thresholds
+  WEIGHT_OVERWEIGHT: 8,
+  WEIGHT_MAX: 15,
+
+  // Target thresholds
+  TARGET_NEAR: 8,
+  TARGET_LOW_UPSIDE: 5,
 };
 
 // ============================================================================
@@ -267,15 +345,16 @@ function getSentiment(
 // ============================================================================
 
 /**
- * Calculate fundamental score (0-100)
- * Based on: P/E, ROE, margins, growth, debt
+ * Calculate fundamental score (0-140 points, normalized to 0-100 for compatibility)
+ * Based on: PEG (20b), P/E (20b), ROE (30b), Net Margin (25b), Revenue Growth (25b), D/E (10b), Current Ratio (10b)
+ * Total: 140 points
  */
 function calculateFundamentalScore(
   f: FundamentalMetrics | null | undefined
 ): ScoreComponent {
   const details: string[] = [];
   let score = 0;
-  const maxScore = 100;
+  const maxScore = 140; // New 140-point system
 
   if (!f) {
     return {
@@ -288,103 +367,206 @@ function calculateFundamentalScore(
     };
   }
 
-  // P/E Ratio (0-20 points) - lower is better (within reason)
-  if (f.peRatio !== null && f.peRatio !== undefined && f.peRatio > 0) {
-    if (f.peRatio < 12) {
-      score += 20;
-      details.push(`P/E ${f.peRatio.toFixed(1)} - undervalued`);
-    } else if (f.peRatio < 20) {
-      score += 15;
-      details.push(`P/E ${f.peRatio.toFixed(1)} - fair value`);
-    } else if (f.peRatio < 30) {
-      score += 10;
-      details.push(`P/E ${f.peRatio.toFixed(1)} - growth premium`);
-    } else if (f.peRatio < 50) {
-      score += 5;
-      details.push(`P/E ${f.peRatio.toFixed(1)} - expensive`);
+  // === PEG Score (0-20 points) ===
+  let pegScore = 0;
+  const hasPeg =
+    f.pegRatio !== null && f.pegRatio !== undefined && f.pegRatio > 0;
+
+  if (hasPeg) {
+    const peg = f.pegRatio!;
+    if (peg >= 0.5 && peg <= 1.2) {
+      pegScore = 20;
+      details.push(`PEG ${peg.toFixed(2)} - ideální ocenění`);
+    } else if (peg > 1.2 && peg <= 2.0) {
+      pegScore = 15;
+      details.push(`PEG ${peg.toFixed(2)} - mírně drahé vs růst`);
+    } else if (peg >= 0.3 && peg < 0.5) {
+      pegScore = 10;
+      details.push(`PEG ${peg.toFixed(2)} - velmi levné`);
+    } else if (peg > 2.0 && peg <= 3.0) {
+      pegScore = 5;
+      details.push(`PEG ${peg.toFixed(2)} - drahé vs růst`);
+    } else if (peg < 0.3) {
+      pegScore = 0;
+      details.push(`PEG ${peg.toFixed(2)} - extrémně levné (ověřte)`);
     } else {
-      details.push(`P/E ${f.peRatio.toFixed(1)} - very expensive`);
+      pegScore = 0;
+      details.push(`PEG ${peg.toFixed(2)} - extrémně drahé`);
+    }
+    score += pegScore;
+  }
+
+  // === Absolutní P/E Score (0-20 points) ===
+  let peScore = 0;
+  if (f.peRatio !== null && f.peRatio !== undefined) {
+    const pe = f.peRatio;
+    if (pe > 0 && pe < 5) {
+      peScore = 3;
+      details.push(`P/E ${pe.toFixed(1)} - extrémně nízké`);
+    } else if (pe >= 5 && pe < 7) {
+      peScore = 8;
+      details.push(`P/E ${pe.toFixed(1)} - velmi levné`);
+    } else if (pe >= 7 && pe < 10) {
+      peScore = 15;
+      details.push(`P/E ${pe.toFixed(1)} - levné`);
+    } else if (pe >= 10 && pe <= 20) {
+      peScore = 20;
+      details.push(`P/E ${pe.toFixed(1)} - férové ocenění`);
+    } else if (pe > 20 && pe <= 30) {
+      peScore = 15;
+      details.push(`P/E ${pe.toFixed(1)} - dražší`);
+    } else if (pe > 30 && pe <= 40) {
+      peScore = 8;
+      details.push(`P/E ${pe.toFixed(1)} - velmi drahé`);
+    } else if (pe > 40 && pe <= 60) {
+      peScore = 3;
+      details.push(`P/E ${pe.toFixed(1)} - extrémní`);
+    } else if (pe > 60) {
+      peScore = 0;
+      details.push(`P/E ${pe.toFixed(1)} - spekulativní`);
+    } else {
+      peScore = 0;
+      details.push(`P/E ${pe.toFixed(1)} - ztrátové`);
     }
   }
 
-  // ROE (0-20 points) - higher is better
+  // If no PEG, P/E can be worth max 20 points
+  // If we have PEG, P/E is also 20 points (total 40 for valuation)
+  if (!hasPeg) {
+    // No PEG - P/E is only valuation metric, keep its score
+    score += peScore;
+  } else {
+    // Have PEG - add P/E score as well
+    score += peScore;
+  }
+
+  // === ROE Score (0-30 points) with D/E Penalty ===
+  let roeScore = 0;
+  let roePenalty = 0;
   if (f.roe !== null && f.roe !== undefined) {
-    if (f.roe > 25) {
-      score += 20;
-      details.push(`ROE ${f.roe.toFixed(1)}% - exceptional`);
-    } else if (f.roe > 18) {
-      score += 16;
-      details.push(`ROE ${f.roe.toFixed(1)}% - excellent`);
-    } else if (f.roe > 12) {
-      score += 12;
-      details.push(`ROE ${f.roe.toFixed(1)}% - good`);
-    } else if (f.roe > 5) {
-      score += 6;
-      details.push(`ROE ${f.roe.toFixed(1)}% - moderate`);
-    } else if (f.roe > 0) {
-      score += 2;
-      details.push(`ROE ${f.roe.toFixed(1)}% - weak`);
+    const roe = f.roe;
+    if (roe > 25) {
+      roeScore = 30;
+      details.push(`ROE ${roe.toFixed(1)}% - vynikající rentabilita`);
+    } else if (roe > 18) {
+      roeScore = 24;
+      details.push(`ROE ${roe.toFixed(1)}% - velmi dobrá rentabilita`);
+    } else if (roe > 12) {
+      roeScore = 18;
+      details.push(`ROE ${roe.toFixed(1)}% - dobrá rentabilita`);
+    } else if (roe > 5) {
+      roeScore = 9;
+      details.push(`ROE ${roe.toFixed(1)}% - průměrná rentabilita`);
+    } else if (roe > 0) {
+      roeScore = 4;
+      details.push(`ROE ${roe.toFixed(1)}% - slabá rentabilita`);
     } else {
-      details.push(`ROE ${f.roe.toFixed(1)}% - negative`);
+      roeScore = 0;
+      details.push(`ROE ${roe.toFixed(1)}% - záporná rentabilita`);
+    }
+
+    // D/E Penalty for high leverage
+    if (
+      f.debtToEquity !== null &&
+      f.debtToEquity !== undefined &&
+      f.debtToEquity > 1.5
+    ) {
+      if (roe > 25) {
+        roePenalty = -6;
+      } else if (roe > 18) {
+        roePenalty = -5;
+      } else if (roe > 12) {
+        roePenalty = -3;
+      }
+      if (roePenalty < 0) {
+        details.push(`ROE penalizace ${roePenalty}b (vysoký dluh)`);
+      }
     }
   }
+  score += Math.max(0, roeScore + roePenalty);
 
-  // Net Margin (0-20 points) - higher is better
+  // === Net Margin Score (0-25 points) ===
   if (f.netMargin !== null && f.netMargin !== undefined) {
-    if (f.netMargin > 25) {
+    const margin = f.netMargin;
+    if (margin > 25) {
+      score += 25;
+      details.push(`Net Margin ${margin.toFixed(1)}% - vynikající`);
+    } else if (margin > 15) {
       score += 20;
-      details.push(`Net margin ${f.netMargin.toFixed(1)}% - exceptional`);
-    } else if (f.netMargin > 15) {
-      score += 15;
-      details.push(`Net margin ${f.netMargin.toFixed(1)}% - strong`);
-    } else if (f.netMargin > 8) {
-      score += 10;
-      details.push(`Net margin ${f.netMargin.toFixed(1)}% - decent`);
-    } else if (f.netMargin > 0) {
-      score += 5;
-      details.push(`Net margin ${f.netMargin.toFixed(1)}% - thin`);
+      details.push(`Net Margin ${margin.toFixed(1)}% - velmi dobrá`);
+    } else if (margin > 8) {
+      score += 13;
+      details.push(`Net Margin ${margin.toFixed(1)}% - dobrá`);
+    } else if (margin > 0) {
+      score += 6;
+      details.push(`Net Margin ${margin.toFixed(1)}% - nízká`);
     } else {
-      details.push(`Net margin ${f.netMargin.toFixed(1)}% - unprofitable`);
+      details.push(`Net Margin ${margin.toFixed(1)}% - ztrátová`);
     }
   }
 
-  // Revenue Growth (0-20 points)
+  // === Revenue Growth Score (0-25 points) ===
   if (f.revenueGrowth !== null && f.revenueGrowth !== undefined) {
-    if (f.revenueGrowth > 25) {
+    const growth = f.revenueGrowth;
+    if (growth > 25) {
+      score += 25;
+      details.push(`Revenue Growth ${growth.toFixed(1)}% - silný růst`);
+    } else if (growth > 15) {
       score += 20;
-      details.push(`Revenue growth ${f.revenueGrowth.toFixed(1)}% - rapid`);
-    } else if (f.revenueGrowth > 15) {
-      score += 15;
-      details.push(`Revenue growth ${f.revenueGrowth.toFixed(1)}% - strong`);
-    } else if (f.revenueGrowth > 5) {
-      score += 10;
-      details.push(`Revenue growth ${f.revenueGrowth.toFixed(1)}% - moderate`);
-    } else if (f.revenueGrowth > 0) {
-      score += 5;
-      details.push(`Revenue growth ${f.revenueGrowth.toFixed(1)}% - slow`);
+      details.push(`Revenue Growth ${growth.toFixed(1)}% - dobrý růst`);
+    } else if (growth > 5) {
+      score += 13;
+      details.push(`Revenue Growth ${growth.toFixed(1)}% - mírný růst`);
+    } else if (growth > 0) {
+      score += 6;
+      details.push(`Revenue Growth ${growth.toFixed(1)}% - minimální růst`);
     } else {
-      details.push(`Revenue growth ${f.revenueGrowth.toFixed(1)}% - declining`);
+      details.push(`Revenue Growth ${growth.toFixed(1)}% - pokles tržeb`);
     }
   }
 
-  // Debt/Equity (0-20 points) - lower is better
+  // === D/E Ratio Score (0-10 points) ===
   if (f.debtToEquity !== null && f.debtToEquity !== undefined) {
-    if (f.debtToEquity < 0.3) {
-      score += 20;
-      details.push(`D/E ${f.debtToEquity.toFixed(2)} - minimal debt`);
-    } else if (f.debtToEquity < 0.7) {
-      score += 16;
-      details.push(`D/E ${f.debtToEquity.toFixed(2)} - low debt`);
-    } else if (f.debtToEquity < 1.5) {
+    const de = f.debtToEquity;
+    if (de < 0.3) {
       score += 10;
-      details.push(`D/E ${f.debtToEquity.toFixed(2)} - moderate debt`);
-    } else if (f.debtToEquity < 2.5) {
-      score += 4;
-      details.push(`D/E ${f.debtToEquity.toFixed(2)} - high debt`);
+      details.push(`D/E ${de.toFixed(2)} - minimální dluh`);
+    } else if (de < 0.7) {
+      score += 8;
+      details.push(`D/E ${de.toFixed(2)} - nízký dluh`);
+    } else if (de < 1.5) {
+      score += 5;
+      details.push(`D/E ${de.toFixed(2)} - střední dluh`);
+    } else if (de < 2.5) {
+      score += 2;
+      details.push(`D/E ${de.toFixed(2)} - vysoký dluh`);
     } else {
-      details.push(`D/E ${f.debtToEquity.toFixed(2)} - very high debt`);
+      details.push(`D/E ${de.toFixed(2)} - velmi vysoký dluh`);
     }
   }
+
+  // === Current Ratio Score (0-10 points) ===
+  if (f.currentRatio !== null && f.currentRatio !== undefined) {
+    const cr = f.currentRatio;
+    if (cr > 2.0) {
+      score += 10;
+      details.push(`Current Ratio ${cr.toFixed(2)} - silná likvidita`);
+    } else if (cr > 1.5) {
+      score += 8;
+      details.push(`Current Ratio ${cr.toFixed(2)} - dobrá likvidita`);
+    } else if (cr > 1.0) {
+      score += 5;
+      details.push(`Current Ratio ${cr.toFixed(2)} - dostatečná likvidita`);
+    } else if (cr > 0.5) {
+      score += 2;
+      details.push(`Current Ratio ${cr.toFixed(2)} - nízká likvidita`);
+    } else {
+      details.push(`Current Ratio ${cr.toFixed(2)} - kritická likvidita`);
+    }
+  }
+
+  // Cap at maxScore
+  score = Math.min(maxScore, score);
 
   return {
     category: 'Fundamentals',
@@ -397,22 +579,24 @@ function calculateFundamentalScore(
 }
 
 /**
- * Calculate technical score (0-100)
- * Based on: RSI, MACD, Bollinger, ADX, Stochastic
+ * Calculate technical score (0-120 points, normalized to 0-100 for compatibility)
+ * Based on: RSI (15b), MACD (35b), Bollinger (10b), ADX (25b), 200-day MA (25b), Volume (10b)
+ * Total: 120 points
+ * Optimized for monthly/yearly position trading horizon
  */
 function calculateTechnicalScore(
   tech: TechnicalData | undefined
 ): ScoreComponent {
   const details: string[] = [];
   let score = 0;
-  const maxScore = 100;
+  const maxScore = 120; // New 120-point system
   let bullishSignals = 0;
   let bearishSignals = 0;
 
   if (!tech) {
     return {
       category: 'Technical',
-      score: 50, // Neutral when no data
+      score: 60, // Neutral when no data (50% of 120)
       maxScore,
       percent: 50,
       details: ['No technical data available'],
@@ -420,57 +604,86 @@ function calculateTechnicalScore(
     };
   }
 
-  // RSI (0-25 points)
+  // === RSI Score (0-15 points) ===
   if (tech.rsi14 !== null && tech.rsi14 !== undefined) {
     const rsi = tech.rsi14;
-    if (rsi < 30) {
-      score += 25; // Oversold = bullish opportunity
-      details.push(`RSI ${rsi.toFixed(0)} - oversold (bullish)`);
+    let rsiScore = 0;
+    if (rsi < 20) {
+      rsiScore = 15;
+      details.push(`RSI ${rsi.toFixed(0)} - extrémně přeprodané`);
       bullishSignals++;
-    } else if (rsi < 45) {
-      score += 18;
-      details.push(`RSI ${rsi.toFixed(0)} - approaching oversold`);
+    } else if (rsi >= 20 && rsi < 30) {
+      rsiScore = 13;
+      details.push(`RSI ${rsi.toFixed(0)} - přeprodané`);
       bullishSignals++;
-    } else if (rsi > 70) {
-      score += 5;
-      details.push(`RSI ${rsi.toFixed(0)} - overbought (bearish)`);
+    } else if (rsi >= 30 && rsi < 40) {
+      rsiScore = 11;
+      details.push(`RSI ${rsi.toFixed(0)} - podhodnocené`);
+    } else if (rsi >= 40 && rsi < 50) {
+      rsiScore = 9;
+      details.push(`RSI ${rsi.toFixed(0)} - neutrální, mírně slabší`);
+    } else if (rsi >= 50 && rsi < 60) {
+      rsiScore = 7;
+      details.push(`RSI ${rsi.toFixed(0)} - neutrální, mírně silnější`);
+    } else if (rsi >= 60 && rsi < 70) {
+      rsiScore = 5;
+      details.push(`RSI ${rsi.toFixed(0)} - spíše překoupené`);
+    } else if (rsi >= 70 && rsi < 80) {
+      rsiScore = 3;
+      details.push(`RSI ${rsi.toFixed(0)} - překoupené`);
       bearishSignals++;
-    } else if (rsi > 60) {
-      score += 12;
-      details.push(`RSI ${rsi.toFixed(0)} - bullish momentum`);
     } else {
-      score += 15;
-      details.push(`RSI ${rsi.toFixed(0)} - neutral`);
+      rsiScore = 1;
+      details.push(`RSI ${rsi.toFixed(0)} - extrémně překoupené`);
+      bearishSignals++;
     }
+    score += rsiScore;
   }
 
-  // MACD (0-20 points)
+  // === MACD Score (0-35 points) - highest weight ===
   if (tech.macdHistogram !== null && tech.macdHistogram !== undefined) {
     const histogram = tech.macdHistogram;
     const macdTrend = tech.macdTrend;
+    let macdScore = 0;
+
+    // Base score based on MACD position and histogram direction
     if (histogram > 0 && macdTrend === 'bullish') {
-      score += 20;
-      details.push('MACD bullish & strengthening');
+      // Bullish + histogram rising
+      macdScore = 28;
+      details.push('MACD silně býčí momentum');
       bullishSignals++;
     } else if (histogram > 0) {
-      score += 15;
-      details.push('MACD bullish');
+      // Just bullish
+      macdScore = 23;
+      details.push('MACD býčí');
       bullishSignals++;
+    } else if (histogram > -0.5 && histogram <= 0) {
+      // MACD slightly below signal (mírně medvědí)
+      macdScore = 12;
+      details.push('MACD mírně medvědí');
     } else if (histogram < 0 && macdTrend === 'bearish') {
-      score += 5;
-      details.push('MACD bearish & weakening');
+      // Bearish + histogram falling
+      macdScore = 3;
+      details.push('MACD silně medvědí momentum');
       bearishSignals++;
     } else if (histogram < 0) {
-      score += 8;
-      details.push('MACD bearish');
+      // Just bearish
+      macdScore = 7;
+      details.push('MACD medvědí');
       bearishSignals++;
     } else {
-      score += 10;
-      details.push('MACD neutral');
+      macdScore = 16;
+      details.push('MACD neutrální');
     }
+
+    // TODO: Add divergence adjustment when macdDivergence is available
+    // if (tech.macdDivergence === 'bullish') macdScore = Math.min(35, macdScore + 7);
+    // if (tech.macdDivergence === 'bearish') macdScore = Math.max(0, macdScore - 7);
+
+    score += Math.min(35, macdScore);
   }
 
-  // Bollinger Bands (0-20 points)
+  // === Bollinger Bands Score (0-10 points) ===
   if (
     tech.bollingerUpper !== null &&
     tech.bollingerLower !== null &&
@@ -480,72 +693,161 @@ function calculateTechnicalScore(
     const upper = tech.bollingerUpper;
     const lower = tech.bollingerLower;
     const middle = tech.bollingerMiddle ?? (upper + lower) / 2;
+    const bandWidth = upper - lower;
+    let bbScore = 0;
 
-    if (price < lower) {
-      score += 20; // Below lower band = potential bounce
-      details.push('Price below lower Bollinger (oversold)');
+    // Calculate position within bands
+    if (price < lower - bandWidth * 0.5) {
+      // Far below lower band
+      bbScore = 9;
+      details.push('Cena výrazně pod BB pásmem');
       bullishSignals++;
-    } else if (price < middle && price > lower) {
-      score += 15;
-      details.push('Price in lower Bollinger zone');
-    } else if (price > upper) {
-      score += 5;
-      details.push('Price above upper Bollinger (overbought)');
+    } else if (price < lower) {
+      // Below lower band
+      bbScore = 7;
+      details.push('Cena pod dolním BB pásmem');
+      bullishSignals++;
+    } else if (price >= lower && price < middle) {
+      // Lower zone
+      bbScore = 5;
+      details.push('Cena ve spodní BB zóně');
+    } else if (price >= middle && price < upper) {
+      // Upper zone
+      bbScore = 4;
+      details.push('Cena v horní BB zóně');
+    } else if (price >= upper && price < upper + bandWidth * 0.5) {
+      // Above upper band
+      bbScore = 2;
+      details.push('Cena nad horním BB pásmem');
       bearishSignals++;
-    } else if (price > middle) {
-      score += 12;
-      details.push('Price in upper Bollinger zone');
     } else {
-      score += 10;
-      details.push('Price at Bollinger midline');
+      // Far above upper band
+      bbScore = 1;
+      details.push('Cena výrazně nad BB pásmem');
+      bearishSignals++;
     }
+
+    // Squeeze bonus (narrow bands = potential breakout)
+    const bandwidthPercent = middle > 0 ? (bandWidth / middle) * 100 : 0;
+    if (bandwidthPercent < 5) {
+      bbScore = Math.min(10, bbScore + 1);
+      details.push('BB squeeze detekován');
+    }
+
+    score += bbScore;
   }
 
-  // ADX - Trend Strength (0-15 points)
+  // === ADX Score (0-25 points) ===
   if (tech.adx !== null && tech.plusDI !== null && tech.minusDI !== null) {
     const adx = tech.adx;
     const plusDI = tech.plusDI;
     const minusDI = tech.minusDI;
-    if (adx > 25 && plusDI > minusDI) {
-      score += 15;
-      details.push(`ADX ${adx.toFixed(0)} - strong uptrend`);
-      bullishSignals++;
-    } else if (adx > 25 && minusDI > plusDI) {
-      score += 5;
-      details.push(`ADX ${adx.toFixed(0)} - strong downtrend`);
-      bearishSignals++;
-    } else if (adx < 20) {
-      score += 8;
-      details.push(`ADX ${adx.toFixed(0)} - weak trend/consolidation`);
+    const isUptrend = plusDI > minusDI;
+    let adxScore = 0;
+
+    if (adx > 40) {
+      // Very strong trend (direction doesn't matter as much)
+      adxScore = 25;
+      details.push(`ADX ${adx.toFixed(0)} - velmi silný trend`);
+      if (isUptrend) bullishSignals++;
+    } else if (adx >= 30 && adx <= 40) {
+      if (isUptrend) {
+        adxScore = 21;
+        details.push(`ADX ${adx.toFixed(0)} - silný uptrend`);
+        bullishSignals++;
+      } else {
+        adxScore = 14;
+        details.push(`ADX ${adx.toFixed(0)} - silný downtrend`);
+        bearishSignals++;
+      }
+    } else if (adx >= 25 && adx < 30) {
+      if (isUptrend) {
+        adxScore = 16;
+        details.push(`ADX ${adx.toFixed(0)} - střední uptrend`);
+      } else {
+        adxScore = 10;
+        details.push(`ADX ${adx.toFixed(0)} - střední downtrend`);
+      }
+    } else if (adx >= 20 && adx < 25) {
+      adxScore = 6;
+      details.push(`ADX ${adx.toFixed(0)} - slabý trend`);
     } else {
-      score += 10;
-      details.push(`ADX ${adx.toFixed(0)} - moderate trend`);
+      adxScore = 3;
+      details.push(`ADX ${adx.toFixed(0)} - sideways`);
     }
+
+    score += adxScore;
   }
 
-  // Stochastic (0-20 points)
-  if (tech.stochasticK !== null && tech.stochasticD !== null) {
-    const k = tech.stochasticK;
-    const d = tech.stochasticD;
-    if (k < 20 && d < 20) {
-      score += 20;
-      details.push(`Stoch %K:${k.toFixed(0)} %D:${d.toFixed(0)} - oversold`);
+  // === 200-day MA Score (0-25 points) ===
+  if (
+    tech.sma200 !== null &&
+    tech.sma200 !== undefined &&
+    tech.currentPrice !== null
+  ) {
+    const price = tech.currentPrice;
+    const sma200 = tech.sma200;
+    const priceVsSma200 =
+      tech.priceVsSma200 ?? ((price - sma200) / sma200) * 100;
+    let ma200Score = 0;
+
+    // Determine if MA is rising (using price vs MA history if available)
+    // For now, we estimate based on whether price is significantly above MA
+    const maRising = priceVsSma200 > 5; // Simplified: assume rising if price > 5% above
+
+    if (price > sma200 && maRising) {
+      ma200Score = 25;
+      details.push('Cena nad rostoucí 200 MA - silný uptrend');
       bullishSignals++;
-    } else if (k < 30) {
-      score += 15;
-      details.push(`Stoch %K:${k.toFixed(0)} - approaching oversold`);
-    } else if (k > 80 && d > 80) {
-      score += 5;
-      details.push(`Stoch %K:${k.toFixed(0)} %D:${d.toFixed(0)} - overbought`);
+    } else if (price > sma200) {
+      ma200Score = 19;
+      details.push('Cena nad 200 MA - bullish trend');
+      bullishSignals++;
+    } else if (priceVsSma200 >= -5 && priceVsSma200 <= 5) {
+      ma200Score = 12;
+      details.push('Cena u klíčové 200 MA úrovně');
+    } else if (price < sma200 && priceVsSma200 >= -15) {
+      ma200Score = 6;
+      details.push('Cena pod 200 MA - pod trendem');
       bearishSignals++;
-    } else if (k > 70) {
-      score += 10;
-      details.push(`Stoch %K:${k.toFixed(0)} - strong momentum`);
     } else {
-      score += 12;
-      details.push(`Stoch %K:${k.toFixed(0)} - neutral`);
+      ma200Score = 0;
+      details.push('Cena výrazně pod 200 MA - silný downtrend');
+      bearishSignals++;
     }
+
+    score += ma200Score;
   }
+
+  // === Volume Score (0-10 points) ===
+  if (tech.avgVolume20 !== null && tech.currentVolume !== null) {
+    const volumeRatio = tech.currentVolume / tech.avgVolume20;
+    const priceUp = tech.priceVsSma50 !== null && tech.priceVsSma50 > 0;
+    let volumeScore = 0;
+
+    if (volumeRatio > 1.5 && priceUp) {
+      volumeScore = 10;
+      details.push('Vysoký objem potvrzuje růst');
+      bullishSignals++;
+    } else if (volumeRatio > 1.5 && !priceUp) {
+      volumeScore = 8;
+      details.push('Vysoký objem při poklesu - možná kapitulace');
+    } else if (volumeRatio > 1.0) {
+      volumeScore = 7;
+      details.push('Nadprůměrný objem');
+    } else if (volumeRatio >= 0.7) {
+      volumeScore = 5;
+      details.push('Normální objem');
+    } else {
+      volumeScore = 2;
+      details.push('Nízký objem');
+    }
+
+    score += volumeScore;
+  }
+
+  // Cap at maxScore
+  score = Math.min(maxScore, score);
 
   // Determine overall sentiment based on signal count
   let sentiment: 'bullish' | 'bearish' | 'neutral' = 'neutral';
@@ -565,61 +867,137 @@ function calculateTechnicalScore(
 }
 
 /**
- * Calculate analyst score (0-100)
- * Based on: consensus score, analyst count
+ * Calculate analyst score (0-80 points, normalized to 0-100 for compatibility)
+ * Based on: Consensus (50b), Coverage (15b), Target Upside (10b), Agreement (5b)
+ * Total: 80 points
  */
 function calculateAnalystScore(item: EnrichedAnalystData): ScoreComponent {
   const details: string[] = [];
   let score = 0;
-  const maxScore = 100;
+  const maxScore = 80; // New 80-point system
 
-  // Consensus Score (0-70 points)
+  // === Consensus Score (0-50 points) ===
   // Scale: -2 (Strong Sell) to +2 (Strong Buy)
   if (item.consensusScore !== null) {
     const cs = item.consensusScore;
+    let consensusPoints = 0;
     if (cs > 1.5) {
-      score += 70;
+      consensusPoints = 50;
       details.push(`Consensus ${cs.toFixed(2)} - Strong Buy`);
-    } else if (cs > 1) {
-      score += 58;
+    } else if (cs > 1.0) {
+      consensusPoints = 40;
       details.push(`Consensus ${cs.toFixed(2)} - Buy`);
     } else if (cs > 0.5) {
-      score += 48;
+      consensusPoints = 32;
       details.push(`Consensus ${cs.toFixed(2)} - Moderate Buy`);
-    } else if (cs > 0) {
-      score += 38;
+    } else if (cs > 0.0) {
+      consensusPoints = 25;
       details.push(`Consensus ${cs.toFixed(2)} - Weak Buy`);
     } else if (cs > -0.5) {
-      score += 28;
+      consensusPoints = 16;
       details.push(`Consensus ${cs.toFixed(2)} - Hold`);
-    } else if (cs > -1) {
-      score += 14;
+    } else if (cs > -1.0) {
+      consensusPoints = 8;
       details.push(`Consensus ${cs.toFixed(2)} - Underperform`);
     } else {
-      score += 0;
+      consensusPoints = 0;
       details.push(`Consensus ${cs.toFixed(2)} - Sell`);
     }
+    score += consensusPoints;
   }
 
-  // Analyst Coverage (0-30 points) - more analysts = more reliable
+  // === Analyst Coverage (0-15 points) ===
   if (item.numberOfAnalysts !== null) {
     const count = item.numberOfAnalysts;
+    let coveragePoints = 0;
     if (count >= 20) {
-      score += 30;
-      details.push(`${count} analysts - high coverage`);
+      coveragePoints = 15;
+      details.push(`${count} analytiků - vysoká pozornost`);
     } else if (count >= 10) {
-      score += 24;
-      details.push(`${count} analysts - good coverage`);
+      coveragePoints = 12;
+      details.push(`${count} analytiků - dobrá pozornost`);
     } else if (count >= 5) {
-      score += 16;
-      details.push(`${count} analysts - moderate coverage`);
+      coveragePoints = 8;
+      details.push(`${count} analytiků - střední pozornost`);
     } else if (count >= 1) {
-      score += 8;
-      details.push(`${count} analysts - low coverage`);
+      coveragePoints = 4;
+      details.push(`${count} analytiků - nízká pozornost`);
     } else {
-      details.push('No analyst coverage');
+      details.push('Žádná data od analytiků');
     }
+    score += coveragePoints;
   }
+
+  // === Price Target Upside (0-10 points) ===
+  // Use analyst target price from Yahoo if available
+  const analystTargetPrice =
+    'analystTargetPrice' in item
+      ? (item as { analystTargetPrice?: number | null }).analystTargetPrice
+      : null;
+
+  if (analystTargetPrice && item.currentPrice && item.currentPrice > 0) {
+    const upside =
+      ((analystTargetPrice - item.currentPrice) / item.currentPrice) * 100;
+    let upsidePoints = 0;
+    if (upside > 30) {
+      upsidePoints = 10;
+      details.push(`Target upside +${upside.toFixed(0)}% - vysoký potenciál`);
+    } else if (upside > 15) {
+      upsidePoints = 8;
+      details.push(`Target upside +${upside.toFixed(0)}% - solidní`);
+    } else if (upside > 5) {
+      upsidePoints = 5;
+      details.push(`Target upside +${upside.toFixed(0)}% - mírný`);
+    } else if (upside > -5) {
+      upsidePoints = 3;
+      details.push(
+        `Target upside ${upside > 0 ? '+' : ''}${upside.toFixed(
+          0
+        )}% - blízko fair value`
+      );
+    } else {
+      upsidePoints = 1;
+      details.push(`Cena ${Math.abs(upside).toFixed(0)}% nad cílem analytiků`);
+    }
+    score += upsidePoints;
+  }
+
+  // === Analyst Agreement (0-5 points) ===
+  // Calculate agreement based on recommendation distribution
+  const total =
+    (item.strongBuy || 0) +
+    (item.buy || 0) +
+    (item.hold || 0) +
+    (item.sell || 0) +
+    (item.strongSell || 0);
+
+  if (total > 0) {
+    const strongBuyPct = ((item.strongBuy || 0) / total) * 100;
+    const buyPct = ((item.buy || 0) / total) * 100;
+    const holdPct = ((item.hold || 0) / total) * 100;
+    const sellPct = (((item.sell || 0) + (item.strongSell || 0)) / total) * 100;
+    const bullishPct = strongBuyPct + buyPct;
+
+    let agreementPoints = 0;
+    // Check for strong consensus (>60% in one direction)
+    if (bullishPct > 60 || sellPct > 60 || holdPct > 60) {
+      agreementPoints = 5;
+      details.push('Silný konsensus analytiků');
+    } else if (bullishPct > 50 || sellPct > 50 || holdPct > 50) {
+      agreementPoints = 4;
+      details.push('Mírný konsensus analytiků');
+    } else if (Math.max(bullishPct, sellPct, holdPct) >= 30) {
+      agreementPoints = 2;
+      details.push('Smíšené názory analytiků');
+    } else {
+      agreementPoints = 1;
+      details.push('Vysoká nejistota mezi analytiky');
+    }
+    score += agreementPoints;
+  }
+
+  // Cap at maxScore
+  score = Math.min(maxScore, score);
 
   return {
     category: 'Analyst',
@@ -632,8 +1010,175 @@ function calculateAnalystScore(item: EnrichedAnalystData): ScoreComponent {
 }
 
 /**
- * Calculate news sentiment score (0-100)
- * Based on: average sentiment from recent articles
+ * Calculate combined News + Insider score (0-100, normalized from 60 points)
+ *
+ * Position Trading Scoring (v3.1):
+ * - News Sentiment: 35b max (58.3% of category)
+ * - Insider Activity: 25b max (41.7% of category)
+ * - Total: 60 raw points, normalized to 0-100 for composite
+ *
+ * News Sentiment scoring (35b max):
+ * | Avg Sentiment | Points |
+ * |---------------|--------|
+ * | > 0.5         | 35     |
+ * | 0.15 - 0.5    | 28     |
+ * | -0.15 - 0.15  | 17     |
+ * | -0.5 - -0.15  | 8      |
+ * | < -0.5        | 0      |
+ *
+ * Insider Activity scoring (25b max):
+ * | MSPR Range    | Points |
+ * |---------------|--------|
+ * | > 50          | 25     |
+ * | 25 - 50       | 21     |
+ * | 0 - 25        | 16     |
+ * | -25 - 0       | 12     |
+ * | -50 - -25     | 6      |
+ * | < -50         | 0      |
+ */
+function calculateNewsInsiderScore(
+  ticker: string,
+  articles: NewsArticle[] | undefined,
+  item: EnrichedAnalystData,
+  timeRange: InsiderTimeRange
+): ScoreComponent {
+  const details: string[] = [];
+  const MAX_RAW_SCORE = 60; // 35 (news) + 25 (insider)
+  let newsRawScore = 17; // Default neutral (middle of 0-35)
+  let insiderRawScore = 12; // Default neutral (middle of 0-25)
+
+  // === News Sentiment Score (0-35 points) ===
+  let avgSentiment = 0;
+  let hasNewsData = false;
+
+  if (articles && articles.length > 0) {
+    // Filter articles for this ticker
+    const tickerArticles = articles.filter(
+      (a) => a.ticker === ticker || a.relatedTickers?.includes(ticker)
+    );
+
+    if (tickerArticles.length > 0) {
+      hasNewsData = true;
+      // Calculate average sentiment (-1 to +1)
+      avgSentiment =
+        tickerArticles.reduce((sum, a) => {
+          return sum + (a.sentiment?.score ?? 0);
+        }, 0) / tickerArticles.length;
+
+      // Apply tiered scoring based on sentiment
+      if (avgSentiment > 0.5) {
+        newsRawScore = 35;
+        details.push(
+          `Sentiment velmi pozitivní (+${(avgSentiment * 100).toFixed(0)}%)`
+        );
+      } else if (avgSentiment >= 0.15) {
+        newsRawScore = 28;
+        details.push(
+          `Sentiment pozitivní (+${(avgSentiment * 100).toFixed(0)}%)`
+        );
+      } else if (avgSentiment >= -0.15) {
+        newsRawScore = 17;
+        details.push(
+          `Sentiment neutrální (${(avgSentiment * 100).toFixed(0)}%)`
+        );
+      } else if (avgSentiment >= -0.5) {
+        newsRawScore = 8;
+        details.push(
+          `Sentiment negativní (${(avgSentiment * 100).toFixed(0)}%)`
+        );
+      } else {
+        newsRawScore = 0;
+        details.push(
+          `Sentiment velmi negativní (${(avgSentiment * 100).toFixed(0)}%)`
+        );
+      }
+
+      // Add article count info
+      const positive = tickerArticles.filter(
+        (a) => (a.sentiment?.score ?? 0) > 0.2
+      ).length;
+      const negative = tickerArticles.filter(
+        (a) => (a.sentiment?.score ?? 0) < -0.2
+      ).length;
+      details.push(
+        `${tickerArticles.length} článků (${positive}+ / ${negative}-)`
+      );
+    }
+  }
+
+  if (!hasNewsData) {
+    details.push('Žádné zprávy');
+  }
+
+  // === Insider Activity Score (0-25 points) ===
+  const insider = getFilteredInsiderSentiment(item, timeRange);
+  let hasInsiderData = false;
+
+  if (insider.mspr !== null) {
+    hasInsiderData = true;
+    const mspr = insider.mspr;
+
+    // Apply tiered scoring based on MSPR
+    if (mspr > 50) {
+      insiderRawScore = 25;
+      details.push(`MSPR +${mspr.toFixed(0)} - silný nákup insiderů`);
+    } else if (mspr >= 25) {
+      insiderRawScore = 21;
+      details.push(`MSPR +${mspr.toFixed(0)} - nákup insiderů`);
+    } else if (mspr >= 0) {
+      insiderRawScore = 16;
+      details.push(`MSPR +${mspr.toFixed(0)} - mírný nákup`);
+    } else if (mspr >= -25) {
+      insiderRawScore = 12;
+      details.push(`MSPR ${mspr.toFixed(0)} - mírný prodej`);
+    } else if (mspr >= -50) {
+      insiderRawScore = 6;
+      details.push(`MSPR ${mspr.toFixed(0)} - prodej insiderů`);
+    } else {
+      insiderRawScore = 0;
+      details.push(`MSPR ${mspr.toFixed(0)} - silný prodej insiderů`);
+    }
+
+    // Add net share change if available
+    if (insider.change !== null && insider.change !== 0) {
+      const changeStr = insider.change > 0 ? '+' : '';
+      details.push(
+        `Čistá změna: ${changeStr}${insider.change.toLocaleString()} akcií`
+      );
+    }
+  }
+
+  if (!hasInsiderData) {
+    details.push('Žádná insider data');
+  }
+
+  // === Calculate total and normalize ===
+  const totalRawScore = newsRawScore + insiderRawScore;
+  const normalizedScore = Math.round((totalRawScore / MAX_RAW_SCORE) * 100);
+
+  // Determine overall sentiment
+  let sentiment: 'bullish' | 'bearish' | 'neutral' = 'neutral';
+  if (avgSentiment > 0.15 || (insider.mspr ?? 0) > 15) {
+    sentiment = 'bullish';
+  } else if (avgSentiment < -0.15 || (insider.mspr ?? 0) < -15) {
+    sentiment = 'bearish';
+  }
+
+  return {
+    category: 'News+Insider',
+    score: normalizedScore,
+    maxScore: 100,
+    percent: normalizedScore,
+    details,
+    sentiment,
+    rawScore: totalRawScore,
+    rawMaxScore: MAX_RAW_SCORE,
+  };
+}
+
+/**
+ * @deprecated Use calculateNewsInsiderScore instead
+ * Kept for backward compatibility during migration
  */
 function calculateNewsScore(
   ticker: string,
@@ -713,8 +1258,8 @@ function calculateNewsScore(
 }
 
 /**
- * Calculate insider sentiment score (0-100)
- * Based on: MSPR and net share changes
+ * @deprecated Use calculateNewsInsiderScore instead
+ * Kept for backward compatibility during migration
  */
 function calculateInsiderScore(
   item: EnrichedAnalystData,
@@ -780,15 +1325,25 @@ function calculateInsiderScore(
 }
 
 /**
- * Calculate portfolio context score (0-100)
- * Based on: position size, distance from avg price, gain/loss, target price upside
+ * Calculate portfolio context score (0-100, normalized from 100 points)
+ *
+ * Position Trading Scoring (v3.1):
+ * Only available for Holdings view (not Research - no personal position data)
+ *
+ * Components:
+ * - Target Upside: 35b max (personal target price vs current)
+ * - Distance from Avg Buy: 25b max (DCA opportunity detection)
+ * - Position Weight: 20b max (concentration risk)
+ * - Unrealized Gain: 20b max (profit-taking signals)
+ * - Total: 100 raw points = 100 normalized (no conversion needed)
  */
 function calculatePortfolioScore(item: EnrichedAnalystData): ScoreComponent {
   const details: string[] = [];
   let score = 0;
   const maxScore = 100;
 
-  // Target Price Upside (0-30 points) - your personal target
+  // === Target Price Upside (0-35 points) ===
+  // Personal target price vs current price
   if (
     item.targetPrice !== null &&
     item.currentPrice !== null &&
@@ -796,107 +1351,122 @@ function calculatePortfolioScore(item: EnrichedAnalystData): ScoreComponent {
   ) {
     const upside =
       ((item.targetPrice - item.currentPrice) / item.currentPrice) * 100;
-    if (upside > 40) {
-      score += 30;
-      details.push(`Target upside +${upside.toFixed(0)}% - high potential`);
-    } else if (upside > 25) {
-      score += 25;
-      details.push(`Target upside +${upside.toFixed(0)}% - good potential`);
-    } else if (upside > 15) {
-      score += 20;
-      details.push(`Target upside +${upside.toFixed(0)}% - moderate`);
+
+    let targetPoints = 0;
+    if (upside > 30) {
+      targetPoints = 35;
+      details.push(`Upside +${upside.toFixed(0)}% - vysoký potenciál`);
+    } else if (upside > 20) {
+      targetPoints = 28;
+      details.push(`Upside +${upside.toFixed(0)}% - dobrý potenciál`);
+    } else if (upside > 10) {
+      targetPoints = 21;
+      details.push(`Upside +${upside.toFixed(0)}% - střední potenciál`);
     } else if (upside > 5) {
-      score += 12;
-      details.push(`Target upside +${upside.toFixed(0)}% - limited`);
-    } else if (upside > -5) {
-      score += 6;
-      details.push(
-        `Near target price (${upside > 0 ? '+' : ''}${upside.toFixed(0)}%)`
-      );
+      targetPoints = 14;
+      details.push(`Upside +${upside.toFixed(0)}% - omezený potenciál`);
+    } else if (upside > 0) {
+      targetPoints = 7;
+      details.push(`Upside +${upside.toFixed(0)}% - blízko cíle`);
     } else {
-      score += 0;
+      targetPoints = 0;
       details.push(
-        `Above target ${Math.abs(upside).toFixed(0)}% - consider trimming`
+        `Cena ${Math.abs(upside).toFixed(0)}% nad cílem - zvažte realizaci`
       );
     }
+    score += targetPoints;
+  } else {
+    // No target price set - give neutral score
+    score += 17; // Middle of 0-35
+    details.push('Cílová cena nenastavena');
   }
 
-  // Distance from average buy price (0-25 points)
+  // === Distance from Average Buy Price (0-25 points) ===
+  // Below avg = DCA opportunity, far above = profit-taking consideration
   if (item.avgBuyPrice > 0 && item.currentPrice !== null) {
     const distanceFromAvg =
       ((item.currentPrice - item.avgBuyPrice) / item.avgBuyPrice) * 100;
 
-    if (distanceFromAvg < -20) {
-      score += 25; // Significantly below avg = good DCA opportunity
+    let distancePoints = 0;
+    if (distanceFromAvg < -15) {
+      distancePoints = 25;
       details.push(
-        `${distanceFromAvg.toFixed(1)}% below avg cost - DCA opportunity`
+        `${distanceFromAvg.toFixed(0)}% pod průměrem - DCA příležitost`
       );
     } else if (distanceFromAvg < -10) {
-      score += 20;
-      details.push(`${distanceFromAvg.toFixed(1)}% below avg cost`);
+      distancePoints = 20;
+      details.push(
+        `${distanceFromAvg.toFixed(0)}% pod průměrem - přidej na dipu`
+      );
     } else if (distanceFromAvg < 0) {
-      score += 15;
-      details.push(`${distanceFromAvg.toFixed(1)}% below avg cost`);
-    } else if (distanceFromAvg < 20) {
-      score += 12;
-      details.push(`+${distanceFromAvg.toFixed(1)}% above avg cost`);
+      distancePoints = 15;
+      details.push(`${distanceFromAvg.toFixed(0)}% pod průměrem`);
+    } else if (distanceFromAvg < 25) {
+      distancePoints = 10;
+      details.push(`+${distanceFromAvg.toFixed(0)}% nad průměrem - mírný zisk`);
     } else if (distanceFromAvg < 50) {
-      score += 8;
-      details.push(`+${distanceFromAvg.toFixed(1)}% above avg cost`);
-    } else {
-      score += 4;
+      distancePoints = 5;
       details.push(
-        `+${distanceFromAvg.toFixed(
-          1
-        )}% above avg cost - consider taking profits`
+        `+${distanceFromAvg.toFixed(0)}% nad průměrem - solidní zisk`
+      );
+    } else {
+      distancePoints = 2;
+      details.push(
+        `+${distanceFromAvg.toFixed(0)}% nad průměrem - zvažte rebalancing`
       );
     }
+    score += distancePoints;
   }
 
-  // Position weight (0-20 points)
-  // Balanced weight (2-8%) is ideal
+  // === Position Weight (0-20 points) ===
+  // Ideal weight is 3-6%, too high = concentration risk
   if (item.weight !== undefined) {
-    if (item.weight > 15) {
-      score += 4;
-      details.push(`Weight ${item.weight.toFixed(1)}% - overweight (risk)`);
-    } else if (item.weight > 8) {
-      score += 12;
-      details.push(`Weight ${item.weight.toFixed(1)}% - slightly overweight`);
-    } else if (item.weight >= 2) {
-      score += 20;
-      details.push(`Weight ${item.weight.toFixed(1)}% - balanced position`);
+    let weightPoints = 0;
+    if (item.weight > 12) {
+      weightPoints = 4;
+      details.push(`Váha ${item.weight.toFixed(1)}% - převážená pozice`);
+    } else if (item.weight > 6) {
+      weightPoints = 12;
+      details.push(`Váha ${item.weight.toFixed(1)}% - mírně velká`);
+    } else if (item.weight >= 3) {
+      weightPoints = 20;
+      details.push(`Váha ${item.weight.toFixed(1)}% - vyvážená pozice`);
     } else {
-      score += 16;
-      details.push(`Weight ${item.weight.toFixed(1)}% - small position`);
+      weightPoints = 15;
+      details.push(`Váha ${item.weight.toFixed(1)}% - malá pozice`);
     }
+    score += weightPoints;
   }
 
-  // Unrealized gain status (0-25 points)
+  // === Unrealized Gain (0-20 points) ===
+  // In profit = good, high profit = consider taking some
   if (item.gainPercentage !== undefined) {
-    if (item.gainPercentage > 100) {
-      score += 15;
+    let gainPoints = 0;
+    if (item.gainPercentage > 75) {
+      gainPoints = 10;
+      details.push(`+${item.gainPercentage.toFixed(0)}% zisk - rebalance!`);
+    } else if (item.gainPercentage > 40) {
+      gainPoints = 13;
       details.push(
-        `+${item.gainPercentage.toFixed(0)}% gain - strong performer`
+        `+${item.gainPercentage.toFixed(0)}% zisk - zvažte realizaci`
       );
-    } else if (item.gainPercentage > 50) {
-      score += 18;
-      details.push(`+${item.gainPercentage.toFixed(0)}% gain - solid return`);
-    } else if (item.gainPercentage > 20) {
-      score += 22;
-      details.push(`+${item.gainPercentage.toFixed(0)}% gain`);
+    } else if (item.gainPercentage > 15) {
+      gainPoints = 16;
+      details.push(`+${item.gainPercentage.toFixed(0)}% zisk - zdravý zisk`);
     } else if (item.gainPercentage > 0) {
-      score += 25;
-      details.push(`+${item.gainPercentage.toFixed(0)}% gain - in profit`);
-    } else if (item.gainPercentage > -10) {
-      score += 20;
-      details.push(`${item.gainPercentage.toFixed(0)}% - small loss`);
-    } else if (item.gainPercentage > -25) {
-      score += 15;
-      details.push(`${item.gainPercentage.toFixed(0)}% - moderate loss`);
+      gainPoints = 20;
+      details.push(`+${item.gainPercentage.toFixed(0)}% - v zisku`);
+    } else if (item.gainPercentage > -15) {
+      gainPoints = 14;
+      details.push(`${item.gainPercentage.toFixed(0)}% - mírná ztráta`);
+    } else if (item.gainPercentage > -30) {
+      gainPoints = 10;
+      details.push(`${item.gainPercentage.toFixed(0)}% - větší ztráta`);
     } else {
-      score += 8;
-      details.push(`${item.gainPercentage.toFixed(0)}% - significant loss`);
+      gainPoints = 4;
+      details.push(`${item.gainPercentage.toFixed(0)}% - velká ztráta`);
     }
+    score += gainPoints;
   }
 
   // Cap at 100
@@ -906,9 +1476,11 @@ function calculatePortfolioScore(item: EnrichedAnalystData): ScoreComponent {
     category: 'Portfolio',
     score,
     maxScore,
-    percent: (score / maxScore) * 100,
+    percent: score, // Already 0-100
     details,
     sentiment: score >= 65 ? 'bullish' : score <= 35 ? 'bearish' : 'neutral',
+    rawScore: score,
+    rawMaxScore: 100,
   };
 }
 
@@ -919,6 +1491,23 @@ function calculatePortfolioScore(item: EnrichedAnalystData): ScoreComponent {
 /**
  * Calculate DIP score (0-100)
  * Identifies oversold conditions that may present buying opportunities
+ *
+ * v3.1 Changes (Position Trading):
+ * - Removed Stochastic (too fast for position trading)
+ * - Removed Distance from Avg (moved to Portfolio Score)
+ * - Added MACD Divergence (trend reversal signal)
+ * - Added Volume Confirmation (capitulation detection)
+ * - Simplified to 200-MA only (removed SMA50)
+ * - Added RSI 35 tier
+ *
+ * Components:
+ * - RSI Based: 0-25 points
+ * - Bollinger: 0-20 points
+ * - 200-MA Position: 0-20 points
+ * - 52-Week Position: 0-15 points
+ * - MACD Divergence: 0-10 points
+ * - Volume Confirmation: 0-10 points
+ * Total: 100 points
  */
 function calculateDipScore(
   tech: TechnicalData | undefined,
@@ -927,106 +1516,152 @@ function calculateDipScore(
   let score = 0;
   const details: string[] = [];
 
-  // RSI based (0-25 points)
+  // === RSI Based (0-25 points) ===
   if (tech?.rsi14 !== null && tech?.rsi14 !== undefined) {
     const rsi = tech.rsi14;
     if (rsi < 25) {
       score += 25;
-      details.push(`RSI ${rsi.toFixed(0)} - deeply oversold`);
+      details.push(`RSI ${rsi.toFixed(0)} - extrémně přeprodané`);
     } else if (rsi < 30) {
       score += 20;
-      details.push(`RSI ${rsi.toFixed(0)} - oversold`);
+      details.push(`RSI ${rsi.toFixed(0)} - přeprodané`);
+    } else if (rsi < 35) {
+      // v3.1: Added tier for RSI 30-35
+      score += 15;
+      details.push(`RSI ${rsi.toFixed(0)} - mírně přeprodané`);
     } else if (rsi < 40) {
-      score += 10;
-      details.push(`RSI ${rsi.toFixed(0)} - approaching oversold`);
+      score += 8;
+      details.push(`RSI ${rsi.toFixed(0)} - blízko k přeprodenosti`);
     }
   }
 
-  // Bollinger position (0-20 points)
+  // === Bollinger Position (0-20 points) ===
   if (
     tech &&
     tech.bollingerLower !== null &&
     tech.bollingerMiddle !== null &&
+    tech.bollingerUpper !== null &&
     tech.currentPrice !== null
   ) {
     const price = tech.currentPrice;
     const lower = tech.bollingerLower;
-    const middle = tech.bollingerMiddle;
-    const bandWidth = middle - lower;
+    const upper = tech.bollingerUpper;
+    const bandWidth = upper - lower;
 
-    if (price < lower) {
+    if (price < lower - bandWidth * 0.5) {
+      // Far below lower band
       score += 20;
-      details.push('Below lower Bollinger band');
-    } else if (price < lower + bandWidth * 0.2) {
-      score += 12;
-      details.push('Near lower Bollinger band');
-    }
-  }
-
-  // SMA position (0-20 points)
-  if (tech?.currentPrice !== null && tech?.currentPrice !== undefined) {
-    const price = tech.currentPrice;
-    const sma50 = tech.sma50;
-    const sma200 = tech.sma200;
-
-    if (sma200 !== null && sma200 !== undefined && price < sma200 * 0.9) {
+      details.push('Cena výrazně pod dolním BB pásmem');
+    } else if (price < lower) {
+      // Below lower band
       score += 15;
-      details.push('Price >10% below SMA200');
-    } else if (sma200 !== null && sma200 !== undefined && price < sma200) {
-      score += 10;
-      details.push('Price below SMA200');
-    }
-
-    if (sma50 !== null && sma50 !== undefined && price < sma50 * 0.95) {
-      score += 5;
-      details.push('Price below SMA50');
+      details.push('Cena pod dolním BB pásmem');
+    } else if (price < lower + bandWidth * 0.2) {
+      // Near lower band (lower zone)
+      score += 8;
+      details.push('Cena ve spodní BB zóně');
     }
   }
 
-  // 52-week position (0-15 points)
+  // === 200-MA Position (0-20 points) ===
+  // v3.1: Only 200-MA, removed SMA50 (position trading focus)
+  if (
+    tech?.currentPrice !== null &&
+    tech?.currentPrice !== undefined &&
+    tech?.sma200 !== null &&
+    tech?.sma200 !== undefined
+  ) {
+    const price = tech.currentPrice;
+    const sma200 = tech.sma200;
+    const distanceFromMa = ((price - sma200) / sma200) * 100;
+
+    if (distanceFromMa < -15) {
+      score += 20;
+      details.push(`Cena ${Math.abs(distanceFromMa).toFixed(0)}% pod 200-MA`);
+    } else if (distanceFromMa < -10) {
+      score += 15;
+      details.push(`Cena ${Math.abs(distanceFromMa).toFixed(0)}% pod 200-MA`);
+    } else if (distanceFromMa < -5) {
+      score += 10;
+      details.push(`Cena ${Math.abs(distanceFromMa).toFixed(0)}% pod 200-MA`);
+    } else if (distanceFromMa < 0) {
+      score += 5;
+      details.push('Cena mírně pod 200-MA');
+    }
+  }
+
+  // === 52-Week Position (0-15 points) ===
+  // Note: fiftyTwoWeekHigh is in AnalystData (item), not TechnicalData
   if (
     item.fiftyTwoWeekHigh !== null &&
-    item.fiftyTwoWeekLow !== null &&
+    item.fiftyTwoWeekHigh !== undefined &&
     item.currentPrice !== null
   ) {
     const dropFromHigh =
       ((item.fiftyTwoWeekHigh - item.currentPrice) / item.fiftyTwoWeekHigh) *
       100;
 
-    if (dropFromHigh > 30) {
+    if (dropFromHigh > 35) {
       score += 15;
-      details.push(`${dropFromHigh.toFixed(0)}% below 52W high`);
-    } else if (dropFromHigh > 20) {
-      score += 10;
-      details.push(`${dropFromHigh.toFixed(0)}% below 52W high`);
+      details.push(`${dropFromHigh.toFixed(0)}% pod 52W maximum`);
+    } else if (dropFromHigh > 25) {
+      score += 12;
+      details.push(`${dropFromHigh.toFixed(0)}% pod 52W maximum`);
+    } else if (dropFromHigh > 15) {
+      score += 8;
+      details.push(`${dropFromHigh.toFixed(0)}% pod 52W maximum`);
     } else if (dropFromHigh > 10) {
-      score += 5;
-      details.push(`${dropFromHigh.toFixed(0)}% below 52W high`);
+      score += 4;
+      details.push(`${dropFromHigh.toFixed(0)}% pod 52W maximum`);
     }
   }
 
-  // Stochastic (0-10 points)
-  if (tech?.stochasticK !== null && tech?.stochasticK !== undefined) {
-    const k = tech.stochasticK;
-    if (k < 20) {
-      score += 10;
-      details.push(`Stochastic oversold (${k.toFixed(0)})`);
-    } else if (k < 30) {
+  // === MACD Divergence (0-10 points) ===
+  // v3.1: NEW - bullish divergence indicates potential reversal
+  if (tech?.macdHistogram !== null && tech?.macdHistogram !== undefined) {
+    const histogram = tech.macdHistogram;
+
+    // Check for improving histogram (potential bullish divergence)
+    // Note: Full divergence detection would need price/MACD history comparison
+    // For now, we use histogram improvement as a proxy
+    if (histogram > 0 && tech.macd !== null && tech.macd !== undefined) {
+      // Histogram positive while in downtrend (potential bullish divergence)
+      if (
+        tech.currentPrice !== null &&
+        tech.sma200 !== null &&
+        tech.currentPrice < tech.sma200
+      ) {
+        score += 10;
+        details.push('MACD bullish divergence (histogram zlepšení)');
+      }
+    } else if (histogram > -0.5 && histogram <= 0) {
+      // Histogram improving from negative
       score += 5;
-      details.push(`Stochastic low (${k.toFixed(0)})`);
+      details.push('MACD histogram se zlepšuje');
     }
+
+    // TODO: When macdDivergence field is available from edge function:
+    // if (tech.macdDivergence === 'bullish') { score += 10; }
   }
 
-  // Distance from avg buy price (0-10 points)
-  if (item.avgBuyPrice > 0 && item.currentPrice !== null) {
-    const distanceFromAvg =
-      ((item.currentPrice - item.avgBuyPrice) / item.avgBuyPrice) * 100;
-    if (distanceFromAvg < -15) {
+  // === Volume Confirmation (0-10 points) ===
+  // v3.1: NEW - high volume on down days suggests capitulation
+  if (tech?.volumeChange !== null && tech?.volumeChange !== undefined) {
+    const volumeChange = tech.volumeChange; // % change vs 20-day average
+
+    // High volume during oversold conditions = potential capitulation
+    if (volumeChange > 100) {
+      // Volume > 2× average
       score += 10;
-      details.push(`${distanceFromAvg.toFixed(0)}% below avg cost`);
-    } else if (distanceFromAvg < -5) {
-      score += 5;
-      details.push(`${distanceFromAvg.toFixed(0)}% below avg cost`);
+      details.push('Extrémní objem - možná kapitulace');
+    } else if (volumeChange > 50) {
+      // Volume > 1.5× average
+      score += 7;
+      details.push('Vysoký objem');
+    } else if (volumeChange > 0) {
+      // Volume above average
+      score += 3;
+      details.push('Nadprůměrný objem');
     }
   }
 
@@ -1157,25 +1792,30 @@ function calculateBuyStrategy(
     currentPrice <= buyZoneHigh;
 
   // DCA Recommendation based on weight
+  // v3.1 Position Trading:
+  // - AGGRESSIVE: 2 weeks interval (underweight <3%)
+  // - NORMAL: 1 month interval (balanced 3-8%)
+  // - CAUTIOUS: 2 months interval (overweight 8-12%)
+  // - NO_DCA: Position already overweight (>12%)
   let dcaRecommendation: 'AGGRESSIVE' | 'NORMAL' | 'CAUTIOUS' | 'NO_DCA';
   let dcaReason: string;
   let maxAddPercent: number;
 
   if (weight > 12) {
     dcaRecommendation = 'NO_DCA';
-    dcaReason = 'Position overweight (>12%)';
+    dcaReason = 'Pozice převážená (>12%)';
     maxAddPercent = 0;
   } else if (weight > 8) {
     dcaRecommendation = 'CAUTIOUS';
-    dcaReason = 'Position overweight (8-12%)';
+    dcaReason = 'Pozice mírně převážená (8-12%), interval 2 měsíce';
     maxAddPercent = 0.5;
   } else if (weight >= 3) {
     dcaRecommendation = 'NORMAL';
-    dcaReason = 'Position balanced (3-8%)';
+    dcaReason = 'Vyvážená pozice (3-8%), interval 1 měsíc';
     maxAddPercent = 1;
   } else {
     dcaRecommendation = 'AGGRESSIVE';
-    dcaReason = 'Position underweight (<3%)';
+    dcaReason = 'Podvážená pozice (<3%), interval 2 týdny';
     maxAddPercent = 2;
   }
 
@@ -1340,13 +1980,27 @@ function calculateExitStrategy(
   }
 
   // Trailing stop percentage
+  // v3.1: Dynamic trailing based on gain level
+  // +50% gain: trailing -6%
+  // +30% gain: trailing -8%
+  // +20% gain: trailing -10%
+  // Default: -15% (conviction-based fallback)
   let trailingStopPercent: number | null = null;
-  if (convictionLevel === 'HIGH') {
-    trailingStopPercent = 15; // Wide trailing for high conviction
-  } else if (convictionLevel === 'MEDIUM') {
+  const currentGainPercent =
+    avgBuyPrice > 0 ? ((currentPrice - avgBuyPrice) / avgBuyPrice) * 100 : 0;
+
+  if (currentGainPercent >= 50) {
+    trailingStopPercent = 6;
+  } else if (currentGainPercent >= 30) {
+    trailingStopPercent = 8;
+  } else if (currentGainPercent >= 20) {
     trailingStopPercent = 10;
+  } else if (convictionLevel === 'HIGH') {
+    trailingStopPercent = 15;
+  } else if (convictionLevel === 'MEDIUM') {
+    trailingStopPercent = 12;
   } else {
-    trailingStopPercent = 7; // Tight for low conviction
+    trailingStopPercent = 10;
   }
 
   // Determine holding period
@@ -1393,6 +2047,10 @@ function calculateExitStrategy(
 /**
  * Calculate Conviction Score (0-100)
  * Measures long-term quality and holding conviction
+ *
+ * v3.1 Changes:
+ * - Replaced RSI momentum with 200-MA Position + Volume Health
+ * - Better suited for position trading (monthly/yearly horizon)
  */
 function calculateConvictionScore(
   item: EnrichedAnalystData,
@@ -1549,30 +2207,48 @@ function calculateConvictionScore(
     score += 4;
   }
 
-  // Price above SMA200 (0-10 points)
+  // v3.1: 200-MA Position (0-10 points) - replaces RSI momentum
+  // Better suited for position trading - long-term trend confirmation
   if (
     tech?.sma200 !== null &&
     tech?.sma200 !== undefined &&
     tech.currentPrice !== null &&
     tech.currentPrice !== undefined
   ) {
-    if (tech.currentPrice > tech.sma200) {
+    const priceVsSma200 = tech.currentPrice / tech.sma200;
+    if (priceVsSma200 > 1.05) {
+      // Price > 5% above 200-MA - solid uptrend
       score += 10;
-      details.push('Price above SMA200 (uptrend)');
-    } else if (tech.currentPrice > tech.sma200 * 0.95) {
-      score += 5;
+      details.push('Price solidly above 200-MA (uptrend)');
+    } else if (priceVsSma200 > 1.0) {
+      // Price above 200-MA - above support
+      score += 7;
+      details.push('Price above 200-MA support');
+    } else if (priceVsSma200 > 0.95) {
+      // Price close to 200-MA (within 5% below)
+      score += 3;
+      details.push('Price near 200-MA');
     }
+    // Below 95% of 200-MA = 0 points (downtrend)
   }
 
-  // Recent momentum (0-8 points)
-  if (tech?.rsi14 !== null && tech?.rsi14 !== undefined) {
-    const rsi = tech.rsi14;
-    if (rsi > 50 && rsi < 70) {
+  // v3.1: Volume Health (0-8 points) - replaces RSI range check
+  // Indicates institutional interest and trend confirmation
+  if (tech?.volumeChange !== null && tech?.volumeChange !== undefined) {
+    const volumeChange = tech.volumeChange; // % change vs average
+    if (volumeChange > 20) {
+      // Volume > 120% of average - rising interest
       score += 8;
-      details.push('Healthy momentum');
-    } else if (rsi > 40 && rsi < 60) {
+      details.push('Rising volume interest');
+    } else if (volumeChange > 0) {
+      // Volume above average - stable interest
       score += 5;
+      details.push('Stable volume');
+    } else if (volumeChange > -30) {
+      // Volume somewhat below average
+      score += 2;
     }
+    // Volume < 70% of average = 0 points (low interest)
   }
 
   // Determine level
@@ -1589,6 +2265,8 @@ function calculateConvictionScore(
 
 /**
  * Generate signals based on all scores
+ *
+ * v3.1: Uses SIGNAL_THRESHOLDS constants for consistent % scale
  */
 function generateSignals(
   _compositeScore: number,
@@ -1609,105 +2287,147 @@ function generateSignals(
 ): StockSignal[] {
   const signals: StockSignal[] = [];
 
+  const rsiValue = tech?.rsi14 ?? null;
+
   // === DIP OPPORTUNITY ===
-  if (dipScore >= 50 && dipQualityPasses) {
+  // Trigger when DIP score exceeds threshold and quality checks pass
+  if (dipScore >= SIGNAL_THRESHOLDS.DIP_TRIGGER && dipQualityPasses) {
     signals.push({
       type: 'DIP_OPPORTUNITY',
       strength: dipScore,
       title: 'DIP Opportunity',
-      description: `Oversold conditions (DIP score: ${dipScore}). Fundamentals check out.`,
+      description: `Přeprodané podmínky (DIP skóre: ${dipScore}). Fundamenty v pořádku.`,
       priority: SIGNAL_PRIORITIES.DIP_OPPORTUNITY,
     });
   }
 
   // === MOMENTUM ===
-  const rsiValue = tech?.rsi14 ?? null;
+  // Strong technical score with confirmed trend (lowered threshold from 70 to 60)
   if (
-    technicalScore >= 70 &&
+    technicalScore >= SIGNAL_THRESHOLDS.TECH_STRONG &&
     rsiValue !== null &&
-    rsiValue > 50 &&
-    rsiValue < 70
+    rsiValue > 45 &&
+    rsiValue < 75
   ) {
     signals.push({
       type: 'MOMENTUM',
       strength: technicalScore,
-      title: 'Momentum Play',
-      description: 'Technical indicators are bullish with confirmed trend.',
+      title: 'Momentum',
+      description: 'Technické indikátory jsou býčí s potvrzeným trendem.',
       priority: SIGNAL_PRIORITIES.MOMENTUM,
     });
   }
 
   // === CONVICTION HOLD ===
+  // High conviction quality stocks
   if (convictionLevel === 'HIGH') {
     signals.push({
       type: 'CONVICTION_HOLD',
       strength: convictionScore,
-      title: 'High Conviction Hold',
-      description:
-        'Strong long-term fundamentals. Hold through short-term noise.',
+      title: 'Držet s přesvědčením',
+      description: 'Silné dlouhodobé fundamenty. Držet přes krátkodobý šum.',
       priority: SIGNAL_PRIORITIES.CONVICTION_HOLD,
     });
   }
 
+  // === QUALITY CORE === (NEW)
+  // High fundamentals + positive analyst sentiment = core holding material
+  if (
+    fundamentalScore >= SIGNAL_THRESHOLDS.FUND_QUALITY &&
+    _analystScore >= SIGNAL_THRESHOLDS.ANALYST_QUALITY &&
+    convictionLevel !== 'LOW'
+  ) {
+    signals.push({
+      type: 'QUALITY_CORE',
+      strength: Math.round((fundamentalScore + _analystScore) / 2),
+      title: 'Kvalitní core',
+      description: 'Silné fundamenty a pozitivní sentiment analytiků.',
+      priority: SIGNAL_PRIORITIES.QUALITY_CORE,
+    });
+  }
+
   // === NEAR TARGET ===
-  if (targetUpside !== null && Math.abs(targetUpside) <= 8) {
+  // Within threshold of target price
+  if (
+    targetUpside !== null &&
+    Math.abs(targetUpside) <= SIGNAL_THRESHOLDS.TARGET_NEAR
+  ) {
     signals.push({
       type: 'NEAR_TARGET',
       strength: 100 - Math.abs(targetUpside) * 5,
-      title: 'Near Target Price',
-      description: `Within ${Math.abs(targetUpside).toFixed(
-        1
-      )}% of analyst target.`,
+      title: 'Blízko cílové ceny',
+      description: `${Math.abs(targetUpside).toFixed(1)}% od cílové ceny.`,
       priority: SIGNAL_PRIORITIES.NEAR_TARGET,
     });
   }
 
-  // === CONSIDER TRIM ===
-  if (
-    technicalScore < 40 &&
-    (rsiValue ?? 50) > 70 &&
-    weight > 8 &&
-    targetUpside !== null &&
-    targetUpside < 5
-  ) {
-    signals.push({
-      type: 'CONSIDER_TRIM',
-      strength: 70,
-      title: 'Consider Trimming',
-      description:
-        'Overbought, high weight, and near target. Consider taking some profits.',
-      priority: SIGNAL_PRIORITIES.CONSIDER_TRIM,
-    });
-  }
-
-  // === WATCH CLOSELY ===
-  if (
-    (fundamentalScore < 35 && fundamentalScore > 20) ||
-    insiderScore < 35 ||
-    (newsScore < 30 && newsScore > 15)
-  ) {
-    signals.push({
-      type: 'WATCH_CLOSELY',
-      strength: 50,
-      title: 'Watch Closely',
-      description: 'Some metrics are deteriorating. Monitor for changes.',
-      priority: SIGNAL_PRIORITIES.WATCH_CLOSELY,
-    });
-  }
-
   // === ACCUMULATE ===
+  // Good quality, not quite at DIP but worth gradual accumulation (wider range)
   if (
     convictionLevel !== 'LOW' &&
-    dipScore < 40 &&
-    dipScore > 20 &&
-    fundamentalScore >= 50
+    dipScore >= SIGNAL_THRESHOLDS.DIP_ACCUMULATE_MIN &&
+    dipScore < SIGNAL_THRESHOLDS.DIP_ACCUMULATE_MAX &&
+    fundamentalScore >= SIGNAL_THRESHOLDS.FUND_STRONG
   ) {
     signals.push({
       type: 'ACCUMULATE',
       strength: 60,
-      title: 'Accumulate',
-      description: 'Good quality stock. Wait for better entry or DCA slowly.',
+      title: 'Akumulovat',
+      description: 'Kvalitní akcie. Čekejte na lepší vstup nebo DCA pomalu.',
       priority: SIGNAL_PRIORITIES.ACCUMULATE,
+    });
+  }
+
+  // === STEADY HOLD === (NEW)
+  // Solid stock with decent fundamentals and technicals - no action needed
+  if (
+    fundamentalScore >= SIGNAL_THRESHOLDS.FUND_MODERATE &&
+    technicalScore >= SIGNAL_THRESHOLDS.TECH_MODERATE &&
+    convictionLevel !== 'LOW'
+  ) {
+    signals.push({
+      type: 'STEADY_HOLD',
+      strength: Math.round((fundamentalScore + technicalScore) / 2),
+      title: 'Stabilně držet',
+      description: 'Solidní akcie bez nutnosti akce. Pokračujte v držení.',
+      priority: SIGNAL_PRIORITIES.STEADY_HOLD,
+    });
+  }
+
+  // === WATCH CLOSELY ===
+  // Deteriorating metrics but not critical
+  if (
+    (fundamentalScore < SIGNAL_THRESHOLDS.FUND_WATCH_HIGH &&
+      fundamentalScore > SIGNAL_THRESHOLDS.FUND_WATCH_LOW) ||
+    insiderScore < SIGNAL_THRESHOLDS.INSIDER_WEAK ||
+    (newsScore < SIGNAL_THRESHOLDS.NEWS_WATCH_HIGH &&
+      newsScore > SIGNAL_THRESHOLDS.NEWS_WATCH_LOW)
+  ) {
+    signals.push({
+      type: 'WATCH_CLOSELY',
+      strength: 50,
+      title: 'Sledujte pozorně',
+      description: 'Některé metriky se zhoršují. Monitorujte vývoj.',
+      priority: SIGNAL_PRIORITIES.WATCH_CLOSELY,
+    });
+  }
+
+  // === CONSIDER TRIM ===
+  // Overbought, overweight, near target
+  if (
+    technicalScore < SIGNAL_THRESHOLDS.TECH_WEAK &&
+    (rsiValue ?? 50) > 70 &&
+    weight > SIGNAL_THRESHOLDS.WEIGHT_OVERWEIGHT &&
+    targetUpside !== null &&
+    targetUpside < SIGNAL_THRESHOLDS.TARGET_LOW_UPSIDE
+  ) {
+    signals.push({
+      type: 'CONSIDER_TRIM',
+      strength: 70,
+      title: 'Zvažte redukci',
+      description:
+        'Překoupeno, vysoká váha, blízko cíle. Zvažte realizaci části.',
+      priority: SIGNAL_PRIORITIES.CONSIDER_TRIM,
     });
   }
 
@@ -1716,8 +2436,8 @@ function generateSignals(
     signals.push({
       type: 'NEUTRAL',
       strength: 50,
-      title: 'No Strong Signal',
-      description: 'No actionable signals at this time.',
+      title: 'Žádný silný signál',
+      description: 'Momentálně žádné akční signály.',
       priority: SIGNAL_PRIORITIES.NEUTRAL,
     });
   }
@@ -1732,6 +2452,12 @@ function generateSignals(
 
 /**
  * Generate complete recommendation for a stock
+ *
+ * v3.1 Scoring System:
+ * - Research view: 400 points total (no portfolio context)
+ * - Holdings view: 500 points total (includes portfolio overlay)
+ *
+ * All individual scores are normalized to 0-100 for consistent weighting.
  */
 export function generateRecommendation(
   input: RecommendationInput
@@ -1748,25 +2474,35 @@ export function generateRecommendation(
   const fundamentalComponent = calculateFundamentalScore(item.fundamentals);
   const technicalComponent = calculateTechnicalScore(tech);
   const analystComponent = calculateAnalystScore(item);
+
+  // v3.1: Combined News+Insider score (replaces separate scores)
+  const newsInsiderComponent = calculateNewsInsiderScore(
+    item.ticker,
+    newsArticles,
+    item,
+    insiderTimeRange
+  );
+
+  // Legacy separate scores (for backward compatibility in UI if needed)
   const newsComponent = calculateNewsScore(item.ticker, newsArticles);
   const insiderComponent = calculateInsiderScore(item, insiderTimeRange);
+
   const portfolioComponent = isResearch ? null : calculatePortfolioScore(item);
 
   // Calculate composite score - use different weights for Research vs Holdings
+  // v3.1: Uses new weight distribution
   const compositeScore = isResearch
     ? Math.round(
         fundamentalComponent.percent * SCORE_WEIGHTS_RESEARCH.fundamental +
           technicalComponent.percent * SCORE_WEIGHTS_RESEARCH.technical +
           analystComponent.percent * SCORE_WEIGHTS_RESEARCH.analyst +
-          newsComponent.percent * SCORE_WEIGHTS_RESEARCH.news +
-          insiderComponent.percent * SCORE_WEIGHTS_RESEARCH.insider
+          newsInsiderComponent.percent * SCORE_WEIGHTS_RESEARCH.newsInsider
       )
     : Math.round(
         fundamentalComponent.percent * SCORE_WEIGHTS.fundamental +
           technicalComponent.percent * SCORE_WEIGHTS.technical +
           analystComponent.percent * SCORE_WEIGHTS.analyst +
-          newsComponent.percent * SCORE_WEIGHTS.news +
-          insiderComponent.percent * SCORE_WEIGHTS.insider +
+          newsInsiderComponent.percent * SCORE_WEIGHTS.newsInsider +
           portfolioComponent!.percent * SCORE_WEIGHTS.portfolio
       );
 

@@ -36,6 +36,11 @@ export const SIGNAL_CONFIG: Record<SignalType, SignalConfig> = {
     class: 'conviction',
     description: 'Strong long-term fundamentals - hold through volatility',
   },
+  QUALITY_CORE: {
+    label: 'Quality',
+    class: 'quality',
+    description: 'High fundamentals and positive analyst sentiment',
+  },
   NEAR_TARGET: {
     label: 'Near Target',
     class: 'target',
@@ -55,6 +60,11 @@ export const SIGNAL_CONFIG: Record<SignalType, SignalConfig> = {
     label: 'Accumulate',
     class: 'accumulate',
     description: 'Good quality stock - wait for better entry',
+  },
+  STEADY_HOLD: {
+    label: 'Hold',
+    class: 'hold',
+    description: 'Solid stock - continue holding, no action needed',
   },
   NEUTRAL: {
     label: 'Neutral',

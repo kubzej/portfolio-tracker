@@ -8,19 +8,23 @@ const CLASS_TO_VARIANT: Record<
   | 'dip'
   | 'momentum'
   | 'conviction'
+  | 'quality'
   | 'target'
   | 'trim'
   | 'watch'
   | 'accumulate'
+  | 'hold'
   | 'neutral'
 > = {
   dip: 'dip',
   momentum: 'momentum',
   conviction: 'conviction',
+  quality: 'quality',
   target: 'target',
   trim: 'trim',
   watch: 'watch',
   accumulate: 'accumulate',
+  hold: 'hold',
   neutral: 'neutral',
 };
 

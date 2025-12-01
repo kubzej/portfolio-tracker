@@ -16,10 +16,12 @@ type BadgeVariant =
   | 'dip'
   | 'momentum'
   | 'conviction'
+  | 'quality'
   | 'target'
   | 'trim'
   | 'watch'
-  | 'accumulate';
+  | 'accumulate'
+  | 'hold';
 
 type BadgeSize = 'xs' | 'sm' | 'base' | 'lg';
 

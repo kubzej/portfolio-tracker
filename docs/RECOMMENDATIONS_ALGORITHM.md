@@ -1,7 +1,7 @@
 # Recommendations & Research Algorithm Documentation
 
-> **Verze:** 3.0  
-> **Poslední aktualizace:** 1. prosince 2025
+> **Verze:** 3.2  
+> **Poslední aktualizace:** 2. prosince 2025
 > **Source of Truth** pro scoring a recommendation algoritmy v Portfolio Tracker
 
 ---
@@ -576,35 +576,67 @@ function checkDipQuality(
 // Prahy v % z maximálního score dané kategorie
 const SIGNAL_THRESHOLDS = {
   // Technical (max 120b)
-  TECH_STRONG: 0.7, // ≥70% = 84b
-  TECH_WEAK: 0.4, // <40% = 48b
+  TECH_STRONG: 60, // ≥60% pro MOMENTUM (sníženo z 70%)
+  TECH_MODERATE: 35, // ≥35% pro STEADY_HOLD
+  TECH_WEAK: 40, // <40% = 48b
 
   // Fundamental (max 140b)
-  FUND_WATCH_LOW: 0.2, // 20% = 28b
-  FUND_WATCH_HIGH: 0.35, // 35% = 49b
-  FUND_STRONG: 0.5, // ≥50% = 70b
+  FUND_QUALITY: 60, // ≥60% pro QUALITY_CORE
+  FUND_STRONG: 50, // ≥50% = 70b
+  FUND_MODERATE: 40, // ≥40% pro STEADY_HOLD
+  FUND_WATCH_HIGH: 35, // 35% = 49b
+  FUND_WATCH_LOW: 20, // 20% = 28b
+
+  // Analyst
+  ANALYST_QUALITY: 55, // ≥55% pro QUALITY_CORE
 
   // Insider (max 25b z News+Insider)
-  INSIDER_WEAK: 0.35, // <35% = 9b
+  INSIDER_WEAK: 35, // <35% = 9b
 
   // News (max 35b z News+Insider)
-  NEWS_WATCH_LOW: 0.25, // 25% = 9b
-  NEWS_WATCH_HIGH: 0.5, // 50% = 17.5b
+  NEWS_WATCH_LOW: 25, // 25% = 9b
+  NEWS_WATCH_HIGH: 50, // 50% = 17.5b
+
+  // DIP
+  DIP_TRIGGER: 50,
+  DIP_ACCUMULATE_MIN: 15, // rozšířeno z 20
+  DIP_ACCUMULATE_MAX: 50, // rozšířeno z 40
 };
 ```
 
 ### Signal Types
 
-| Signal            | Priorita | Ikona | Podmínky                                                                   |
-| ----------------- | -------- | ----- | -------------------------------------------------------------------------- |
-| `DIP_OPPORTUNITY` | 1        | 🔥    | dipScore ≥ 50 && quality check passes                                      |
-| `MOMENTUM`        | 2        | 📈    | technicalScore ≥ 70% (84b) && RSI 50-70                                    |
-| `CONVICTION_HOLD` | 3        | 💎    | convictionLevel === 'HIGH'                                                 |
-| `NEAR_TARGET`     | 4        | 🎯    | \|targetUpside\| ≤ 8%                                                      |
-| `CONSIDER_TRIM`   | 5        | 📉    | technicalScore < 40% (48b) && RSI > 70 && weight > 8% && targetUpside < 5% |
-| `WATCH_CLOSELY`   | 6        | ⚠️    | (fundamental 20-35%) OR insider < 35% OR (news 25-50%)                     |
-| `ACCUMULATE`      | 7        | 🔄    | conviction != LOW && dipScore 20-40 && fundamental ≥ 50% (70b)             |
-| `NEUTRAL`         | 10       | ➖    | Žádný jiný signál                                                          |
+| Signal            | Priorita | Badge       | Podmínky                                                             |
+| ----------------- | -------- | ----------- | -------------------------------------------------------------------- |
+| `DIP_OPPORTUNITY` | 1        | DIP         | dipScore ≥ 50 && quality check passes                                |
+| `MOMENTUM`        | 2        | Momentum    | technicalScore ≥ 60% && RSI 45-75 (rozšířeno)                        |
+| `CONVICTION_HOLD` | 3        | Conviction  | convictionLevel === 'HIGH'                                           |
+| `QUALITY_CORE`    | 4        | Quality     | fundamentalScore ≥ 60% && analystScore ≥ 55% && conviction != LOW    |
+| `NEAR_TARGET`     | 5        | Near Target | \|targetUpside\| ≤ 8%                                                |
+| `ACCUMULATE`      | 6        | Accumulate  | conviction != LOW && dipScore 15-50 && fundamental ≥ 50%             |
+| `STEADY_HOLD`     | 7        | Hold        | fundamentalScore ≥ 40% && technicalScore ≥ 35% && conviction != LOW  |
+| `WATCH_CLOSELY`   | 8        | Watch       | (fundamental 20-35%) OR insider < 35% OR (news 25-50%)               |
+| `CONSIDER_TRIM`   | 9        | Trim        | technicalScore < 40% && RSI > 70 && weight > 8% && targetUpside < 5% |
+| `NEUTRAL`         | 10       | Neutral     | Žádný jiný signál (fallback)                                         |
+
+### Signal Flow Logic
+
+```
+Akcie přichází → Kontrola podmínek od priority 1 do 10
+                 ↓
+   ┌─────────────────────────────────────────────────────────────┐
+   │ DIP_OPPORTUNITY: Přeprodané + kvalitní fundamenty           │
+   │ MOMENTUM: Technicky silné + potvrzený trend                 │
+   │ CONVICTION_HOLD: Špičková dlouhodobá kvalita                │
+   │ QUALITY_CORE: Vysoké fundamenty + pozitivní analytici       │ ← NEW
+   │ NEAR_TARGET: Blízko cílové ceny                             │
+   │ ACCUMULATE: Kvalitní akcie, prostor pro DCA                 │
+   │ STEADY_HOLD: Solidní akcie, držet bez akce                  │ ← NEW
+   │ WATCH_CLOSELY: Něco se zhoršuje, sledovat                   │
+   │ CONSIDER_TRIM: Překoupeno + vysoká váha                     │
+   │ NEUTRAL: Fallback když nic jiného nesedí                    │
+   └─────────────────────────────────────────────────────────────┘
+```
 
 ### Signal Structure
 
@@ -614,7 +646,6 @@ interface StockSignal {
   strength: number; // 0-100
   title: string;
   description: string;
-  icon: string;
   priority: number; // Pro řazení (nižší = vyšší priorita)
 }
 ```
