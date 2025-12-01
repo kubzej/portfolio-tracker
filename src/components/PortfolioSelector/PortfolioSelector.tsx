@@ -50,7 +50,7 @@ export function PortfolioSelector({
           onPortfolioChange(data[0].id, data[0]);
         }
       }
-      
+
       // If selected portfolio no longer exists, reset selection
       if (selectedPortfolioId && data.length > 0) {
         const stillExists = data.find((p) => p.id === selectedPortfolioId);

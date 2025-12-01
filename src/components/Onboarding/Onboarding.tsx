@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { Button } from '@/components/shared/Button';
 import { Input } from '@/components/shared/Input';
-import { PageTitle, Description, Label, Text } from '@/components/shared/Typography';
+import {
+  PageTitle,
+  Description,
+  Label,
+  Text,
+} from '@/components/shared/Typography';
 import { portfoliosApi } from '@/services/api';
 import type { Portfolio } from '@/types/database';
 import './Onboarding.css';
@@ -19,7 +24,7 @@ export function Onboarding({ onComplete, onSignOut }: OnboardingProps) {
 
   const handleCreatePortfolio = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!portfolioName.trim()) {
       setError('Portfolio name is required');
       return;
@@ -50,7 +55,8 @@ export function Onboarding({ onComplete, onSignOut }: OnboardingProps) {
             <div className="onboarding-header">
               <PageTitle>Welcome to Portfolio Tracker!</PageTitle>
               <Description>
-                Track your stock investments, analyze performance, and make informed decisions.
+                Track your stock investments, analyze performance, and make
+                informed decisions.
               </Description>
             </div>
 

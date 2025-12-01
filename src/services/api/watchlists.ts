@@ -7,7 +7,10 @@ import type {
 } from '@/types/database';
 
 async function getCurrentUserId(): Promise<string> {
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
   if (error || !user) throw new Error('User not authenticated');
   return user.id;
 }
@@ -61,7 +64,7 @@ export const watchlistsApi = {
    */
   async create(input: CreateWatchlistInput): Promise<Watchlist> {
     const userId = await getCurrentUserId();
-    
+
     const { data, error } = await supabase
       .from('watchlists')
       .insert({ ...input, user_id: userId })

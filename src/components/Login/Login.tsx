@@ -34,7 +34,7 @@ export function Login() {
         setLoading(false);
         return;
       }
-      
+
       const { error } = await signUp(email, password);
       if (error) {
         setError(error.message);
@@ -80,7 +80,7 @@ export function Login() {
               <Text color="primary">{error}</Text>
             </div>
           )}
-          
+
           {message && (
             <div className="login-message">
               <Text>{message}</Text>
@@ -143,19 +143,25 @@ export function Login() {
             fullWidth
             disabled={loading}
           >
-            {loading 
-              ? (isSignUp ? 'Creating account...' : 'Signing in...') 
-              : (isSignUp ? 'Create Account' : 'Sign In')
-            }
+            {loading
+              ? isSignUp
+                ? 'Creating account...'
+                : 'Signing in...'
+              : isSignUp
+              ? 'Create Account'
+              : 'Sign In'}
           </Button>
         </form>
 
         <div className="login-footer">
-          <button type="button" className="toggle-auth-btn" onClick={toggleMode}>
-            {isSignUp 
-              ? 'Already have an account? Sign in' 
-              : "Don't have an account? Sign up"
-            }
+          <button
+            type="button"
+            className="toggle-auth-btn"
+            onClick={toggleMode}
+          >
+            {isSignUp
+              ? 'Already have an account? Sign in'
+              : "Don't have an account? Sign up"}
           </button>
         </div>
       </div>

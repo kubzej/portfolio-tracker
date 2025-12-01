@@ -80,7 +80,7 @@ function App() {
   const [refreshingPrices, setRefreshingPrices] = useState(false);
   const [showAddStockModal, setShowAddStockModal] = useState(false);
   const [showAddTransactionModal, setShowAddTransactionModal] = useState(false);
-  
+
   // Onboarding state
   const [checkingPortfolios, setCheckingPortfolios] = useState(true);
   const [hasPortfolios, setHasPortfolios] = useState(true);
@@ -206,10 +206,7 @@ function App() {
   // Show onboarding if user has no portfolios
   if (!hasPortfolios) {
     return (
-      <Onboarding
-        onComplete={handleOnboardingComplete}
-        onSignOut={signOut}
-      />
+      <Onboarding onComplete={handleOnboardingComplete} onSignOut={signOut} />
     );
   }
 

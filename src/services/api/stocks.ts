@@ -7,7 +7,10 @@ import type {
 } from '@/types';
 
 async function getCurrentUserId(): Promise<string> {
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
   if (error || !user) throw new Error('User not authenticated');
   return user.id;
 }
@@ -100,7 +103,7 @@ export const stocksApi = {
    */
   async create(input: CreateStockInput): Promise<Stock> {
     const userId = await getCurrentUserId();
-    
+
     const { data, error } = await supabase
       .from('stocks')
       .insert({
