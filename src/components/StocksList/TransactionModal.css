@@ -4,6 +4,10 @@
   gap: var(--spacing-md);
 }
 
+.transaction-modal-empty {
+  padding: var(--spacing-lg) 0;
+}
+
 .transaction-modal-form .form-error {
   padding: var(--spacing-sm);
   background: var(--bg-error);

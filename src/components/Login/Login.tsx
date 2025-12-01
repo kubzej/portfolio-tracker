@@ -10,38 +10,80 @@ import {
 } from '@/components/shared/Typography';
 import './Login.css';
 
+type AuthMode = 'signin' | 'signup';
+
 export function Login() {
-  const { signIn } = useAuth();
+  const { signIn, signUp } = useAuth();
+  const [mode, setMode] = useState<AuthMode>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setMessage(null);
 
-    const { error } = await signIn(email, password);
-    if (error) {
-      setError(error.message);
+    if (mode === 'signup') {
+      if (password !== confirmPassword) {
+        setError('Passwords do not match');
+        setLoading(false);
+        return;
+      }
+      
+      const { error } = await signUp(email, password);
+      if (error) {
+        setError(error.message);
+      } else {
+        setMessage('Check your email to confirm your account');
+        setMode('signin');
+        setPassword('');
+        setConfirmPassword('');
+      }
+    } else {
+      const { error } = await signIn(email, password);
+      if (error) {
+        setError(error.message);
+      }
     }
 
     setLoading(false);
   };
+
+  const toggleMode = () => {
+    setMode(mode === 'signin' ? 'signup' : 'signin');
+    setError(null);
+    setMessage(null);
+    setPassword('');
+    setConfirmPassword('');
+  };
+
+  const isSignUp = mode === 'signup';
 
   return (
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
           <PageTitle>Portfolio Tracker</PageTitle>
-          <Description>Sign in to continue</Description>
+          <Description>
+            {isSignUp ? 'Create a new account' : 'Sign in to continue'}
+          </Description>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
           {error && (
             <div className="login-error">
               <Text color="primary">{error}</Text>
+            </div>
+          )}
+          
+          {message && (
+            <div className="login-message">
+              <Text>{message}</Text>
             </div>
           )}
 
@@ -72,9 +114,27 @@ export function Login() {
               placeholder="••••••••"
               required
               minLength={6}
-              autoComplete="current-password"
+              autoComplete={isSignUp ? 'new-password' : 'current-password'}
             />
           </div>
+
+          {isSignUp && (
+            <div className="form-group">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                inputSize="lg"
+                fullWidth
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                minLength={6}
+                autoComplete="new-password"
+              />
+            </div>
+          )}
 
           <Button
             type="submit"
@@ -83,9 +143,21 @@ export function Login() {
             fullWidth
             disabled={loading}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading 
+              ? (isSignUp ? 'Creating account...' : 'Signing in...') 
+              : (isSignUp ? 'Create Account' : 'Sign In')
+            }
           </Button>
         </form>
+
+        <div className="login-footer">
+          <button type="button" className="toggle-auth-btn" onClick={toggleMode}>
+            {isSignUp 
+              ? 'Already have an account? Sign in' 
+              : "Don't have an account? Sign up"
+            }
+          </button>
+        </div>
       </div>
     </div>
   );

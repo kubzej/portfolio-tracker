@@ -6,6 +6,7 @@ export type TransactionType = 'BUY' | 'SELL';
 // Portfolio
 export interface Portfolio {
   id: string;
+  user_id: string;
   name: string;
   description: string | null;
   color: string;
@@ -24,6 +25,7 @@ export interface Sector {
 // Stock (master data)
 export interface Stock {
   id: string;
+  user_id: string;
   ticker: string;
   name: string;
   sector_id: string | null;
@@ -78,6 +80,7 @@ export interface CurrentPrice {
 
 // Holdings view (calculated from transactions)
 export interface Holding {
+  user_id: string;
   portfolio_id: string;
   stock_id: string;
   ticker: string;
@@ -100,6 +103,7 @@ export interface Holding {
 
 // Portfolio summary view (holdings + current prices)
 export interface PortfolioSummary {
+  user_id: string;
   portfolio_id: string;
   portfolio_name: string;
   stock_id: string;
@@ -219,6 +223,7 @@ export interface PortfolioTotals {
 // Watchlist (similar to Portfolio but for tracking only)
 export interface Watchlist {
   id: string;
+  user_id: string;
   name: string;
   description: string | null;
   color: string;

@@ -13,6 +13,7 @@ import {
   Input,
   ToggleGroup,
   TextArea,
+  EmptyState,
 } from '@/components/shared';
 import { Label, Hint, Text, MetricValue } from '@/components/shared/Typography';
 import {
@@ -251,9 +252,37 @@ export function TransactionModal({
     ? 'Adding...'
     : `Add ${formData.type}`;
 
+  // Check if user has required data
+  const hasNoPortfolios = portfolios.length === 0;
+  const hasNoStocks = stocks.length === 0;
+  const cannotAddTransaction = !isEditMode && (hasNoPortfolios || hasNoStocks);
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="md">
-      <form onSubmit={handleSubmit} className="transaction-modal-form">
+      {cannotAddTransaction ? (
+        <div className="transaction-modal-empty">
+          {hasNoPortfolios ? (
+            <EmptyState
+              title="No Portfolios"
+              description="You need to create a portfolio first before adding transactions."
+              action={{
+                label: 'Close',
+                onClick: onClose,
+              }}
+            />
+          ) : (
+            <EmptyState
+              title="No Stocks"
+              description="You need to add a stock first before adding transactions. Use the 'Add Stock' button in the navigation."
+              action={{
+                label: 'Close',
+                onClick: onClose,
+              }}
+            />
+          )}
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="transaction-modal-form">
         {error && (
           <div className="form-error">
             <Text color="danger">{error}</Text>
@@ -435,6 +464,7 @@ export function TransactionModal({
           </Button>
         </div>
       </form>
+      )}
     </Modal>
   );
 }

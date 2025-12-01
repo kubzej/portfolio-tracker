@@ -6,6 +6,12 @@ import type {
   UpdateStockInput,
 } from '@/types';
 
+async function getCurrentUserId(): Promise<string> {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) throw new Error('User not authenticated');
+  return user.id;
+}
+
 export const stocksApi = {
   /**
    * Get all stocks with sector info
@@ -93,11 +99,14 @@ export const stocksApi = {
    * Create a new stock
    */
   async create(input: CreateStockInput): Promise<Stock> {
+    const userId = await getCurrentUserId();
+    
     const { data, error } = await supabase
       .from('stocks')
       .insert({
         ...input,
         ticker: input.ticker.toUpperCase(),
+        user_id: userId,
       })
       .select()
       .single();

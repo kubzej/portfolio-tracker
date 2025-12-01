@@ -5,6 +5,12 @@ import type {
   UpdatePortfolioInput,
 } from '@/types/database';
 
+async function getCurrentUserId(): Promise<string> {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) throw new Error('User not authenticated');
+  return user.id;
+}
+
 export const portfoliosApi = {
   // Get all portfolios
   async getAll(): Promise<Portfolio[]> {
@@ -50,6 +56,8 @@ export const portfoliosApi = {
 
   // Create a new portfolio
   async create(input: CreatePortfolioInput): Promise<Portfolio> {
+    const userId = await getCurrentUserId();
+    
     // If this is set as default, unset other defaults first
     if (input.is_default) {
       await supabase
@@ -60,7 +68,7 @@ export const portfoliosApi = {
 
     const { data, error } = await supabase
       .from('portfolios')
-      .insert(input)
+      .insert({ ...input, user_id: userId })
       .select()
       .single();
 
