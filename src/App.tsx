@@ -82,13 +82,16 @@ function App() {
   const [showAddTransactionModal, setShowAddTransactionModal] = useState(false);
 
   // Onboarding state
-  const [checkingPortfolios, setCheckingPortfolios] = useState(true);
+  const [checkingPortfolios, setCheckingPortfolios] = useState(false);
   const [hasPortfolios, setHasPortfolios] = useState(true);
 
   // Check if user has portfolios (for onboarding)
   useEffect(() => {
     if (user) {
       checkPortfolios();
+    } else {
+      // No user - no need to check portfolios
+      setCheckingPortfolios(false);
     }
   }, [user]);
 
