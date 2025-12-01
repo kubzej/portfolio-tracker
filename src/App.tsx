@@ -13,12 +13,13 @@ import { Analysis } from './components/Analysis';
 import { News } from './components/News';
 import { WatchlistManager, WatchlistView } from './components/Watchlists';
 import { Login } from './components/Login';
+import { Onboarding } from './components/Onboarding';
 import { DebugShowcase } from './components/Debug';
 import { Button } from './components/shared/Button';
 import { Title, MetricLabel } from './components/shared/Typography';
 import { LoadingSpinner } from './components/shared/LoadingSpinner';
 import { useAuth } from './contexts/AuthContext';
-import { refreshAllPrices } from './services/api';
+import { refreshAllPrices, portfoliosApi } from './services/api';
 import type { Portfolio } from './types/database';
 import './App.css';
 
@@ -79,6 +80,36 @@ function App() {
   const [refreshingPrices, setRefreshingPrices] = useState(false);
   const [showAddStockModal, setShowAddStockModal] = useState(false);
   const [showAddTransactionModal, setShowAddTransactionModal] = useState(false);
+
+  // Onboarding state
+  const [checkingPortfolios, setCheckingPortfolios] = useState(true);
+  const [hasPortfolios, setHasPortfolios] = useState(true);
+
+  // Check if user has portfolios (for onboarding)
+  useEffect(() => {
+    if (user) {
+      checkPortfolios();
+    }
+  }, [user]);
+
+  const checkPortfolios = async () => {
+    try {
+      setCheckingPortfolios(true);
+      const portfolios = await portfoliosApi.getAll();
+      setHasPortfolios(portfolios.length > 0);
+    } catch (err) {
+      console.error('Failed to check portfolios:', err);
+      setHasPortfolios(false);
+    } finally {
+      setCheckingPortfolios(false);
+    }
+  };
+
+  const handleOnboardingComplete = (portfolio: Portfolio) => {
+    setHasPortfolios(true);
+    setSelectedPortfolioId(portfolio.id);
+    setSelectedPortfolio(portfolio);
+  };
 
   // Sync URL hash with current view
   useEffect(() => {
@@ -159,7 +190,7 @@ function App() {
   };
 
   // Show loading state
-  if (loading) {
+  if (loading || checkingPortfolios) {
     return (
       <div className="app-loading">
         <LoadingSpinner size="lg" text="Loading..." />
@@ -170,6 +201,13 @@ function App() {
   // Show login if not authenticated
   if (!user) {
     return <Login />;
+  }
+
+  // Show onboarding if user has no portfolios
+  if (!hasPortfolios) {
+    return (
+      <Onboarding onComplete={handleOnboardingComplete} onSignOut={signOut} />
+    );
   }
 
   const portfolioColor = selectedPortfolio?.color ?? '#94a3b8';

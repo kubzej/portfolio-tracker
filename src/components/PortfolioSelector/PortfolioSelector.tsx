@@ -41,13 +41,22 @@ export function PortfolioSelector({
       const data = await portfoliosApi.getAll();
       setPortfolios(data);
 
-      // Auto-select default portfolio if none selected
+      // Auto-select default portfolio if none selected and portfolios exist
       if (selectedPortfolioId === null && data.length > 0) {
         const defaultPortfolio = data.find((p) => p.is_default);
         if (defaultPortfolio) {
           onPortfolioChange(defaultPortfolio.id, defaultPortfolio);
         } else {
           onPortfolioChange(data[0].id, data[0]);
+        }
+      }
+
+      // If selected portfolio no longer exists, reset selection
+      if (selectedPortfolioId && data.length > 0) {
+        const stillExists = data.find((p) => p.id === selectedPortfolioId);
+        if (!stillExists) {
+          const defaultPortfolio = data.find((p) => p.is_default) || data[0];
+          onPortfolioChange(defaultPortfolio.id, defaultPortfolio);
         }
       }
     } catch (err) {
