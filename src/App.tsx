@@ -80,20 +80,23 @@ function App() {
   const [refreshingPrices, setRefreshingPrices] = useState(false);
   const [showAddStockModal, setShowAddStockModal] = useState(false);
   const [showAddTransactionModal, setShowAddTransactionModal] = useState(false);
+  const [previousView, setPreviousView] = useState<View>('stocks');
 
   // Onboarding state
   const [checkingPortfolios, setCheckingPortfolios] = useState(false);
   const [hasPortfolios, setHasPortfolios] = useState(true);
 
   // Check if user has portfolios (for onboarding)
+  // Use user?.id instead of user to prevent re-running when user object reference changes
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       checkPortfolios();
     } else {
       // No user - no need to check portfolios
       setCheckingPortfolios(false);
     }
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const checkPortfolios = async () => {
     try {
@@ -134,6 +137,7 @@ function App() {
   }, []);
 
   const handleStockClick = (stockId: string) => {
+    setPreviousView(currentView); // Remember where we came from
     setSelectedStockId(stockId);
     setCurrentView('stock-detail');
   };
@@ -145,7 +149,7 @@ function App() {
   };
 
   const handleBackFromStock = () => {
-    setCurrentView('stocks');
+    setCurrentView(previousView);
     setRefreshKey((k) => k + 1);
   };
 

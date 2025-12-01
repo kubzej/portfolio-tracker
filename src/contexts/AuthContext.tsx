@@ -44,12 +44,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
     // Listen for auth changes
+    // Don't setLoading here - it causes full app unmount on tab switch
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      setLoading(false);
     });
 
     return () => {
