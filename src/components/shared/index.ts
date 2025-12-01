@@ -34,6 +34,13 @@ export {
 export type { IndicatorSentiment, SignalType } from './IndicatorValue';
 export { TrendSignal, MACard, MACardsRow } from './TrendSignal';
 export type { TrendType } from './TrendSignal';
+export { PriceChart } from './PriceChart';
+export type {
+  PriceChartProps,
+  ChartType,
+  ChartDataPoint,
+  TooltipData,
+} from './PriceChart';
 
 // Typography
 export {

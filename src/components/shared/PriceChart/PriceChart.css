@@ -1,0 +1,324 @@
+.price-chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  width: 100%;
+}
+
+/* Price Header */
+.price-chart__header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
+.price-chart__header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.price-chart__header-price {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.price-chart__header-change {
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.price-chart__header-change.positive {
+  color: var(--chart-positive);
+}
+
+.price-chart__header-change.negative {
+  color: var(--chart-negative);
+}
+
+.price-chart__header-date {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.price-chart__header-ohlc {
+  display: flex;
+  gap: 12px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.price-chart__header-ohlc span {
+  white-space: nowrap;
+}
+
+/* Controls */
+.price-chart__controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.price-chart__type-toggle {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.price-chart__ranges {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+}
+
+.price-chart__range-btn {
+  min-width: 36px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+/* Chart container */
+.price-chart__container {
+  width: 100%;
+  min-height: 200px;
+  outline: none;
+}
+
+/* Remove focus outline from SVG and all chart elements */
+.price-chart__container *:focus,
+.price-chart__container *:focus-visible {
+  outline: none;
+}
+
+.price-chart svg {
+  outline: none;
+}
+
+.price-chart svg:focus,
+.price-chart svg:focus-visible {
+  outline: none;
+}
+
+/* Date labels under chart */
+.price-chart__date-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 10px 0 10px;
+  margin-right: 55px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* Volume chart */
+.price-chart__volume {
+  width: 100%;
+  outline: none;
+}
+
+.price-chart__volume *:focus,
+.price-chart__volume *:focus-visible,
+.price-chart__volume-section *:focus,
+.price-chart__volume-section *:focus-visible {
+  outline: none;
+}
+
+/* Loading state */
+.price-chart__loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+/* Empty state */
+.price-chart__empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  background: var(--background-secondary);
+  border-radius: var(--radius-md);
+}
+
+/* Chart colors (CSS custom properties) */
+:root {
+  --chart-positive: #22c55e;
+  --chart-negative: #ef4444;
+  --chart-volume: rgba(100, 116, 139, 0.3);
+  --chart-volume-top: #64748b;
+  --chart-volume-bottom: #94a3b8;
+  --chart-sma50: #f59e0b;
+  --chart-sma200: #8b5cf6;
+}
+
+/* SMA Toggle */
+.price-chart__sma-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  justify-content: flex-start;
+}
+
+.price-chart__checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  user-select: none;
+}
+
+.price-chart__checkbox input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--color-primary);
+}
+
+.price-chart__checkbox-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* SMA Legend */
+.price-chart__legend {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.price-chart__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.price-chart__legend-line {
+  width: 16px;
+  height: 2px;
+  border-radius: 1px;
+}
+
+.price-chart__legend-line--sma50 {
+  background: var(--chart-sma50);
+}
+
+.price-chart__legend-line--sma200 {
+  background: var(--chart-sma200);
+}
+
+/* Volume section */
+.price-chart__volume-section {
+  margin-top: var(--spacing-sm);
+  border-top: 1px solid var(--border-color);
+}
+
+.price-chart__volume-label {
+  padding: var(--spacing-xs) 0 0 var(--spacing-sm);
+}
+
+/* Volume chart */
+.price-chart__volume {
+  width: 100%;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .price-chart {
+    gap: var(--spacing-xs);
+  }
+
+  .price-chart__header {
+    gap: 2px;
+    padding-bottom: var(--spacing-xs);
+    margin-bottom: 0;
+  }
+
+  .price-chart__header-row {
+    gap: var(--spacing-sm);
+  }
+
+  .price-chart__header-price {
+    font-size: 1.25rem;
+  }
+
+  .price-chart__header-change {
+    font-size: 0.7rem;
+  }
+
+  .price-chart__header-date {
+    font-size: 0.65rem;
+  }
+
+  .price-chart__header-ohlc {
+    gap: 10px;
+    font-size: 0.7rem;
+  }
+
+  .price-chart__controls {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-xs);
+  }
+
+  .price-chart__type-toggle {
+    order: 0;
+  }
+
+  .price-chart__type-toggle button {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    min-width: auto;
+  }
+
+  .price-chart__ranges {
+    order: 0;
+    gap: 2px;
+  }
+
+  .price-chart__range-btn {
+    min-width: 26px;
+    padding: 4px 5px;
+    font-size: 0.65rem;
+  }
+
+  .price-chart__sma-toggle {
+    justify-content: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .price-chart__checkbox-label {
+    font-size: 0.7rem;
+  }
+
+  .price-chart__legend {
+    gap: var(--spacing-xs);
+  }
+
+  .price-chart__volume-section {
+    margin-top: var(--spacing-xs);
+  }
+
+  .price-chart__volume-label {
+    padding-left: 0;
+  }
+}
+
+/* Dark mode adjustments if needed */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --chart-volume-top: #94a3b8;
+    --chart-volume-bottom: #64748b;
+  }
+}

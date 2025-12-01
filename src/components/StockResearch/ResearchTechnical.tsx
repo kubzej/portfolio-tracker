@@ -1,4 +1,9 @@
-import type { TechnicalData } from '@/services/api/technical';
+import { useCallback } from 'react';
+import type {
+  TechnicalData,
+  IntradayPricePoint,
+} from '@/services/api/technical';
+import { fetchIntradayData } from '@/services/api/technical';
 import type { StockRecommendation } from '@/utils/recommendations';
 import {
   ScoreCard,
@@ -10,6 +15,7 @@ import {
   Badge,
   InfoTooltip,
   IndicatorSignal,
+  PriceChart,
 } from '@/components/shared';
 import type { SignalType } from '@/components/shared';
 import './ResearchTechnical.css';
@@ -17,13 +23,26 @@ import './ResearchTechnical.css';
 interface ResearchTechnicalProps {
   technicalData: TechnicalData | null;
   recommendation: StockRecommendation | null;
+  ticker: string;
+  currency?: string;
 }
 
 export function ResearchTechnical({
   technicalData,
   recommendation,
+  ticker,
+  currency = 'USD',
 }: ResearchTechnicalProps) {
   const tech = technicalData;
+
+  // Lazy load intraday data
+  const handleLoadIntraday = useCallback(
+    async (range: '1d' | '1w'): Promise<IntradayPricePoint[]> => {
+      const data = await fetchIntradayData(ticker, range);
+      return data.prices;
+    },
+    [ticker]
+  );
 
   if (!tech) {
     return (
@@ -35,6 +54,19 @@ export function ResearchTechnical({
 
   return (
     <div className="research-technical">
+      {/* Price Chart */}
+      <section className="technical-section">
+        <CardTitle>Price Chart</CardTitle>
+        <PriceChart
+          historicalPrices={tech.historicalPrices}
+          historicalPricesWeekly={tech.historicalPricesWeekly}
+          currency={currency}
+          onLoadIntraday={handleLoadIntraday}
+          defaultRange="3m"
+          sma50History={tech.sma50History}
+          sma200History={tech.sma200History}
+        />
+      </section>
       {/* Technical Bias */}
       {recommendation && (
         <section className="technical-section">
