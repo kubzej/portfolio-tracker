@@ -109,6 +109,16 @@
   outline: none;
 }
 
+/* Date labels under chart */
+.price-chart__date-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 10px 0 10px;
+  margin-right: 55px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
 /* Volume chart */
 .price-chart__volume {
   width: 100%;

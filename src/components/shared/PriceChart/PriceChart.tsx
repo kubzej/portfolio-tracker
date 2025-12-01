@@ -10,6 +10,7 @@ import {
   Line,
   Cell,
   Tooltip,
+  Label,
 } from 'recharts';
 import { Button } from '../Button';
 import { LoadingSpinner } from '../LoadingSpinner';
@@ -86,10 +87,18 @@ function formatXAxisDate(date: string, range: TimeRange): string {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
   if (range === '6m' || range === '1y') {
-    return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+    return d.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
   }
-  // 5Y
-  return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+  // 5Y - include full year
+  return d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
 // Format date for header display
@@ -264,6 +273,18 @@ export function PriceChart({
   // First price for reference line
   const firstPrice = chartData.length > 0 ? chartData[0].close : null;
 
+  // Min/Max/Current prices for Y axis labels (desktop only)
+  const priceLabels = useMemo(() => {
+    if (chartData.length === 0) return null;
+    const highs = chartData.map((d) => d.high);
+    const lows = chartData.map((d) => d.low);
+    return {
+      min: Math.min(...lows),
+      max: Math.max(...highs),
+      current: chartData[chartData.length - 1].close,
+    };
+  }, [chartData]);
+
   // Mobile-specific height
   const chartHeight = isMobile ? 280 : height;
   const volumeHeight = isMobile ? 50 : 80;
@@ -434,32 +455,26 @@ export function PriceChart({
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
               data={chartData}
-              margin={{ top: 10, right: isMobile ? 0 : 10, left: 0, bottom: 0 }}
+              margin={{
+                top: 10,
+                right: isMobile ? 0 : 55,
+                left: 10,
+                bottom: 0,
+              }}
               onMouseMove={handleMouseMove}
             >
-              {/* X Axis - hidden on mobile */}
-              <XAxis
-                dataKey="date"
-                tickFormatter={(date) => formatXAxisDate(date, selectedRange)}
-                tick={{ fontSize: 11, fill: 'var(--text-secondary)' }}
-                axisLine={{ stroke: 'var(--border-color)' }}
-                tickLine={false}
-                minTickGap={60}
-                hide={isMobile}
-              />
+              {/* X Axis - hidden, using custom labels below */}
+              <XAxis dataKey="date" hide />
 
-              {/* Y Axis (Price) - hidden on mobile */}
+              {/* Y Axis - hidden on mobile, visible on desktop */}
               <YAxis
                 domain={priceDomain}
                 tickFormatter={(value) => formatNumber(value, 0)}
-                tick={{
-                  fontSize: 11,
-                  fill: 'var(--text-secondary)',
-                }}
+                tick={{ fontSize: 10, fill: 'var(--text-secondary)' }}
                 axisLine={false}
                 tickLine={false}
-                width={isMobile ? 0 : 45}
                 orientation="right"
+                width={45}
                 hide={isMobile}
               />
 
@@ -479,6 +494,44 @@ export function PriceChart({
                   stroke="var(--text-tertiary)"
                   strokeDasharray="3 3"
                 />
+              )}
+
+              {/* Current price line with badge (desktop only) */}
+              {!isMobile && priceLabels && (
+                <ReferenceLine
+                  y={priceLabels.current}
+                  stroke={priceChange.color}
+                  strokeDasharray="2 2"
+                  strokeWidth={1}
+                >
+                  <Label
+                    content={({ viewBox }) => {
+                      const { x, y } = viewBox as { x: number; y: number };
+                      return (
+                        <g>
+                          <rect
+                            x={x + 5}
+                            y={y - 9}
+                            width={45}
+                            height={18}
+                            rx={4}
+                            fill={priceChange.color}
+                          />
+                          <text
+                            x={x + 27}
+                            y={y + 4}
+                            fill="white"
+                            fontSize={10}
+                            fontWeight={600}
+                            textAnchor="middle"
+                          >
+                            {formatNumber(priceLabels.current, 2)}
+                          </text>
+                        </g>
+                      );
+                    }}
+                  />
+                </ReferenceLine>
               )}
 
               {/* Area chart */}
@@ -601,6 +654,19 @@ export function PriceChart({
         </div>
       )}
 
+      {/* Custom X-axis date labels (desktop only) */}
+      {!isMobile && chartData.length > 0 && (
+        <div className="price-chart__date-labels">
+          <span>{formatXAxisDate(chartData[0].date, selectedRange)}</span>
+          <span>
+            {formatXAxisDate(
+              chartData[chartData.length - 1].date,
+              selectedRange
+            )}
+          </span>
+        </div>
+      )}
+
       {/* Volume chart */}
       {showVolume && !loadingIntraday && chartData.length > 0 && (
         <div className="price-chart__volume-section">
@@ -615,14 +681,14 @@ export function PriceChart({
                 data={chartData}
                 margin={{
                   top: 4,
-                  right: isMobile ? 0 : 45,
-                  left: 0,
+                  right: isMobile ? 0 : 55,
+                  left: 10,
                   bottom: 0,
                 }}
                 onMouseMove={handleMouseMove}
                 onClick={(e) => {
                   if (e && e.activeTooltipIndex !== undefined) {
-                    setActiveIndex(e.activeTooltipIndex);
+                    setActiveIndex(Number(e.activeTooltipIndex));
                   }
                 }}
               >
