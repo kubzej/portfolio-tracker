@@ -239,29 +239,19 @@
   color: var(--color-success);
 }
 
+.badge--breakout {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.badge--reversal {
+  background: rgba(132, 204, 22, 0.15);
+  color: #84cc16;
+}
+
 .badge--momentum {
   background: var(--color-accent-bg);
   color: var(--color-accent);
-}
-
-.badge--conviction {
-  background: rgba(139, 92, 246, 0.15);
-  color: #8b5cf6;
-}
-
-.badge--target {
-  background: var(--color-warning-bg);
-  color: var(--color-warning);
-}
-
-.badge--trim {
-  background: var(--color-danger-bg);
-  color: var(--color-danger);
-}
-
-.badge--watch {
-  background: rgba(249, 115, 22, 0.15);
-  color: #f97316;
 }
 
 .badge--accumulate {
@@ -269,14 +259,69 @@
   color: #0891b2;
 }
 
-.badge--quality {
+.badge--good-entry {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.badge--wait {
+  background: rgba(251, 191, 36, 0.15);
+  color: #d97706;
+}
+
+.badge--target {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+.badge--take-profit {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+}
+
+.badge--trim {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.badge--conviction {
   background: rgba(139, 92, 246, 0.15);
   color: #8b5cf6;
 }
 
-.badge--hold {
+.badge--quality {
+  background: rgba(20, 184, 166, 0.15);
+  color: #14b8a6;
+}
+
+.badge--undervalued {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.badge--strong-trend {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.badge--steady {
   background: rgba(100, 116, 139, 0.15);
   color: #64748b;
+}
+
+.badge--watch {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+}
+
+.badge--overbought {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+}
+
+.badge--weak {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
 }
 
 /* ========================================

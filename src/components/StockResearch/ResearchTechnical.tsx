@@ -105,7 +105,7 @@ export function ResearchTechnical({
             value={tech.sma50 ? `$${tech.sma50.toFixed(2)}` : null}
             sentiment={getSMASentiment(tech.priceVsSma50)}
             tooltip={
-              <InfoTooltip text="**SMA 50** | 50denní klouzavý průměr. | • Cena NAD = krátkodobě roste | • Cena POD = krátkodobě klesá" />
+              <InfoTooltip text="**SMA 50** | Průměrná cena za posledních 50 dní. | Ukazuje krátkodobý trend. | • Cena NAD SMA50 = krátkodobě bullish | • Cena POD SMA50 = krátkodobě bearish" />
             }
           />
           <MetricCard
@@ -113,7 +113,7 @@ export function ResearchTechnical({
             value={tech.sma200 ? `$${tech.sma200.toFixed(2)}` : null}
             sentiment={getSMASentiment(tech.priceVsSma200)}
             tooltip={
-              <InfoTooltip text="**SMA 200** | 200denní klouzavý průměr. | • Cena NAD = dlouhodobý růst | • Cena POD = dlouhodobý pokles" />
+              <InfoTooltip text="**SMA 200** | Průměrná cena za posledních 200 dní. | Ukazuje dlouhodobý trend. | • Cena NAD SMA200 = dlouhodobě bullish | • Cena POD SMA200 = dlouhodobě bearish" />
             }
           />
           <MetricCard
@@ -125,7 +125,7 @@ export function ResearchTechnical({
             }
             sentiment={getSMASentiment(tech.priceVsSma50)}
             tooltip={
-              <InfoTooltip text="**Cena vs SMA50** | Vzdálenost ceny od 50denního průměru. | • Kladné = nad průměrem (býčí) | • Záporné = pod (medvědí)" />
+              <InfoTooltip text="**Cena vs SMA50** | O kolik % je cena nad/pod 50denním průměrem. | • Kladné = bullish momentum | • Záporné = bearish momentum | • Nad +10% = možná překoupená | • Pod -10% = možná přeprodaná" />
             }
           />
           <MetricCard
@@ -137,7 +137,7 @@ export function ResearchTechnical({
             }
             sentiment={getSMASentiment(tech.priceVsSma200)}
             tooltip={
-              <InfoTooltip text="**Cena vs SMA200** | Vzdálenost ceny od 200denního průměru. | • Nad = dlouhodobý uptrend | • Pod = downtrend" />
+              <InfoTooltip text="**Cena vs SMA200** | O kolik % je cena nad/pod 200denním průměrem. | • Kladné = dlouhodobý uptrend | • Záporné = dlouhodobý downtrend | Kombinace: Nad oběma SMA = silně bullish, pod oběma = silně bearish" />
             }
           />
         </div>
@@ -279,6 +279,26 @@ export function ResearchTechnical({
                 </MetricValue>
               </div>
             </div>
+            {/* MACD Divergence indicator */}
+            {tech.macdDivergence && (
+              <div className="macd-divergence">
+                <Badge
+                  variant={tech.macdDivergence === 'bullish' ? 'buy' : 'sell'}
+                  size="sm"
+                >
+                  {tech.macdDivergence === 'bullish'
+                    ? '↑ Bullish Divergence'
+                    : '↓ Bearish Divergence'}
+                </Badge>
+                <InfoTooltip
+                  text={
+                    tech.macdDivergence === 'bullish'
+                      ? '**Bullish Divergence** | Cena dělá nižší low, ale MACD dělá vyšší low. | Signál potenciálního obratu nahoru.'
+                      : '**Bearish Divergence** | Cena dělá vyšší high, ale MACD dělá nižší high. | Signál potenciálního obratu dolů.'
+                  }
+                />
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -511,15 +531,15 @@ function getSMASentiment(
 
 function getSMAInterpretation(vsSma50: number, vsSma200: number): string {
   if (vsSma50 > 0 && vsSma200 > 0) {
-    return 'Price above both SMAs - Bullish trend';
+    return 'Cena nad oběma SMA — Bullish trend';
   }
   if (vsSma50 < 0 && vsSma200 < 0) {
-    return 'Price below both SMAs - Bearish trend';
+    return 'Cena pod oběma SMA — Bearish trend';
   }
   if (vsSma50 > 0 && vsSma200 < 0) {
-    return 'Short-term recovery, still below long-term trend';
+    return 'Krátkodobé zotavení, stále pod dlouhodobým trendem';
   }
-  return 'Recent weakness, but long-term trend intact';
+  return 'Nedávná slabost, ale dlouhodobý trend drží';
 }
 
 function getSMASignalType(vsSma50: number, vsSma200: number): SignalType {

@@ -143,6 +143,17 @@
   flex: 1;
 }
 
+/* MACD Divergence indicator */
+.macd-divergence {
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-primary);
+  border-radius: var(--radius-sm);
+}
+
 /* Bollinger Signal */
 .bollinger-signal-row {
   margin-top: 1rem;

@@ -3,28 +3,46 @@ import { SIGNAL_CONFIG } from '@/utils/signals';
 import { Badge } from '../Typography';
 
 // Map signal class to Badge variant
-const CLASS_TO_VARIANT: Record<
-  string,
+type BadgeVariant =
   | 'dip'
+  | 'breakout'
+  | 'reversal'
   | 'momentum'
+  | 'accumulate'
+  | 'good-entry'
+  | 'wait'
+  | 'target'
+  | 'take-profit'
+  | 'trim'
   | 'conviction'
   | 'quality'
-  | 'target'
-  | 'trim'
+  | 'undervalued'
+  | 'strong-trend'
+  | 'steady'
   | 'watch'
-  | 'accumulate'
-  | 'hold'
-  | 'neutral'
-> = {
+  | 'overbought'
+  | 'weak'
+  | 'neutral';
+
+const CLASS_TO_VARIANT: Record<string, BadgeVariant> = {
   dip: 'dip',
+  breakout: 'breakout',
+  reversal: 'reversal',
   momentum: 'momentum',
+  accumulate: 'accumulate',
+  'good-entry': 'good-entry',
+  wait: 'wait',
+  target: 'target',
+  'take-profit': 'take-profit',
+  trim: 'trim',
   conviction: 'conviction',
   quality: 'quality',
-  target: 'target',
-  trim: 'trim',
+  undervalued: 'undervalued',
+  'strong-trend': 'strong-trend',
+  steady: 'steady',
   watch: 'watch',
-  accumulate: 'accumulate',
-  hold: 'hold',
+  overbought: 'overbought',
+  weak: 'weak',
   neutral: 'neutral',
 };
 

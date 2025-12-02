@@ -1,0 +1,303 @@
+/* ============================================================================
+   EXPLAIN PANEL - Signal Decision Transparency
+   ============================================================================ */
+
+.explain-panel {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border-color);
+}
+
+/* Quick Summary */
+.explain-summary {
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.explain-summary-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.signal-reason {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+/* Detail View */
+.explain-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-md);
+}
+
+/* Section styling */
+.explain-section {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+}
+
+/* ============================================================================
+   SCORE BREAKDOWN GRID
+   ============================================================================ */
+
+.score-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.score-row {
+  display: grid;
+  grid-template-columns: 100px auto 1fr;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.score-row.composite {
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--border-color);
+}
+
+.score-values {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.score-bar {
+  height: 6px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* ============================================================================
+   INDICATORS GRID
+   ============================================================================ */
+
+.indicators-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.indicator-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--spacing-sm);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+/* ============================================================================
+   ANALYST DATA
+   ============================================================================ */
+
+.analyst-data {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-sm);
+}
+
+.analyst-target {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.analyst-recs {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.rec-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  min-width: 50px;
+}
+
+.rec-item.buy {
+  border-left: 2px solid var(--color-success);
+}
+
+.rec-item.hold {
+  border-left: 2px solid var(--color-warning);
+}
+
+.rec-item.sell {
+  border-left: 2px solid var(--color-danger);
+}
+
+.analyst-consensus {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* ============================================================================
+   SIGNAL EVALUATION
+   ============================================================================ */
+
+.signal-evaluation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-sm);
+}
+
+.eval-category {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.eval-row {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.eval-row.passed {
+  border-left: 3px solid var(--color-success);
+}
+
+.eval-row.failed {
+  border-left: 3px solid var(--color-danger);
+  opacity: 0.7;
+}
+
+.eval-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.eval-header:hover {
+  background: var(--bg-hover);
+}
+
+.eval-status {
+  font-size: var(--font-size-sm);
+  width: 20px;
+}
+
+.eval-row.passed .eval-status {
+  color: var(--color-success);
+}
+
+.eval-row.failed .eval-status {
+  color: var(--color-danger);
+}
+
+.eval-expand {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.eval-conditions {
+  padding: var(--spacing-xs) var(--spacing-md) var(--spacing-sm);
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.condition-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 2px 0;
+}
+
+.condition-row.passed .condition-status {
+  color: var(--color-success);
+}
+
+.condition-row.failed .condition-status {
+  color: var(--color-danger);
+}
+
+.condition-status {
+  font-size: var(--font-size-xs);
+  width: 14px;
+}
+
+/* ============================================================================
+   THRESHOLDS GRID
+   ============================================================================ */
+
+.thresholds-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.threshold-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .explain-panel {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+  }
+
+  .score-row {
+    grid-template-columns: 80px auto 1fr;
+    gap: var(--spacing-sm);
+  }
+
+  .indicators-grid,
+  .thresholds-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .analyst-recs {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .indicators-grid,
+  .thresholds-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

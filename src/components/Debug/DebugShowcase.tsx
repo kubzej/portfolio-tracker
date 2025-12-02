@@ -609,6 +609,8 @@ function BadgesSection() {
           <Badge variant="trim">Trim</Badge>
           <Badge variant="watch">Watch</Badge>
           <Badge variant="accumulate">Accumulate</Badge>
+          <Badge variant="good-entry">Good Entry</Badge>
+          <Badge variant="wait">Wait</Badge>
         </div>
       </div>
 
@@ -637,12 +639,14 @@ function BadgesSection() {
         <div className="debug-showcase-row">
           <SignalBadge type="DIP_OPPORTUNITY" size="md" showTooltip />
           <SignalBadge type="MOMENTUM" size="md" showTooltip />
-          <SignalBadge type="CONVICTION_HOLD" size="md" showTooltip />
+          <SignalBadge type="CONVICTION" size="md" showTooltip />
           <SignalBadge type="NEAR_TARGET" size="md" showTooltip />
           <SignalBadge type="CONSIDER_TRIM" size="md" showTooltip />
-          <SignalBadge type="WATCH_CLOSELY" size="md" showTooltip />
+          <SignalBadge type="WATCH" size="md" showTooltip />
           <SignalBadge type="ACCUMULATE" size="md" showTooltip />
           <SignalBadge type="NEUTRAL" size="md" showTooltip />
+          <SignalBadge type="GOOD_ENTRY" size="md" showTooltip />
+          <SignalBadge type="WAIT_FOR_DIP" size="md" showTooltip />
         </div>
         <div className="debug-showcase-row">
           <SignalBadge type="DIP_OPPORTUNITY" size="sm" />

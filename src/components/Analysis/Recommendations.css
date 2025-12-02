@@ -209,33 +209,130 @@
   transform: translateY(-2px);
 }
 
-/* Signal Header - colored top band */
+/* Signal Header - colored top band with primary signal and optional badge */
 .tile-signal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 1rem;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.tile-signal-header .signal-label {
+/* Primary signal - left aligned with strength */
+.signal-primary {
   display: flex;
   align-items: center;
-  gap: 0.375rem;
-  color: inherit !important;
+  gap: 0.5rem;
+  color: inherit;
 }
 
-.tile-signal-header .signal-strength {
-  opacity: 0.8;
+/* Secondary signal badge - small pill on the right */
+.signal-badge {
+  padding: 0.125rem 0.5rem;
+  border-radius: 1rem;
+  font-size: 0.625rem;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: rgba(0, 0, 0, 0.2);
+  color: inherit;
+  white-space: nowrap;
 }
 
-/* Signal Header Colors */
+/* Badge colors - match the signal type */
+.signal-badge.dip {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+.signal-badge.breakout {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+}
+.signal-badge.reversal {
+  background: linear-gradient(135deg, #84cc16, #65a30d);
+  color: white;
+}
+.signal-badge.momentum {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+}
+.signal-badge.accumulate {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  color: white;
+}
+.signal-badge.good-entry {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+}
+.signal-badge.wait {
+  background: linear-gradient(135deg, #fbbf24, #d97706);
+  color: white;
+}
+.signal-badge.target {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+}
+.signal-badge.take-profit {
+  background: linear-gradient(135deg, #eab308, #ca8a04);
+  color: white;
+}
+.signal-badge.trim {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+.signal-badge.conviction {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+}
+.signal-badge.quality {
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
+  color: white;
+}
+.signal-badge.undervalued {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+.signal-badge.strong-trend {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+}
+.signal-badge.steady {
+  background: linear-gradient(135deg, #64748b, #475569);
+  color: white;
+}
+.signal-badge.watch {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: white;
+}
+.signal-badge.overbought {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: white;
+}
+.signal-badge.weak {
+  background: linear-gradient(135deg, #94a3b8, #64748b);
+  color: white;
+}
+.signal-badge.neutral {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+/* Signal Header Colors - Primary signal determines tile color */
 .tile-signal-header.dip {
   background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.tile-signal-header.breakout {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+}
+
+.tile-signal-header.reversal {
+  background: linear-gradient(135deg, #84cc16, #65a30d);
   color: white;
 }
 
@@ -244,8 +341,18 @@
   color: white;
 }
 
-.tile-signal-header.conviction {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+.tile-signal-header.accumulate {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  color: white;
+}
+
+.tile-signal-header.good-entry {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+}
+
+.tile-signal-header.wait {
+  background: linear-gradient(135deg, #fbbf24, #d97706);
   color: white;
 }
 
@@ -254,8 +361,8 @@
   color: white;
 }
 
-.tile-signal-header.watch {
-  background: linear-gradient(135deg, #f97316, #ea580c);
+.tile-signal-header.take-profit {
+  background: linear-gradient(135deg, #eab308, #ca8a04);
   color: white;
 }
 
@@ -264,8 +371,43 @@
   color: white;
 }
 
-.tile-signal-header.accumulate {
-  background: linear-gradient(135deg, #06b6d4, #0891b2);
+.tile-signal-header.conviction {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+}
+
+.tile-signal-header.quality {
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
+  color: white;
+}
+
+.tile-signal-header.undervalued {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.tile-signal-header.strong-trend {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+}
+
+.tile-signal-header.steady {
+  background: linear-gradient(135deg, #64748b, #475569);
+  color: white;
+}
+
+.tile-signal-header.watch {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: white;
+}
+
+.tile-signal-header.overbought {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: white;
+}
+
+.tile-signal-header.weak {
+  background: linear-gradient(135deg, #94a3b8, #64748b);
   color: white;
 }
 
@@ -481,6 +623,24 @@
   color: white;
 }
 
+.banner-signal {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.banner-signal-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.banner-separator {
+  width: 1px;
+  height: 1.25rem;
+  background: rgba(255, 255, 255, 0.4);
+}
+
 .modal-banner.dip { background: linear-gradient(135deg, #10b981, #059669); }
 .modal-banner.momentum { background: linear-gradient(135deg, #3b82f6, #2563eb); }
 .modal-banner.conviction { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
@@ -488,6 +648,10 @@
 .modal-banner.watch { background: linear-gradient(135deg, #f97316, #ea580c); }
 .modal-banner.trim { background: linear-gradient(135deg, #ef4444, #dc2626); }
 .modal-banner.accumulate { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+.modal-banner.good-entry { background: linear-gradient(135deg, #22c55e, #16a34a); }
+.modal-banner.wait { background: linear-gradient(135deg, #fbbf24, #d97706); }
+.modal-banner.quality { background: linear-gradient(135deg, #14b8a6, #0d9488); }
+.modal-banner.hold { background: linear-gradient(135deg, #64748b, #475569); }
 .modal-banner.neutral { background: var(--bg-tertiary); color: var(--text-secondary); }
 
 @media (max-width: 768px) {

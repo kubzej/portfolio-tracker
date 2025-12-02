@@ -38,13 +38,14 @@ import {
   type SignalLogEntry,
   type SignalPerformance,
 } from '@/services/api/signals';
+import { ExplainPanel } from './ExplainPanel';
 import './Recommendations.css';
 
 const GROUPING_OPTIONS = [
-  { value: 'none', label: 'None' },
-  { value: 'signal', label: 'Signal' },
-  { value: 'score', label: 'Score' },
-  { value: 'conviction', label: 'Conviction' },
+  { value: 'none', label: 'Žádné' },
+  { value: 'signal', label: 'Signál' },
+  { value: 'score', label: 'Skóre' },
+  { value: 'conviction', label: 'Přesvědčení' },
 ];
 
 interface RecommendationsProps {
@@ -57,8 +58,10 @@ type FilterType =
   | 'all'
   | 'dips'
   | 'conviction'
+  | 'quality'
   | 'momentum'
   | 'accumulate'
+  | 'hold'
   | 'target'
   | 'watch'
   | 'trim';
@@ -136,7 +139,11 @@ export function Recommendations({
         return recommendations.filter((r) => r.isDip || r.dipScore >= 40);
       case 'conviction':
         return recommendations.filter(
-          (r) => r.primarySignal.type === 'CONVICTION_HOLD'
+          (r) => r.primarySignal.type === 'CONVICTION'
+        );
+      case 'quality':
+        return recommendations.filter(
+          (r) => r.primarySignal.type === 'QUALITY_CORE'
         );
       case 'momentum':
         return recommendations.filter(
@@ -146,14 +153,14 @@ export function Recommendations({
         return recommendations.filter(
           (r) => r.primarySignal.type === 'ACCUMULATE'
         );
+      case 'hold':
+        return recommendations.filter((r) => r.primarySignal.type === 'STEADY');
       case 'target':
         return recommendations.filter(
           (r) => r.primarySignal.type === 'NEAR_TARGET'
         );
       case 'watch':
-        return recommendations.filter(
-          (r) => r.primarySignal.type === 'WATCH_CLOSELY'
-        );
+        return recommendations.filter((r) => r.primarySignal.type === 'WATCH');
       case 'trim':
         return recommendations.filter(
           (r) => r.primarySignal.type === 'CONSIDER_TRIM'
@@ -202,11 +209,13 @@ export function Recommendations({
       dips: recommendations.filter(
         (r) => r.primarySignal.type === 'DIP_OPPORTUNITY'
       ).length,
-      conviction: countBySignal('CONVICTION_HOLD'),
+      conviction: countBySignal('CONVICTION'),
+      quality: countBySignal('QUALITY_CORE'),
       momentum: countBySignal('MOMENTUM'),
       accumulate: countBySignal('ACCUMULATE'),
+      hold: countBySignal('STEADY'),
       target: countBySignal('NEAR_TARGET'),
-      watch: countBySignal('WATCH_CLOSELY'),
+      watch: countBySignal('WATCH'),
       trim: countBySignal('CONSIDER_TRIM'),
       neutral: countBySignal('NEUTRAL'),
     };
@@ -215,12 +224,18 @@ export function Recommendations({
   // Filter options for ToggleGroup
   const filterOptions: ToggleOption[] = useMemo(
     () => [
-      { value: 'all', label: 'All', count: stats.total, color: 'default' },
+      { value: 'all', label: 'Vše', count: stats.total, color: 'default' },
       { value: 'dips', label: 'DIP', count: stats.dips, color: 'success' },
       {
         value: 'conviction',
         label: 'Conviction',
         count: stats.conviction,
+        color: 'purple',
+      },
+      {
+        value: 'quality',
+        label: 'Kvalita',
+        count: stats.quality,
         color: 'purple',
       },
       {
@@ -231,31 +246,42 @@ export function Recommendations({
       },
       {
         value: 'accumulate',
-        label: 'Accumulate',
+        label: 'Akumulovat',
         count: stats.accumulate,
         color: 'cyan',
       },
       {
+        value: 'hold',
+        label: 'Držet',
+        count: stats.hold,
+        color: 'default',
+      },
+      {
         value: 'target',
-        label: 'Near Target',
+        label: 'U cíle',
         count: stats.target,
         color: 'warning',
       },
-      { value: 'watch', label: 'Watch', count: stats.watch, color: 'orange' },
-      { value: 'trim', label: 'Trim', count: stats.trim, color: 'danger' },
+      {
+        value: 'watch',
+        label: 'Sledovat',
+        count: stats.watch,
+        color: 'orange',
+      },
+      { value: 'trim', label: 'Redukovat', count: stats.trim, color: 'danger' },
     ],
     [stats]
   );
 
   if (loading) {
-    return <LoadingSpinner text="Analyzing portfolio..." />;
+    return <LoadingSpinner text="Analyzuji portfolio..." />;
   }
 
   if (recommendations.length === 0) {
     return (
       <EmptyState
-        title="No recommendations"
-        description="Load analyst and technical data first."
+        title="Žádná doporučení"
+        description="Nejprve načtěte data analytiků a technická data."
       />
     );
   }
@@ -265,7 +291,7 @@ export function Recommendations({
       {/* Header */}
       <div className="rec-header">
         <div className="rec-header-left">
-          <SectionTitle>Smart Insights</SectionTitle>
+          <SectionTitle>Chytré analýzy</SectionTitle>
           {autoLogStatus && <Badge variant="buy">{autoLogStatus}</Badge>}
         </div>
         <div className="rec-header-right">
@@ -275,7 +301,7 @@ export function Recommendations({
             isActive={showHistory}
             onClick={() => setShowHistory(!showHistory)}
           >
-            Show signal history
+            Historie signálů
           </Button>
         </div>
       </div>
@@ -362,18 +388,43 @@ interface StockTileProps {
 }
 
 function StockTile({ rec, onClick }: StockTileProps) {
-  const signalInfo = SIGNAL_CONFIG[rec.primarySignal.type];
+  const actionSignal = rec.actionSignal;
+  const qualitySignal = rec.qualitySignal;
+
+  // Determine primary and secondary signals for display
+  // Priority: action signal first (if exists), otherwise quality signal
+  const primarySignal = actionSignal ?? qualitySignal;
+  const secondarySignal = actionSignal ? qualitySignal : null;
+
+  // Get signal configs
+  const primaryConfig = primarySignal
+    ? SIGNAL_CONFIG[primarySignal.type]
+    : SIGNAL_CONFIG.NEUTRAL;
+  const secondaryConfig = secondarySignal
+    ? SIGNAL_CONFIG[secondarySignal.type]
+    : null;
 
   return (
     <div className="stock-tile" onClick={onClick}>
-      {/* Signal Header */}
-      <div className={`tile-signal-header ${signalInfo.class}`}>
-        <Text size="sm" weight="semibold">
-          {signalInfo.label}
-        </Text>
-        <Text size="sm" weight="medium">
-          {rec.primarySignal.strength.toFixed(0)}%
-        </Text>
+      {/* Signal Header - primary signal full width with optional badge */}
+      <div className={`tile-signal-header ${primaryConfig.class}`}>
+        <div className="signal-primary">
+          <Text size="sm" weight="semibold">
+            {primaryConfig.label}
+          </Text>
+          {primarySignal && (
+            <Text size="xs" weight="medium" color="secondary">
+              {primarySignal.strength.toFixed(0)}%
+            </Text>
+          )}
+        </div>
+        {secondaryConfig && (
+          <div className={`signal-badge ${secondaryConfig.class}`}>
+            <Text size="xs" weight="semibold">
+              {secondaryConfig.label}
+            </Text>
+          </div>
+        )}
       </div>
 
       {/* Tile Body */}
@@ -398,7 +449,7 @@ function StockTile({ rec, onClick }: StockTileProps) {
         <div className="tile-metrics">
           <div className="metric">
             <MetricValue>{rec.weight.toFixed(1)}%</MetricValue>
-            <MetricLabel>Weight</MetricLabel>
+            <MetricLabel>Váha</MetricLabel>
           </div>
           <div className="metric">
             <MetricValue
@@ -412,7 +463,7 @@ function StockTile({ rec, onClick }: StockTileProps) {
             >
               {rec.compositeScore}
             </MetricValue>
-            <MetricLabel>Score</MetricLabel>
+            <MetricLabel>Skóre</MetricLabel>
           </div>
           <div className="metric">
             <Badge
@@ -424,9 +475,13 @@ function StockTile({ rec, onClick }: StockTileProps) {
                   : 'sell'
               }
             >
-              {rec.convictionLevel}
+              {rec.convictionLevel === 'HIGH'
+                ? 'Vysoká'
+                : rec.convictionLevel === 'MEDIUM'
+                ? 'Střední'
+                : 'Nízká'}
             </Badge>
-            <MetricLabel>Conviction</MetricLabel>
+            <MetricLabel>Přesvědčení</MetricLabel>
           </div>
         </div>
 
@@ -435,7 +490,7 @@ function StockTile({ rec, onClick }: StockTileProps) {
           <div className="tile-metrics tile-metrics--2col">
             <div className="metric">
               <MetricValue>${rec.targetPrice.toFixed(0)}</MetricValue>
-              <MetricLabel>Target</MetricLabel>
+              <MetricLabel>Cíl</MetricLabel>
             </div>
             <div className="metric">
               <MetricValue
@@ -444,7 +499,7 @@ function StockTile({ rec, onClick }: StockTileProps) {
                 {rec.targetUpside >= 0 ? '+' : ''}
                 {rec.targetUpside.toFixed(0)}%
               </MetricValue>
-              <MetricLabel>Upside</MetricLabel>
+              <MetricLabel>Potenciál</MetricLabel>
             </div>
           </div>
         )}
@@ -465,6 +520,15 @@ interface StockDetailModalProps {
 function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
   const signalInfo = SIGNAL_CONFIG[rec.primarySignal.type];
 
+  // Get category signals
+  const actionSignal = rec.actionSignal;
+  const qualitySignal = rec.qualitySignal;
+
+  const actionConfig = actionSignal ? SIGNAL_CONFIG[actionSignal.type] : null;
+  const qualityConfig = qualitySignal
+    ? SIGNAL_CONFIG[qualitySignal.type]
+    : null;
+
   return (
     <div className="rec-modal">
       <div className="rec-modal-overlay" onClick={onClose} />
@@ -472,12 +536,29 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
         {/* Signal Banner */}
         <div className={`modal-banner ${signalInfo.class}`}>
           <div className="banner-signal">
-            <Text size="lg" weight="bold">
-              {signalInfo.label}
-            </Text>
-            <Text size="md" weight="medium">
-              {rec.primarySignal.strength.toFixed(0)}%
-            </Text>
+            {/* Action signal */}
+            {actionConfig ? (
+              <div className="banner-signal-item">
+                <Text size="lg" weight="bold">
+                  {actionConfig.label}
+                </Text>
+                <Text size="sm" weight="medium">
+                  {actionSignal!.strength.toFixed(0)}%
+                </Text>
+              </div>
+            ) : null}
+            {/* Separator if both exist */}
+            {actionConfig && qualityConfig && (
+              <div className="banner-separator" />
+            )}
+            {/* Quality signal */}
+            {qualityConfig ? (
+              <div className="banner-signal-item">
+                <Text size="lg" weight="bold">
+                  {qualityConfig.label}
+                </Text>
+              </div>
+            ) : null}
           </div>
           <Button variant="ghost" size="lg" icon onClick={onClose}>
             X
@@ -499,14 +580,18 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                 : 'sell'
             }
           >
-            {rec.convictionLevel}
+            {rec.convictionLevel === 'HIGH'
+              ? 'Vysoká'
+              : rec.convictionLevel === 'MEDIUM'
+              ? 'Střední'
+              : 'Nízká'}
           </Badge>
         </div>
 
         {/* Quick Stats */}
         <div className="modal-stats">
           <div className="stat-box">
-            <MetricLabel>Score</MetricLabel>
+            <MetricLabel>Skóre</MetricLabel>
             <MetricValue
               sentiment={
                 rec.compositeScore >= 70
@@ -520,7 +605,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
             </MetricValue>
           </div>
           <div className="stat-box">
-            <MetricLabel>Technical</MetricLabel>
+            <MetricLabel>Technika</MetricLabel>
             <Badge
               variant={
                 rec.technicalBias === 'BULLISH'
@@ -530,7 +615,11 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                   : 'hold'
               }
             >
-              {rec.technicalBias}
+              {rec.technicalBias === 'BULLISH'
+                ? 'Býčí'
+                : rec.technicalBias === 'BEARISH'
+                ? 'Medvědí'
+                : 'Neutrální'}
             </Badge>
           </div>
         </div>
@@ -543,19 +632,19 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
         {/* Key Metrics - unified grid */}
         <div className="modal-section">
           <div className="section-header">
-            <CardTitle>Key Metrics</CardTitle>
+            <CardTitle>Klíčové metriky</CardTitle>
           </div>
           <div className="metrics-grid">
             <div className="metric-cell">
-              <MetricLabel>Weight</MetricLabel>
+              <MetricLabel>Váha</MetricLabel>
               <MetricValue>{rec.weight.toFixed(1)}%</MetricValue>
             </div>
             <div className="metric-cell">
-              <MetricLabel>Current</MetricLabel>
+              <MetricLabel>Cena</MetricLabel>
               <MetricValue>${rec.currentPrice.toFixed(2)}</MetricValue>
             </div>
             <div className="metric-cell">
-              <MetricLabel>Avg Buy</MetricLabel>
+              <MetricLabel>Prům. nákup</MetricLabel>
               <MetricValue>${rec.avgBuyPrice.toFixed(2)}</MetricValue>
             </div>
             <div className="metric-cell">
@@ -569,7 +658,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
             </div>
             {rec.targetPrice !== null && rec.targetUpside !== null && (
               <div className="metric-cell">
-                <MetricLabel>Target</MetricLabel>
+                <MetricLabel>Cíl</MetricLabel>
                 <MetricValue>
                   ${rec.targetPrice.toFixed(0)}
                   <Text
@@ -586,7 +675,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
             {rec.buyStrategy.buyZoneLow !== null &&
               rec.buyStrategy.buyZoneHigh !== null && (
                 <div className="metric-cell">
-                  <MetricLabel>Entry Zone</MetricLabel>
+                  <MetricLabel>Vstupní zóna</MetricLabel>
                   <MetricValue>
                     ${rec.buyStrategy.buyZoneLow.toFixed(0)} – $
                     {rec.buyStrategy.buyZoneHigh.toFixed(0)}
@@ -595,7 +684,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
               )}
             {rec.buyStrategy.supportPrice !== null && (
               <div className="metric-cell">
-                <MetricLabel>Support</MetricLabel>
+                <MetricLabel>Podpora</MetricLabel>
                 <MetricValue>
                   ${rec.buyStrategy.supportPrice.toFixed(0)}
                   <Text size="xs" color="danger">
@@ -613,7 +702,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
             )}
             {rec.buyStrategy.riskRewardRatio !== null && (
               <div className="metric-cell">
-                <MetricLabel>Risk/Reward</MetricLabel>
+                <MetricLabel>Riziko/Výnos</MetricLabel>
                 <MetricValue
                   sentiment={
                     rec.buyStrategy.riskRewardRatio >= 2
@@ -640,8 +729,12 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                   }
                 >
                   {rec.buyStrategy.dcaRecommendation === 'NO_DCA'
-                    ? 'Hold'
-                    : rec.buyStrategy.dcaRecommendation}
+                    ? 'Nepokračovat'
+                    : rec.buyStrategy.dcaRecommendation === 'AGGRESSIVE'
+                    ? 'Agresivní'
+                    : rec.buyStrategy.dcaRecommendation === 'NORMAL'
+                    ? 'Normální'
+                    : 'Opatrný'}
                 </Badge>
                 {rec.buyStrategy.dcaReason && (
                   <Badge variant="info">{rec.buyStrategy.dcaReason}</Badge>
@@ -654,7 +747,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
           {rec.exitStrategy && (
             <div className="exit-strategy-section">
               <div className="section-header">
-                <CardTitle>Exit Strategy</CardTitle>
+                <CardTitle>Strategie výstupu</CardTitle>
               </div>
               <div className="exit-header">
                 <Badge
@@ -667,10 +760,10 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                   }
                 >
                   {rec.exitStrategy.holdingPeriod === 'SWING'
-                    ? 'Swing'
+                    ? 'Krátkodobě'
                     : rec.exitStrategy.holdingPeriod === 'MEDIUM'
-                    ? 'Medium'
-                    : 'Long'}
+                    ? 'Střednědobě'
+                    : 'Dlouhodobě'}
                 </Badge>
                 <Text size="sm" color="muted">
                   {rec.exitStrategy.holdingReason}
@@ -715,7 +808,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                 )}
                 {rec.exitStrategy.takeProfit3 !== null && (
                   <div className="metric-cell">
-                    <MetricLabel>Target</MetricLabel>
+                    <MetricLabel>Cíl</MetricLabel>
                     <MetricValue sentiment="positive">
                       ${rec.exitStrategy.takeProfit3.toFixed(0)}
                       <Text size="xs" color="success">
@@ -752,8 +845,8 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
               </div>
               {rec.exitStrategy.trailingStopPercent && (
                 <Caption>
-                  Consider {rec.exitStrategy.trailingStopPercent}% trailing stop
-                  after TP1
+                  Zvažte {rec.exitStrategy.trailingStopPercent}% trailing stop
+                  po TP1
                 </Caption>
               )}
             </div>
@@ -763,10 +856,10 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
           {rec.fiftyTwoWeekHigh !== null && rec.fiftyTwoWeekLow !== null && (
             <div className="week-range">
               <div className="range-header">
-                <MetricLabel>52-Week Range</MetricLabel>
+                <MetricLabel>52týdní rozsah</MetricLabel>
                 {rec.distanceFrom52wHigh !== null && (
                   <Text size="xs" color="muted">
-                    {rec.distanceFrom52wHigh.toFixed(0)}% below high
+                    {rec.distanceFrom52wHigh.toFixed(0)}% pod maximem
                   </Text>
                 )}
               </div>
@@ -801,7 +894,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
         {/* Score Breakdown */}
         <div className="modal-section">
           <div className="section-header">
-            <CardTitle>Score Breakdown</CardTitle>
+            <CardTitle>Rozpad skóre</CardTitle>
           </div>
           <div className="breakdown-list">
             {rec.breakdown.map((b) => (
@@ -845,7 +938,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
         {(rec.strengths.length > 0 || rec.concerns.length > 0) && (
           <div className="modal-section">
             <div className="section-header">
-              <CardTitle>Analysis</CardTitle>
+              <CardTitle>Analýza</CardTitle>
             </div>
             <div className="two-col">
               {rec.strengths.length > 0 && (
@@ -854,7 +947,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                     <Text color="success" weight="bold">
                       ✓
                     </Text>
-                    <CardTitle>Strengths</CardTitle>
+                    <CardTitle>Silné stránky</CardTitle>
                   </div>
                   <ul>
                     {rec.strengths.map((s, i) => (
@@ -869,7 +962,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                     <Text color="danger" weight="bold">
                       !
                     </Text>
-                    <CardTitle>Concerns</CardTitle>
+                    <CardTitle>Obavy</CardTitle>
                   </div>
                   <ul>
                     {rec.concerns.map((c, i) => (
@@ -886,7 +979,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
         {rec.actionItems.length > 0 && (
           <div className="modal-section">
             <div className="section-header">
-              <CardTitle>Action Items</CardTitle>
+              <CardTitle>Doporučené akce</CardTitle>
             </div>
             <div className="action-list">
               {rec.actionItems.map((a, i) => (
@@ -899,18 +992,33 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
           </div>
         )}
 
-        {/* Other Signals */}
-        {rec.signals.length > 1 && (
+        {/* Other Signals - only show if there are more than the displayed ones */}
+        {rec.signals.length > 2 && (
           <div className="modal-section">
             <div className="section-header">
-              <CardTitle>Other Signals</CardTitle>
+              <CardTitle>Další signály</CardTitle>
             </div>
             <div className="other-signals">
-              {rec.signals.slice(1).map((sig, i) => (
-                <SignalBadge key={i} type={sig.type} />
-              ))}
+              {rec.signals
+                .filter(
+                  (sig) =>
+                    sig.type !== actionSignal?.type &&
+                    sig.type !== qualitySignal?.type
+                )
+                .map((sig, i) => (
+                  <SignalBadge key={i} type={sig.type} />
+                ))}
             </div>
           </div>
+        )}
+
+        {/* Explain Mode */}
+        {rec.explanation && (
+          <ExplainPanel
+            explanation={rec.explanation}
+            actionSignal={actionSignal?.type ?? null}
+            qualitySignal={qualitySignal?.type ?? 'NEUTRAL'}
+          />
         )}
       </div>
     </div>
@@ -995,7 +1103,7 @@ function SignalHistoryPanel({
   // Ticker options for filter dropdown
   const tickerOptions: SelectOption[] = useMemo(() => {
     return [
-      { value: '', label: 'All Tickers' },
+      { value: '', label: 'Všechny tickery' },
       ...uniqueTickers.map((t) => ({ value: t, label: t })),
     ];
   }, [uniqueTickers]);
@@ -1003,7 +1111,7 @@ function SignalHistoryPanel({
   // Signal options for filter dropdown
   const signalOptions: SelectOption[] = useMemo(() => {
     return [
-      { value: 'all', label: 'All Signals' },
+      { value: 'all', label: 'Všechny signály' },
       ...Object.entries(SIGNAL_CONFIG).map(([key, val]) => ({
         value: key,
         label: val.label,
@@ -1014,7 +1122,7 @@ function SignalHistoryPanel({
   if (loading) {
     return (
       <div className="history-fullscreen">
-        <LoadingSpinner text="Loading history..." />
+        <LoadingSpinner text="Načítám historii..." />
       </div>
     );
   }
@@ -1024,8 +1132,8 @@ function SignalHistoryPanel({
       {/* Header */}
       <div className="history-header">
         <div className="history-title">
-          <SectionTitle>Signal History</SectionTitle>
-          <Muted>{stats.total} signals</Muted>
+          <SectionTitle>Historie signálů</SectionTitle>
+          <Muted>{stats.total} signálů</Muted>
         </div>
         <Button variant="ghost" size="sm" icon onClick={onClose}>
           ×
@@ -1034,9 +1142,9 @@ function SignalHistoryPanel({
 
       {/* Stats Bar */}
       <div className="history-stats">
-        <MetricCard label="Total Signals" value={stats.total} size="sm" />
+        <MetricCard label="Celkem signálů" value={stats.total} size="sm" />
         <MetricCard
-          label="Avg 1W Return"
+          label="Prům. výnos 1T"
           value={`${
             stats.avgReturn1w >= 0 ? '+' : ''
           }${stats.avgReturn1w.toFixed(1)}`}
@@ -1045,7 +1153,7 @@ function SignalHistoryPanel({
           size="sm"
         />
         <MetricCard
-          label="Win Rate (1W)"
+          label="Úspěšnost (1T)"
           value={stats.winRate.toFixed(0)}
           suffix="%"
           sentiment={stats.winRate >= 50 ? 'positive' : 'negative'}
@@ -1059,33 +1167,33 @@ function SignalHistoryPanel({
           value={tickerFilter}
           onChange={setTickerFilter}
           options={tickerOptions}
-          placeholder="All Tickers"
-          title="Filter by Ticker"
+          placeholder="Všechny tickery"
+          title="Filtr podle tickeru"
         />
         <BottomSheetSelect
           value={signalFilter}
           onChange={setSignalFilter}
           options={signalOptions}
-          placeholder="All Signals"
-          title="Filter by Signal"
+          placeholder="Všechny signály"
+          title="Filtr podle signálu"
         />
       </div>
 
       {/* Table */}
       {filteredHistory.length === 0 ? (
-        <Muted>No signals match your filters.</Muted>
+        <Muted>Žádné signály neodpovídají filtrům.</Muted>
       ) : (
         <>
           <div className="history-table-wrapper">
             <table className="history-table">
               <thead>
                 <tr>
-                  <th>Date</th>
+                  <th>Datum</th>
                   <th>Ticker</th>
-                  <th>Signal</th>
-                  <th>Price</th>
+                  <th>Signál</th>
+                  <th>Cena</th>
                   <th>1D</th>
-                  <th>1W</th>
+                  <th>1T</th>
                   <th>1M</th>
                 </tr>
               </thead>
@@ -1139,10 +1247,10 @@ function SignalHistoryPanel({
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
               >
-                ← Prev
+                ← Předchozí
               </Button>
               <Text size="sm" color="muted">
-                Page {currentPage} of {totalPages}
+                Stránka {currentPage} z {totalPages}
               </Text>
               <Button
                 variant="outline"
@@ -1152,7 +1260,7 @@ function SignalHistoryPanel({
                 }
                 disabled={currentPage === totalPages}
               >
-                Next →
+                Další →
               </Button>
             </div>
           )}

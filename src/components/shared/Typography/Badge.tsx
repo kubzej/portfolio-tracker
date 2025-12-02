@@ -12,16 +12,26 @@ type BadgeVariant =
   // General
   | 'info'
   | 'warning'
-  // Signals
+  // Action Signals
   | 'dip'
+  | 'breakout'
+  | 'reversal'
   | 'momentum'
+  | 'accumulate'
+  | 'good-entry'
+  | 'wait'
+  | 'target'
+  | 'take-profit'
+  | 'trim'
+  // Quality Signals
   | 'conviction'
   | 'quality'
-  | 'target'
-  | 'trim'
+  | 'undervalued'
+  | 'strong-trend'
+  | 'steady'
   | 'watch'
-  | 'accumulate'
-  | 'hold';
+  | 'overbought'
+  | 'weak';
 
 type BadgeSize = 'xs' | 'sm' | 'base' | 'lg';
 

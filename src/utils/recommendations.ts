@@ -50,20 +50,61 @@ export interface ScoreComponent {
 
 /** Signal types that can be generated */
 export type SignalType =
+  // === ACTION SIGNALS (what to do) ===
   | 'DIP_OPPORTUNITY' // Oversold + fundamentals OK
+  | 'BREAKOUT' // Price breaking out with volume
+  | 'REVERSAL' // MACD divergence + oversold = potential reversal
   | 'MOMENTUM' // Technical bullish trend
-  | 'CONVICTION_HOLD' // Long-term strong metrics
-  | 'QUALITY_CORE' // High fundamentals + positive analysts
-  | 'NEAR_TARGET' // Close to analyst target price
-  | 'WATCH_CLOSELY' // Something is changing
-  | 'CONSIDER_TRIM' // Overbought + high weight + near target
-  | 'ACCUMULATE' // Good stock, wait for better price
-  | 'STEADY_HOLD' // Solid stock, no action needed
-  | 'NEUTRAL'; // No strong signal
+  | 'ACCUMULATE' // Good stock, wait for better price or DCA
+  | 'GOOD_ENTRY' // Research: quality stock below analyst target
+  | 'WAIT_FOR_DIP' // Research: quality stock but price too high
+  | 'NEAR_TARGET' // Close to target - consider action
+  | 'TAKE_PROFIT' // Large gains - consider realizing
+  | 'CONSIDER_TRIM' // Overbought + high weight
+  // === QUALITY SIGNALS (stock assessment) ===
+  | 'CONVICTION' // High conviction - top tier
+  | 'QUALITY_CORE' // Strong fundamentals + analysts
+  | 'UNDERVALUED' // Big upside potential
+  | 'STRONG_TREND' // ADX strong + bullish
+  | 'STEADY' // Solid, no action needed
+  | 'WATCH' // Deteriorating metrics
+  | 'WEAK' // Poor fundamentals/trend
+  | 'OVERBOUGHT' // RSI + Stoch overbought
+  | 'NEUTRAL'; // No strong signals
+
+/** Signal category - separates action signals from quality signals */
+export type SignalCategory = 'action' | 'quality';
+
+/** Mapping of signal types to their categories */
+export const SIGNAL_CATEGORIES: Record<SignalType, SignalCategory> = {
+  // Action signals - what to do
+  DIP_OPPORTUNITY: 'action',
+  BREAKOUT: 'action',
+  REVERSAL: 'action',
+  MOMENTUM: 'action',
+  ACCUMULATE: 'action',
+  GOOD_ENTRY: 'action',
+  WAIT_FOR_DIP: 'action',
+  NEAR_TARGET: 'action',
+  TAKE_PROFIT: 'action',
+  CONSIDER_TRIM: 'action',
+
+  // Quality signals - stock quality assessment
+  CONVICTION: 'quality',
+  QUALITY_CORE: 'quality',
+  UNDERVALUED: 'quality',
+  STRONG_TREND: 'quality',
+  STEADY: 'quality',
+  WATCH: 'quality',
+  WEAK: 'quality',
+  OVERBOUGHT: 'quality',
+  NEUTRAL: 'quality',
+};
 
 /** A single insight/signal for a stock */
 export interface StockSignal {
   type: SignalType;
+  category: SignalCategory;
   strength: number; // 0-100
   title: string;
   description: string;
@@ -106,6 +147,10 @@ export interface StockRecommendation {
   // Generated signals (sorted by priority)
   signals: StockSignal[];
   primarySignal: StockSignal;
+
+  // Category-based signals for UI (one per category, null if none)
+  actionSignal: StockSignal | null; // DIP, BREAKOUT, MOMENTUM, TRIM, etc.
+  qualitySignal: StockSignal | null; // CONVICTION, QUALITY, STEADY, WATCH, etc.
 
   // Key points for display
   strengths: string[];
@@ -156,6 +201,101 @@ export interface StockRecommendation {
     newsSentiment: number | null;
     insiderMspr: number | null;
   };
+
+  // Explanation data for debugging/understanding
+  explanation: SignalExplanation;
+}
+
+/** Detailed explanation of signal decision process */
+export interface SignalExplanation {
+  // Raw technical indicators
+  technicalIndicators: {
+    rsi14: number | null;
+    macdHistogram: number | null;
+    macdSignalLine: number | null;
+    stochK: number | null;
+    stochD: number | null;
+    adx: number | null;
+    bollingerUpper: number | null;
+    bollingerLower: number | null;
+    bollingerMiddle: number | null;
+    sma20: number | null;
+    sma50: number | null;
+    sma200: number | null;
+    atr14: number | null;
+  };
+
+  // Raw fundamental data
+  fundamentalData: {
+    peRatio: number | null;
+    forwardPE: number | null;
+    pegRatio: number | null;
+    roe: number | null;
+    profitMargin: number | null;
+    debtToEquity: number | null;
+    revenueGrowth: number | null;
+    epsGrowth: number | null;
+    currentRatio: number | null;
+  };
+
+  // Analyst data
+  analystData: {
+    targetPrice: number | null;
+    currentPrice: number | null;
+    upside: number | null;
+    strongBuy: number;
+    buy: number;
+    hold: number;
+    sell: number;
+    strongSell: number;
+    totalAnalysts: number;
+    consensusScore: number | null; // 1-5 scale
+  };
+
+  // Score components with points
+  scoreBreakdown: {
+    fundamental: { points: number; maxPoints: number; percent: number };
+    technical: { points: number; maxPoints: number; percent: number };
+    analyst: { points: number; maxPoints: number; percent: number };
+    news: { points: number; maxPoints: number; percent: number };
+    insider: { points: number; maxPoints: number; percent: number };
+    portfolio: { points: number; maxPoints: number; percent: number } | null;
+    composite: { points: number; maxPoints: number; percent: number };
+  };
+
+  // Signal evaluation results
+  signalEvaluation: SignalEvaluationResult[];
+
+  // Decision path - why we chose these signals
+  decisionPath: {
+    actionSignal: {
+      chosen: SignalType | null;
+      reason: string;
+    };
+    qualitySignal: {
+      chosen: SignalType | null;
+      reason: string;
+    };
+  };
+
+  // Thresholds used for reference
+  thresholds: typeof SIGNAL_THRESHOLDS;
+}
+
+/** Result of evaluating a single signal */
+export interface SignalEvaluationResult {
+  signal: SignalType;
+  category: SignalCategory;
+  passed: boolean;
+  conditions: SignalCondition[];
+}
+
+/** A single condition that was checked */
+export interface SignalCondition {
+  name: string;
+  actual: number | string | null;
+  required: string; // e.g., "≥ 50", "< 30", "true"
+  passed: boolean;
 }
 
 /** Input data for generating recommendations */
@@ -208,16 +348,27 @@ const SCORE_WEIGHTS_RESEARCH = {
 
 /** Signal priorities (lower = higher priority) */
 const SIGNAL_PRIORITIES: Record<SignalType, number> = {
+  // Action signals (priority 1-12)
   DIP_OPPORTUNITY: 1,
-  MOMENTUM: 2,
-  CONVICTION_HOLD: 3,
-  QUALITY_CORE: 4,
-  NEAR_TARGET: 5,
-  ACCUMULATE: 6,
-  STEADY_HOLD: 7,
-  WATCH_CLOSELY: 8,
-  CONSIDER_TRIM: 9,
-  NEUTRAL: 10,
+  BREAKOUT: 2,
+  REVERSAL: 3,
+  MOMENTUM: 4,
+  ACCUMULATE: 5,
+  GOOD_ENTRY: 6,
+  WAIT_FOR_DIP: 7,
+  NEAR_TARGET: 8,
+  TAKE_PROFIT: 9,
+  CONSIDER_TRIM: 10,
+  // Quality signals (priority 11-20)
+  CONVICTION: 11,
+  QUALITY_CORE: 12,
+  UNDERVALUED: 13,
+  STRONG_TREND: 14,
+  STEADY: 15,
+  WATCH: 16,
+  WEAK: 17,
+  OVERBOUGHT: 18,
+  NEUTRAL: 20,
 };
 
 /**
@@ -240,16 +391,16 @@ const SIGNAL_PRIORITIES: Record<SignalType, number> = {
  */
 const SIGNAL_THRESHOLDS = {
   // Technical thresholds
-  TECH_STRONG: 60, // Lowered from 70 for more MOMENTUM signals
-  TECH_MODERATE: 35, // For STEADY_HOLD
-  TECH_WEAK: 40,
+  TECH_STRONG: 60, // For MOMENTUM
+  TECH_MODERATE: 40, // For STEADY
+  TECH_WEAK: 30, // For WEAK quality
 
   // Fundamental thresholds
   FUND_QUALITY: 60, // For QUALITY_CORE
-  FUND_STRONG: 50,
-  FUND_MODERATE: 40, // For STEADY_HOLD
-  FUND_WATCH_HIGH: 35,
-  FUND_WATCH_LOW: 20,
+  FUND_STRONG: 50, // For UNDERVALUED check
+  FUND_MODERATE: 40, // For STEADY
+  FUND_WATCH: 35, // For WATCH quality
+  FUND_WEAK: 25, // For WEAK quality
 
   // Analyst thresholds
   ANALYST_QUALITY: 55, // For QUALITY_CORE
@@ -258,21 +409,32 @@ const SIGNAL_THRESHOLDS = {
   INSIDER_WEAK: 35,
 
   // News thresholds
-  NEWS_WATCH_HIGH: 50,
-  NEWS_WATCH_LOW: 25,
+  NEWS_WATCH: 40,
 
   // DIP thresholds
   DIP_TRIGGER: 50,
-  DIP_ACCUMULATE_MIN: 15, // Lowered from 20 for wider range
-  DIP_ACCUMULATE_MAX: 50, // Raised from 40 for wider range
+  DIP_ACCUMULATE_MIN: 20,
+  DIP_ACCUMULATE_MAX: 50,
 
   // Position thresholds
   WEIGHT_OVERWEIGHT: 8,
   WEIGHT_MAX: 15,
 
   // Target thresholds
-  TARGET_NEAR: 8,
+  TARGET_NEAR: 10, // Within 10% of target
+  TARGET_UPSIDE_HIGH: 30, // For UNDERVALUED (>30% upside)
   TARGET_LOW_UPSIDE: 5,
+
+  // Gain thresholds
+  GAIN_TAKE_PROFIT: 50, // Consider taking profit at 50%+ gain
+
+  // RSI thresholds
+  RSI_OVERBOUGHT: 70,
+  RSI_OVERSOLD: 30,
+
+  // ADX thresholds
+  ADX_STRONG: 25, // Strong trend
+  ADX_WEAK: 20, // Weak/no trend
 };
 
 // ============================================================================
@@ -676,9 +838,16 @@ function calculateTechnicalScore(
       details.push('MACD neutrální');
     }
 
-    // TODO: Add divergence adjustment when macdDivergence is available
-    // if (tech.macdDivergence === 'bullish') macdScore = Math.min(35, macdScore + 7);
-    // if (tech.macdDivergence === 'bearish') macdScore = Math.max(0, macdScore - 7);
+    // MACD Divergence adjustment (±7 points)
+    if (tech.macdDivergence === 'bullish') {
+      macdScore = Math.min(35, macdScore + 7);
+      details.push('MACD bullish divergence detekována');
+      bullishSignals++;
+    } else if (tech.macdDivergence === 'bearish') {
+      macdScore = Math.max(0, macdScore - 7);
+      details.push('MACD bearish divergence detekována');
+      bearishSignals++;
+    }
 
     score += Math.min(35, macdScore);
   }
@@ -1640,8 +1809,11 @@ function calculateDipScore(
       details.push('MACD histogram se zlepšuje');
     }
 
-    // TODO: When macdDivergence field is available from edge function:
-    // if (tech.macdDivergence === 'bullish') { score += 10; }
+    // MACD Divergence - direct detection from edge function
+    if (tech.macdDivergence === 'bullish') {
+      score += 10;
+      details.push('MACD bullish divergence - potenciální obrat');
+    }
   }
 
   // === Volume Confirmation (0-10 points) ===
@@ -2266,13 +2438,15 @@ function calculateConvictionScore(
 /**
  * Generate signals based on all scores
  *
- * v3.1: Uses SIGNAL_THRESHOLDS constants for consistent % scale
+ * v3.2: Two categories only - ACTION (what to do) and QUALITY (stock assessment)
+ * Each stock gets max 1 action signal and max 1 quality signal
+ * v3.3: Added isResearch for Research-specific signals (GOOD_ENTRY, WAIT_FOR_DIP)
  */
 function generateSignals(
   _compositeScore: number,
   fundamentalScore: number,
   technicalScore: number,
-  _analystScore: number,
+  analystScore: number,
   newsScore: number,
   insiderScore: number,
   _portfolioScore: number,
@@ -2281,169 +2455,1040 @@ function generateSignals(
   convictionScore: number,
   convictionLevel: 'HIGH' | 'MEDIUM' | 'LOW',
   targetUpside: number | null,
-  _distanceFromAvg: number,
+  gainPercentage: number,
   weight: number,
-  tech: TechnicalData | undefined
+  tech: TechnicalData | undefined,
+  isResearch: boolean = false
 ): StockSignal[] {
   const signals: StockSignal[] = [];
 
   const rsiValue = tech?.rsi14 ?? null;
+  const adxValue = tech?.adx ?? null;
+  const adxTrend = tech?.adxTrend ?? null;
+  const stochK = tech?.stochasticK ?? null;
+  const macdDivergence = tech?.macdDivergence ?? null;
+  const bollingerSignal = tech?.bollingerSignal ?? null;
+  const volumeSignal = tech?.volumeSignal ?? null;
 
-  // === DIP OPPORTUNITY ===
-  // Trigger when DIP score exceeds threshold and quality checks pass
+  // =========================================================================
+  // ACTION SIGNALS (what to do) - pick the best one
+  // =========================================================================
+  let actionSignal: StockSignal | null = null;
+
+  // === DIP OPPORTUNITY === (highest priority action)
   if (dipScore >= SIGNAL_THRESHOLDS.DIP_TRIGGER && dipQualityPasses) {
-    signals.push({
+    actionSignal = {
       type: 'DIP_OPPORTUNITY',
+      category: 'action',
       strength: dipScore,
-      title: 'DIP Opportunity',
-      description: `Přeprodané podmínky (DIP skóre: ${dipScore}). Fundamenty v pořádku.`,
+      title: 'DIP příležitost',
+      description: `Přeprodáno (skóre ${dipScore}). Fundamenty OK.`,
       priority: SIGNAL_PRIORITIES.DIP_OPPORTUNITY,
-    });
+    };
   }
 
-  // === MOMENTUM ===
-  // Strong technical score with confirmed trend (lowered threshold from 70 to 60)
+  // === BREAKOUT === (price breaking upper Bollinger with high volume)
   if (
+    !actionSignal &&
+    bollingerSignal === 'overbought' &&
+    volumeSignal === 'high' &&
+    technicalScore >= SIGNAL_THRESHOLDS.TECH_STRONG
+  ) {
+    actionSignal = {
+      type: 'BREAKOUT',
+      category: 'action',
+      strength: technicalScore,
+      title: 'Průraz',
+      description: 'Cena proráží s vysokým objemem. Potenciální breakout.',
+      priority: SIGNAL_PRIORITIES.BREAKOUT,
+    };
+  }
+
+  // === REVERSAL === (MACD bullish divergence + oversold)
+  if (
+    !actionSignal &&
+    macdDivergence === 'bullish' &&
+    rsiValue !== null &&
+    rsiValue < 40
+  ) {
+    actionSignal = {
+      type: 'REVERSAL',
+      category: 'action',
+      strength: 65,
+      title: 'Obrat',
+      description: 'MACD divergence naznačuje potenciální obrat trendu.',
+      priority: SIGNAL_PRIORITIES.REVERSAL,
+    };
+  }
+
+  // === MOMENTUM === (strong technicals, healthy RSI)
+  if (
+    !actionSignal &&
     technicalScore >= SIGNAL_THRESHOLDS.TECH_STRONG &&
     rsiValue !== null &&
     rsiValue > 45 &&
-    rsiValue < 75
+    rsiValue < SIGNAL_THRESHOLDS.RSI_OVERBOUGHT
   ) {
-    signals.push({
+    actionSignal = {
       type: 'MOMENTUM',
+      category: 'action',
       strength: technicalScore,
       title: 'Momentum',
-      description: 'Technické indikátory jsou býčí s potvrzeným trendem.',
+      description: 'Technické indikátory ukazují býčí trend.',
       priority: SIGNAL_PRIORITIES.MOMENTUM,
-    });
+    };
   }
 
-  // === CONVICTION HOLD ===
-  // High conviction quality stocks
-  if (convictionLevel === 'HIGH') {
-    signals.push({
-      type: 'CONVICTION_HOLD',
-      strength: convictionScore,
-      title: 'Držet s přesvědčením',
-      description: 'Silné dlouhodobé fundamenty. Držet přes krátkodobý šum.',
-      priority: SIGNAL_PRIORITIES.CONVICTION_HOLD,
-    });
-  }
-
-  // === QUALITY CORE === (NEW)
-  // High fundamentals + positive analyst sentiment = core holding material
+  // === ACCUMULATE === (quality stock, moderate dip)
   if (
-    fundamentalScore >= SIGNAL_THRESHOLDS.FUND_QUALITY &&
-    _analystScore >= SIGNAL_THRESHOLDS.ANALYST_QUALITY &&
-    convictionLevel !== 'LOW'
-  ) {
-    signals.push({
-      type: 'QUALITY_CORE',
-      strength: Math.round((fundamentalScore + _analystScore) / 2),
-      title: 'Kvalitní core',
-      description: 'Silné fundamenty a pozitivní sentiment analytiků.',
-      priority: SIGNAL_PRIORITIES.QUALITY_CORE,
-    });
-  }
-
-  // === NEAR TARGET ===
-  // Within threshold of target price
-  if (
-    targetUpside !== null &&
-    Math.abs(targetUpside) <= SIGNAL_THRESHOLDS.TARGET_NEAR
-  ) {
-    signals.push({
-      type: 'NEAR_TARGET',
-      strength: 100 - Math.abs(targetUpside) * 5,
-      title: 'Blízko cílové ceny',
-      description: `${Math.abs(targetUpside).toFixed(1)}% od cílové ceny.`,
-      priority: SIGNAL_PRIORITIES.NEAR_TARGET,
-    });
-  }
-
-  // === ACCUMULATE ===
-  // Good quality, not quite at DIP but worth gradual accumulation (wider range)
-  if (
+    !actionSignal &&
     convictionLevel !== 'LOW' &&
     dipScore >= SIGNAL_THRESHOLDS.DIP_ACCUMULATE_MIN &&
     dipScore < SIGNAL_THRESHOLDS.DIP_ACCUMULATE_MAX &&
-    fundamentalScore >= SIGNAL_THRESHOLDS.FUND_STRONG
+    fundamentalScore >= SIGNAL_THRESHOLDS.FUND_MODERATE
   ) {
-    signals.push({
+    actionSignal = {
       type: 'ACCUMULATE',
-      strength: 60,
+      category: 'action',
+      strength: 55,
       title: 'Akumulovat',
-      description: 'Kvalitní akcie. Čekejte na lepší vstup nebo DCA pomalu.',
+      description: 'Kvalitní akcie. Vhodné pro postupný nákup (DCA).',
       priority: SIGNAL_PRIORITIES.ACCUMULATE,
-    });
+    };
   }
 
-  // === STEADY HOLD === (NEW)
-  // Solid stock with decent fundamentals and technicals - no action needed
+  // === GOOD ENTRY === (Research: quality stock below analyst target)
   if (
+    !actionSignal &&
+    isResearch &&
+    targetUpside !== null &&
+    targetUpside >= 15 && // At least 15% upside
+    fundamentalScore >= SIGNAL_THRESHOLDS.FUND_MODERATE &&
+    convictionLevel !== 'LOW'
+  ) {
+    actionSignal = {
+      type: 'GOOD_ENTRY',
+      category: 'action',
+      strength: Math.min(80, 50 + targetUpside / 3),
+      title: 'Dobrý vstup',
+      description: `Kvalitní akcie s +${targetUpside.toFixed(0)}% potenciálem.`,
+      priority: SIGNAL_PRIORITIES.GOOD_ENTRY,
+    };
+  }
+
+  // === WAIT FOR DIP === (Research: quality stock but price too high)
+  if (
+    !actionSignal &&
+    isResearch &&
+    convictionLevel !== 'LOW' &&
+    fundamentalScore >= SIGNAL_THRESHOLDS.FUND_MODERATE &&
+    (targetUpside === null || targetUpside < 10) && // Near or above target
+    rsiValue !== null &&
+    rsiValue > 55 // Not oversold
+  ) {
+    actionSignal = {
+      type: 'WAIT_FOR_DIP',
+      category: 'action',
+      strength: 50,
+      title: 'Počkat na pokles',
+      description:
+        'Kvalitní akcie, ale cena příliš vysoká. Vyčkejte na pokles.',
+      priority: SIGNAL_PRIORITIES.WAIT_FOR_DIP,
+    };
+  }
+
+  // === NEAR TARGET === (approaching target price)
+  if (
+    !actionSignal &&
+    targetUpside !== null &&
+    targetUpside <= SIGNAL_THRESHOLDS.TARGET_NEAR &&
+    targetUpside > 0
+  ) {
+    actionSignal = {
+      type: 'NEAR_TARGET',
+      category: 'action',
+      strength: Math.round(100 - targetUpside * 5),
+      title: 'Blízko cíle',
+      description: `${targetUpside.toFixed(
+        1
+      )}% do cílové ceny. Zvažte strategii.`,
+      priority: SIGNAL_PRIORITIES.NEAR_TARGET,
+    };
+  }
+
+  // === TAKE PROFIT === (large unrealized gains)
+  if (
+    !actionSignal &&
+    gainPercentage >= SIGNAL_THRESHOLDS.GAIN_TAKE_PROFIT &&
+    convictionLevel !== 'HIGH'
+  ) {
+    actionSignal = {
+      type: 'TAKE_PROFIT',
+      category: 'action',
+      strength: Math.min(90, 50 + gainPercentage / 2),
+      title: 'Realizovat zisk',
+      description: `+${gainPercentage.toFixed(
+        0
+      )}% zisk. Zvažte částečnou realizaci.`,
+      priority: SIGNAL_PRIORITIES.TAKE_PROFIT,
+    };
+  }
+
+  // === CONSIDER TRIM === (overbought + overweight)
+  if (
+    !actionSignal &&
+    rsiValue !== null &&
+    rsiValue > SIGNAL_THRESHOLDS.RSI_OVERBOUGHT &&
+    weight > SIGNAL_THRESHOLDS.WEIGHT_OVERWEIGHT
+  ) {
+    actionSignal = {
+      type: 'CONSIDER_TRIM',
+      category: 'action',
+      strength: 65,
+      title: 'Redukovat',
+      description: 'Překoupeno s vysokou vahou. Zvažte redukci pozice.',
+      priority: SIGNAL_PRIORITIES.CONSIDER_TRIM,
+    };
+  }
+
+  // =========================================================================
+  // QUALITY SIGNALS (stock assessment) - pick the best one
+  // =========================================================================
+  let qualitySignal: StockSignal | null = null;
+
+  // === CONVICTION === (top tier quality)
+  if (convictionLevel === 'HIGH') {
+    qualitySignal = {
+      type: 'CONVICTION',
+      category: 'quality',
+      strength: convictionScore,
+      title: 'Přesvědčení',
+      description: 'Vysoká kvalita. Dlouhodobě držet.',
+      priority: SIGNAL_PRIORITIES.CONVICTION,
+    };
+  }
+
+  // === QUALITY CORE === (strong fundamentals + analysts)
+  if (
+    !qualitySignal &&
+    fundamentalScore >= SIGNAL_THRESHOLDS.FUND_QUALITY &&
+    analystScore >= SIGNAL_THRESHOLDS.ANALYST_QUALITY
+  ) {
+    qualitySignal = {
+      type: 'QUALITY_CORE',
+      category: 'quality',
+      strength: Math.round((fundamentalScore + analystScore) / 2),
+      title: 'Kvalita',
+      description: 'Silné fundamenty a pozitivní analytici.',
+      priority: SIGNAL_PRIORITIES.QUALITY_CORE,
+    };
+  }
+
+  // === UNDERVALUED === (big upside potential + decent fundamentals)
+  if (
+    !qualitySignal &&
+    targetUpside !== null &&
+    targetUpside >= SIGNAL_THRESHOLDS.TARGET_UPSIDE_HIGH &&
+    fundamentalScore >= SIGNAL_THRESHOLDS.FUND_MODERATE
+  ) {
+    qualitySignal = {
+      type: 'UNDERVALUED',
+      category: 'quality',
+      strength: Math.min(85, 50 + targetUpside / 2),
+      title: 'Podhodnocená',
+      description: `+${targetUpside.toFixed(0)}% potenciál dle analytiků.`,
+      priority: SIGNAL_PRIORITIES.UNDERVALUED,
+    };
+  }
+
+  // === STRONG TREND === (ADX strong + bullish)
+  if (
+    !qualitySignal &&
+    adxValue !== null &&
+    adxValue >= SIGNAL_THRESHOLDS.ADX_STRONG &&
+    adxTrend === 'bullish'
+  ) {
+    qualitySignal = {
+      type: 'STRONG_TREND',
+      category: 'quality',
+      strength: Math.min(80, 50 + adxValue),
+      title: 'Silný trend',
+      description: 'ADX ukazuje silný býčí trend.',
+      priority: SIGNAL_PRIORITIES.STRONG_TREND,
+    };
+  }
+
+  // === STEADY === (solid fundamentals and technicals)
+  if (
+    !qualitySignal &&
     fundamentalScore >= SIGNAL_THRESHOLDS.FUND_MODERATE &&
     technicalScore >= SIGNAL_THRESHOLDS.TECH_MODERATE &&
     convictionLevel !== 'LOW'
   ) {
-    signals.push({
-      type: 'STEADY_HOLD',
+    qualitySignal = {
+      type: 'STEADY',
+      category: 'quality',
       strength: Math.round((fundamentalScore + technicalScore) / 2),
-      title: 'Stabilně držet',
-      description: 'Solidní akcie bez nutnosti akce. Pokračujte v držení.',
-      priority: SIGNAL_PRIORITIES.STEADY_HOLD,
-    });
+      title: 'Stabilní',
+      description: 'Solidní akcie. Pokračujte v držení.',
+      priority: SIGNAL_PRIORITIES.STEADY,
+    };
   }
 
-  // === WATCH CLOSELY ===
-  // Deteriorating metrics but not critical
+  // === OVERBOUGHT === (RSI + Stochastic overbought)
   if (
-    (fundamentalScore < SIGNAL_THRESHOLDS.FUND_WATCH_HIGH &&
-      fundamentalScore > SIGNAL_THRESHOLDS.FUND_WATCH_LOW) ||
-    insiderScore < SIGNAL_THRESHOLDS.INSIDER_WEAK ||
-    (newsScore < SIGNAL_THRESHOLDS.NEWS_WATCH_HIGH &&
-      newsScore > SIGNAL_THRESHOLDS.NEWS_WATCH_LOW)
+    !qualitySignal &&
+    rsiValue !== null &&
+    rsiValue > SIGNAL_THRESHOLDS.RSI_OVERBOUGHT &&
+    stochK !== null &&
+    stochK > 80
   ) {
-    signals.push({
-      type: 'WATCH_CLOSELY',
-      strength: 50,
-      title: 'Sledujte pozorně',
-      description: 'Některé metriky se zhoršují. Monitorujte vývoj.',
-      priority: SIGNAL_PRIORITIES.WATCH_CLOSELY,
-    });
+    qualitySignal = {
+      type: 'OVERBOUGHT',
+      category: 'quality',
+      strength: 60,
+      title: 'Překoupeno',
+      description: 'RSI a Stochastic ukazují překoupenost.',
+      priority: SIGNAL_PRIORITIES.OVERBOUGHT,
+    };
   }
 
-  // === CONSIDER TRIM ===
-  // Overbought, overweight, near target
+  // === WATCH === (deteriorating metrics)
   if (
-    technicalScore < SIGNAL_THRESHOLDS.TECH_WEAK &&
-    (rsiValue ?? 50) > 70 &&
-    weight > SIGNAL_THRESHOLDS.WEIGHT_OVERWEIGHT &&
-    targetUpside !== null &&
-    targetUpside < SIGNAL_THRESHOLDS.TARGET_LOW_UPSIDE
+    !qualitySignal &&
+    (fundamentalScore < SIGNAL_THRESHOLDS.FUND_WATCH ||
+      insiderScore < SIGNAL_THRESHOLDS.INSIDER_WEAK ||
+      newsScore < SIGNAL_THRESHOLDS.NEWS_WATCH)
   ) {
-    signals.push({
-      type: 'CONSIDER_TRIM',
-      strength: 70,
-      title: 'Zvažte redukci',
-      description:
-        'Překoupeno, vysoká váha, blízko cíle. Zvažte realizaci části.',
-      priority: SIGNAL_PRIORITIES.CONSIDER_TRIM,
-    });
+    qualitySignal = {
+      type: 'WATCH',
+      category: 'quality',
+      strength: 45,
+      title: 'Sledovat',
+      description: 'Některé metriky se zhoršují.',
+      priority: SIGNAL_PRIORITIES.WATCH,
+    };
   }
 
-  // If no signals, add neutral
-  if (signals.length === 0) {
-    signals.push({
+  // === WEAK === (poor fundamentals or technicals)
+  if (
+    !qualitySignal &&
+    (fundamentalScore < SIGNAL_THRESHOLDS.FUND_WEAK ||
+      technicalScore < SIGNAL_THRESHOLDS.TECH_WEAK)
+  ) {
+    qualitySignal = {
+      type: 'WEAK',
+      category: 'quality',
+      strength: 30,
+      title: 'Slabá',
+      description: 'Slabé fundamenty nebo technický obraz.',
+      priority: SIGNAL_PRIORITIES.WEAK,
+    };
+  }
+
+  // === NEUTRAL === (fallback)
+  if (!qualitySignal) {
+    qualitySignal = {
       type: 'NEUTRAL',
+      category: 'quality',
       strength: 50,
-      title: 'Žádný silný signál',
-      description: 'Momentálně žádné akční signály.',
+      title: 'Neutrální',
+      description: 'Žádné výrazné signály.',
       priority: SIGNAL_PRIORITIES.NEUTRAL,
-    });
+    };
   }
+
+  // =========================================================================
+  // Combine signals
+  // =========================================================================
+  if (actionSignal) {
+    signals.push(actionSignal);
+  }
+  signals.push(qualitySignal);
 
   // Sort by priority
   return signals.sort((a, b) => a.priority - b.priority);
+}
+
+// ============================================================================
+// EXPLANATION GENERATION
+// ============================================================================
+
+/**
+ * Generate detailed explanation of signal evaluation
+ */
+function generateExplanation(
+  item: EnrichedAnalystData,
+  tech: TechnicalData | undefined,
+  fundamentalComponent: ScoreComponent,
+  technicalComponent: ScoreComponent,
+  analystComponent: ScoreComponent,
+  newsComponent: ScoreComponent,
+  insiderComponent: ScoreComponent,
+  portfolioComponent: ScoreComponent | null,
+  compositeScore: number,
+  dipScore: number,
+  dipQualityPasses: boolean,
+  convictionScore: number,
+  convictionLevel: 'HIGH' | 'MEDIUM' | 'LOW',
+  targetUpside: number | null,
+  gainPercentage: number,
+  weight: number,
+  actionSignal: SignalType | null,
+  qualitySignal: SignalType
+): SignalExplanation {
+  const rsiValue = tech?.rsi14 ?? null;
+  const adxValue = tech?.adx ?? null;
+  const adxTrend = tech?.adxTrend ?? null;
+  const stochK = tech?.stochasticK ?? null;
+  const stochD = tech?.stochasticD ?? null;
+  const macdDivergence = tech?.macdDivergence ?? null;
+  const bollingerSignal = tech?.bollingerSignal ?? null;
+  const volumeSignal = tech?.volumeSignal ?? null;
+
+  // Build signal evaluation results
+  const signalEvaluation: SignalEvaluationResult[] = [];
+
+  // === ACTION SIGNALS ===
+
+  // DIP_OPPORTUNITY
+  signalEvaluation.push({
+    signal: 'DIP_OPPORTUNITY',
+    category: 'action',
+    passed: dipScore >= SIGNAL_THRESHOLDS.DIP_TRIGGER && dipQualityPasses,
+    conditions: [
+      {
+        name: 'dipScore',
+        actual: Math.round(dipScore),
+        required: `≥ ${SIGNAL_THRESHOLDS.DIP_TRIGGER}`,
+        passed: dipScore >= SIGNAL_THRESHOLDS.DIP_TRIGGER,
+      },
+      {
+        name: 'dipQualityPasses',
+        actual: dipQualityPasses ? 'ano' : 'ne',
+        required: 'ano',
+        passed: dipQualityPasses,
+      },
+    ],
+  });
+
+  // BREAKOUT
+  signalEvaluation.push({
+    signal: 'BREAKOUT',
+    category: 'action',
+    passed:
+      bollingerSignal === 'overbought' &&
+      volumeSignal === 'high' &&
+      technicalComponent.percent >= SIGNAL_THRESHOLDS.TECH_STRONG,
+    conditions: [
+      {
+        name: 'bollingerSignal',
+        actual: bollingerSignal ?? 'N/A',
+        required: 'overbought',
+        passed: bollingerSignal === 'overbought',
+      },
+      {
+        name: 'volumeSignal',
+        actual: volumeSignal ?? 'N/A',
+        required: 'high',
+        passed: volumeSignal === 'high',
+      },
+      {
+        name: 'technicalScore',
+        actual: Math.round(technicalComponent.percent),
+        required: `≥ ${SIGNAL_THRESHOLDS.TECH_STRONG}`,
+        passed: technicalComponent.percent >= SIGNAL_THRESHOLDS.TECH_STRONG,
+      },
+    ],
+  });
+
+  // REVERSAL
+  signalEvaluation.push({
+    signal: 'REVERSAL',
+    category: 'action',
+    passed: macdDivergence === 'bullish' && rsiValue !== null && rsiValue < 40,
+    conditions: [
+      {
+        name: 'macdDivergence',
+        actual: macdDivergence ?? 'N/A',
+        required: 'bullish',
+        passed: macdDivergence === 'bullish',
+      },
+      {
+        name: 'RSI',
+        actual: rsiValue !== null ? Math.round(rsiValue) : 'N/A',
+        required: '< 40',
+        passed: rsiValue !== null && rsiValue < 40,
+      },
+    ],
+  });
+
+  // MOMENTUM
+  signalEvaluation.push({
+    signal: 'MOMENTUM',
+    category: 'action',
+    passed:
+      technicalComponent.percent >= SIGNAL_THRESHOLDS.TECH_STRONG &&
+      rsiValue !== null &&
+      rsiValue > 45 &&
+      rsiValue < SIGNAL_THRESHOLDS.RSI_OVERBOUGHT,
+    conditions: [
+      {
+        name: 'technicalScore',
+        actual: Math.round(technicalComponent.percent),
+        required: `≥ ${SIGNAL_THRESHOLDS.TECH_STRONG}`,
+        passed: technicalComponent.percent >= SIGNAL_THRESHOLDS.TECH_STRONG,
+      },
+      {
+        name: 'RSI',
+        actual: rsiValue !== null ? Math.round(rsiValue) : 'N/A',
+        required: '45-70',
+        passed:
+          rsiValue !== null &&
+          rsiValue > 45 &&
+          rsiValue < SIGNAL_THRESHOLDS.RSI_OVERBOUGHT,
+      },
+    ],
+  });
+
+  // ACCUMULATE
+  signalEvaluation.push({
+    signal: 'ACCUMULATE',
+    category: 'action',
+    passed:
+      convictionLevel !== 'LOW' &&
+      dipScore >= SIGNAL_THRESHOLDS.DIP_ACCUMULATE_MIN &&
+      dipScore < SIGNAL_THRESHOLDS.DIP_ACCUMULATE_MAX &&
+      fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE,
+    conditions: [
+      {
+        name: 'convictionLevel',
+        actual: convictionLevel,
+        required: 'MEDIUM nebo HIGH',
+        passed: convictionLevel !== 'LOW',
+      },
+      {
+        name: 'dipScore',
+        actual: Math.round(dipScore),
+        required: `${SIGNAL_THRESHOLDS.DIP_ACCUMULATE_MIN}-${SIGNAL_THRESHOLDS.DIP_ACCUMULATE_MAX}`,
+        passed:
+          dipScore >= SIGNAL_THRESHOLDS.DIP_ACCUMULATE_MIN &&
+          dipScore < SIGNAL_THRESHOLDS.DIP_ACCUMULATE_MAX,
+      },
+      {
+        name: 'fundamentalScore',
+        actual: Math.round(fundamentalComponent.percent),
+        required: `≥ ${SIGNAL_THRESHOLDS.FUND_MODERATE}`,
+        passed: fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE,
+      },
+    ],
+  });
+
+  // GOOD_ENTRY (Research only)
+  signalEvaluation.push({
+    signal: 'GOOD_ENTRY',
+    category: 'action',
+    passed:
+      portfolioComponent === null && // isResearch
+      targetUpside !== null &&
+      targetUpside >= 15 &&
+      fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE &&
+      convictionLevel !== 'LOW',
+    conditions: [
+      {
+        name: 'isResearch',
+        actual: portfolioComponent === null ? 'ano' : 'ne',
+        required: 'ano',
+        passed: portfolioComponent === null,
+      },
+      {
+        name: 'targetUpside',
+        actual: targetUpside !== null ? `${Math.round(targetUpside)}%` : 'N/A',
+        required: '≥ 15%',
+        passed: targetUpside !== null && targetUpside >= 15,
+      },
+      {
+        name: 'fundamentalScore',
+        actual: Math.round(fundamentalComponent.percent),
+        required: `≥ ${SIGNAL_THRESHOLDS.FUND_MODERATE}`,
+        passed: fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE,
+      },
+      {
+        name: 'convictionLevel',
+        actual: convictionLevel,
+        required: 'MEDIUM nebo HIGH',
+        passed: convictionLevel !== 'LOW',
+      },
+    ],
+  });
+
+  // WAIT_FOR_DIP (Research only)
+  signalEvaluation.push({
+    signal: 'WAIT_FOR_DIP',
+    category: 'action',
+    passed:
+      portfolioComponent === null && // isResearch
+      convictionLevel !== 'LOW' &&
+      fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE &&
+      (targetUpside === null || targetUpside < 10) &&
+      rsiValue !== null &&
+      rsiValue > 55,
+    conditions: [
+      {
+        name: 'isResearch',
+        actual: portfolioComponent === null ? 'ano' : 'ne',
+        required: 'ano',
+        passed: portfolioComponent === null,
+      },
+      {
+        name: 'convictionLevel',
+        actual: convictionLevel,
+        required: 'MEDIUM nebo HIGH',
+        passed: convictionLevel !== 'LOW',
+      },
+      {
+        name: 'fundamentalScore',
+        actual: Math.round(fundamentalComponent.percent),
+        required: `≥ ${SIGNAL_THRESHOLDS.FUND_MODERATE}`,
+        passed: fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE,
+      },
+      {
+        name: 'targetUpside',
+        actual: targetUpside !== null ? `${Math.round(targetUpside)}%` : 'N/A',
+        required: '< 10% nebo N/A',
+        passed: targetUpside === null || targetUpside < 10,
+      },
+      {
+        name: 'RSI',
+        actual: rsiValue !== null ? Math.round(rsiValue) : 'N/A',
+        required: '> 55',
+        passed: rsiValue !== null && rsiValue > 55,
+      },
+    ],
+  });
+
+  // NEAR_TARGET
+  signalEvaluation.push({
+    signal: 'NEAR_TARGET',
+    category: 'action',
+    passed:
+      targetUpside !== null &&
+      targetUpside <= SIGNAL_THRESHOLDS.TARGET_NEAR &&
+      targetUpside > 0,
+    conditions: [
+      {
+        name: 'targetUpside',
+        actual: targetUpside !== null ? `${Math.round(targetUpside)}%` : 'N/A',
+        required: `≤ ${SIGNAL_THRESHOLDS.TARGET_NEAR}% a > 0`,
+        passed:
+          targetUpside !== null &&
+          targetUpside <= SIGNAL_THRESHOLDS.TARGET_NEAR &&
+          targetUpside > 0,
+      },
+    ],
+  });
+
+  // TAKE_PROFIT
+  signalEvaluation.push({
+    signal: 'TAKE_PROFIT',
+    category: 'action',
+    passed:
+      gainPercentage >= SIGNAL_THRESHOLDS.GAIN_TAKE_PROFIT &&
+      convictionLevel !== 'HIGH',
+    conditions: [
+      {
+        name: 'gainPercentage',
+        actual: `${Math.round(gainPercentage)}%`,
+        required: `≥ ${SIGNAL_THRESHOLDS.GAIN_TAKE_PROFIT}%`,
+        passed: gainPercentage >= SIGNAL_THRESHOLDS.GAIN_TAKE_PROFIT,
+      },
+      {
+        name: 'convictionLevel',
+        actual: convictionLevel,
+        required: '≠ HIGH',
+        passed: convictionLevel !== 'HIGH',
+      },
+    ],
+  });
+
+  // CONSIDER_TRIM
+  signalEvaluation.push({
+    signal: 'CONSIDER_TRIM',
+    category: 'action',
+    passed:
+      rsiValue !== null &&
+      rsiValue > SIGNAL_THRESHOLDS.RSI_OVERBOUGHT &&
+      weight > SIGNAL_THRESHOLDS.WEIGHT_OVERWEIGHT,
+    conditions: [
+      {
+        name: 'RSI',
+        actual: rsiValue !== null ? Math.round(rsiValue) : 'N/A',
+        required: `> ${SIGNAL_THRESHOLDS.RSI_OVERBOUGHT}`,
+        passed:
+          rsiValue !== null && rsiValue > SIGNAL_THRESHOLDS.RSI_OVERBOUGHT,
+      },
+      {
+        name: 'weight',
+        actual: `${weight.toFixed(1)}%`,
+        required: `> ${SIGNAL_THRESHOLDS.WEIGHT_OVERWEIGHT}%`,
+        passed: weight > SIGNAL_THRESHOLDS.WEIGHT_OVERWEIGHT,
+      },
+    ],
+  });
+
+  // === QUALITY SIGNALS ===
+
+  // CONVICTION
+  signalEvaluation.push({
+    signal: 'CONVICTION',
+    category: 'quality',
+    passed: convictionLevel === 'HIGH',
+    conditions: [
+      {
+        name: 'convictionLevel',
+        actual: convictionLevel,
+        required: 'HIGH',
+        passed: convictionLevel === 'HIGH',
+      },
+      {
+        name: 'convictionScore',
+        actual: Math.round(convictionScore),
+        required: '≥ 70',
+        passed: convictionScore >= 70,
+      },
+    ],
+  });
+
+  // QUALITY_CORE
+  signalEvaluation.push({
+    signal: 'QUALITY_CORE',
+    category: 'quality',
+    passed:
+      fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_QUALITY &&
+      analystComponent.percent >= SIGNAL_THRESHOLDS.ANALYST_QUALITY,
+    conditions: [
+      {
+        name: 'fundamentalScore',
+        actual: Math.round(fundamentalComponent.percent),
+        required: `≥ ${SIGNAL_THRESHOLDS.FUND_QUALITY}`,
+        passed: fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_QUALITY,
+      },
+      {
+        name: 'analystScore',
+        actual: Math.round(analystComponent.percent),
+        required: `≥ ${SIGNAL_THRESHOLDS.ANALYST_QUALITY}`,
+        passed: analystComponent.percent >= SIGNAL_THRESHOLDS.ANALYST_QUALITY,
+      },
+    ],
+  });
+
+  // UNDERVALUED
+  signalEvaluation.push({
+    signal: 'UNDERVALUED',
+    category: 'quality',
+    passed:
+      targetUpside !== null &&
+      targetUpside >= SIGNAL_THRESHOLDS.TARGET_UPSIDE_HIGH &&
+      fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE,
+    conditions: [
+      {
+        name: 'targetUpside',
+        actual: targetUpside !== null ? `${Math.round(targetUpside)}%` : 'N/A',
+        required: `≥ ${SIGNAL_THRESHOLDS.TARGET_UPSIDE_HIGH}%`,
+        passed:
+          targetUpside !== null &&
+          targetUpside >= SIGNAL_THRESHOLDS.TARGET_UPSIDE_HIGH,
+      },
+      {
+        name: 'fundamentalScore',
+        actual: Math.round(fundamentalComponent.percent),
+        required: `≥ ${SIGNAL_THRESHOLDS.FUND_MODERATE}`,
+        passed: fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE,
+      },
+    ],
+  });
+
+  // STRONG_TREND
+  signalEvaluation.push({
+    signal: 'STRONG_TREND',
+    category: 'quality',
+    passed:
+      adxValue !== null &&
+      adxValue >= SIGNAL_THRESHOLDS.ADX_STRONG &&
+      adxTrend === 'bullish',
+    conditions: [
+      {
+        name: 'ADX',
+        actual: adxValue !== null ? Math.round(adxValue) : 'N/A',
+        required: `≥ ${SIGNAL_THRESHOLDS.ADX_STRONG}`,
+        passed: adxValue !== null && adxValue >= SIGNAL_THRESHOLDS.ADX_STRONG,
+      },
+      {
+        name: 'adxTrend',
+        actual: adxTrend ?? 'N/A',
+        required: 'bullish',
+        passed: adxTrend === 'bullish',
+      },
+    ],
+  });
+
+  // STEADY
+  signalEvaluation.push({
+    signal: 'STEADY',
+    category: 'quality',
+    passed:
+      fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE &&
+      technicalComponent.percent >= SIGNAL_THRESHOLDS.TECH_MODERATE &&
+      convictionLevel !== 'LOW',
+    conditions: [
+      {
+        name: 'fundamentalScore',
+        actual: Math.round(fundamentalComponent.percent),
+        required: `≥ ${SIGNAL_THRESHOLDS.FUND_MODERATE}`,
+        passed: fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE,
+      },
+      {
+        name: 'technicalScore',
+        actual: Math.round(technicalComponent.percent),
+        required: `≥ ${SIGNAL_THRESHOLDS.TECH_MODERATE}`,
+        passed: technicalComponent.percent >= SIGNAL_THRESHOLDS.TECH_MODERATE,
+      },
+      {
+        name: 'convictionLevel',
+        actual: convictionLevel,
+        required: '≠ LOW',
+        passed: convictionLevel !== 'LOW',
+      },
+    ],
+  });
+
+  // OVERBOUGHT
+  signalEvaluation.push({
+    signal: 'OVERBOUGHT',
+    category: 'quality',
+    passed:
+      rsiValue !== null &&
+      rsiValue > SIGNAL_THRESHOLDS.RSI_OVERBOUGHT &&
+      stochK !== null &&
+      stochK > 80,
+    conditions: [
+      {
+        name: 'RSI',
+        actual: rsiValue !== null ? Math.round(rsiValue) : 'N/A',
+        required: `> ${SIGNAL_THRESHOLDS.RSI_OVERBOUGHT}`,
+        passed:
+          rsiValue !== null && rsiValue > SIGNAL_THRESHOLDS.RSI_OVERBOUGHT,
+      },
+      {
+        name: 'StochK',
+        actual: stochK !== null ? Math.round(stochK) : 'N/A',
+        required: '> 80',
+        passed: stochK !== null && stochK > 80,
+      },
+    ],
+  });
+
+  // WATCH
+  signalEvaluation.push({
+    signal: 'WATCH',
+    category: 'quality',
+    passed:
+      fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_WATCH ||
+      insiderComponent.percent < SIGNAL_THRESHOLDS.INSIDER_WEAK ||
+      newsComponent.percent < SIGNAL_THRESHOLDS.NEWS_WATCH,
+    conditions: [
+      {
+        name: 'fundamentalScore',
+        actual: Math.round(fundamentalComponent.percent),
+        required: `< ${SIGNAL_THRESHOLDS.FUND_WATCH}`,
+        passed: fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_WATCH,
+      },
+      {
+        name: 'insiderScore',
+        actual: Math.round(insiderComponent.percent),
+        required: `< ${SIGNAL_THRESHOLDS.INSIDER_WEAK}`,
+        passed: insiderComponent.percent < SIGNAL_THRESHOLDS.INSIDER_WEAK,
+      },
+      {
+        name: 'newsScore',
+        actual: Math.round(newsComponent.percent),
+        required: `< ${SIGNAL_THRESHOLDS.NEWS_WATCH}`,
+        passed: newsComponent.percent < SIGNAL_THRESHOLDS.NEWS_WATCH,
+      },
+    ],
+  });
+
+  // WEAK
+  signalEvaluation.push({
+    signal: 'WEAK',
+    category: 'quality',
+    passed:
+      fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_WEAK ||
+      technicalComponent.percent < SIGNAL_THRESHOLDS.TECH_WEAK,
+    conditions: [
+      {
+        name: 'fundamentalScore',
+        actual: Math.round(fundamentalComponent.percent),
+        required: `< ${SIGNAL_THRESHOLDS.FUND_WEAK}`,
+        passed: fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_WEAK,
+      },
+      {
+        name: 'technicalScore',
+        actual: Math.round(technicalComponent.percent),
+        required: `< ${SIGNAL_THRESHOLDS.TECH_WEAK}`,
+        passed: technicalComponent.percent < SIGNAL_THRESHOLDS.TECH_WEAK,
+      },
+    ],
+  });
+
+  // NEUTRAL (always possible as fallback)
+  signalEvaluation.push({
+    signal: 'NEUTRAL',
+    category: 'quality',
+    passed: true, // fallback
+    conditions: [
+      {
+        name: 'fallback',
+        actual: 'ano',
+        required: 'fallback signál',
+        passed: true,
+      },
+    ],
+  });
+
+  // Build decision path explanation
+  const actionReason = actionSignal
+    ? `${actionSignal} splnil všechny podmínky s nejvyšší prioritou`
+    : 'Žádný action signál nesplnil podmínky';
+
+  const qualityReason =
+    qualitySignal === 'NEUTRAL'
+      ? 'Žádný quality signál nesplnil podmínky, použit fallback NEUTRAL'
+      : `${qualitySignal} splnil všechny podmínky s nejvyšší prioritou`;
+
+  // Get analyst recommendation data from item directly
+  const totalAnalysts =
+    (item.strongBuy ?? 0) +
+    (item.buy ?? 0) +
+    (item.hold ?? 0) +
+    (item.sell ?? 0) +
+    (item.strongSell ?? 0);
+
+  // Calculate consensus score (1-5 scale, 5 = strong buy)
+  let consensusScore: number | null = null;
+  if (totalAnalysts > 0) {
+    consensusScore =
+      ((item.strongBuy ?? 0) * 5 +
+        (item.buy ?? 0) * 4 +
+        (item.hold ?? 0) * 3 +
+        (item.sell ?? 0) * 2 +
+        (item.strongSell ?? 0) * 1) /
+      totalAnalysts;
+  }
+
+  const maxPoints = portfolioComponent ? 500 : 400;
+
+  return {
+    technicalIndicators: {
+      rsi14: rsiValue !== null ? Math.round(rsiValue * 10) / 10 : null,
+      macdHistogram:
+        tech?.macdHistogram !== null && tech?.macdHistogram !== undefined
+          ? Math.round(tech.macdHistogram * 100) / 100
+          : null,
+      macdSignalLine: tech?.macdSignal ?? null,
+      stochK: stochK !== null ? Math.round(stochK) : null,
+      stochD: stochD !== null ? Math.round(stochD) : null,
+      adx: adxValue !== null ? Math.round(adxValue) : null,
+      bollingerUpper: tech?.bollingerUpper ?? null,
+      bollingerLower: tech?.bollingerLower ?? null,
+      bollingerMiddle: tech?.bollingerMiddle ?? null,
+      sma20: null, // Not in TechnicalData
+      sma50: tech?.sma50 ?? null,
+      sma200: tech?.sma200 ?? null,
+      atr14: tech?.atr14 ?? null,
+    },
+
+    fundamentalData: {
+      peRatio: item.fundamentals?.peRatio ?? null,
+      forwardPE: item.fundamentals?.forwardPe ?? null,
+      pegRatio: item.fundamentals?.pegRatio ?? null,
+      roe: item.fundamentals?.roe ?? null,
+      profitMargin: item.fundamentals?.netMargin ?? null,
+      debtToEquity: item.fundamentals?.debtToEquity ?? null,
+      revenueGrowth: item.fundamentals?.revenueGrowth ?? null,
+      epsGrowth: item.fundamentals?.epsGrowth ?? null,
+      currentRatio: item.fundamentals?.currentRatio ?? null,
+    },
+
+    analystData: {
+      targetPrice: item.analystTargetPrice ?? item.targetPrice ?? null,
+      currentPrice: item.currentPrice ?? null,
+      upside: targetUpside !== null ? Math.round(targetUpside) : null,
+      strongBuy: item.strongBuy ?? 0,
+      buy: item.buy ?? 0,
+      hold: item.hold ?? 0,
+      sell: item.sell ?? 0,
+      strongSell: item.strongSell ?? 0,
+      totalAnalysts,
+      consensusScore:
+        consensusScore !== null ? Math.round(consensusScore * 10) / 10 : null,
+    },
+
+    scoreBreakdown: {
+      fundamental: {
+        points: fundamentalComponent.score,
+        maxPoints: fundamentalComponent.maxScore,
+        percent: Math.round(fundamentalComponent.percent),
+      },
+      technical: {
+        points: technicalComponent.score,
+        maxPoints: technicalComponent.maxScore,
+        percent: Math.round(technicalComponent.percent),
+      },
+      analyst: {
+        points: analystComponent.score,
+        maxPoints: analystComponent.maxScore,
+        percent: Math.round(analystComponent.percent),
+      },
+      news: {
+        points: newsComponent.score,
+        maxPoints: newsComponent.maxScore,
+        percent: Math.round(newsComponent.percent),
+      },
+      insider: {
+        points: insiderComponent.score,
+        maxPoints: insiderComponent.maxScore,
+        percent: Math.round(insiderComponent.percent),
+      },
+      portfolio: portfolioComponent
+        ? {
+            points: portfolioComponent.score,
+            maxPoints: portfolioComponent.maxScore,
+            percent: Math.round(portfolioComponent.percent),
+          }
+        : null,
+      composite: {
+        points: Math.round(compositeScore * (maxPoints / 100)),
+        maxPoints,
+        percent: Math.round(compositeScore),
+      },
+    },
+
+    signalEvaluation,
+
+    decisionPath: {
+      actionSignal: {
+        chosen: actionSignal,
+        reason: actionReason,
+      },
+      qualitySignal: {
+        chosen: qualitySignal,
+        reason: qualityReason,
+      },
+    },
+
+    thresholds: SIGNAL_THRESHOLDS,
+  };
 }
 
 // ============================================================================
@@ -2522,14 +3567,17 @@ export function generateRecommendation(
   );
 
   // Calculate target upside
+  // For Research view, use analystTargetPrice since there's no personal targetPrice
   let targetUpside: number | null = null;
+  const effectiveTargetPrice =
+    item.targetPrice ?? item.analystTargetPrice ?? null;
   if (
-    item.targetPrice !== null &&
+    effectiveTargetPrice !== null &&
     item.currentPrice !== null &&
     item.currentPrice > 0
   ) {
     targetUpside =
-      ((item.targetPrice - item.currentPrice) / item.currentPrice) * 100;
+      ((effectiveTargetPrice - item.currentPrice) / item.currentPrice) * 100;
   }
 
   // Calculate distance from average
@@ -2559,9 +3607,10 @@ export function generateRecommendation(
     conviction.score,
     conviction.level,
     targetUpside,
-    distanceFromAvg,
+    item.gainPercentage ?? 0,
     item.weight,
-    tech
+    tech,
+    isResearch
   );
 
   // Compile strengths and concerns
@@ -2593,13 +3642,13 @@ export function generateRecommendation(
     actionItems.push('Consider adding to position');
     if (distanceFromAvg < -10) actionItems.push('Good DCA opportunity');
   }
-  if (primarySignal.type === 'CONVICTION_HOLD') {
+  if (primarySignal.type === 'CONVICTION') {
     actionItems.push('Hold through short-term volatility');
   }
   if (primarySignal.type === 'CONSIDER_TRIM') {
     actionItems.push('Consider taking partial profits');
   }
-  if (primarySignal.type === 'WATCH_CLOSELY') {
+  if (primarySignal.type === 'WATCH') {
     actionItems.push('Monitor upcoming earnings');
     actionItems.push('Set price alerts');
   }
@@ -2623,6 +3672,34 @@ export function generateRecommendation(
     tech,
     conviction.level,
     technicalBias
+  );
+
+  // Get action and quality signals for explanation
+  const actionSignalType =
+    signals.find((s) => s.category === 'action')?.type ?? null;
+  const qualitySignalType =
+    signals.find((s) => s.category === 'quality')?.type ?? 'NEUTRAL';
+
+  // Generate explanation data
+  const explanation = generateExplanation(
+    item,
+    tech,
+    fundamentalComponent,
+    technicalComponent,
+    analystComponent,
+    newsComponent,
+    insiderComponent,
+    portfolioComponent,
+    compositeScore,
+    dipResult.score,
+    dipQuality.passes,
+    conviction.score,
+    conviction.level,
+    targetUpside,
+    item.gainPercentage ?? 0,
+    item.weight,
+    actionSignalType,
+    qualitySignalType
   );
 
   return {
@@ -2669,6 +3746,10 @@ export function generateRecommendation(
 
     signals,
     primarySignal,
+
+    // Category-based signals (2 categories: action + quality)
+    actionSignal: signals.find((s) => s.category === 'action') ?? null,
+    qualitySignal: signals.find((s) => s.category === 'quality') ?? null,
 
     strengths: strengths.slice(0, 4),
     concerns: concerns.slice(0, 4),
@@ -2717,6 +3798,8 @@ export function generateRecommendation(
           : (newsComponent.percent - 50) / 50,
       insiderMspr: getFilteredInsiderSentiment(item, insiderTimeRange).mspr,
     },
+
+    explanation,
   };
 }
 
@@ -2778,4 +3861,31 @@ export function createSignalLogEntry(rec: StockRecommendation): SignalLogEntry {
     convictionScore: rec.convictionScore,
     metadata: rec.metadata,
   };
+}
+
+// ============================================================================
+// SIGNAL CATEGORY HELPERS
+// ============================================================================
+
+/** Category labels for UI display */
+export const SIGNAL_CATEGORY_LABELS: Record<SignalCategory, string> = {
+  action: 'Akce',
+  quality: 'Kvalita',
+};
+
+/**
+ * Get the primary signals for display (one from each category)
+ * Returns [actionSignal, qualitySignal] - the two most important for tile display
+ */
+export function getDisplaySignals(
+  rec: StockRecommendation
+): [StockSignal | null, StockSignal | null] {
+  return [rec.actionSignal, rec.qualitySignal];
+}
+
+/**
+ * Check if stock has any actionable signal (not just quality/neutral)
+ */
+export function hasActionableSignal(rec: StockRecommendation): boolean {
+  return rec.actionSignal !== null;
 }
