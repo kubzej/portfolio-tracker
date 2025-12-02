@@ -3,6 +3,7 @@ import {
   fetchAnalystData,
   type FundamentalMetrics,
   type EarningsData,
+  type RateLimitInfo,
 } from '@/services/api/analysis';
 import {
   fetchTechnicalData,
@@ -65,6 +66,25 @@ import {
 import { ColumnPicker } from './ColumnPicker';
 import './Analysis.css';
 
+// Debug info for tracking data load status per stock
+interface StockDataStatus {
+  ticker: string;
+  hasAnalyst: boolean;
+  hasFundamentals: boolean;
+  hasTechnical: boolean;
+  hasNews: boolean;
+  isValid: boolean; // Has minimum required data for recommendation
+}
+
+// Overall data load status
+interface DataLoadStatus {
+  stocks: StockDataStatus[];
+  rateLimited?: { finnhub: boolean; yahoo: boolean };
+  totalStocks: number;
+  validStocks: number;
+  errors: string[];
+}
+
 interface AnalysisProps {
   portfolioId: string | null;
 }
@@ -119,6 +139,15 @@ export function Analysis({ portfolioId }: AnalysisProps) {
     []
   );
 
+  // Data load status for debug panel
+  const [dataLoadStatus, setDataLoadStatus] = useState<DataLoadStatus>({
+    stocks: [],
+    totalStocks: 0,
+    validStocks: 0,
+    errors: [],
+  });
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
+
   // Mobile tooltip state
   const [mobileTooltip, setMobileTooltip] = useState<{
     text: string;
@@ -162,16 +191,30 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
   // Regenerate recommendations when insider time range changes
   useEffect(() => {
-    if (analystData.length > 0) {
+    if (analystData.length > 0 && dataLoadStatus.stocks.length > 0) {
+      // Filter to only stocks with valid data
+      const validEnriched = analystData.filter((stock) => {
+        const status = dataLoadStatus.stocks.find(
+          (s) => s.ticker === stock.ticker
+        );
+        return status?.isValid ?? false;
+      });
+
       const recs = generateAllRecommendations(
-        analystData,
+        validEnriched,
         technicalData,
         newsArticles,
         insiderTimeRange
       );
       setRecommendations(recs);
     }
-  }, [insiderTimeRange, analystData, technicalData, newsArticles]);
+  }, [
+    insiderTimeRange,
+    analystData,
+    technicalData,
+    newsArticles,
+    dataLoadStatus.stocks,
+  ]);
 
   const loadIndicators = async () => {
     try {
@@ -198,7 +241,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
   const loadData = async () => {
     if (!portfolioId) {
-      setError('Please select a portfolio to view analysis');
+      setError('Vyberte portfolio pro zobrazení analýzy');
       setLoading(false);
       return;
     }
@@ -206,13 +249,22 @@ export function Analysis({ portfolioId }: AnalysisProps) {
     try {
       setLoading(true);
       setError(null);
+      setDataLoadStatus({
+        stocks: [],
+        totalStocks: 0,
+        validStocks: 0,
+        errors: [],
+      });
 
       // Fetch ALL data in parallel: analyst, holdings, technical, and news
       const [analysisResult, holdings, technicalResult, newsResult] =
         await Promise.all([
           fetchAnalystData(portfolioId),
           holdingsApi.getPortfolioSummary(portfolioId),
-          fetchTechnicalData(portfolioId).catch(() => ({ data: [] })),
+          fetchTechnicalData(portfolioId).catch(() => ({
+            data: [],
+            rateLimited: undefined,
+          })),
           fetchPortfolioNews(portfolioId).catch(() => ({ articles: [] })),
         ]);
 
@@ -221,6 +273,19 @@ export function Analysis({ portfolioId }: AnalysisProps) {
       const news = newsResult.articles || [];
       setTechnicalData(techData);
       setNewsArticles(news);
+
+      // Track rate limiting - combine from all sources
+      const rateLimited: RateLimitInfo | undefined =
+        analysisResult.rateLimited || technicalResult.rateLimited
+          ? {
+              finnhub: analysisResult.rateLimited?.finnhub ?? false,
+              yahoo:
+                analysisResult.rateLimited?.yahoo ??
+                technicalResult.rateLimited?.yahoo ??
+                false,
+              alpha: analysisResult.rateLimited?.alpha ?? false,
+            }
+          : undefined;
 
       // Calculate total portfolio value
       const totalValue = holdings.reduce(
@@ -261,12 +326,83 @@ export function Analysis({ portfolioId }: AnalysisProps) {
         })
         .filter((item): item is EnrichedAnalystData => item !== null);
 
+      // Build data load status for each stock
+      const stockStatuses: StockDataStatus[] = enriched.map((stock) => {
+        const techForStock = techData.find((t) => t.ticker === stock.ticker);
+
+        // Technical: need RSI or MACD with actual values
+        const hasTech = !!(
+          techForStock &&
+          (typeof techForStock.rsi14 === 'number' ||
+            typeof techForStock.macd === 'number')
+        );
+
+        const hasStockNews = news.some((n) => n.ticker === stock.ticker);
+
+        // Fundamentals: need at least 2 actual metric values
+        const f = stock.fundamentals;
+        const fundamentalValues = f
+          ? [
+              f.peRatio,
+              f.roe,
+              f.netMargin,
+              f.grossMargin,
+              f.revenueGrowth,
+              f.debtToEquity,
+              f.pbRatio,
+            ].filter((v) => typeof v === 'number')
+          : [];
+        const hasFundamentals = fundamentalValues.length >= 2;
+
+        // Analyst: need price AND (recommendation data OR consensus score)
+        const hasPrice =
+          typeof stock.currentPrice === 'number' && stock.currentPrice > 0;
+        const hasRecommendation = !!(
+          stock.recommendationKey ||
+          typeof stock.consensusScore === 'number' ||
+          typeof stock.numberOfAnalysts === 'number'
+        );
+        const hasAnalyst = hasPrice && hasRecommendation;
+
+        // Stock is valid for recommendation only if it has ALL required data:
+        // - Price (required for any calculation)
+        // - Analyst data (recommendations/consensus)
+        // - Fundamentals (at least 2 metrics)
+        // - Technical data (RSI or MACD)
+        const isValid = hasPrice && hasAnalyst && hasFundamentals && hasTech;
+
+        return {
+          ticker: stock.ticker,
+          hasAnalyst,
+          hasFundamentals,
+          hasTechnical: hasTech,
+          hasNews: hasStockNews,
+          isValid,
+        };
+      });
+
+      const validStocks = stockStatuses.filter((s) => s.isValid).length;
+
+      setDataLoadStatus({
+        stocks: stockStatuses,
+        rateLimited,
+        totalStocks: enriched.length,
+        validStocks,
+        errors: analysisResult.errors || [],
+      });
+
       setAnalystData(enriched);
 
-      // Generate recommendations immediately with all prefetched data
+      // Generate recommendations only for valid stocks
       if (enriched.length > 0) {
+        // Filter to only stocks with valid data
+        const validEnriched = enriched.filter((stock) => {
+          const status = stockStatuses.find((s) => s.ticker === stock.ticker);
+          return status?.isValid ?? false;
+        });
+
         const recs = generateAllRecommendations(
-          enriched,
+          validEnriched,
           techData,
           news,
           insiderTimeRange
@@ -275,7 +411,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
       }
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to load analysis data'
+        err instanceof Error ? err.message : 'Nepodařilo se načíst data analýzy'
       );
     } finally {
       setLoading(false);
@@ -505,8 +641,8 @@ export function Analysis({ portfolioId }: AnalysisProps) {
     return (
       <div className="analysis">
         <EmptyState
-          title="Select a portfolio"
-          description="Analysis is not available for 'All Portfolios' view. Please select a specific portfolio."
+          title="Vyberte portfolio"
+          description="Analýza není dostupná pro 'Všechna portfolia'. Vyberte konkrétní portfolio."
         />
       </div>
     );
@@ -515,7 +651,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
   if (loading) {
     return (
       <div className="analysis">
-        <LoadingSpinner text="Loading analyst data..." fullPage />
+        <LoadingSpinner text="Načítám data..." fullPage />
       </div>
     );
   }
@@ -528,29 +664,162 @@ export function Analysis({ portfolioId }: AnalysisProps) {
     );
   }
 
+  // Compute debug status colors
+  const allValid = dataLoadStatus.validStocks === dataLoadStatus.totalStocks;
+  const hasRateLimited = !!(
+    dataLoadStatus.rateLimited?.finnhub || dataLoadStatus.rateLimited?.yahoo
+  );
+  const debugBgColor = hasRateLimited
+    ? '#f8d7da' // red - rate limited
+    : allValid
+    ? '#d4edda' // green - all OK
+    : dataLoadStatus.validStocks > 0
+    ? '#fff3cd' // yellow - partial
+    : '#f5f5f5'; // neutral
+
   return (
     <div className="analysis">
-      {/* Debug */}
+      {/* Debug Panel Header */}
       <div
         style={{
           fontSize: '9px',
           fontFamily: 'monospace',
-          color: '#666',
-          padding: '2px 4px',
-          background: '#f5f5f5',
+          color: '#333',
+          padding: '4px 8px',
+          background: debugBgColor,
           display: 'flex',
           flexWrap: 'wrap',
-          gap: '8px',
+          gap: '12px',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          cursor: 'pointer',
         }}
+        onClick={() => setShowDebugPanel(!showDebugPanel)}
       >
-        <Text size="sm" color="muted">
-          stocks: {analystData.length} | tech: {technicalData.length} | news:{' '}
+        <span>
+          stocks: {dataLoadStatus.totalStocks} | valid:{' '}
+          {dataLoadStatus.validStocks} | tech: {technicalData.length} | news:{' '}
           {newsArticles.length} | recs: {recommendations.length}
-        </Text>
+          {hasRateLimited && (
+            <span
+              style={{ color: '#c00', fontWeight: 'bold', marginLeft: '8px' }}
+            >
+              RATE LIMITED: {dataLoadStatus.rateLimited?.finnhub && 'Finnhub '}
+              {dataLoadStatus.rateLimited?.yahoo && 'Yahoo'}
+            </span>
+          )}
+        </span>
+        <span style={{ color: '#666' }}>
+          {showDebugPanel ? '▼ hide' : '▶ show details'}
+        </span>
       </div>
 
+      {/* Expanded Debug Panel */}
+      {showDebugPanel && dataLoadStatus.stocks.length > 0 && (
+        <div
+          style={{
+            fontSize: '9px',
+            fontFamily: 'monospace',
+            padding: '8px',
+            background: '#fafafa',
+            border: '1px solid #ddd',
+            borderTop: 'none',
+            maxHeight: '200px',
+            overflowY: 'auto',
+          }}
+        >
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid #ccc' }}>
+                <th style={{ textAlign: 'left', padding: '2px 4px' }}>
+                  Ticker
+                </th>
+                <th style={{ textAlign: 'center', padding: '2px 4px' }}>
+                  Analyst
+                </th>
+                <th style={{ textAlign: 'center', padding: '2px 4px' }}>
+                  Fund.
+                </th>
+                <th style={{ textAlign: 'center', padding: '2px 4px' }}>
+                  Tech
+                </th>
+                <th style={{ textAlign: 'center', padding: '2px 4px' }}>
+                  News
+                </th>
+                <th style={{ textAlign: 'center', padding: '2px 4px' }}>
+                  Valid
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {dataLoadStatus.stocks.map((stock) => (
+                <tr
+                  key={stock.ticker}
+                  style={{
+                    background: stock.isValid ? 'transparent' : '#fee',
+                  }}
+                >
+                  <td style={{ padding: '2px 4px', fontWeight: 'bold' }}>
+                    {stock.ticker}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'center',
+                      color: stock.hasAnalyst ? '#28a745' : '#dc3545',
+                    }}
+                  >
+                    {stock.hasAnalyst ? '✓' : '✗'}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'center',
+                      color: stock.hasFundamentals ? '#28a745' : '#dc3545',
+                    }}
+                  >
+                    {stock.hasFundamentals ? '✓' : '✗'}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'center',
+                      color: stock.hasTechnical ? '#28a745' : '#ffc107',
+                    }}
+                  >
+                    {stock.hasTechnical ? '✓' : '○'}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'center',
+                      color: stock.hasNews ? '#28a745' : '#999',
+                    }}
+                  >
+                    {stock.hasNews ? '✓' : '○'}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'center',
+                      fontWeight: 'bold',
+                      color: stock.isValid ? '#28a745' : '#dc3545',
+                    }}
+                  >
+                    {stock.isValid ? '✓' : '✗'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {dataLoadStatus.errors.length > 0 && (
+            <div style={{ marginTop: '8px', color: '#c00' }}>
+              Errors: {dataLoadStatus.errors.join(', ')}
+            </div>
+          )}
+          <div style={{ marginTop: '8px', color: '#666' }}>
+            Legend: ✓ = OK, ✗ = missing (required), ○ = missing (optional)
+          </div>
+        </div>
+      )}
+
       <div className="analysis-header">
-        <SectionTitle>Analysis</SectionTitle>
+        <SectionTitle>Analýza portfolia</SectionTitle>
         <Button variant="outline" size="sm" onClick={loadData}>
           <svg
             width="14"
@@ -567,7 +836,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
             <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
             <path d="M16 21h5v-5" />
           </svg>
-          Refresh
+          Obnovit
         </Button>
       </div>
 
@@ -576,10 +845,10 @@ export function Analysis({ portfolioId }: AnalysisProps) {
         value={activeTab}
         onChange={(value) => setActiveTab(value as TabType)}
         options={[
-          { value: 'analysts', label: 'Analysts' },
-          { value: 'fundamentals', label: 'Fundamentals' },
-          { value: 'technicals', label: 'Technical' },
-          { value: 'recommendations', label: 'Recommendations' },
+          { value: 'analysts', label: 'Analytici' },
+          { value: 'fundamentals', label: 'Fundamenty' },
+          { value: 'technicals', label: 'Technika' },
+          { value: 'recommendations', label: 'Doporučení' },
         ]}
         className="analysis-tabs"
       />
@@ -588,9 +857,10 @@ export function Analysis({ portfolioId }: AnalysisProps) {
       {activeTab === 'analysts' && (
         <>
           <section className="analysis-section">
-            <SectionTitle>Analyst Recommendations</SectionTitle>
+            <SectionTitle>Doporučení analytiků</SectionTitle>
             <Description>
-              Analyst ratings and earnings surprises from Finnhub (FREE tier).
+              Hodnocení analytiků a překvapení ve výsledcích z Finnhub (FREE
+              tier).
             </Description>
 
             <div className="analysis-table-wrapper">
@@ -598,42 +868,42 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 <thead>
                   <tr>
                     <th onClick={() => handleSort('ticker')}>
-                      Stock <SortIconComponent column="ticker" />
+                      Akcie <SortIconComponent column="ticker" />
                     </th>
                     <th className="right" onClick={() => handleSort('weight')}>
-                      Weight <SortIconComponent column="weight" />
+                      Váha <SortIconComponent column="weight" />
                     </th>
                     <th
                       className="right"
                       onClick={() => handleSort('currentPrice')}
                     >
-                      Price <SortIconComponent column="currentPrice" />
+                      Cena <SortIconComponent column="currentPrice" />
                     </th>
                     <th
                       className="right"
                       onClick={() => handleSort('priceChangePercent')}
                     >
-                      Change <SortIconComponent column="priceChangePercent" />
+                      Změna <SortIconComponent column="priceChangePercent" />
                     </th>
-                    <th className="center">Rating</th>
+                    <th className="center">Hodnocení</th>
                     <th
                       className="center"
                       onClick={() => handleSort('consensusScore')}
                     >
-                      Score{' '}
+                      Skóre{' '}
                       <InfoTooltip text="**Consensus Score** | Vážené skóre doporučení analytiků na stupnici -2 až +2. | • -2 = Strong Sell (silný prodej) | • 0 = Hold (držet) | • +2 = Strong Buy (silný nákup) | Nad +0.5 je dobré, nad +1 výborné." />{' '}
                       <SortIconComponent column="consensusScore" />
                     </th>
-                    <th className="center">Breakdown</th>
+                    <th className="center">Rozložení</th>
                     <th
                       className="center"
                       onClick={() => handleSort('numberOfAnalysts')}
                     >
-                      Analysts <SortIconComponent column="numberOfAnalysts" />
+                      Analytici <SortIconComponent column="numberOfAnalysts" />
                     </th>
-                    <th className="center">Earnings (4Q)</th>
+                    <th className="center">Výsledky (4Q)</th>
                     <th className="center">
-                      Updated{' '}
+                      Aktualizováno{' '}
                       <InfoTooltip text="**Datum aktualizace** | Poslední aktualizace dat od Finnhub. | • Data starší než 3 měsíce berte s rezervou | • Ideálně aktualizováno v posledních 1-2 měsících" />
                     </th>
                   </tr>
@@ -804,13 +1074,13 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                   </div>
                   <div className="analyst-card-stats">
                     <div className="analyst-card-stat">
-                      <MetricLabel>Price</MetricLabel>
+                      <MetricLabel>Cena</MetricLabel>
                       <Text size="sm" weight="medium">
                         {formatNumber(item.currentPrice)}
                       </Text>
                     </div>
                     <div className="analyst-card-stat">
-                      <MetricLabel>Change</MetricLabel>
+                      <MetricLabel>Změna</MetricLabel>
                       <MetricValue
                         sentiment={
                           (item.priceChangePercent ?? 0) >= 0
@@ -822,13 +1092,13 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                       </MetricValue>
                     </div>
                     <div className="analyst-card-stat">
-                      <MetricLabel>Weight</MetricLabel>
+                      <MetricLabel>Váha</MetricLabel>
                       <Text size="sm" weight="medium">
                         {item.weight.toFixed(1)}%
                       </Text>
                     </div>
                     <div className="analyst-card-stat">
-                      <MetricLabel>Score</MetricLabel>
+                      <MetricLabel>Skóre</MetricLabel>
                       <MetricValue
                         sentiment={
                           item.consensusScore !== null
@@ -848,13 +1118,13 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                       </MetricValue>
                     </div>
                     <div className="analyst-card-stat">
-                      <MetricLabel>Analysts</MetricLabel>
+                      <MetricLabel>Analytici</MetricLabel>
                       <Text size="sm" weight="medium">
                         {item.numberOfAnalysts || '—'}
                       </Text>
                     </div>
                     <div className="analyst-card-stat">
-                      <MetricLabel>Earnings</MetricLabel>
+                      <MetricLabel>Výsledky</MetricLabel>
                       <Text size="sm" weight="medium">
                         {item.earnings && item.earnings.length > 0 ? (
                           <span className="earnings-surprises">
@@ -893,7 +1163,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     </div>
                     {item.numberOfAnalysts && (
                       <div className="analyst-card-breakdown">
-                        <MetricLabel>Breakdown:</MetricLabel>
+                        <MetricLabel>Rozložení:</MetricLabel>
                         <div className="recommendations-breakdown">
                           <RecItem variant="strong-buy" title="Strong Buy">
                             {item.strongBuy || 0}
@@ -921,10 +1191,10 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
           {/* Analyst Summary */}
           <section className="analysis-section">
-            <SectionTitle>Analyst Insights</SectionTitle>
+            <SectionTitle>Souhrn analytiků</SectionTitle>
             <div className="insights-grid">
               <MetricCard
-                label="Avg Consensus Score"
+                label="Prům. Consensus Score"
                 value={
                   analystData.filter((d) => d.consensusScore !== null).length >
                   0
@@ -959,7 +1229,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 }
               />
               <MetricCard
-                label="Stocks with Buy Rating"
+                label="Akcie s Buy hodnocením"
                 value={
                   analystData.filter(
                     (d) =>
@@ -972,7 +1242,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 sentiment="positive"
               />
               <MetricCard
-                label="Stocks with Sell Rating"
+                label="Akcie se Sell hodnocením"
                 value={
                   analystData.filter(
                     (d) =>
@@ -985,16 +1255,16 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 sentiment="negative"
               />
               <MetricCard
-                label="Total Analyst Coverage"
+                label="Celkové pokrytí analytiky"
                 value={analystData.reduce(
                   (sum, d) => sum + (d.numberOfAnalysts || 0),
                   0
                 )}
-                subtext="analysts"
+                subtext="analytiků"
                 size="lg"
               />
               <MetricCard
-                label="Beat Earnings (Last Q)"
+                label="Překonaly výsledky (poslední Q)"
                 value={
                   analystData.filter(
                     (d) =>
@@ -1024,10 +1294,10 @@ export function Analysis({ portfolioId }: AnalysisProps) {
           <section className="analysis-section">
             <div className="section-header-row">
               <div>
-                <SectionTitle>Fundamental Metrics</SectionTitle>
+                <SectionTitle>Fundamentální metriky</SectionTitle>
                 <Description>
-                  Customize columns to show the metrics you care about. Data
-                  from Finnhub (FREE tier).
+                  Přizpůsobte sloupce pro zobrazení metrik, které vás zajímají.
+                  Data z Finnhub (FREE tier).
                 </Description>
               </div>
               {currentView && <Badge variant="info">{currentView.name}</Badge>}
@@ -1053,10 +1323,10 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 <thead>
                   <tr>
                     <th onClick={() => handleSort('ticker')}>
-                      Stock <SortIconComponent column="ticker" />
+                      Akcie <SortIconComponent column="ticker" />
                     </th>
                     <th className="right" onClick={() => handleSort('weight')}>
-                      Weight <SortIconComponent column="weight" />
+                      Váha <SortIconComponent column="weight" />
                     </th>
                     {selectedColumns.map((key) => {
                       const indicator = getIndicatorByKey(key);
@@ -1270,7 +1540,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                             </MetricValue>
                           </div>
                           <div className="insider-stat">
-                            <MetricLabel>Net Shares</MetricLabel>
+                            <MetricLabel>Net akcie</MetricLabel>
                             <MetricValue
                               sentiment={
                                 (filteredSentiment.change ?? 0) >= 0
@@ -1287,8 +1557,8 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                         {chartData.length > 1 && (
                           <div className="insider-chart">
                             <div className="chart-labels">
-                              <MetricLabel>Older</MetricLabel>
-                              <MetricLabel>Recent</MetricLabel>
+                              <MetricLabel>Starší</MetricLabel>
+                              <MetricLabel>Novější</MetricLabel>
                             </div>
                             <div className="chart-bars">
                               {chartData.map((d, i) => {
@@ -1342,7 +1612,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                       </>
                     ) : (
                       <div className="insider-no-data">
-                        <Muted>No insider data</Muted>
+                        <Muted>Žádná insider data</Muted>
                       </div>
                     )}
                   </div>
@@ -1353,14 +1623,14 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
           {/* Fundamental Summary */}
           <section className="analysis-section">
-            <SectionTitle>Fundamental Insights</SectionTitle>
+            <SectionTitle>Fundamentální souhrn</SectionTitle>
             <Description>
-              Portfolio-weighted averages and key metrics across your holdings.
+              Vážené průměry portfolia a klíčové metriky vašich pozic.
             </Description>
 
             {/* Valuation Row */}
             <div className="insights-category">
-              <Text weight="medium">Valuation</Text>
+              <Text weight="medium">Valuace</Text>
               <div className="insights-grid">
                 <MetricCard
                   label="Avg P/E"
@@ -1399,7 +1669,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
             {/* Profitability Row */}
             <div className="insights-category">
-              <Text weight="medium">Profitability</Text>
+              <Text weight="medium">Ziskovost</Text>
               <div className="insights-grid">
                 <MetricCard
                   label="Avg ROE"
@@ -1434,7 +1704,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                   }
                 />
                 <MetricCard
-                  label="Dividend Payers"
+                  label="Dividendové akcie"
                   value={
                     analystData.filter(
                       (d) => (d.fundamentals?.dividendYield ?? 0) > 0
@@ -1450,7 +1720,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
             {/* Risk & Growth Row */}
             <div className="insights-category">
-              <Text weight="medium">Risk & Growth</Text>
+              <Text weight="medium">Riziko a růst</Text>
               <div className="insights-grid">
                 <MetricCard
                   label="Avg Beta"
@@ -1530,39 +1800,39 @@ export function Analysis({ portfolioId }: AnalysisProps) {
       {activeTab === 'technicals' && (
         <>
           <section className="analysis-section">
-            <SectionTitle>Price Analysis</SectionTitle>
-            <Description>Click row for chart detail</Description>
+            <SectionTitle>Cenová analýza</SectionTitle>
+            <Description>Klikněte na řádek pro detail grafu</Description>
 
             <div className="analysis-table-wrapper">
               <table className="analysis-table technicals-table">
                 <thead>
                   <tr>
                     <th onClick={() => handleSort('ticker')}>
-                      Stock <SortIconComponent column="ticker" />
+                      Akcie <SortIconComponent column="ticker" />
                     </th>
                     <th className="right" onClick={() => handleSort('weight')}>
-                      Weight <SortIconComponent column="weight" />
+                      Váha <SortIconComponent column="weight" />
                     </th>
                     <th
                       className="right"
                       onClick={() => handleSort('currentPrice')}
                     >
-                      Price <SortIconComponent column="currentPrice" />
+                      Cena <SortIconComponent column="currentPrice" />
                     </th>
                     <th
                       className="right"
                       onClick={() => handleSort('priceChangePercent')}
                     >
-                      Change <SortIconComponent column="priceChangePercent" />
+                      Změna <SortIconComponent column="priceChangePercent" />
                     </th>
-                    <th className="right">52W Low</th>
-                    <th className="right">52W High</th>
+                    <th className="right">52W Min</th>
+                    <th className="right">52W Max</th>
                     <th className="center">
-                      52W Range Position{' '}
+                      Pozice v 52W rozmezí{' '}
                       <InfoTooltip text="**52W Range Position** | Pozice ceny v rámci ročního rozpětí. | • 0% = roční minimum | • 100% = roční maximum | • Nad 80% = silné momentum nebo překoupená | • Pod 20% = slabé momentum nebo příležitost" />
                     </th>
                     <th className="left">
-                      Peers{' '}
+                      Konkurenti{' '}
                       <InfoTooltip text="**Peers** | Konkurenti ve stejném odvětví. | Můžete porovnat metriky s konkurenty a zjistit, zda je akcie lepší nebo horší." />
                     </th>
                   </tr>
@@ -1593,8 +1863,8 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                         }}
                         title={
                           hasTechnicalData
-                            ? 'Click to view technical chart'
-                            : 'Loading technical data...'
+                            ? 'Klikněte pro technický graf'
+                            : 'Načítám technická data...'
                         }
                       >
                         <td>
@@ -1745,7 +2015,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                             />
                           </div>
                           <div className="range-position-label">
-                            52W Position:{' '}
+                            Pozice v 52W:{' '}
                             <strong>{rangePosition.toFixed(0)}%</strong>
                           </div>
                         </div>
@@ -1754,7 +2024,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                       {/* Peers */}
                       {item.peers && item.peers.length > 0 && (
                         <div className="technicals-peers">
-                          <span className="peers-label">Peers:</span>
+                          <span className="peers-label">Konkurenti:</span>
                           <div className="peers-list">
                             {item.peers
                               .slice(0, 5)
@@ -1767,7 +2037,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
                       {hasTechnicalData && (
                         <div className="technicals-card-hint">
-                          <Muted>Tap for chart →</Muted>
+                          <Muted>Ťukněte pro graf →</Muted>
                         </div>
                       )}
                     </div>
@@ -1794,20 +2064,20 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
           {/* Technical Summary */}
           <section className="analysis-section">
-            <SectionTitle>Technical Insights</SectionTitle>
+            <SectionTitle>Technický souhrn</SectionTitle>
             <div className="insights-grid">
               <MetricCard
-                label="Near 52W High (>80%)"
+                label="Blízko 52W Max (>80%)"
                 value={countNear52WeekHigh()}
                 subValue={analystData.length}
               />
               <MetricCard
-                label="Near 52W Low (<20%)"
+                label="Blízko 52W Min (<20%)"
                 value={countNear52WeekLow()}
                 subValue={analystData.length}
               />
               <MetricCard
-                label="Positive Today"
+                label="Dnes v plusu"
                 value={
                   analystData.filter((d) => (d.priceChangePercent ?? 0) > 0)
                     .length
@@ -1816,7 +2086,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 sentiment="positive"
               />
               <MetricCard
-                label="Negative Today"
+                label="Dnes v mínusu"
                 value={
                   analystData.filter((d) => (d.priceChangePercent ?? 0) < 0)
                     .length
@@ -1839,7 +2109,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
       )}
 
       {analystData.length === 0 && (
-        <div className="no-data">No holdings in this portfolio.</div>
+        <div className="no-data">Žádné akcie v tomto portfoliu.</div>
       )}
 
       {/* Mobile Tooltip Modal */}

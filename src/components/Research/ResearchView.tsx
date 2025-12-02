@@ -25,10 +25,8 @@ export function ResearchView() {
     <div className="research-view">
       {/* Quick Research Input */}
       <div className="research-search-section">
-        <SectionTitle>Stock Research</SectionTitle>
-        <Description>
-          Enter any ticker symbol to get comprehensive analysis
-        </Description>
+        <SectionTitle>Vyhledávání akcií</SectionTitle>
+        <Description>Zadejte ticker pro komplexní analýzu akcie</Description>
         <form className="research-search-form" onSubmit={handleSubmit}>
           <Input
             type="text"
@@ -40,7 +38,7 @@ export function ResearchView() {
             maxLength={10}
           />
           <Button type="submit" variant="primary" disabled={!ticker.trim()}>
-            Analyze
+            Analyzovat
           </Button>
         </form>
       </div>

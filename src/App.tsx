@@ -200,7 +200,7 @@ function App() {
   if (loading || checkingPortfolios) {
     return (
       <div className="app-loading">
-        <LoadingSpinner size="lg" text="Loading..." />
+        <LoadingSpinner size="lg" text="Načítám..." />
       </div>
     );
   }
@@ -220,7 +220,7 @@ function App() {
   const portfolioColor = selectedPortfolio?.color ?? '#94a3b8';
   const headerTitle = selectedPortfolio
     ? selectedPortfolio.name
-    : 'All Portfolios';
+    : 'Všechna portfolia';
 
   return (
     <div className="app">
@@ -249,9 +249,9 @@ function App() {
               variant="success"
               onClick={handleRefreshPrices}
               disabled={refreshingPrices}
-              title="Refresh all stock prices"
+              title="Aktualizovat všechny ceny akcií"
             >
-              {refreshingPrices ? 'Refreshing...' : 'Refresh Prices'}
+              {refreshingPrices ? 'Aktualizuji...' : 'Aktualizovat ceny'}
             </Button>
             <PortfolioSelector
               selectedPortfolioId={selectedPortfolioId}
@@ -264,8 +264,8 @@ function App() {
                 currentView === 'dashboard' || currentView === 'stocks'
               }
             />
-            <Button variant="secondary" onClick={signOut} title="Sign out">
-              Sign Out
+            <Button variant="secondary" onClick={signOut} title="Odhlásit se">
+              Odhlásit se
             </Button>
           </div>
         </div>
@@ -275,7 +275,7 @@ function App() {
             isActive={currentView === 'dashboard'}
             onClick={() => setCurrentView('dashboard')}
           >
-            Dashboard
+            Přehled
           </Button>
           <Button
             variant="ghost"
@@ -284,21 +284,21 @@ function App() {
             }
             onClick={() => setCurrentView('stocks')}
           >
-            Stocks
+            Akcie
           </Button>
           <Button
             variant="ghost"
             isActive={currentView === 'analysis'}
             onClick={() => setCurrentView('analysis')}
           >
-            Analysis
+            Analýza portfolia
           </Button>
           <Button
             variant="ghost"
             isActive={currentView === 'news'}
             onClick={() => setCurrentView('news')}
           >
-            News
+            Zprávy
           </Button>
           <Button
             variant="ghost"
@@ -307,7 +307,7 @@ function App() {
             }
             onClick={() => setCurrentView('watchlists')}
           >
-            Watchlists
+            Watchlisty
           </Button>
           <Button
             variant="ghost"
@@ -316,16 +316,16 @@ function App() {
             }
             onClick={() => setCurrentView('research')}
           >
-            Research
+            Vyhledávání
           </Button>
           <Button variant="outline" onClick={() => setShowAddStockModal(true)}>
-            + Add Stock
+            + Přidat akcii
           </Button>
           <Button
             variant="outline"
             onClick={() => setShowAddTransactionModal(true)}
           >
-            + Add Transaction
+            + Přidat transakci
           </Button>
           {import.meta.env.DEV && (
             <Button

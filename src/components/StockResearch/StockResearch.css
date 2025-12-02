@@ -95,12 +95,6 @@
   margin-bottom: 0.5rem;
 }
 
-.stock-research-signal {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
 /* Quick Stats */
 .stock-research-quick-stats {
   display: flex;
@@ -146,16 +140,6 @@
   .stock-research-price-bar {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .stock-research-signal {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-
-  .stock-research-signal .signal-description {
-    max-width: 100%;
   }
 
   .stock-research-quick-stats {

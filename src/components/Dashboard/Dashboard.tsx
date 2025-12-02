@@ -45,10 +45,10 @@ const SORT_FIELDS: SortField[] = [
   { value: 'ticker', label: 'Ticker', defaultDirection: 'asc' },
   { value: 'plPercent', label: 'P&L %', defaultDirection: 'desc' },
   { value: 'plCzk', label: 'P&L CZK', defaultDirection: 'desc' },
-  { value: 'current', label: 'Value', defaultDirection: 'desc' },
-  { value: 'portfolio', label: 'Weight', defaultDirection: 'desc' },
-  { value: 'distanceToTarget', label: 'To Target', defaultDirection: 'asc' },
-  { value: 'sector', label: 'Sector', defaultDirection: 'asc' },
+  { value: 'current', label: 'Hodnota', defaultDirection: 'desc' },
+  { value: 'portfolio', label: 'Váha', defaultDirection: 'desc' },
+  { value: 'distanceToTarget', label: 'K cíli', defaultDirection: 'asc' },
+  { value: 'sector', label: 'Sektor', defaultDirection: 'asc' },
 ];
 
 interface DashboardProps {
@@ -135,7 +135,9 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
       setHoldings(holdingsData);
       setTotals(totalsData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load portfolio');
+      setError(
+        err instanceof Error ? err.message : 'Nepodařilo se načíst portfolio'
+      );
     } finally {
       setLoading(false);
     }
@@ -160,7 +162,7 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
   );
 
   if (loading) {
-    return <LoadingSpinner text="Loading portfolio..." />;
+    return <LoadingSpinner text="Načítám portfolio..." />;
   }
 
   if (error) {
@@ -171,27 +173,27 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
     <div className="dashboard">
       {/* Dashboard Header */}
       <div className="dashboard-header">
-        <SectionTitle>Portfolio Overview</SectionTitle>
+        <SectionTitle>Přehled portfolia</SectionTitle>
       </div>
 
       {/* Portfolio Summary Cards */}
       <div className="summary-cards">
         <div className="summary-card">
-          <MetricLabel>Total Invested</MetricLabel>
+          <MetricLabel>Investováno</MetricLabel>
           <MetricValue size="lg">
             {formatCurrency(totals?.totalInvestedCzk || 0)}
           </MetricValue>
         </div>
 
         <div className="summary-card">
-          <MetricLabel>Current Value</MetricLabel>
+          <MetricLabel>Aktuální hodnota</MetricLabel>
           <MetricValue size="lg">
             {formatCurrency(totals?.totalCurrentValueCzk || 0)}
           </MetricValue>
         </div>
 
         <div className="summary-card">
-          <MetricLabel>Unrealized P&L</MetricLabel>
+          <MetricLabel>Nerealizovaný P&L</MetricLabel>
           <div className="card-value-with-percent">
             <MetricValue
               size="lg"
@@ -215,7 +217,7 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
         </div>
 
         <div className="summary-card">
-          <MetricLabel>Stocks</MetricLabel>
+          <MetricLabel>Počet akcií</MetricLabel>
           <div className="card-value-with-percent">
             <MetricValue size="lg">{totals?.stockCount || 0}</MetricValue>
           </div>
@@ -224,12 +226,12 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
 
       {/* Holdings Table */}
       <div className="holdings-section">
-        <SectionTitle>Holdings</SectionTitle>
+        <SectionTitle>Pozice</SectionTitle>
 
         {holdings.length === 0 ? (
           <EmptyState
-            title="No holdings yet"
-            description="Add a stock and transaction to get started!"
+            title="Žádné pozice"
+            description="Přidejte akcii a transakci pro začátek!"
           />
         ) : (
           <>
@@ -311,37 +313,37 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                     )}
                     <div className="holding-card-stats">
                       <div className="holding-card-stat">
-                        <MetricLabel>Shares</MetricLabel>
+                        <MetricLabel>Počet</MetricLabel>
                         <MetricValue>
                           {formatNumber(holding.total_shares, 4)}
                         </MetricValue>
                       </div>
                       <div className="holding-card-stat">
-                        <MetricLabel>Current Price</MetricLabel>
+                        <MetricLabel>Aktuální cena</MetricLabel>
                         <MetricValue>
                           {formatPrice(holding.current_price)}
                         </MetricValue>
                       </div>
                       <div className="holding-card-stat">
-                        <MetricLabel>Invested</MetricLabel>
+                        <MetricLabel>Investováno</MetricLabel>
                         <MetricValue>
                           {formatCurrency(holding.total_invested_czk)}
                         </MetricValue>
                       </div>
                       <div className="holding-card-stat">
-                        <MetricLabel>Avg Price</MetricLabel>
+                        <MetricLabel>Prům. cena</MetricLabel>
                         <MetricValue>
                           {formatPrice(holding.avg_buy_price)}
                         </MetricValue>
                       </div>
                       <div className="holding-card-stat">
-                        <MetricLabel>Current</MetricLabel>
+                        <MetricLabel>Hodnota</MetricLabel>
                         <MetricValue>
                           {formatCurrency(holding.current_value_czk)}
                         </MetricValue>
                       </div>
                       <div className="holding-card-stat">
-                        <MetricLabel>Weight</MetricLabel>
+                        <MetricLabel>Váha</MetricLabel>
                         <MetricValue>
                           {portfolioPercentage !== null
                             ? formatPercent(portfolioPercentage, 1)
@@ -349,7 +351,7 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                         </MetricValue>
                       </div>
                       <div className="holding-card-stat">
-                        <MetricLabel>Target</MetricLabel>
+                        <MetricLabel>Cílová cena</MetricLabel>
                         <MetricValue>
                           {holding.target_price !== null
                             ? `$${formatPrice(
@@ -361,7 +363,7 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                         </MetricValue>
                       </div>
                       <div className="holding-card-stat">
-                        <MetricLabel>To Target</MetricLabel>
+                        <MetricLabel>K cíli</MetricLabel>
                         <MetricValue
                           sentiment={
                             holding.distance_to_target_pct !== null
@@ -391,7 +393,7 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
               <table className="holdings-table sortable-table">
                 <thead>
                   <tr>
-                    <SortHeader label="Stock" sortKeyName="ticker" />
+                    <SortHeader label="Akcie" sortKeyName="ticker" />
                     {showPortfolioColumn && (
                       <SortHeader
                         label="Portfolio"
@@ -399,27 +401,27 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                       />
                     )}
                     <SortHeader
-                      label="Shares"
+                      label="Počet"
                       sortKeyName="shares"
                       className="right"
                     />
                     <SortHeader
-                      label="Current Price"
+                      label="Cena"
                       sortKeyName="currentPrice"
                       className="right"
                     />
                     <SortHeader
-                      label="Invested"
+                      label="Investováno"
                       sortKeyName="invested"
                       className="right"
                     />
                     <SortHeader
-                      label="Avg Price"
+                      label="Prům. cena"
                       sortKeyName="avgPrice"
                       className="right"
                     />
                     <SortHeader
-                      label="Current Value"
+                      label="Hodnota"
                       sortKeyName="current"
                       className="right"
                     />
@@ -429,16 +431,16 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                       className="right"
                     />
                     <SortHeader
-                      label="Weight"
+                      label="Váha"
                       sortKeyName="portfolio"
                       className="right"
                     />
                     <SortHeader
-                      label="Target"
+                      label="Cíl"
                       sortKeyName="distanceToTarget"
                       className="right"
                     />
-                    <SortHeader label="Sector" sortKeyName="sector" />
+                    <SortHeader label="Sektor" sortKeyName="sector" />
                   </tr>
                 </thead>
                 <tbody>
@@ -567,7 +569,7 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
       {/* Sector Distribution */}
       {totals && totals.sectorDistribution.length > 0 && (
         <div className="sector-section">
-          <SectionTitle>Sector Distribution</SectionTitle>
+          <SectionTitle>Rozložení podle sektorů</SectionTitle>
           <div className="sector-bars">
             {totals.sectorDistribution.map((sector) => (
               <div key={sector.sector} className="sector-row">

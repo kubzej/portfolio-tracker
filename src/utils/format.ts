@@ -268,10 +268,10 @@ export function getInsiderSentimentLabel(mspr: number | null): {
   class: 'positive' | 'negative' | '';
 } {
   if (mspr === null) return { label: '—', class: '' };
-  if (mspr > 25) return { label: 'Strong Buying', class: 'positive' };
-  if (mspr > 0) return { label: 'Buying', class: 'positive' };
-  if (mspr > -25) return { label: 'Selling', class: 'negative' };
-  return { label: 'Strong Selling', class: 'negative' };
+  if (mspr > 25) return { label: 'Silný nákup', class: 'positive' };
+  if (mspr > 0) return { label: 'Nákup', class: 'positive' };
+  if (mspr > -25) return { label: 'Prodej', class: 'negative' };
+  return { label: 'Silný prodej', class: 'negative' };
 }
 
 // ============================================================================
@@ -696,7 +696,7 @@ export function getMarketStatus(ticker: string): MarketStatus {
   if (!exchange) {
     return {
       isOpen: false,
-      statusText: 'Unknown',
+      statusText: 'Neznámý',
       localTime: '--:--',
       nextChange: null,
     };
@@ -725,9 +725,9 @@ export function getMarketStatus(ticker: string): MarketStatus {
   if (exchange.weekendClosed && (dayOfWeek === 0 || dayOfWeek === 6)) {
     return {
       isOpen: false,
-      statusText: 'Weekend',
+      statusText: 'Víkend',
       localTime: localTimeStr,
-      nextChange: `Opens Monday ${String(exchange.openHour).padStart(
+      nextChange: `Otevře pondělí ${String(exchange.openHour).padStart(
         2,
         '0'
       )}:${String(exchange.openMinute).padStart(2, '0')}`,
@@ -741,12 +741,12 @@ export function getMarketStatus(ticker: string): MarketStatus {
     const minsUntil = minsUntilOpen % 60;
     return {
       isOpen: false,
-      statusText: 'Pre-market',
+      statusText: 'Před otevřením',
       localTime: localTimeStr,
       nextChange:
         hoursUntil > 0
-          ? `Opens in ${hoursUntil}h ${minsUntil}m`
-          : `Opens in ${minsUntil}m`,
+          ? `Otevře za ${hoursUntil}h ${minsUntil}m`
+          : `Otevře za ${minsUntil}m`,
     };
   }
 
@@ -754,9 +754,9 @@ export function getMarketStatus(ticker: string): MarketStatus {
   if (currentMinutes >= closeMinutes) {
     return {
       isOpen: false,
-      statusText: 'After-hours',
+      statusText: 'Po zavření',
       localTime: localTimeStr,
-      nextChange: `Opens tomorrow ${String(exchange.openHour).padStart(
+      nextChange: `Otevře zítra ${String(exchange.openHour).padStart(
         2,
         '0'
       )}:${String(exchange.openMinute).padStart(2, '0')}`,
@@ -769,12 +769,12 @@ export function getMarketStatus(ticker: string): MarketStatus {
   const minsUntil = minsUntilClose % 60;
   return {
     isOpen: true,
-    statusText: 'Open',
+    statusText: 'Otevřeno',
     localTime: localTimeStr,
     nextChange:
       hoursUntil > 0
-        ? `Closes in ${hoursUntil}h ${minsUntil}m`
-        : `Closes in ${minsUntil}m`,
+        ? `Zavře za ${hoursUntil}h ${minsUntil}m`
+        : `Zavře za ${minsUntil}m`,
   };
 }
 
@@ -794,5 +794,5 @@ export function getLimitedDataMessage(ticker: string): string | null {
   const info = getExchangeInfo(ticker);
   if (!info.hasLimitedData) return null;
 
-  return `Data for ${info.exchangeName} (${info.country}) stocks is limited. Only price data is available – analyst ratings, fundamentals, and insider data are not supported.`;
+  return `Data pro ${info.exchangeName} (${info.country}) jsou omezená. K dispozici jsou pouze cenové údaje – hodnocení analytiků, fundamenty a insider data nejsou podporovány.`;
 }

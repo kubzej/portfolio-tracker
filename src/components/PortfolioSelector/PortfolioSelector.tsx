@@ -60,7 +60,7 @@ export function PortfolioSelector({
         }
       }
     } catch (err) {
-      setError('Failed to load portfolios');
+      setError('Nepodařilo se načíst portfolia');
       console.error(err);
     } finally {
       setLoading(false);
@@ -93,13 +93,13 @@ export function PortfolioSelector({
   const displayName = selectedPortfolio
     ? selectedPortfolio.name
     : showAllOption
-    ? 'All Portfolios'
-    : 'Select...';
+    ? 'Všechna portfolia'
+    : 'Vybrat...';
 
   if (loading) {
     return (
       <div className="portfolio-selector loading">
-        <Text color="muted">Loading...</Text>
+        <Text color="muted">Načítám...</Text>
       </div>
     );
   }
@@ -121,11 +121,11 @@ export function PortfolioSelector({
           onChange={(e) => handleSelectChange(e.target.value)}
           className="portfolio-select desktop-only"
         >
-          {showAllOption && <option value="all">All Portfolios</option>}
+          {showAllOption && <option value="all">Všechna portfolia</option>}
           {portfolios.map((portfolio) => (
             <option key={portfolio.id} value={portfolio.id}>
               {portfolio.name}
-              {portfolio.is_default ? ' (Default)' : ''}
+              {portfolio.is_default ? ' (Výchozí)' : ''}
             </option>
           ))}
         </select>
@@ -176,7 +176,7 @@ export function PortfolioSelector({
           icon
           className="portfolio-manage-btn"
           onClick={() => setShowManager(true)}
-          title="Manage portfolios"
+          title="Spravovat portfolia"
         >
           ⚙
         </Button>
@@ -186,12 +186,12 @@ export function PortfolioSelector({
       <ActionSheet
         isOpen={showMobilePicker}
         onClose={() => setShowMobilePicker(false)}
-        title="Select Portfolio"
+        title="Vybrat portfolio"
       >
         <div className="action-sheet-options">
           {showAllOption && (
             <ActionSheetOption
-              label="All Portfolios"
+              label="Všechna portfolia"
               color="#6366f1"
               selected={selectedPortfolioId === null}
               onClick={() => handleSelectChange('all')}
@@ -201,7 +201,7 @@ export function PortfolioSelector({
             <ActionSheetOption
               key={portfolio.id}
               label={portfolio.name}
-              suffix={portfolio.is_default ? ' (Default)' : undefined}
+              suffix={portfolio.is_default ? ' (Výchozí)' : undefined}
               color={portfolio.color ?? '#6366f1'}
               selected={selectedPortfolioId === portfolio.id}
               onClick={() => handleSelectChange(portfolio.id)}

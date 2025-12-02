@@ -18,7 +18,7 @@ interface OnboardingProps {
 
 export function Onboarding({ onComplete, onSignOut }: OnboardingProps) {
   const [step, setStep] = useState<'welcome' | 'create-portfolio'>('welcome');
-  const [portfolioName, setPortfolioName] = useState('My Portfolio');
+  const [portfolioName, setPortfolioName] = useState('Moje portfolio');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +26,7 @@ export function Onboarding({ onComplete, onSignOut }: OnboardingProps) {
     e.preventDefault();
 
     if (!portfolioName.trim()) {
-      setError('Portfolio name is required');
+      setError('Název portfolia je povinný');
       return;
     }
 
@@ -41,7 +41,7 @@ export function Onboarding({ onComplete, onSignOut }: OnboardingProps) {
       onComplete(portfolio);
     } catch (err) {
       console.error('Failed to create portfolio:', err);
-      setError('Failed to create portfolio. Please try again.');
+      setError('Nepodařilo se vytvořit portfolio. Zkuste to znovu.');
     } finally {
       setLoading(false);
     }
@@ -53,33 +53,33 @@ export function Onboarding({ onComplete, onSignOut }: OnboardingProps) {
         {step === 'welcome' && (
           <>
             <div className="onboarding-header">
-              <PageTitle>Welcome to Portfolio Tracker!</PageTitle>
+              <PageTitle>Vítejte v Portfolio Trackeru!</PageTitle>
               <Description>
-                Track your stock investments, analyze performance, and make
-                informed decisions.
+                Sledujte své akciové investice, analyzujte výkonnost a dělejte
+                informovaná rozhodnutí.
               </Description>
             </div>
 
             <div className="onboarding-features">
               <div className="feature-item">
                 <span className="feature-icon">📊</span>
-                <Text>Track multiple portfolios</Text>
+                <Text>Sledujte více portfolií</Text>
               </div>
               <div className="feature-item">
                 <span className="feature-icon">📈</span>
-                <Text>Real-time price updates</Text>
+                <Text>Aktualizace cen v reálném čase</Text>
               </div>
               <div className="feature-item">
                 <span className="feature-icon">💡</span>
-                <Text>Smart buy/sell recommendations</Text>
+                <Text>Chytrá doporučení k nákupu/prodeji</Text>
               </div>
               <div className="feature-item">
                 <span className="feature-icon">🔍</span>
-                <Text>Technical & fundamental analysis</Text>
+                <Text>Technická a fundamentální analýza</Text>
               </div>
               <div className="feature-item">
                 <span className="feature-icon">📰</span>
-                <Text>News with sentiment analysis</Text>
+                <Text>Novinky s analýzou sentimentu</Text>
               </div>
             </div>
 
@@ -90,7 +90,7 @@ export function Onboarding({ onComplete, onSignOut }: OnboardingProps) {
                 fullWidth
                 onClick={() => setStep('create-portfolio')}
               >
-                Get Started
+                Začít
               </Button>
             </div>
           </>
@@ -99,9 +99,9 @@ export function Onboarding({ onComplete, onSignOut }: OnboardingProps) {
         {step === 'create-portfolio' && (
           <>
             <div className="onboarding-header">
-              <PageTitle>Create Your First Portfolio</PageTitle>
+              <PageTitle>Vytvořte své první portfolio</PageTitle>
               <Description>
-                A portfolio helps you organize and track your investments.
+                Portfolio vám pomůže organizovat a sledovat vaše investice.
               </Description>
             </div>
 
@@ -113,7 +113,7 @@ export function Onboarding({ onComplete, onSignOut }: OnboardingProps) {
               )}
 
               <div className="form-group">
-                <Label htmlFor="portfolioName">Portfolio Name</Label>
+                <Label htmlFor="portfolioName">Název portfolia</Label>
                 <Input
                   id="portfolioName"
                   type="text"
@@ -121,7 +121,7 @@ export function Onboarding({ onComplete, onSignOut }: OnboardingProps) {
                   fullWidth
                   value={portfolioName}
                   onChange={(e) => setPortfolioName(e.target.value)}
-                  placeholder="e.g., Main Portfolio, Retirement, Trading"
+                  placeholder="např. Hlavní portfolio, Důchod, Trading"
                   required
                   autoFocus
                 />
@@ -134,7 +134,7 @@ export function Onboarding({ onComplete, onSignOut }: OnboardingProps) {
                   onClick={() => setStep('welcome')}
                   disabled={loading}
                 >
-                  Back
+                  Zpět
                 </Button>
                 <Button
                   type="submit"
@@ -142,7 +142,7 @@ export function Onboarding({ onComplete, onSignOut }: OnboardingProps) {
                   size="lg"
                   disabled={loading}
                 >
-                  {loading ? 'Creating...' : 'Create Portfolio'}
+                  {loading ? 'Vytvářím...' : 'Vytvořit portfolio'}
                 </Button>
               </div>
             </form>
@@ -151,7 +151,7 @@ export function Onboarding({ onComplete, onSignOut }: OnboardingProps) {
 
         <div className="onboarding-footer">
           <Button variant="ghost" size="sm" onClick={onSignOut}>
-            Sign out
+            Odhlásit se
           </Button>
         </div>
       </div>

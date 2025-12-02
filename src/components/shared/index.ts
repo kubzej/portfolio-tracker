@@ -11,6 +11,7 @@ export { ScoreCard } from './ScoreCard';
 export { MetricCard } from './MetricCard';
 export { MetricRow } from './MetricRow';
 export { SignalBadge } from './SignalBadge';
+export { SignalCheckItem, SignalCheckGroup } from './SignalCheck';
 export { StockCard } from './StockCard';
 export { Tabs } from './Tabs';
 export { ToggleGroup } from './ToggleGroup';

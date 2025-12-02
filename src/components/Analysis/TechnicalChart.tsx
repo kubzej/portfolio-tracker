@@ -395,8 +395,8 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
   } => {
     if (data.sma50 === null || data.sma200 === null) {
       return {
-        signal: 'Insufficient Data',
-        description: 'Need more price history to determine trend.',
+        signal: 'Nedostatek dat',
+        description: 'Potřebujeme více historie cen pro určení trendu.',
         type: 'neutral',
       };
     }
@@ -407,39 +407,62 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
       data.currentPrice !== null && data.currentPrice > data.sma200;
     const goldenCross = data.sma50 > data.sma200;
 
+    // Golden Cross scenarios (50 DMA > 200 DMA)
     if (goldenCross && priceAbove50 && priceAbove200) {
       return {
         signal: 'Strong Bullish',
         description:
-          'Golden Cross (50 DMA > 200 DMA) with price above both averages. Strong uptrend.',
+          'Golden Cross (50 DMA > 200 DMA) s cenou nad oběma průměry. Silný růstový trend.',
         type: 'bullish',
       };
-    } else if (goldenCross && priceAbove200) {
+    } else if (goldenCross && priceAbove50 && !priceAbove200) {
       return {
         signal: 'Bullish',
         description:
-          'Golden Cross active. Price above 200 DMA indicates long-term uptrend.',
+          'Golden Cross aktivní. Cena nad 50 DMA, ale stále pod 200 DMA. Vznikající uptrend.',
         type: 'bullish',
       };
-    } else if (!goldenCross && !priceAbove50 && !priceAbove200) {
+    } else if (goldenCross && !priceAbove50 && priceAbove200) {
+      return {
+        signal: 'Bullish',
+        description:
+          'Golden Cross aktivní. Cena nad 200 DMA indikuje dlouhodobý uptrend.',
+        type: 'bullish',
+      };
+    } else if (goldenCross && !priceAbove50 && !priceAbove200) {
+      return {
+        signal: 'Mixed',
+        description:
+          'Golden Cross aktivní, ale cena pod oběma průměry. Možná korekce v uptrendu.',
+        type: 'neutral',
+      };
+    }
+    // Death Cross scenarios (50 DMA < 200 DMA)
+    else if (!goldenCross && !priceAbove50 && !priceAbove200) {
       return {
         signal: 'Strong Bearish',
         description:
-          'Death Cross (50 DMA < 200 DMA) with price below both averages. Strong downtrend.',
+          'Death Cross (50 DMA < 200 DMA) s cenou pod oběma průměry. Silný klesající trend.',
         type: 'bearish',
       };
-    } else if (!goldenCross && !priceAbove200) {
+    } else if (!goldenCross && !priceAbove50 && priceAbove200) {
+      return {
+        signal: 'Mixed',
+        description:
+          'Death Cross aktivní, ale cena nad 200 DMA. Nejasný signál, vyčkejte.',
+        type: 'neutral',
+      };
+    } else if (!goldenCross && priceAbove50 && !priceAbove200) {
       return {
         signal: 'Bearish',
         description:
-          'Death Cross active. Price below 200 DMA indicates long-term downtrend.',
+          'Death Cross aktivní. Cena pod 200 DMA indikuje dlouhodobý downtrend.',
         type: 'bearish',
       };
     } else {
       return {
         signal: 'Mixed',
-        description:
-          'Conflicting signals. Price is transitioning between trends.',
+        description: 'Protichůdné signály. Cena přechází mezi trendy.',
         type: 'neutral',
       };
     }
@@ -449,9 +472,9 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
 
   const getRSILabel = (rsi: number | null): string => {
     if (rsi === null) return 'N/A';
-    if (rsi >= 70) return 'Overbought';
-    if (rsi <= 30) return 'Oversold';
-    return 'Neutral';
+    if (rsi >= 70) return 'Překoupená';
+    if (rsi <= 30) return 'Přeprodaná';
+    return 'Neutrální';
   };
 
   return (
@@ -470,7 +493,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
 
         {chartData.length === 0 ? (
           <div className="chart-error">
-            <Text>No historical data available for {data.ticker}</Text>
+            <Text>Žádná historická data pro {data.ticker}</Text>
             {data.error && <Muted>{data.error}</Muted>}
           </div>
         ) : (
@@ -570,7 +593,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                     style={{ background: '#3b82f6' }}
                   />
                   <Text size="sm">
-                    <Text weight="semibold">Price:</Text> Daily closing price
+                    <Text weight="semibold">Price:</Text> Denní zavírací cena
                   </Text>
                 </div>
                 <div className="legend-item">
@@ -579,8 +602,8 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                     style={{ background: '#f59e0b' }}
                   />
                   <Text size="sm">
-                    <Text weight="semibold">50 DMA:</Text> Short-term trend (avg
-                    of last 50 days)
+                    <Text weight="semibold">50 DMA:</Text> Krátkodobý trend
+                    (průměr 50 dní)
                   </Text>
                 </div>
                 <div className="legend-item">
@@ -589,8 +612,8 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                     style={{ background: '#8b5cf6' }}
                   />
                   <Text size="sm">
-                    <Text weight="semibold">200 DMA:</Text> Long-term trend (avg
-                    of last 200 days)
+                    <Text weight="semibold">200 DMA:</Text> Dlouhodobý trend
+                    (průměr 200 dní)
                   </Text>
                 </div>
               </div>
@@ -701,7 +724,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       &gt;70 Overbought
                     </Text>
                     <Text size="xs" color="secondary">
-                      Potential pullback ahead
+                      Možný pokles
                     </Text>
                     <InfoTooltip text="**Překoupená (>70)** | Akcie hodně rostla a může být drahá. | • Možná není nejlepší čas na nákup | • Cena může brzy klesnout" />
                   </div>
@@ -710,7 +733,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       30-70 Neutral
                     </Text>
                     <Text size="xs" color="secondary">
-                      Normal momentum
+                      Normální momentum
                     </Text>
                     <InfoTooltip text="**Neutrální (30-70)** | Normální obchodní podmínky. | • Můžete nakupovat/prodávat dle jiných faktorů | • Sledujte směr RSI" />
                   </div>
@@ -719,13 +742,13 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       &lt;30 Oversold
                     </Text>
                     <Text size="xs" color="secondary">
-                      Potential bounce ahead
+                      Možný odraz
                     </Text>
                     <InfoTooltip text="**Přeprodaná (<30)** | Akcie hodně klesala a může být levná. | • Možná dobrá příležitost k nákupu | • Pozor - někdy klesá z dobrého důvodu" />
                   </div>
                 </div>
                 <div className="rsi-current">
-                  <MetricLabel>Current RSI</MetricLabel>
+                  <MetricLabel>Aktuální RSI</MetricLabel>
                   <MetricValue
                     size="lg"
                     sentiment={
@@ -857,16 +880,16 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                   </IndicatorValuesRow>
                   <IndicatorSignal type={data.macdTrend}>
                     {data.macdTrend === 'bullish' &&
-                      'Bullish momentum — MACD above signal line'}
+                      'Bullish momentum — MACD nad signal linií'}
                     {data.macdTrend === 'bearish' &&
-                      'Bearish momentum — MACD below signal line'}
+                      'Bearish momentum — MACD pod signal linií'}
                     {data.macdTrend === 'neutral' &&
-                      'Neutral — Momentum transitioning'}
-                    {data.macdTrend === null && 'Insufficient data'}
+                      'Neutrální — Momentum v přechodu'}
+                    {data.macdTrend === null && 'Nedostatek dat'}
                   </IndicatorSignal>
                 </>
               ) : (
-                <ChartNoData message="Insufficient data to calculate MACD" />
+                <ChartNoData message="Nedostatek dat pro výpočet MACD" />
               )}
             </ChartSection>
 
@@ -983,7 +1006,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                   </IndicatorValuesRow>
                   <div className="indicator-position-block">
                     <div className="position-header">
-                      <MetricLabel>Position within bands</MetricLabel>
+                      <MetricLabel>Pozice v pásmech</MetricLabel>
                       <MetricValue>{data.bollingerPosition ?? 0}%</MetricValue>
                     </div>
                     <div className="position-bar">
@@ -994,28 +1017,28 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                     </div>
                     <div className="position-zones">
                       <Text size="xs" color="muted">
-                        Lower Band
+                        Spodní
                       </Text>
                       <Text size="xs" color="muted">
-                        Middle
+                        Střed
                       </Text>
                       <Text size="xs" color="muted">
-                        Upper Band
+                        Horní
                       </Text>
                     </div>
                   </div>
                   <IndicatorSignal type={data.bollingerSignal}>
                     {data.bollingerSignal === 'overbought' &&
-                      'Price above upper band — potentially overbought'}
+                      'Cena nad horním pásmem — možná překoupená'}
                     {data.bollingerSignal === 'oversold' &&
-                      'Price below lower band — potentially oversold'}
+                      'Cena pod dolním pásmem — možná přeprodaná'}
                     {data.bollingerSignal === 'neutral' &&
-                      'Price within bands — normal trading range'}
-                    {data.bollingerSignal === null && 'Insufficient data'}
+                      'Cena v pásmech — normální obchodní rozsah'}
+                    {data.bollingerSignal === null && 'Nedostatek dat'}
                   </IndicatorSignal>
                 </>
               ) : (
-                <ChartNoData message="Insufficient data to calculate Bollinger Bands" />
+                <ChartNoData message="Nedostatek dat pro výpočet Bollinger Bands" />
               )}
             </ChartSection>
 
@@ -1125,22 +1148,22 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                     />
                   </IndicatorValuesRow>
                   <ZonesRow>
-                    <ZoneBadge type="overbought">&gt;80 Overbought</ZoneBadge>
-                    <ZoneBadge type="neutral">20-80 Neutral</ZoneBadge>
-                    <ZoneBadge type="oversold">&lt;20 Oversold</ZoneBadge>
+                    <ZoneBadge type="overbought">&gt;80 Překoupená</ZoneBadge>
+                    <ZoneBadge type="neutral">20-80 Neutrální</ZoneBadge>
+                    <ZoneBadge type="oversold">&lt;20 Přeprodaná</ZoneBadge>
                   </ZonesRow>
                   <IndicatorSignal type={data.stochasticSignal}>
                     {data.stochasticSignal === 'overbought' &&
-                      'Stochastic above 80 — potentially overbought'}
+                      'Stochastic nad 80 — možná překoupená'}
                     {data.stochasticSignal === 'oversold' &&
-                      'Stochastic below 20 — potentially oversold'}
+                      'Stochastic pod 20 — možná přeprodaná'}
                     {data.stochasticSignal === 'neutral' &&
-                      'Stochastic in neutral zone — normal trading'}
-                    {data.stochasticSignal === null && 'Insufficient data'}
+                      'Stochastic v neutrální zóně — normální obchodování'}
+                    {data.stochasticSignal === null && 'Nedostatek dat'}
                   </IndicatorSignal>
                 </>
               ) : (
-                <ChartNoData message="Insufficient data to calculate Stochastic Oscillator" />
+                <ChartNoData message="Nedostatek dat pro výpočet Stochastic Oscillator" />
               )}
             </ChartSection>
 
@@ -1216,7 +1239,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                   </div>
                   <IndicatorValuesRow>
                     <IndicatorValue
-                      label="Current Volume"
+                      label="Aktuální objem"
                       value={
                         data.currentVolume !== null
                           ? formatVolume(data.currentVolume)
@@ -1224,7 +1247,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       }
                     />
                     <IndicatorValue
-                      label="20-Day Average"
+                      label="20denní průměr"
                       value={
                         data.avgVolume20 !== null
                           ? formatVolume(data.avgVolume20)
@@ -1232,7 +1255,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       }
                     />
                     <IndicatorValue
-                      label="vs Average"
+                      label="vs průměr"
                       value={
                         data.volumeChange !== null
                           ? `${data.volumeChange > 0 ? '+' : ''}${
@@ -1251,16 +1274,16 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                   </IndicatorValuesRow>
                   <IndicatorSignal type={data.volumeSignal}>
                     {data.volumeSignal === 'high' &&
-                      'Volume above average — strong interest'}
+                      'Objem nad průměrem — silný zájem'}
                     {data.volumeSignal === 'low' &&
-                      'Volume below average — weak interest'}
+                      'Objem pod průměrem — slabý zájem'}
                     {data.volumeSignal === 'normal' &&
-                      'Volume near average — normal activity'}
-                    {data.volumeSignal === null && 'Insufficient data'}
+                      'Objem blízko průměru — normální aktivita'}
+                    {data.volumeSignal === null && 'Nedostatek dat'}
                   </IndicatorSignal>
                 </>
               ) : (
-                <ChartNoData message="Insufficient data to display Volume Analysis" />
+                <ChartNoData message="Nedostatek dat pro Volume Analysis" />
               )}
             </ChartSection>
 
@@ -1388,16 +1411,16 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                   </IndicatorValuesRow>
                   <IndicatorSignal type={data.atrSignal}>
                     {data.atrSignal === 'high' &&
-                      'High volatility — consider wider stop-losses'}
+                      'Vysoká volatilita — zvažte širší stop-loss'}
                     {data.atrSignal === 'low' &&
-                      'Low volatility — stable but limited upside'}
+                      'Nízká volatilita — stabilní, ale omezený potenciál'}
                     {data.atrSignal === 'normal' &&
-                      'Normal volatility — typical price movement'}
-                    {data.atrSignal === null && 'Insufficient data'}
+                      'Normální volatilita — typický cenový pohyb'}
+                    {data.atrSignal === null && 'Nedostatek dat'}
                   </IndicatorSignal>
                 </>
               ) : (
-                <ChartNoData message="Insufficient data to display ATR Analysis" />
+                <ChartNoData message="Nedostatek dat pro ATR Analysis" />
               )}
             </ChartSection>
 
@@ -1462,18 +1485,18 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                   </div>
                   <IndicatorValuesRow>
                     <IndicatorValue
-                      label="Current OBV"
+                      label="Aktuální OBV"
                       value={data.obv !== null ? formatVolume(data.obv) : null}
                     />
                     <IndicatorValue
                       label="OBV Trend"
                       value={
                         data.obvTrend === 'bullish'
-                          ? 'Accumulation'
+                          ? 'Akumulace'
                           : data.obvTrend === 'bearish'
-                          ? 'Distribution'
+                          ? 'Distribuce'
                           : data.obvTrend === 'neutral'
-                          ? 'Neutral'
+                          ? 'Neutrální'
                           : null
                       }
                       sentiment={
@@ -1491,7 +1514,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                           ? 'Bullish'
                           : data.obvDivergence === 'bearish'
                           ? 'Bearish'
-                          : 'None'
+                          : 'Žádná'
                       }
                       sentiment={
                         data.obvDivergence === 'bullish'
@@ -1504,12 +1527,12 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                   </IndicatorValuesRow>
                   <IndicatorSignal type={data.obvTrend}>
                     {data.obvTrend === 'bullish' &&
-                      'Accumulation — volume flowing into stock'}
+                      'Akumulace — objem proudí do akcie'}
                     {data.obvTrend === 'bearish' &&
-                      'Distribution — volume leaving stock'}
+                      'Distribuce — objem odchází z akcie'}
                     {data.obvTrend === 'neutral' &&
-                      'Neutral — no clear volume trend'}
-                    {!data.obvTrend && 'Insufficient data'}
+                      'Neutrální — žádný jasný objemový trend'}
+                    {!data.obvTrend && 'Nedostatek dat'}
                   </IndicatorSignal>
                   {data.obvDivergence && (
                     <IndicatorSignal
@@ -1517,14 +1540,14 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       variant="divergence"
                     >
                       {data.obvDivergence === 'bullish' &&
-                        'Bullish divergence: Price down, OBV up — possible reversal!'}
+                        'Bullish divergence: Cena klesá, OBV roste — možný obrat!'}
                       {data.obvDivergence === 'bearish' &&
-                        'Bearish divergence: Price up, OBV down — caution!'}
+                        'Bearish divergence: Cena roste, OBV klesá — opatrnost!'}
                     </IndicatorSignal>
                   )}
                 </>
               ) : (
-                <ChartNoData message="Insufficient data to display OBV Analysis" />
+                <ChartNoData message="Nedostatek dat pro OBV Analysis" />
               )}
             </ChartSection>
 
@@ -1625,16 +1648,16 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       sentiment="negative"
                     />
                     <IndicatorValue
-                      label="Strength"
+                      label="Síla"
                       value={
                         data.adxSignal === 'strong'
-                          ? 'Very Strong'
+                          ? 'Velmi silný'
                           : data.adxSignal === 'moderate'
-                          ? 'Strong'
+                          ? 'Silný'
                           : data.adxSignal === 'weak'
-                          ? 'Weak'
+                          ? 'Slabý'
                           : data.adxSignal === 'no-trend'
-                          ? 'No Trend'
+                          ? 'Žádný trend'
                           : null
                       }
                       sentiment={
@@ -1650,26 +1673,26 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                   </IndicatorValuesRow>
                   <IndicatorSignal type={data.adxSignal}>
                     {data.adxSignal === 'strong' &&
-                      'Very strong trend — follow the momentum'}
+                      'Velmi silný trend — následujte momentum'}
                     {data.adxSignal === 'moderate' &&
-                      'Strong trend — good for trend trades'}
-                    {data.adxSignal === 'weak' && 'Weak trend — be cautious'}
+                      'Silný trend — vhodné pro trendové obchody'}
+                    {data.adxSignal === 'weak' && 'Slabý trend — buďte opatrní'}
                     {data.adxSignal === 'no-trend' &&
-                      'No trend — avoid trend strategies'}
-                    {!data.adxSignal && 'Insufficient data'}
+                      'Žádný trend — vyhněte se trendovým strategiím'}
+                    {!data.adxSignal && 'Nedostatek dat'}
                   </IndicatorSignal>
                   {data.adxTrend && data.adxSignal !== 'no-trend' && (
                     <IndicatorSignal type={data.adxTrend} variant="direction">
                       {data.adxTrend === 'bullish' &&
-                        '+DI > -DI → Bulls in control'}
+                        '+DI > -DI → Býci mají kontrolu'}
                       {data.adxTrend === 'bearish' &&
-                        '-DI > +DI → Bears in control'}
-                      {data.adxTrend === 'neutral' && '+DI ≈ -DI → Undecided'}
+                        '-DI > +DI → Medvědi mají kontrolu'}
+                      {data.adxTrend === 'neutral' && '+DI ≈ -DI → Nerozhodně'}
                     </IndicatorSignal>
                   )}
                 </>
               ) : (
-                <ChartNoData message="Insufficient data to display ADX Analysis" />
+                <ChartNoData message="Nedostatek dat pro ADX Analysis" />
               )}
             </ChartSection>
 
@@ -1752,18 +1775,18 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                         }}
                       >
                         <Text size="sm" weight="semibold">
-                          Current: ${data.currentPrice?.toFixed(2)}
+                          Aktuální: ${data.currentPrice?.toFixed(2)}
                         </Text>
                       </div>
                     </div>
                   </div>
                   <IndicatorValuesRow>
                     <IndicatorValue
-                      label="Period High"
+                      label="Maximum období"
                       value={`$${data.fibonacciLevels.high.toFixed(2)}`}
                     />
                     <IndicatorValue
-                      label="Period Low"
+                      label="Minimum období"
                       value={`$${data.fibonacciLevels.low.toFixed(2)}`}
                     />
                     <IndicatorValue
@@ -1780,9 +1803,9 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                       }
                     />
                     <IndicatorValue
-                      label="Near Level"
+                      label="Blízko úrovně"
                       value={
-                        data.fibonacciLevels.currentLevel || 'Between levels'
+                        data.fibonacciLevels.currentLevel || 'Mezi úrovněmi'
                       }
                     />
                   </IndicatorValuesRow>
@@ -1794,33 +1817,33 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                     }
                   >
                     {data.fibonacciLevels.trend === 'uptrend'
-                      ? 'Uptrend — look for buy opportunities at 38.2% or 61.8% levels'
-                      : 'Downtrend — levels may act as resistance during rallies'}
+                      ? 'Uptrend — hledejte nákupní příležitosti na 38.2% nebo 61.8% úrovních'
+                      : 'Downtrend — úrovně mohou fungovat jako odpor při růstech'}
                   </IndicatorSignal>
                   {data.fibonacciLevels.currentLevel && (
                     <IndicatorSignal type="neutral" variant="highlight">
-                      Price near{' '}
+                      Cena blízko{' '}
                       <Text weight="semibold">
                         {data.fibonacciLevels.currentLevel}
                       </Text>{' '}
-                      — watch for reaction!
+                      — sledujte reakci!
                     </IndicatorSignal>
                   )}
                 </>
               ) : (
-                <ChartNoData message="Insufficient data to calculate Fibonacci levels" />
+                <ChartNoData message="Nedostatek dat pro výpočet Fibonacci úrovní" />
               )}
             </ChartSection>
 
-            {/* Section 13: What These Indicators Tell You */}
+            {/* Section 13: Jak používat tuto analýzu */}
             <ChartSection
-              title="How to use this analysis"
+              title="Jak používat tuto analýzu"
               tooltip="**Důležité** | Technická analýza není 100% spolehlivá. | • Používejte jako JEDEN z nástrojů | • Kombinujte více indikátorů | • Nikdy neinvestujte jen na základě jednoho indikátoru"
             >
               <div className="usage-guide">
                 <div className="usage-item">
                   <Text weight="semibold" color="success">
-                    Bullish signals:
+                    Bullish signály:
                   </Text>
                   <Text size="sm" color="secondary">
                     Golden Cross, cena nad klouzavými průměry, RSI stoupá z
@@ -1831,7 +1854,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                 </div>
                 <div className="usage-item">
                   <Text weight="semibold" color="danger">
-                    Bearish signals:
+                    Bearish signály:
                   </Text>
                   <Text size="sm" color="secondary">
                     Death Cross, cena pod klouzavými průměry, RSI klesá z
@@ -1841,7 +1864,7 @@ export function TechnicalChart({ data, onClose }: TechnicalChartProps) {
                   </Text>
                 </div>
                 <div className="usage-item">
-                  <Text weight="semibold">Volume tip:</Text>
+                  <Text weight="semibold">Tip k objemu:</Text>
                   <Text size="sm" color="secondary">
                     Objem potvrzuje cenové pohyby. Růst s vysokým objemem je
                     silnější než růst s nízkým objemem. Pokles s nízkým objemem

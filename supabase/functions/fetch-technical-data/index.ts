@@ -30,6 +30,7 @@ interface TechnicalData {
   macdSignal: number | null; // 9-day EMA of MACD
   macdHistogram: number | null; // MACD - Signal
   macdTrend: 'bullish' | 'bearish' | 'neutral' | null;
+  macdDivergence: 'bullish' | 'bearish' | null; // v3.1: Price/MACD divergence
   // Bollinger Bands
   bollingerUpper: number | null;
   bollingerMiddle: number | null; // 20 SMA
@@ -210,6 +211,141 @@ function calculateMACD(prices: number[]): {
 
   // Start index in original prices: 25 (EMA26 start) + 8 (signal start) = 33
   return { macd: alignedMacd, signal: signalLine, histogram, startIndex: 33 };
+}
+
+/**
+ * Detect MACD Divergence (v3.1)
+ *
+ * Bullish Divergence: Price makes lower lows but MACD makes higher lows
+ * - Indicates potential reversal from downtrend to uptrend
+ *
+ * Bearish Divergence: Price makes higher highs but MACD makes lower highs
+ * - Indicates potential reversal from uptrend to downtrend
+ *
+ * Uses last 20 trading days (approx 1 month) for detection
+ * Looks for swing points (local min/max) in both price and MACD
+ */
+function detectMACDDivergence(
+  prices: number[],
+  macdValues: number[],
+  lookbackPeriod: number = 20
+): 'bullish' | 'bearish' | null {
+  if (prices.length < lookbackPeriod || macdValues.length < lookbackPeriod) {
+    return null;
+  }
+
+  // Get recent data
+  const recentPrices = prices.slice(-lookbackPeriod);
+  const recentMacd = macdValues.slice(-lookbackPeriod);
+
+  // Find swing lows (for bullish divergence detection)
+  const priceLows: { index: number; value: number }[] = [];
+  const macdLows: { index: number; value: number }[] = [];
+
+  // Find swing highs (for bearish divergence detection)
+  const priceHighs: { index: number; value: number }[] = [];
+  const macdHighs: { index: number; value: number }[] = [];
+
+  // Scan for swing points (need at least 2 days on each side)
+  for (let i = 2; i < lookbackPeriod - 2; i++) {
+    // Swing low: lower than 2 neighbors on each side
+    if (
+      recentPrices[i] < recentPrices[i - 1] &&
+      recentPrices[i] < recentPrices[i - 2] &&
+      recentPrices[i] < recentPrices[i + 1] &&
+      recentPrices[i] < recentPrices[i + 2]
+    ) {
+      priceLows.push({ index: i, value: recentPrices[i] });
+    }
+
+    if (
+      recentMacd[i] < recentMacd[i - 1] &&
+      recentMacd[i] < recentMacd[i - 2] &&
+      recentMacd[i] < recentMacd[i + 1] &&
+      recentMacd[i] < recentMacd[i + 2]
+    ) {
+      macdLows.push({ index: i, value: recentMacd[i] });
+    }
+
+    // Swing high: higher than 2 neighbors on each side
+    if (
+      recentPrices[i] > recentPrices[i - 1] &&
+      recentPrices[i] > recentPrices[i - 2] &&
+      recentPrices[i] > recentPrices[i + 1] &&
+      recentPrices[i] > recentPrices[i + 2]
+    ) {
+      priceHighs.push({ index: i, value: recentPrices[i] });
+    }
+
+    if (
+      recentMacd[i] > recentMacd[i - 1] &&
+      recentMacd[i] > recentMacd[i - 2] &&
+      recentMacd[i] > recentMacd[i + 1] &&
+      recentMacd[i] > recentMacd[i + 2]
+    ) {
+      macdHighs.push({ index: i, value: recentMacd[i] });
+    }
+  }
+
+  // Check for BULLISH divergence (price lower low, MACD higher low)
+  if (priceLows.length >= 2 && macdLows.length >= 2) {
+    const lastPriceLow = priceLows[priceLows.length - 1];
+    const prevPriceLow = priceLows[priceLows.length - 2];
+
+    // Find corresponding MACD lows (closest in time)
+    const lastMacdLow = macdLows.reduce((closest, low) =>
+      Math.abs(low.index - lastPriceLow.index) <
+      Math.abs(closest.index - lastPriceLow.index)
+        ? low
+        : closest
+    );
+    const prevMacdLow = macdLows.reduce((closest, low) =>
+      Math.abs(low.index - prevPriceLow.index) <
+      Math.abs(closest.index - prevPriceLow.index)
+        ? low
+        : closest
+    );
+
+    // Bullish: Price makes lower low, MACD makes higher low
+    if (
+      lastPriceLow.value < prevPriceLow.value && // Price lower low
+      lastMacdLow.value > prevMacdLow.value && // MACD higher low
+      Math.abs(lastPriceLow.index - lastMacdLow.index) <= 3 // Swing points are close in time
+    ) {
+      return 'bullish';
+    }
+  }
+
+  // Check for BEARISH divergence (price higher high, MACD lower high)
+  if (priceHighs.length >= 2 && macdHighs.length >= 2) {
+    const lastPriceHigh = priceHighs[priceHighs.length - 1];
+    const prevPriceHigh = priceHighs[priceHighs.length - 2];
+
+    // Find corresponding MACD highs (closest in time)
+    const lastMacdHigh = macdHighs.reduce((closest, high) =>
+      Math.abs(high.index - lastPriceHigh.index) <
+      Math.abs(closest.index - lastPriceHigh.index)
+        ? high
+        : closest
+    );
+    const prevMacdHigh = macdHighs.reduce((closest, high) =>
+      Math.abs(high.index - prevPriceHigh.index) <
+      Math.abs(closest.index - prevPriceHigh.index)
+        ? high
+        : closest
+    );
+
+    // Bearish: Price makes higher high, MACD makes lower high
+    if (
+      lastPriceHigh.value > prevPriceHigh.value && // Price higher high
+      lastMacdHigh.value < prevMacdHigh.value && // MACD lower high
+      Math.abs(lastPriceHigh.index - lastMacdHigh.index) <= 3 // Swing points are close in time
+    ) {
+      return 'bearish';
+    }
+  }
+
+  return null;
 }
 
 // Calculate Stochastic Oscillator (14, 3, 3)
@@ -587,6 +723,7 @@ async function fetchTechnicalData(
     let macdSignalValue: number | null = null;
     let macdHistogram: number | null = null;
     let macdTrend: 'bullish' | 'bearish' | 'neutral' | null = null;
+    let macdDivergence: 'bullish' | 'bearish' | null = null;
     const macdHistory: {
       date: string;
       macd: number;
@@ -608,6 +745,17 @@ async function fetchTechnicalData(
         macdTrend = 'bearish';
       } else {
         macdTrend = 'neutral';
+      }
+
+      // v3.1: Detect MACD divergence
+      // Get aligned prices for divergence detection
+      const alignedPrices = chronologicalCloses.slice(macdResult.startIndex);
+      if (alignedPrices.length >= 20 && macdResult.macd.length >= 20) {
+        macdDivergence = detectMACDDivergence(
+          alignedPrices,
+          macdResult.macd,
+          20
+        );
       }
 
       // Build MACD history - all arrays are aligned
@@ -1189,6 +1337,7 @@ async function fetchTechnicalData(
       macdSignal: macdSignalValue,
       macdHistogram,
       macdTrend,
+      macdDivergence,
       bollingerUpper,
       bollingerMiddle,
       bollingerLower,

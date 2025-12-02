@@ -32,14 +32,16 @@ export function StocksList({ onStockClick }: StocksListProps) {
       const data = await stocksApi.getAll();
       setStocks(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load stocks');
+      setError(
+        err instanceof Error ? err.message : 'Nepodařilo se načíst akcie'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   if (loading) {
-    return <LoadingSpinner text="Loading stocks..." />;
+    return <LoadingSpinner text="Načítám akcie..." />;
   }
 
   if (error) {
@@ -49,18 +51,18 @@ export function StocksList({ onStockClick }: StocksListProps) {
   return (
     <div className="stocks-list">
       <div className="stocks-list-header">
-        <SectionTitle>Stocks</SectionTitle>
+        <SectionTitle>Akcie</SectionTitle>
         <Button variant="primary" onClick={() => setShowAddModal(true)}>
-          + Add Stock
+          + Přidat akcii
         </Button>
       </div>
 
       {stocks.length === 0 ? (
         <EmptyState
-          title="No stocks yet"
-          description="Add your first stock to get started!"
+          title="Žádné akcie"
+          description="Přidejte svou první akcii!"
           action={{
-            label: '+ Add Stock',
+            label: '+ Přidat akcii',
             onClick: () => setShowAddModal(true),
           }}
         />

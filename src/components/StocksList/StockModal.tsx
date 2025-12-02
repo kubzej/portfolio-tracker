@@ -103,7 +103,7 @@ export function StockModal({
 
   const sectorOptions: SelectOption[] = useMemo(
     () => [
-      { value: '', label: 'Select sector...' },
+      { value: '', label: 'Vyberte sektor...' },
       ...sectors.map((s) => ({ value: s.id, label: s.name })),
     ],
     [sectors]
@@ -136,7 +136,7 @@ export function StockModal({
       setError(
         err instanceof Error
           ? err.message
-          : `Failed to ${isEditMode ? 'update' : 'create'} stock`
+          : `Nepodařilo se ${isEditMode ? 'upravit' : 'vytvořit'} akcii`
       );
     } finally {
       setLoading(false);
@@ -161,14 +161,14 @@ export function StockModal({
     }));
   };
 
-  const title = isEditMode ? 'Edit Stock' : 'Add New Stock';
+  const title = isEditMode ? 'Upravit akcii' : 'Přidat novou akcii';
   const submitLabel = isEditMode
     ? loading
-      ? 'Saving...'
-      : 'Save Changes'
+      ? 'Ukládám...'
+      : 'Uložit změny'
     : loading
-    ? 'Adding...'
-    : 'Add Stock';
+    ? 'Přidávám...'
+    : 'Přidat akcii';
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="md">
@@ -195,7 +195,7 @@ export function StockModal({
           </div>
 
           <div className="form-group">
-            <Label htmlFor="name">Company Name *</Label>
+            <Label htmlFor="name">Název společnosti *</Label>
             <Input
               id="name"
               name="name"
@@ -210,7 +210,7 @@ export function StockModal({
 
         <div className="form-row">
           <BottomSheetSelect
-            label="Sector"
+            label="Sektor"
             options={sectorOptions}
             value={formData.sector_id || ''}
             onChange={(value) =>
@@ -219,33 +219,33 @@ export function StockModal({
                 sector_id: value || undefined,
               }))
             }
-            placeholder="Select sector..."
+            placeholder="Vyberte sektor..."
           />
 
           <BottomSheetSelect
-            label="Exchange"
+            label="Burza"
             options={EXCHANGE_OPTIONS}
             value={formData.exchange || ''}
             onChange={(value) =>
               setFormData((prev) => ({ ...prev, exchange: value || undefined }))
             }
-            placeholder="Select exchange..."
+            placeholder="Vyberte burzu..."
           />
         </div>
 
         <div className="form-row">
           <BottomSheetSelect
-            label="Currency"
+            label="Měna"
             options={CURRENCY_OPTIONS}
             value={formData.currency || 'USD'}
             onChange={(value) =>
               setFormData((prev) => ({ ...prev, currency: value || 'USD' }))
             }
-            placeholder="Select currency..."
+            placeholder="Vyberte měnu..."
           />
 
           <div className="form-group">
-            <Label htmlFor="target_price">Target Price</Label>
+            <Label htmlFor="target_price">Cílová cena</Label>
             <Input
               type="number"
               id="target_price"
@@ -272,18 +272,20 @@ export function StockModal({
               maxLength={20}
               fullWidth
             />
-            <Hint>Only needed for non-US stocks if auto-detection fails</Hint>
+            <Hint>
+              Potřeba pouze pro ne-US akcie, pokud auto-detekce selhává
+            </Hint>
           </div>
         </div>
 
         <div className="form-group">
-          <Label htmlFor="notes">Notes</Label>
+          <Label htmlFor="notes">Poznámky</Label>
           <TextArea
             id="notes"
             name="notes"
             value={formData.notes || ''}
             onChange={handleChange}
-            placeholder="Any notes about this stock..."
+            placeholder="Jakékoli poznámky k této akcii..."
             rows={3}
             fullWidth
           />
@@ -291,7 +293,7 @@ export function StockModal({
 
         <div className="form-actions">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
+            Zrušit
           </Button>
           <Button type="submit" variant="primary" disabled={loading}>
             {submitLabel}

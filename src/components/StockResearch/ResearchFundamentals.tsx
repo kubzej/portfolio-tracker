@@ -26,7 +26,7 @@ export function ResearchFundamentals({
     return (
       <div className="research-fundamentals">
         <div className="no-data">
-          <Muted>No fundamental data available</Muted>
+          <Muted>Nejsou dostupná fundamentální data</Muted>
         </div>
       </div>
     );
@@ -36,7 +36,7 @@ export function ResearchFundamentals({
     <div className="research-fundamentals">
       {/* Profitability */}
       <section className="fundamentals-section">
-        <CardTitle>Profitability</CardTitle>
+        <CardTitle>Ziskovost</CardTitle>
         <div className="metrics-grid">
           <MetricCard
             label="ROE"
@@ -89,7 +89,7 @@ export function ResearchFundamentals({
 
       {/* Growth */}
       <section className="fundamentals-section">
-        <CardTitle>Growth</CardTitle>
+        <CardTitle>Růst</CardTitle>
         <div className="metrics-grid">
           <MetricCard
             label="Revenue Growth"
@@ -138,7 +138,7 @@ export function ResearchFundamentals({
 
       {/* Financial Health */}
       <section className="fundamentals-section">
-        <CardTitle>Financial Health</CardTitle>
+        <CardTitle>Finanční zdraví</CardTitle>
         <div className="metrics-grid">
           <MetricCard
             label="Debt/Equity"
@@ -177,7 +177,7 @@ export function ResearchFundamentals({
       {/* Dividends (if applicable) */}
       {(f.dividendYield !== null || f.payoutRatio !== null) && (
         <section className="fundamentals-section">
-          <CardTitle>Dividends</CardTitle>
+          <CardTitle>Dividendy</CardTitle>
           <div className="metrics-grid">
             <MetricCard
               label="Dividend Yield"
@@ -222,7 +222,7 @@ export function ResearchFundamentals({
       {/* Earnings History */}
       {earnings && earnings.length > 0 && (
         <section className="fundamentals-section">
-          <CardTitle>Recent Earnings</CardTitle>
+          <CardTitle>Poslední výsledky</CardTitle>
           <div className="earnings-grid">
             {earnings.slice(0, 4).map((e, i) => (
               <div key={i} className="earnings-card">
@@ -287,10 +287,10 @@ function EarningsSummary({ earnings }: EarningsSummaryProps) {
 
   const message =
     beats === total
-      ? 'Beat expectations in all quarters'
+      ? 'Překonal očekávání ve všech čtvrtletích'
       : beats === 0
-      ? 'Missed expectations in all quarters'
-      : `Beat expectations ${beats}/${total} quarters`;
+      ? 'Nesplnil očekávání v žádném čtvrtletí'
+      : `Překonal očekávání ${beats}/${total} čtvrtletí`;
 
   return (
     <div className="earnings-summary-wrapper">

@@ -48,9 +48,7 @@ interface ChartNoDataProps {
   message?: string;
 }
 
-export function ChartNoData({
-  message = 'Insufficient data',
-}: ChartNoDataProps) {
+export function ChartNoData({ message = 'Nedostatek dat' }: ChartNoDataProps) {
   return (
     <div className="chart-no-data">
       <Text color="muted">{message}</Text>

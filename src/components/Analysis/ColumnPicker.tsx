@@ -83,13 +83,13 @@ export function ColumnPicker({
     'size',
   ];
   const categoryLabels: Record<string, string> = {
-    valuation: 'Valuation',
-    profitability: 'Profitability',
-    growth: 'Growth',
-    risk: 'Risk',
-    dividend: 'Dividend',
-    performance: 'Performance',
-    size: 'Size',
+    valuation: 'Valuace',
+    profitability: 'Ziskovost',
+    growth: 'Růst',
+    risk: 'Riziko',
+    dividend: 'Dividendy',
+    performance: 'Výkonnost',
+    size: 'Velikost',
   };
 
   // Filter indicators by search
@@ -218,7 +218,7 @@ export function ColumnPicker({
           className="picker-trigger"
           onClick={() => setIsOpen(!isOpen)}
         >
-          <Text>⚙ Columns ({selectedKeys.length})</Text>
+          <Text>⚙ Sloupce ({selectedKeys.length})</Text>
           <span className={`dropdown-arrow ${isOpen ? 'open' : ''}`}>▼</span>
         </Button>
 
@@ -227,9 +227,9 @@ export function ColumnPicker({
             variant="outline"
             size="sm"
             onClick={() => setShowSaveDialog(true)}
-            title="Save current column configuration as a view"
+            title="Uložit aktuální konfiguraci sloupců jako pohled"
           >
-            Save View
+            Uložit pohled
           </Button>
         )}
       </div>
@@ -237,7 +237,7 @@ export function ColumnPicker({
       {/* Views Selector */}
       {views.length > 0 && (
         <div className="views-row">
-          <Caption>Views:</Caption>
+          <Caption>Pohledy:</Caption>
           <div className="views-list">
             {views.map((view) => (
               <div
@@ -260,7 +260,9 @@ export function ColumnPicker({
                       }
                     }}
                     title={
-                      view.is_default ? 'Default view' : 'Set as default view'
+                      view.is_default
+                        ? 'Výchozí pohled'
+                        : 'Nastavit jako výchozí pohled'
                     }
                   >
                     {view.is_default ? '★' : '☆'}
@@ -281,11 +283,11 @@ export function ColumnPicker({
                     className="view-chip-delete"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (confirm(`Delete view "${view.name}"?`)) {
+                      if (confirm(`Smazat pohled "${view.name}"?`)) {
                         onDeleteView(view.id);
                       }
                     }}
-                    title="Delete view"
+                    title="Smazat pohled"
                   >
                     ×
                   </Button>
@@ -303,10 +305,10 @@ export function ColumnPicker({
           onClick={() => setShowSaveDialog(false)}
         >
           <div className="save-dialog" onClick={(e) => e.stopPropagation()}>
-            <CardTitle>Save View</CardTitle>
+            <CardTitle>Uložit pohled</CardTitle>
             <Input
               type="text"
-              placeholder="View name..."
+              placeholder="Název pohledu..."
               value={viewName}
               onChange={(e) => setViewName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSaveView()}
@@ -319,7 +321,7 @@ export function ColumnPicker({
                 size="sm"
                 onClick={() => setShowSaveDialog(false)}
               >
-                Cancel
+                Zrušit
               </Button>
               <Button
                 variant="primary"
@@ -327,7 +329,7 @@ export function ColumnPicker({
                 onClick={handleSaveView}
                 disabled={!viewName.trim()}
               >
-                Save
+                Uložit
               </Button>
             </div>
           </div>
@@ -337,7 +339,7 @@ export function ColumnPicker({
       {/* Selected Columns Preview - Drag & Drop (Desktop only) */}
       {!isMobile && (
         <div className="selected-columns">
-          <Caption>Drag to reorder:</Caption>
+          <Caption>Tažením změníte pořadí:</Caption>
           {selectedKeys.map((key, index) => {
             const indicator = getIndicatorByKey(key);
             if (!indicator) return null;
@@ -398,7 +400,7 @@ export function ColumnPicker({
           <div className="picker-search">
             <Input
               type="text"
-              placeholder="Search indicators..."
+              placeholder="Hledat indikátory..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -445,13 +447,13 @@ export function ColumnPicker({
               {(searchTerm || activeCategory) &&
                 filteredIndicators.length === 0 && (
                   <div className="indicator-empty">
-                    <Muted>No indicators found</Muted>
+                    <Muted>Žádné indikátory nenalezeny</Muted>
                   </div>
                 )}
 
               {!searchTerm && !activeCategory && (
                 <div className="indicator-empty">
-                  <Muted>Select a category or search</Muted>
+                  <Muted>Vyberte kategorii nebo hledejte</Muted>
                 </div>
               )}
 
@@ -489,10 +491,10 @@ export function ColumnPicker({
               size="sm"
               onClick={handleResetToDefault}
             >
-              Reset to Default
+              Výchozí nastavení
             </Button>
             <Button variant="primary" size="sm" onClick={handleClose}>
-              Done
+              Hotovo
             </Button>
           </div>
         </div>
@@ -504,7 +506,7 @@ export function ColumnPicker({
           <div className="mobile-picker-backdrop" onClick={handleClose} />
           <div className="mobile-picker-sheet">
             <div className="mobile-picker-header">
-              <SectionTitle>Select Columns</SectionTitle>
+              <SectionTitle>Vybrat sloupce</SectionTitle>
               <Button
                 variant="ghost"
                 className="mobile-picker-close"
@@ -526,7 +528,7 @@ export function ColumnPicker({
             <div className="mobile-picker-search">
               <Input
                 type="text"
-                placeholder="Search indicators..."
+                placeholder="Hledat indikátory..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 fullWidth
@@ -548,7 +550,7 @@ export function ColumnPicker({
               {mobileFilteredIndicators && (
                 <div className="mobile-search-results">
                   {mobileFilteredIndicators.length === 0 ? (
-                    <Muted>No indicators found</Muted>
+                    <Muted>Žádné indikátory nenalezeny</Muted>
                   ) : (
                     mobileFilteredIndicators.map((ind) => (
                       <div
@@ -664,10 +666,10 @@ export function ColumnPicker({
 
             <div className="mobile-picker-footer">
               <Button variant="secondary" onClick={handleResetToDefault}>
-                Reset to Default
+                Výchozí nastavení
               </Button>
               <Button variant="primary" onClick={handleClose}>
-                Done ({selectedKeys.length})
+                Hotovo ({selectedKeys.length})
               </Button>
             </div>
           </div>

@@ -73,7 +73,7 @@ export function WatchlistManager({ onSelectWatchlist }: WatchlistManagerProps) {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Delete this watchlist and all its items?')) {
+    if (!confirm('Smazat tento watchlist a všechny jeho položky?')) {
       return;
     }
 
@@ -90,7 +90,7 @@ export function WatchlistManager({ onSelectWatchlist }: WatchlistManagerProps) {
   if (loading) {
     return (
       <div className="watchlists">
-        <LoadingSpinner text="Loading watchlists..." fullPage />
+        <LoadingSpinner text="Načítám watchlisty..." fullPage />
       </div>
     );
   }
@@ -98,9 +98,9 @@ export function WatchlistManager({ onSelectWatchlist }: WatchlistManagerProps) {
   return (
     <div className="watchlists">
       <div className="watchlists-header">
-        <SectionTitle>Watchlists</SectionTitle>
+        <SectionTitle>Watchlisty</SectionTitle>
         <Button variant="primary" onClick={handleCreate}>
-          + New Watchlist
+          + Nový watchlist
         </Button>
       </div>
 
@@ -108,9 +108,9 @@ export function WatchlistManager({ onSelectWatchlist }: WatchlistManagerProps) {
 
       {watchlists.length === 0 ? (
         <EmptyState
-          title="No watchlists yet"
-          description="Create your first watchlist to start tracking stocks you're interested in."
-          action={{ label: 'Create Watchlist', onClick: handleCreate }}
+          title="Žádné watchlisty"
+          description="Vytvořte svůj první watchlist a začněte sledovat akcie, které vás zajímají."
+          action={{ label: 'Vytvořit watchlist', onClick: handleCreate }}
         />
       ) : (
         <div className="watchlists-grid">
@@ -134,7 +134,7 @@ export function WatchlistManager({ onSelectWatchlist }: WatchlistManagerProps) {
                       variant="ghost"
                       size="sm"
                       onClick={(e) => handleEdit(watchlist, e)}
-                      title="Edit watchlist"
+                      title="Upravit watchlist"
                     >
                       <EditIcon size={14} />
                     </Button>
@@ -142,7 +142,7 @@ export function WatchlistManager({ onSelectWatchlist }: WatchlistManagerProps) {
                       variant="ghost"
                       size="sm"
                       onClick={(e) => handleDelete(watchlist.id, e)}
-                      title="Delete watchlist"
+                      title="Smazat watchlist"
                     >
                       <TrashIcon size={14} />
                     </Button>
@@ -159,7 +159,7 @@ export function WatchlistManager({ onSelectWatchlist }: WatchlistManagerProps) {
                       {watchlist.item_count}
                     </MetricValue>
                     <MetricLabel>
-                      {watchlist.item_count === 1 ? 'stock' : 'stocks'}
+                      {watchlist.item_count === 1 ? 'akcie' : 'akcií'}
                     </MetricLabel>
                   </div>
                   {watchlist.items_at_buy_target > 0 && (
@@ -167,7 +167,7 @@ export function WatchlistManager({ onSelectWatchlist }: WatchlistManagerProps) {
                       <MetricValue size="base" sentiment="positive">
                         {watchlist.items_at_buy_target}
                       </MetricValue>
-                      <MetricLabel>at buy target</MetricLabel>
+                      <MetricLabel>na nákupním cíli</MetricLabel>
                     </div>
                   )}
                   {watchlist.items_at_sell_target > 0 && (
@@ -175,7 +175,7 @@ export function WatchlistManager({ onSelectWatchlist }: WatchlistManagerProps) {
                       <MetricValue size="base" sentiment="negative">
                         {watchlist.items_at_sell_target}
                       </MetricValue>
-                      <MetricLabel>at sell target</MetricLabel>
+                      <MetricLabel>na prodejním cíli</MetricLabel>
                     </div>
                   )}
                 </div>

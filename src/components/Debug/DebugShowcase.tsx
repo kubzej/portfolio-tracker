@@ -64,8 +64,75 @@ import {
   ZoneBadge,
   ZonesRow,
 } from '@/components/shared/IndicatorValue';
+import { SignalCheckGroup } from '@/components/shared/SignalCheck';
+import type { SignalEvaluationResult } from '@/utils/recommendations';
 import { EditIcon, TrashIcon } from '@/components/shared/Icons';
 import './DebugShowcase.css';
+
+// Mock data for SignalCheck demo
+const MOCK_ACTION_SIGNALS: SignalEvaluationResult[] = [
+  {
+    signal: 'DIP_OPPORTUNITY',
+    category: 'action',
+    passed: true,
+    conditions: [
+      { name: 'DIP Score', actual: 65, required: '≥ 50', passed: true },
+      { name: 'Fundamenty', actual: 72, required: '≥ 45', passed: true },
+      { name: 'RSI', actual: 28, required: '< 35', passed: true },
+    ],
+  },
+  {
+    signal: 'MOMENTUM',
+    category: 'action',
+    passed: false,
+    conditions: [
+      { name: 'Technical Score', actual: 58, required: '≥ 65', passed: false },
+      { name: 'MACD', actual: 'Bullish', required: 'Bullish', passed: true },
+      { name: 'ADX', actual: 22, required: '≥ 25', passed: false },
+    ],
+  },
+  {
+    signal: 'ACCUMULATE',
+    category: 'action',
+    passed: true,
+    conditions: [
+      { name: 'Composite Score', actual: 68, required: '≥ 55', passed: true },
+      {
+        name: 'Conviction',
+        actual: 'MEDIUM',
+        required: 'MEDIUM+',
+        passed: true,
+      },
+    ],
+  },
+];
+
+const MOCK_QUALITY_SIGNALS: SignalEvaluationResult[] = [
+  {
+    signal: 'CONVICTION',
+    category: 'quality',
+    passed: true,
+    conditions: [
+      { name: 'Conviction Score', actual: 78, required: '≥ 70', passed: true },
+      { name: 'Fundamental Score', actual: 72, required: '≥ 60', passed: true },
+      { name: 'Analyst Score', actual: 65, required: '≥ 50', passed: true },
+    ],
+  },
+  {
+    signal: 'STEADY',
+    category: 'quality',
+    passed: false,
+    conditions: [
+      {
+        name: 'Volatility',
+        actual: 'High',
+        required: 'Low-Medium',
+        passed: false,
+      },
+      { name: 'Trend', actual: 'Neutral', required: 'Neutral', passed: true },
+    ],
+  },
+];
 
 type Section =
   | 'typography'
@@ -609,6 +676,8 @@ function BadgesSection() {
           <Badge variant="trim">Trim</Badge>
           <Badge variant="watch">Watch</Badge>
           <Badge variant="accumulate">Accumulate</Badge>
+          <Badge variant="good-entry">Good Entry</Badge>
+          <Badge variant="wait">Wait</Badge>
         </div>
       </div>
 
@@ -637,12 +706,14 @@ function BadgesSection() {
         <div className="debug-showcase-row">
           <SignalBadge type="DIP_OPPORTUNITY" size="md" showTooltip />
           <SignalBadge type="MOMENTUM" size="md" showTooltip />
-          <SignalBadge type="CONVICTION_HOLD" size="md" showTooltip />
+          <SignalBadge type="CONVICTION" size="md" showTooltip />
           <SignalBadge type="NEAR_TARGET" size="md" showTooltip />
           <SignalBadge type="CONSIDER_TRIM" size="md" showTooltip />
-          <SignalBadge type="WATCH_CLOSELY" size="md" showTooltip />
+          <SignalBadge type="WATCH" size="md" showTooltip />
           <SignalBadge type="ACCUMULATE" size="md" showTooltip />
           <SignalBadge type="NEUTRAL" size="md" showTooltip />
+          <SignalBadge type="GOOD_ENTRY" size="md" showTooltip />
+          <SignalBadge type="WAIT_FOR_DIP" size="md" showTooltip />
         </div>
         <div className="debug-showcase-row">
           <SignalBadge type="DIP_OPPORTUNITY" size="sm" />
@@ -1263,6 +1334,25 @@ function ChartsSection() {
           <ZoneBadge type="neutral">Neutral (30-70)</ZoneBadge>
           <ZoneBadge type="oversold">Oversold (&lt;30)</ZoneBadge>
         </ZonesRow>
+      </div>
+
+      {/* SignalCheck */}
+      <div className="debug-subsection">
+        <CardTitle>SignalCheck (Signal Evaluation)</CardTitle>
+        <Description>
+          Komponenta pro zobrazení vyhodnocení signálů s expandovatelnými
+          podmínkami.
+        </Description>
+        <div className="debug-showcase-grid">
+          <SignalCheckGroup
+            title="Action signály"
+            evaluations={MOCK_ACTION_SIGNALS}
+          />
+          <SignalCheckGroup
+            title="Quality signály"
+            evaluations={MOCK_QUALITY_SIGNALS}
+          />
+        </div>
       </div>
     </div>
   );

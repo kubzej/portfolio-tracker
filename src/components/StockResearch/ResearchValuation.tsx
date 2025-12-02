@@ -25,7 +25,7 @@ export function ResearchValuation({
     return (
       <div className="research-valuation">
         <div className="no-data">
-          <Muted>No valuation data available</Muted>
+          <Muted>Nejsou dostupná data pro valuaci</Muted>
         </div>
       </div>
     );
@@ -38,7 +38,7 @@ export function ResearchValuation({
     <div className="research-valuation">
       {/* Valuation Multiples */}
       <section className="valuation-section">
-        <CardTitle>Valuation Multiples</CardTitle>
+        <CardTitle>Valuační násobky</CardTitle>
         <div className="metrics-grid">
           <MetricCard
             label="P/E Ratio"
@@ -94,7 +94,7 @@ export function ResearchValuation({
       {/* Valuation Analysis */}
       {valuationMethods.length > 0 && (
         <section className="valuation-section">
-          <CardTitle>Valuation Analysis</CardTitle>
+          <CardTitle>Analýza valuace</CardTitle>
           <div className="valuation-analysis">
             {valuationMethods.map((method) => (
               <div key={method.name} className="valuation-method">
@@ -122,10 +122,10 @@ export function ResearchValuation({
       {/* Target Price Analysis */}
       {recommendation && recommendation.targetUpside !== null && (
         <section className="valuation-section">
-          <CardTitle>Analyst Target</CardTitle>
+          <CardTitle>Cíl analytiků</CardTitle>
           <div className="target-analysis">
             <MetricCard
-              label="Analyst Target"
+              label="Cílová cena"
               value={
                 recommendation.targetPrice
                   ? `$${recommendation.targetPrice.toFixed(2)}`
@@ -133,7 +133,7 @@ export function ResearchValuation({
               }
             />
             <MetricCard
-              label="Potential Upside"
+              label="Potenciál"
               value={
                 recommendation.targetUpside !== null
                   ? `${
@@ -151,37 +151,37 @@ export function ResearchValuation({
 
       {/* 52-Week Context */}
       <section className="valuation-section">
-        <CardTitle>Price Context</CardTitle>
+        <CardTitle>Cenový kontext</CardTitle>
         <div className="metrics-grid">
           {recommendation && (
             <>
               <MetricCard
-                label="52W High"
+                label="52T maximum"
                 value={
                   recommendation.fiftyTwoWeekHigh
                     ? `$${recommendation.fiftyTwoWeekHigh.toFixed(2)}`
                     : null
                 }
                 tooltip={
-                  <InfoTooltip text="**52W Maximum** | Nejvyšší cena za poslední rok." />
+                  <InfoTooltip text="**52T Maximum** | Nejvyšší cena za poslední rok." />
                 }
               />
               <MetricCard
-                label="52W Low"
+                label="52T minimum"
                 value={
                   recommendation.fiftyTwoWeekLow
                     ? `$${recommendation.fiftyTwoWeekLow.toFixed(2)}`
                     : null
                 }
                 tooltip={
-                  <InfoTooltip text="**52W Minimum** | Nejnižší cena za poslední rok." />
+                  <InfoTooltip text="**52T Minimum** | Nejnižší cena za poslední rok." />
                 }
               />
               <MetricCard
-                label="Distance from 52W High"
+                label="Vzdálenost od 52T max"
                 value={
                   recommendation.distanceFrom52wHigh !== null
-                    ? `${recommendation.distanceFrom52wHigh.toFixed(1)}% below`
+                    ? `${recommendation.distanceFrom52wHigh.toFixed(1)}% pod`
                     : null
                 }
                 tooltip={
@@ -223,32 +223,32 @@ function calculateValuationMethods(f: FundamentalMetrics): ValuationMethod[] {
     let description: string;
 
     if (f.peRatio < 12) {
-      verdict = 'Undervalued';
+      verdict = 'Podhodnoceno';
       sentiment = 'positive';
-      description = `P/E of ${f.peRatio.toFixed(
+      description = `P/E ${f.peRatio.toFixed(
         1
-      )} suggests potential undervaluation. Compare with sector average.`;
+      )} naznačuje potenciální podhodnocení. Porovnejte s průměrem sektoru.`;
     } else if (f.peRatio < 20) {
-      verdict = 'Fair Value';
+      verdict = 'Férová hodnota';
       sentiment = 'neutral';
-      description = `P/E of ${f.peRatio.toFixed(
+      description = `P/E ${f.peRatio.toFixed(
         1
-      )} is in the typical range for established companies.`;
+      )} je v typickém rozmezí pro zaváděné firmy.`;
     } else if (f.peRatio < 35) {
-      verdict = 'Growth Premium';
+      verdict = 'Růstové prémium';
       sentiment = 'neutral';
-      description = `P/E of ${f.peRatio.toFixed(
+      description = `P/E ${f.peRatio.toFixed(
         1
-      )} reflects growth expectations. Verify with earnings growth.`;
+      )} odráží očekávaný růst. Ověřte s růstem zisků.`;
     } else {
-      verdict = 'Expensive';
+      verdict = 'Drahé';
       sentiment = 'negative';
-      description = `P/E of ${f.peRatio.toFixed(
+      description = `P/E ${f.peRatio.toFixed(
         1
-      )} is elevated. Requires strong growth to justify.`;
+      )} je vysoké. Vyžaduje silný růst pro ospravedlnění.`;
     }
 
-    methods.push({ name: 'P/E Analysis', verdict, description, sentiment });
+    methods.push({ name: 'P/E analýza', verdict, description, sentiment });
   }
 
   // PEG Analysis
@@ -258,26 +258,26 @@ function calculateValuationMethods(f: FundamentalMetrics): ValuationMethod[] {
     let description: string;
 
     if (f.pegRatio < 1) {
-      verdict = 'Undervalued';
+      verdict = 'Podhodnoceno';
       sentiment = 'positive';
-      description = `PEG of ${f.pegRatio.toFixed(
+      description = `PEG ${f.pegRatio.toFixed(
         2
-      )} under 1 suggests price doesn't fully reflect growth.`;
+      )} pod 1 naznačuje, že cena plně neodráží růst.`;
     } else if (f.pegRatio < 1.5) {
-      verdict = 'Fair Value';
+      verdict = 'Férová hodnota';
       sentiment = 'neutral';
-      description = `PEG of ${f.pegRatio.toFixed(
+      description = `PEG ${f.pegRatio.toFixed(
         2
-      )} indicates balanced valuation vs growth.`;
+      )} indikuje vyvážnou valuaci vs růst.`;
     } else {
-      verdict = 'Expensive';
+      verdict = 'Drahé';
       sentiment = 'negative';
-      description = `PEG of ${f.pegRatio.toFixed(
+      description = `PEG ${f.pegRatio.toFixed(
         2
-      )} over 1.5 suggests premium pricing.`;
+      )} nad 1.5 naznačuje prémiovou cenu.`;
     }
 
-    methods.push({ name: 'PEG Analysis', verdict, description, sentiment });
+    methods.push({ name: 'PEG analýza', verdict, description, sentiment });
   }
 
   // EV/EBITDA Analysis
@@ -287,27 +287,25 @@ function calculateValuationMethods(f: FundamentalMetrics): ValuationMethod[] {
     let description: string;
 
     if (f.evEbitda < 8) {
-      verdict = 'Undervalued';
+      verdict = 'Podhodnoceno';
       sentiment = 'positive';
-      description = `EV/EBITDA of ${f.evEbitda.toFixed(
+      description = `EV/EBITDA ${f.evEbitda.toFixed(
         1
-      )} is below average. Could signal opportunity.`;
+      )} je pod průměrem. Může signalizovat příležitost.`;
     } else if (f.evEbitda < 14) {
-      verdict = 'Fair Value';
+      verdict = 'Férová hodnota';
       sentiment = 'neutral';
-      description = `EV/EBITDA of ${f.evEbitda.toFixed(
-        1
-      )} is in typical range.`;
+      description = `EV/EBITDA ${f.evEbitda.toFixed(1)} je v typickém rozmezí.`;
     } else {
-      verdict = 'Premium';
+      verdict = 'Prémium';
       sentiment = 'negative';
-      description = `EV/EBITDA of ${f.evEbitda.toFixed(
+      description = `EV/EBITDA ${f.evEbitda.toFixed(
         1
-      )} is above average. Premium valuation.`;
+      )} je nad průměrem. Prémiová valuace.`;
     }
 
     methods.push({
-      name: 'EV/EBITDA Analysis',
+      name: 'EV/EBITDA analýza',
       verdict,
       description,
       sentiment,

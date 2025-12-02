@@ -30,7 +30,7 @@ export function Login() {
 
     if (mode === 'signup') {
       if (password !== confirmPassword) {
-        setError('Passwords do not match');
+        setError('Hesla se neshodují');
         setLoading(false);
         return;
       }
@@ -39,7 +39,7 @@ export function Login() {
       if (error) {
         setError(error.message);
       } else {
-        setMessage('Check your email to confirm your account');
+        setMessage('Zkontrolujte email a potvrďte účet');
         setMode('signin');
         setPassword('');
         setConfirmPassword('');
@@ -70,7 +70,7 @@ export function Login() {
         <div className="login-header">
           <PageTitle>Portfolio Tracker</PageTitle>
           <Description>
-            {isSignUp ? 'Create a new account' : 'Sign in to continue'}
+            {isSignUp ? 'Vytvořte nový účet' : 'Přihlaste se pro pokračování'}
           </Description>
         </div>
 
@@ -103,7 +103,7 @@ export function Login() {
           </div>
 
           <div className="form-group">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Heslo</Label>
             <Input
               id="password"
               type="password"
@@ -120,7 +120,7 @@ export function Login() {
 
           {isSignUp && (
             <div className="form-group">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">Potvrdit heslo</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -145,11 +145,11 @@ export function Login() {
           >
             {loading
               ? isSignUp
-                ? 'Creating account...'
-                : 'Signing in...'
+                ? 'Vytvářím účet...'
+                : 'Přihlašuji...'
               : isSignUp
-              ? 'Create Account'
-              : 'Sign In'}
+              ? 'Vytvořit účet'
+              : 'Přihlásit se'}
           </Button>
         </form>
 
@@ -160,8 +160,8 @@ export function Login() {
             onClick={toggleMode}
           >
             {isSignUp
-              ? 'Already have an account? Sign in'
-              : "Don't have an account? Sign up"}
+              ? 'Už máte účet? Přihlašte se'
+              : 'Nemáte účet? Zaregistrujte se'}
           </button>
         </div>
       </div>
