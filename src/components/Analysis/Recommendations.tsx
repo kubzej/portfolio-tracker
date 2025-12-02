@@ -17,6 +17,7 @@ import {
   EmptyState,
   SignalBadge,
   MetricCard,
+  SignalCheckGroup,
 } from '@/components/shared';
 import {
   SectionTitle,
@@ -38,7 +39,6 @@ import {
   type SignalLogEntry,
   type SignalPerformance,
 } from '@/services/api/signals';
-import { ExplainPanel } from './ExplainPanel';
 import './Recommendations.css';
 
 const GROUPING_OPTIONS = [
@@ -476,10 +476,10 @@ function StockTile({ rec, onClick }: StockTileProps) {
               }
             >
               {rec.convictionLevel === 'HIGH'
-                ? 'Vysoká'
+                ? 'Vysoké'
                 : rec.convictionLevel === 'MEDIUM'
                 ? 'Střední'
-                : 'Nízká'}
+                : 'Nízké'}
             </Badge>
             <MetricLabel>Přesvědčení</MetricLabel>
           </div>
@@ -842,6 +842,25 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                     </MetricValue>
                   </div>
                 )}
+                {rec.exitStrategy.resistanceLevel !== null && (
+                  <div className="metric-cell">
+                    <MetricLabel>Odpor</MetricLabel>
+                    <MetricValue>
+                      ${rec.exitStrategy.resistanceLevel.toFixed(0)}
+                      <Text size="xs" color="muted">
+                        {' '}
+                        (+
+                        {(
+                          ((rec.exitStrategy.resistanceLevel -
+                            rec.currentPrice) /
+                            rec.currentPrice) *
+                          100
+                        ).toFixed(0)}
+                        %)
+                      </Text>
+                    </MetricValue>
+                  </div>
+                )}
               </div>
               {rec.exitStrategy.trailingStopPercent && (
                 <Caption>
@@ -922,7 +941,7 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                 </div>
                 {b.details.length > 0 && (
                   <div className="breakdown-details">
-                    {b.details.slice(0, 3).map((d, i) => (
+                    {b.details.slice(0, 5).map((d, i) => (
                       <Text key={i} size="sm" color="muted">
                         {d}
                       </Text>
@@ -1012,13 +1031,27 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
           </div>
         )}
 
-        {/* Explain Mode */}
-        {rec.explanation && (
-          <ExplainPanel
-            explanation={rec.explanation}
-            actionSignal={actionSignal?.type ?? null}
-            qualitySignal={qualitySignal?.type ?? 'NEUTRAL'}
-          />
+        {/* Signal Evaluation */}
+        {rec.explanation && rec.explanation.signalEvaluation.length > 0 && (
+          <div className="modal-section">
+            <div className="section-header">
+              <CardTitle>Vyhodnocení signálů</CardTitle>
+            </div>
+            <div className="signal-evaluation-grid">
+              <SignalCheckGroup
+                title="Action signály"
+                evaluations={rec.explanation.signalEvaluation.filter(
+                  (e) => e.category === 'action'
+                )}
+              />
+              <SignalCheckGroup
+                title="Quality signály"
+                evaluations={rec.explanation.signalEvaluation.filter(
+                  (e) => e.category === 'quality'
+                )}
+              />
+            </div>
+          </div>
         )}
       </div>
     </div>

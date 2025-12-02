@@ -1379,7 +1379,7 @@ function calculateNewsScore(
       score: 50,
       maxScore,
       percent: 50,
-      details: ['No news for this stock'],
+      details: ['Žádné zprávy pro tuto akcii'],
       sentiment: 'neutral',
     };
   }
@@ -1446,7 +1446,7 @@ function calculateInsiderScore(
       score: 50,
       maxScore,
       percent: 50,
-      details: ['No insider data available'],
+      details: ['Nejsou k dispozici data o insiderech'],
       sentiment: 'neutral',
     };
   }
@@ -1457,22 +1457,22 @@ function calculateInsiderScore(
   score = Math.max(0, Math.min(100, score));
 
   if (insider.mspr > 50) {
-    details.push(`MSPR +${insider.mspr.toFixed(1)} - very strong buying`);
+    details.push(`MSPR +${insider.mspr.toFixed(1)} - velmi silné nákupy`);
   } else if (insider.mspr > 25) {
-    details.push(`MSPR +${insider.mspr.toFixed(1)} - strong buying`);
+    details.push(`MSPR +${insider.mspr.toFixed(1)} - silné nákupy`);
   } else if (insider.mspr > 0) {
-    details.push(`MSPR +${insider.mspr.toFixed(1)} - moderate buying`);
+    details.push(`MSPR +${insider.mspr.toFixed(1)} - mírné nákupy`);
   } else if (insider.mspr > -25) {
-    details.push(`MSPR ${insider.mspr.toFixed(1)} - moderate selling`);
+    details.push(`MSPR ${insider.mspr.toFixed(1)} - mírné prodeje`);
   } else if (insider.mspr > -50) {
-    details.push(`MSPR ${insider.mspr.toFixed(1)} - strong selling`);
+    details.push(`MSPR ${insider.mspr.toFixed(1)} - silné prodeje`);
   } else {
-    details.push(`MSPR ${insider.mspr.toFixed(1)} - very strong selling`);
+    details.push(`MSPR ${insider.mspr.toFixed(1)} - velmi silné prodeje`);
   }
 
   if (insider.change !== null) {
     details.push(
-      `Net shares: ${
+      `Čisté akcie: ${
         insider.change > 0 ? '+' : ''
       }${insider.change.toLocaleString()}`
     );
@@ -2181,23 +2181,23 @@ function calculateExitStrategy(
 
   if (convictionLevel === 'HIGH' && technicalBias !== 'BEARISH') {
     holdingPeriod = 'LONG';
-    holdingReason = 'Strong fundamentals and positive outlook';
+    holdingReason = 'Silné fundamenty a pozitivní výhled';
   } else if (convictionLevel === 'LOW' || technicalBias === 'BEARISH') {
     holdingPeriod = 'SWING';
     if (technicalBias === 'BEARISH') {
-      holdingReason = 'Bearish technicals - consider quick exit';
+      holdingReason = 'Bearish technika — zvažte rychlý výstup';
     } else {
-      holdingReason = 'Weak fundamentals - trade momentum only';
+      holdingReason = 'Slabé fundamenty — obchodujte jen momentum';
     }
   } else {
     holdingPeriod = 'MEDIUM';
-    holdingReason = 'Hold for target, reassess quarterly';
+    holdingReason = 'Držte do cíle, přehodnocujte kvartálně';
   }
 
   // Override for extreme cases
   if (item.gainPercentage > 50 && convictionLevel !== 'HIGH') {
     holdingPeriod = 'SWING';
-    holdingReason = 'Large unrealized gain - consider taking profits';
+    holdingReason = 'Velký nerealizovaný zisk — zvažte výběr zisku';
   }
 
   return {
@@ -3617,40 +3617,40 @@ export function generateRecommendation(
   const strengths: string[] = [];
   const concerns: string[] = [];
 
-  if (fundamentalComponent.percent >= 65) strengths.push('Strong fundamentals');
-  if (technicalComponent.percent >= 65) strengths.push('Bullish technicals');
+  if (fundamentalComponent.percent >= 65) strengths.push('Silné fundamenty');
+  if (technicalComponent.percent >= 65) strengths.push('Býčí technika');
   if (analystComponent.percent >= 65)
-    strengths.push('Positive analyst sentiment');
-  if (insiderComponent.percent >= 60) strengths.push('Insider buying');
-  if (conviction.level === 'HIGH') strengths.push('High conviction quality');
+    strengths.push('Pozitivní sentiment analytiků');
+  if (insiderComponent.percent >= 60) strengths.push('Insider nákupy');
+  if (conviction.level === 'HIGH') strengths.push('Vysoká kvalita');
   if (dipResult.score >= 50 && dipQuality.passes)
-    strengths.push('DIP opportunity');
+    strengths.push('DIP příležitost');
 
-  if (fundamentalComponent.percent < 35) concerns.push('Weak fundamentals');
-  if (technicalComponent.percent < 35) concerns.push('Bearish technicals');
+  if (fundamentalComponent.percent < 35) concerns.push('Slabé fundamenty');
+  if (technicalComponent.percent < 35) concerns.push('Medvědí technika');
   if (analystComponent.percent < 35)
-    concerns.push('Negative analyst sentiment');
-  if (insiderComponent.percent < 40) concerns.push('Insider selling');
-  if (newsComponent.percent < 35) concerns.push('Negative news sentiment');
-  if (item.weight > 12) concerns.push('Overweight position');
+    concerns.push('Negativní sentiment analytiků');
+  if (insiderComponent.percent < 40) concerns.push('Insider prodeje');
+  if (newsComponent.percent < 35) concerns.push('Negativní zprávy');
+  if (item.weight > 12) concerns.push('Převážená pozice');
 
   // Action items
   const actionItems: string[] = [];
   const primarySignal = signals[0];
 
   if (primarySignal.type === 'DIP_OPPORTUNITY') {
-    actionItems.push('Consider adding to position');
-    if (distanceFromAvg < -10) actionItems.push('Good DCA opportunity');
+    actionItems.push('Zvažte navýšení pozice');
+    if (distanceFromAvg < -10) actionItems.push('Dobrá DCA příležitost');
   }
   if (primarySignal.type === 'CONVICTION') {
-    actionItems.push('Hold through short-term volatility');
+    actionItems.push('Držte i přes krátkodobou volatilitu');
   }
   if (primarySignal.type === 'CONSIDER_TRIM') {
-    actionItems.push('Consider taking partial profits');
+    actionItems.push('Zvažte částečný výběr zisků');
   }
   if (primarySignal.type === 'WATCH') {
-    actionItems.push('Monitor upcoming earnings');
-    actionItems.push('Set price alerts');
+    actionItems.push('Sledujte nadčcházející výsledky');
+    actionItems.push('Nastavte cenové alerty');
   }
 
   // Calculate buy strategy
