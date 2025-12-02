@@ -23,6 +23,9 @@ type BadgeVariant =
   | 'target'
   | 'take-profit'
   | 'trim'
+  | 'fundamentally-weak'
+  | 'technically-weak'
+  | 'problematic'
   // Quality Signals
   | 'conviction'
   | 'quality'

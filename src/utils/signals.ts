@@ -26,43 +26,43 @@ export interface SignalConfig {
 export const SIGNAL_CONFIG: Record<SignalType, SignalConfig> = {
   // === ACTION SIGNALS (what to do) ===
   DIP_OPPORTUNITY: {
-    label: 'DIP',
+    label: 'Výhodná cena',
     class: 'dip',
     description:
       'Přeprodáno se solidními fundamenty – potenciální příležitost k nákupu',
   },
   BREAKOUT: {
-    label: 'Průlom',
+    label: 'Průlom objemu',
     class: 'breakout',
     description: 'Cena prorazila nad Bollinger Band s vysokým objemem',
   },
   REVERSAL: {
-    label: 'Obrat',
+    label: 'Začátek růstu',
     class: 'reversal',
-    description: 'Technické signály ukazují potenciální obrat trendu',
+    description: 'MACD divergence naznačuje potenciální obrat trendu',
   },
   MOMENTUM: {
-    label: 'Momentum',
+    label: 'Pokračující růst',
     class: 'momentum',
     description: 'Technické indikátory ukazují býčí momentum',
   },
   ACCUMULATE: {
-    label: 'Akumulovat',
+    label: 'Akumulovat DCA',
     class: 'accumulate',
-    description: 'Kvalitní akcie – čekejte na lepší vstup nebo DCA',
+    description: 'Kvalitní akcie – pokračuj v postupném nákupu',
   },
   GOOD_ENTRY: {
-    label: 'Dobrý vstup',
+    label: 'Příležitost k nákupu',
     class: 'good-entry',
     description: 'Kvalitní akcie pod cílovou cenou analytiků – vhodné k nákupu',
   },
   WAIT_FOR_DIP: {
-    label: 'Počkat',
+    label: 'Počkat na pokles',
     class: 'wait',
-    description: 'Kvalitní akcie, ale cena příliš vysoká – vyčkejte na pokles',
+    description: 'Kvalitní akcie, ale cena příliš vysoká – vyčkej na pokles',
   },
   NEAR_TARGET: {
-    label: 'U cíle',
+    label: 'Blízko cíle',
     class: 'target',
     description: 'Blíží se k cílové ceně analytiků',
   },
@@ -76,20 +76,40 @@ export const SIGNAL_CONFIG: Record<SignalType, SignalConfig> = {
     class: 'trim',
     description: 'Překoupeno s vysokou vahou – zvažte realizaci zisku',
   },
+  HOLD: {
+    label: 'Držet',
+    class: 'hold',
+    description: 'Kvalitní akcie – pokračuj v držení, případně DCA',
+  },
+  FUNDAMENTALLY_WEAK: {
+    label: 'Fundamentálně slabá',
+    class: 'fundamentally-weak',
+    description: 'Slabé fundamenty, ale technicky OK – riskantní pozice',
+  },
+  TECHNICALLY_WEAK: {
+    label: 'Technicky slabá',
+    class: 'technically-weak',
+    description: 'Dobré fundamenty, ale špatný timing – vyčkej',
+  },
+  PROBLEMATIC: {
+    label: 'Problémová',
+    class: 'problematic',
+    description: 'Slabé fundamenty i technika – zvažuj prodej',
+  },
 
   // === QUALITY SIGNALS (stock assessment) ===
   CONVICTION: {
-    label: 'Přesvědčení',
+    label: 'Nejvyšší kvalita',
     class: 'conviction',
     description: 'Silné dlouhodobé fundamenty – držet přes volatilitu',
   },
   QUALITY_CORE: {
-    label: 'Kvalita',
+    label: 'Kvalitní',
     class: 'quality',
     description: 'Vysoké fundamenty a pozitivní sentiment analytiků',
   },
   UNDERVALUED: {
-    label: 'Podhodnoceno',
+    label: 'Růstový potenciál',
     class: 'undervalued',
     description: 'Potenciál 30%+ růst dle cílové ceny analytiků',
   },

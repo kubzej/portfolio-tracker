@@ -57,14 +57,19 @@ interface RecommendationsProps {
 type FilterType =
   | 'all'
   | 'dips'
-  | 'conviction'
-  | 'quality'
+  | 'breakout'
+  | 'reversal'
   | 'momentum'
   | 'accumulate'
+  | 'good_entry'
+  | 'wait_for_dip'
+  | 'near_target'
+  | 'take_profit'
+  | 'consider_trim'
   | 'hold'
-  | 'target'
-  | 'watch'
-  | 'trim';
+  | 'fundamentally_weak'
+  | 'technically_weak'
+  | 'problematic';
 type GroupBy = 'signal' | 'score' | 'conviction' | 'none';
 
 // Helper: Get entry action based on signal type
@@ -135,9 +140,10 @@ function getEntryAction(signalType: SignalType): {
         variant: 'hold',
       };
     case 'STEADY':
+    case 'HOLD':
       return {
         action: 'Držet',
-        description: 'Stabilní pozice – bez akce',
+        description: 'Stabilní pozice – pokračuj v držení, případně DCA',
         variant: 'hold',
       };
     case 'WATCH':
@@ -146,6 +152,24 @@ function getEntryAction(signalType: SignalType): {
         action: 'Nepřikupovat',
         description: 'Některé metriky se zhoršují – sleduj vývoj',
         variant: 'warning',
+      };
+    case 'FUNDAMENTALLY_WEAK':
+      return {
+        action: 'Riskantní',
+        description: 'Slabé fundamenty, ale technicky OK – opatrně',
+        variant: 'warning',
+      };
+    case 'TECHNICALLY_WEAK':
+      return {
+        action: 'Vyčkat',
+        description: 'Dobré fundamenty, ale špatný timing',
+        variant: 'warning',
+      };
+    case 'PROBLEMATIC':
+      return {
+        action: 'Zvážit prodej',
+        description: 'Slabé fundamenty i technika',
+        variant: 'sell',
       };
     default:
       return {
@@ -231,18 +255,20 @@ export function Recommendations({
     }
   };
 
-  // Filter recommendations
+  // Filter recommendations - matches all 14 action signals
   const filteredRecs = useMemo(() => {
     switch (filter) {
       case 'dips':
-        return recommendations.filter((r) => r.isDip || r.dipScore >= 40);
-      case 'conviction':
         return recommendations.filter(
-          (r) => r.primarySignal.type === 'CONVICTION'
+          (r) => r.primarySignal.type === 'DIP_OPPORTUNITY'
         );
-      case 'quality':
+      case 'breakout':
         return recommendations.filter(
-          (r) => r.primarySignal.type === 'QUALITY_CORE'
+          (r) => r.primarySignal.type === 'BREAKOUT'
+        );
+      case 'reversal':
+        return recommendations.filter(
+          (r) => r.primarySignal.type === 'REVERSAL'
         );
       case 'momentum':
         return recommendations.filter(
@@ -252,17 +278,39 @@ export function Recommendations({
         return recommendations.filter(
           (r) => r.primarySignal.type === 'ACCUMULATE'
         );
-      case 'hold':
-        return recommendations.filter((r) => r.primarySignal.type === 'STEADY');
-      case 'target':
+      case 'good_entry':
+        return recommendations.filter(
+          (r) => r.primarySignal.type === 'GOOD_ENTRY'
+        );
+      case 'wait_for_dip':
+        return recommendations.filter(
+          (r) => r.primarySignal.type === 'WAIT_FOR_DIP'
+        );
+      case 'near_target':
         return recommendations.filter(
           (r) => r.primarySignal.type === 'NEAR_TARGET'
         );
-      case 'watch':
-        return recommendations.filter((r) => r.primarySignal.type === 'WATCH');
-      case 'trim':
+      case 'take_profit':
+        return recommendations.filter(
+          (r) => r.primarySignal.type === 'TAKE_PROFIT'
+        );
+      case 'consider_trim':
         return recommendations.filter(
           (r) => r.primarySignal.type === 'CONSIDER_TRIM'
+        );
+      case 'hold':
+        return recommendations.filter((r) => r.primarySignal.type === 'HOLD');
+      case 'fundamentally_weak':
+        return recommendations.filter(
+          (r) => r.primarySignal.type === 'FUNDAMENTALLY_WEAK'
+        );
+      case 'technically_weak':
+        return recommendations.filter(
+          (r) => r.primarySignal.type === 'TECHNICALLY_WEAK'
+        );
+      case 'problematic':
+        return recommendations.filter(
+          (r) => r.primarySignal.type === 'PROBLEMATIC'
         );
       default:
         return recommendations;
@@ -298,44 +346,52 @@ export function Recommendations({
     return groups;
   }, [filteredRecs, groupBy]);
 
-  // Stats - count by signal type
+  // Stats - count all 14 action signals
   const stats = useMemo(() => {
     const countBySignal = (type: SignalType) =>
       recommendations.filter((r) => r.primarySignal.type === type).length;
 
     return {
       total: recommendations.length,
-      dips: recommendations.filter(
-        (r) => r.primarySignal.type === 'DIP_OPPORTUNITY'
-      ).length,
-      conviction: countBySignal('CONVICTION'),
-      quality: countBySignal('QUALITY_CORE'),
+      dips: countBySignal('DIP_OPPORTUNITY'),
+      breakout: countBySignal('BREAKOUT'),
+      reversal: countBySignal('REVERSAL'),
       momentum: countBySignal('MOMENTUM'),
       accumulate: countBySignal('ACCUMULATE'),
-      hold: countBySignal('STEADY'),
-      target: countBySignal('NEAR_TARGET'),
-      watch: countBySignal('WATCH'),
-      trim: countBySignal('CONSIDER_TRIM'),
-      neutral: countBySignal('NEUTRAL'),
+      good_entry: countBySignal('GOOD_ENTRY'),
+      wait_for_dip: countBySignal('WAIT_FOR_DIP'),
+      near_target: countBySignal('NEAR_TARGET'),
+      take_profit: countBySignal('TAKE_PROFIT'),
+      consider_trim: countBySignal('CONSIDER_TRIM'),
+      hold: countBySignal('HOLD'),
+      fundamentally_weak: countBySignal('FUNDAMENTALLY_WEAK'),
+      technically_weak: countBySignal('TECHNICALLY_WEAK'),
+      problematic: countBySignal('PROBLEMATIC'),
     };
   }, [recommendations]);
 
-  // Filter options for ToggleGroup
+  // Filter options for ToggleGroup - all 14 action signals
   const filterOptions: ToggleOption[] = useMemo(
     () => [
       { value: 'all', label: 'Vše', count: stats.total, color: 'default' },
-      { value: 'dips', label: 'DIP', count: stats.dips, color: 'success' },
+      // Buy signals (green/cyan)
       {
-        value: 'conviction',
-        label: 'Conviction',
-        count: stats.conviction,
-        color: 'purple',
+        value: 'dips',
+        label: 'Výhodná cena',
+        count: stats.dips,
+        color: 'success',
       },
       {
-        value: 'quality',
-        label: 'Kvalita',
-        count: stats.quality,
-        color: 'purple',
+        value: 'breakout',
+        label: 'Průlom',
+        count: stats.breakout,
+        color: 'success',
+      },
+      {
+        value: 'reversal',
+        label: 'Obrat',
+        count: stats.reversal,
+        color: 'success',
       },
       {
         value: 'momentum',
@@ -350,24 +406,57 @@ export function Recommendations({
         color: 'cyan',
       },
       {
-        value: 'hold',
-        label: 'Držet',
-        count: stats.hold,
-        color: 'default',
+        value: 'good_entry',
+        label: 'Dobrý vstup',
+        count: stats.good_entry,
+        color: 'cyan',
+      },
+      // Wait/Hold signals (yellow/default)
+      {
+        value: 'wait_for_dip',
+        label: 'Počkat',
+        count: stats.wait_for_dip,
+        color: 'warning',
+      },
+      { value: 'hold', label: 'Držet', count: stats.hold, color: 'default' },
+      // Caution signals (orange)
+      {
+        value: 'near_target',
+        label: 'U cíle',
+        count: stats.near_target,
+        color: 'orange',
       },
       {
-        value: 'target',
-        label: 'U cíle',
-        count: stats.target,
+        value: 'take_profit',
+        label: 'Vybrat zisk',
+        count: stats.take_profit,
+        color: 'orange',
+      },
+      {
+        value: 'consider_trim',
+        label: 'Redukovat',
+        count: stats.consider_trim,
+        color: 'orange',
+      },
+      // Problem signals (red/warning)
+      {
+        value: 'fundamentally_weak',
+        label: 'Slabé fundamenty',
+        count: stats.fundamentally_weak,
         color: 'warning',
       },
       {
-        value: 'watch',
-        label: 'Sledovat',
-        count: stats.watch,
-        color: 'orange',
+        value: 'technically_weak',
+        label: 'Špatný timing',
+        count: stats.technically_weak,
+        color: 'warning',
       },
-      { value: 'trim', label: 'Redukovat', count: stats.trim, color: 'danger' },
+      {
+        value: 'problematic',
+        label: 'Problém',
+        count: stats.problematic,
+        color: 'danger',
+      },
     ],
     [stats]
   );

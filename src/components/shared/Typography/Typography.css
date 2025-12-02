@@ -284,6 +284,26 @@
   color: var(--color-danger);
 }
 
+.badge--hold {
+  background: rgba(100, 116, 139, 0.15);
+  color: #64748b;
+}
+
+.badge--fundamentally-weak {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.badge--technically-weak {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+}
+
+.badge--problematic {
+  background: rgba(220, 38, 38, 0.2);
+  color: #dc2626;
+}
+
 .badge--conviction {
   background: rgba(139, 92, 246, 0.15);
   color: #8b5cf6;
@@ -323,6 +343,8 @@
   background: rgba(148, 163, 184, 0.15);
   color: #94a3b8;
 }
+
+/* Note: .badge--neutral is already defined above */
 
 /* ========================================
    COUNT

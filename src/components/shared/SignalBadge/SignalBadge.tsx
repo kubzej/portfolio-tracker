@@ -14,6 +14,10 @@ type BadgeVariant =
   | 'target'
   | 'take-profit'
   | 'trim'
+  | 'hold'
+  | 'fundamentally-weak'
+  | 'technically-weak'
+  | 'problematic'
   | 'conviction'
   | 'quality'
   | 'undervalued'
@@ -24,6 +28,7 @@ type BadgeVariant =
   | 'weak'
   | 'neutral';
 
+// Keys match the 'class' property in SIGNAL_CONFIG (signals.ts)
 const CLASS_TO_VARIANT: Record<string, BadgeVariant> = {
   dip: 'dip',
   breakout: 'breakout',
@@ -35,6 +40,10 @@ const CLASS_TO_VARIANT: Record<string, BadgeVariant> = {
   target: 'target',
   'take-profit': 'take-profit',
   trim: 'trim',
+  hold: 'hold',
+  'fundamentally-weak': 'fundamentally-weak',
+  'technically-weak': 'technically-weak',
+  problematic: 'problematic',
   conviction: 'conviction',
   quality: 'quality',
   undervalued: 'undervalued',

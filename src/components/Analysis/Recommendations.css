@@ -371,6 +371,26 @@
   color: white;
 }
 
+.tile-signal-header.hold {
+  background: linear-gradient(135deg, #64748b, #475569);
+  color: white;
+}
+
+.tile-signal-header.fundamentally-weak {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+.tile-signal-header.technically-weak {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: white;
+}
+
+.tile-signal-header.problematic {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: white;
+}
+
 .tile-signal-header.conviction {
   background: linear-gradient(135deg, #8b5cf6, #7c3aed);
   color: white;
