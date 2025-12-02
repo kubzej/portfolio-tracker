@@ -47,7 +47,7 @@ export function ResearchTechnical({
   if (!tech) {
     return (
       <div className="research-technical">
-        <div className="no-data">No technical data available</div>
+        <div className="no-data">Nejsou dostupná technická data</div>
       </div>
     );
   }
@@ -56,7 +56,7 @@ export function ResearchTechnical({
     <div className="research-technical">
       {/* Price Chart */}
       <section className="technical-section">
-        <CardTitle>Price Chart</CardTitle>
+        <CardTitle>Cenový graf</CardTitle>
         <PriceChart
           historicalPrices={tech.historicalPrices}
           historicalPricesWeekly={tech.historicalPricesWeekly}
@@ -70,7 +70,7 @@ export function ResearchTechnical({
       {/* Technical Bias */}
       {recommendation && (
         <section className="technical-section">
-          <CardTitle>Technical Outlook</CardTitle>
+          <CardTitle>Technický výhled</CardTitle>
           <div className="technical-outlook">
             <Badge
               variant={
@@ -86,7 +86,7 @@ export function ResearchTechnical({
             </Badge>
             <div className="technical-score">
               <ScoreCard
-                label="Technical Score"
+                label="Technické skóre"
                 value={recommendation.technicalScore}
                 showBar
                 thresholds={{ good: 60, bad: 40 }}
@@ -98,7 +98,7 @@ export function ResearchTechnical({
 
       {/* Moving Averages */}
       <section className="technical-section">
-        <CardTitle>Moving Averages</CardTitle>
+        <CardTitle>Klouzavé průměry</CardTitle>
         <div className="metrics-grid">
           <MetricCard
             label="SMA 50"
@@ -154,7 +154,7 @@ export function ResearchTechnical({
 
       {/* Momentum Indicators */}
       <section className="technical-section">
-        <CardTitle>Momentum Indicators</CardTitle>
+        <CardTitle>Indikátory momenta</CardTitle>
         <div className="momentum-grid">
           {/* RSI */}
           <div className="momentum-card">
@@ -305,10 +305,10 @@ export function ResearchTechnical({
 
       {/* Bollinger Bands */}
       <section className="technical-section">
-        <CardTitle>Bollinger Bands</CardTitle>
+        <CardTitle>Bollingerova pásma</CardTitle>
         <div className="metrics-grid">
           <MetricCard
-            label="Upper Band"
+            label="Horní pásmo"
             value={
               tech.bollingerUpper ? `$${tech.bollingerUpper.toFixed(2)}` : null
             }
@@ -317,7 +317,7 @@ export function ResearchTechnical({
             }
           />
           <MetricCard
-            label="Middle Band"
+            label="Střední pásmo"
             value={
               tech.bollingerMiddle
                 ? `$${tech.bollingerMiddle.toFixed(2)}`
@@ -328,7 +328,7 @@ export function ResearchTechnical({
             }
           />
           <MetricCard
-            label="Lower Band"
+            label="Spodní pásmo"
             value={
               tech.bollingerLower ? `$${tech.bollingerLower.toFixed(2)}` : null
             }
@@ -337,7 +337,7 @@ export function ResearchTechnical({
             }
           />
           <MetricCard
-            label="Position"
+            label="Pozice v pásmech"
             value={
               tech.bollingerPosition !== null
                 ? `${tech.bollingerPosition.toFixed(0)}%`
@@ -368,7 +368,7 @@ export function ResearchTechnical({
 
       {/* Trend & Volume */}
       <section className="technical-section">
-        <CardTitle>Trend & Volume</CardTitle>
+        <CardTitle>Trend a objem</CardTitle>
         <div className="metrics-grid">
           <MetricCard
             label="ADX"
@@ -406,7 +406,7 @@ export function ResearchTechnical({
             }
           />
           <MetricCard
-            label="Volume Change"
+            label="Změna objemu"
             value={
               tech.volumeChange !== null
                 ? `${tech.volumeChange.toFixed(0)}%`
@@ -431,7 +431,7 @@ export function ResearchTechnical({
       {/* Fibonacci Levels */}
       {tech.fibonacciLevels && (
         <section className="technical-section">
-          <CardTitle>Fibonacci Retracement</CardTitle>
+          <CardTitle>Fibonacci úrovně</CardTitle>
           <div className="metrics-grid">
             <MetricCard
               label="0% (High)"

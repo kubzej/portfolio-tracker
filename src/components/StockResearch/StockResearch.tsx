@@ -172,7 +172,7 @@ export function StockResearch({
       } catch (err) {
         if (!cancelled) {
           setError(
-            err instanceof Error ? err.message : 'Failed to load research data'
+            err instanceof Error ? err.message : 'Nepodařilo se načíst data'
           );
         }
       } finally {
@@ -223,7 +223,7 @@ export function StockResearch({
   if (loading) {
     return (
       <div className="stock-research">
-        <LoadingSpinner text={`Loading research for ${ticker}...`} />
+        <LoadingSpinner text={`Načítám data pro ${ticker}...`} />
       </div>
     );
   }
@@ -233,11 +233,11 @@ export function StockResearch({
       <div className="stock-research">
         <div className="stock-research-header">
           <button className="back-btn" onClick={onBack}>
-            ← Back
+            ← Zpět
           </button>
         </div>
         <ErrorState
-          message={error || 'Failed to load data'}
+          message={error || 'Nepodařilo se načíst data'}
           onRetry={handleRetry}
         />
       </div>
@@ -245,11 +245,11 @@ export function StockResearch({
   }
 
   const tabs = [
-    { value: 'summary', label: 'Summary' },
-    { value: 'fundamentals', label: 'Fundamentals' },
-    { value: 'valuation', label: 'Valuation' },
-    { value: 'technical', label: 'Technical' },
-    { value: 'peers', label: 'Peers' },
+    { value: 'summary', label: 'Přehled' },
+    { value: 'fundamentals', label: 'Fundamenty' },
+    { value: 'valuation', label: 'Valuace' },
+    { value: 'technical', label: 'Technika' },
+    { value: 'peers', label: 'Konkurence' },
   ];
 
   // Get exchange info for non-US stock badges
@@ -314,7 +314,7 @@ export function StockResearch({
       <div className="stock-research-header">
         <div className="stock-research-header__top">
           <Button variant="ghost" size="sm" onClick={onBack}>
-            ← Back
+            ← Zpět
           </Button>
           {onAddToWatchlist && (
             <Button
@@ -322,7 +322,7 @@ export function StockResearch({
               size="sm"
               onClick={() => onAddToWatchlist(ticker)}
             >
-              + Watchlist
+              + Sledovat
             </Button>
           )}
         </div>
@@ -349,7 +349,7 @@ export function StockResearch({
             size="sm"
             onClick={() => setDescriptionExpanded(!descriptionExpanded)}
           >
-            {descriptionExpanded ? 'Show less' : 'Show more'}
+            {descriptionExpanded ? 'Méně' : 'Více'}
           </Button>
         </div>
       )}
@@ -375,7 +375,7 @@ export function StockResearch({
       {/* Quick Stats Bar */}
       <div className="stock-research-quick-stats">
         <QuickStat
-          label="52W Range"
+          label="52T rozsah"
           value={
             analystData.fiftyTwoWeekLow && analystData.fiftyTwoWeekHigh
               ? `$${analystData.fiftyTwoWeekLow.toFixed(
@@ -385,7 +385,7 @@ export function StockResearch({
           }
         />
         <QuickStat
-          label="Analyst"
+          label="Analytici"
           value={
             analystData.recommendationKey?.toUpperCase().replace('_', ' ') ??
             '—'
@@ -400,7 +400,7 @@ export function StockResearch({
               : undefined
           }
         />
-        <QuickStat label="Industry" value={analystData.industry ?? '—'} />
+        <QuickStat label="Odvětví" value={analystData.industry ?? '—'} />
       </div>
 
       {/* Tabs */}

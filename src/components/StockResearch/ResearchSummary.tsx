@@ -33,7 +33,7 @@ export function ResearchSummary({
     <div className="research-summary">
       {/* Score Overview - both Conviction and Composite scores */}
       <section className="summary-section">
-        <CardTitle>Overall Rating</CardTitle>
+        <CardTitle>Celkové hodnocení</CardTitle>
         <div className="score-overview">
           <div className="dual-scores">
             {/* Composite Score */}
@@ -44,7 +44,7 @@ export function ResearchSummary({
               )}
             >
               <div className="score-label">
-                <MetricLabel>Score</MetricLabel>
+                <MetricLabel>Skóre</MetricLabel>
                 <InfoTooltip text="**Celkové skóre akcie** | Vážený průměr všech analytických faktorů: | • 25% technická analýza | • 20% fundamenty | • 20% portfolio kontext | • 15% analytici | • 10% zprávy | • 10% insider aktivita" />
               </div>
               <MetricValue size="xl">
@@ -71,7 +71,7 @@ export function ResearchSummary({
               )}
             >
               <div className="score-label">
-                <MetricLabel>Conviction</MetricLabel>
+                <MetricLabel>Přesvědčení</MetricLabel>
                 <InfoTooltip text="**Conviction Score** | Dlouhodobá kvalita akcie pro držení. | Zahrnuje stabilitu fundamentů (ROE, marže, růst), tržní pozici a momentum." />
               </div>
               <MetricValue size="xl">
@@ -95,7 +95,7 @@ export function ResearchSummary({
 
       {/* Score Breakdown */}
       <section className="summary-section">
-        <CardTitle>Score Breakdown</CardTitle>
+        <CardTitle>Rozpad skóre</CardTitle>
         <div className="score-breakdown-grid">
           {breakdown.map((component) => (
             <ScoreCard
@@ -115,7 +115,7 @@ export function ResearchSummary({
         <div className="points-card strengths">
           <div className="points-header">
             <span className="points-icon">✓</span>
-            <CardTitle>Strengths</CardTitle>
+            <CardTitle>Silné stránky</CardTitle>
           </div>
           {strengths.length > 0 ? (
             <div className="points-list">
@@ -126,13 +126,13 @@ export function ResearchSummary({
               ))}
             </div>
           ) : (
-            <Muted>No strong positives</Muted>
+            <Muted>Žádné výrazné pozitiva</Muted>
           )}
         </div>
         <div className="points-card concerns">
           <div className="points-header">
             <span className="points-icon">!</span>
-            <CardTitle>Concerns</CardTitle>
+            <CardTitle>Obavy</CardTitle>
           </div>
           {concerns.length > 0 ? (
             <div className="points-list">
@@ -143,7 +143,7 @@ export function ResearchSummary({
               ))}
             </div>
           ) : (
-            <Muted>No major concerns</Muted>
+            <Muted>Žádné vážné obavy</Muted>
           )}
         </div>
       </section>
@@ -151,16 +151,16 @@ export function ResearchSummary({
       {/* Entry Strategy */}
       {buyStrategy && (
         <section className="summary-section">
-          <CardTitle>Entry Strategy</CardTitle>
+          <CardTitle>Vstupní strategie</CardTitle>
           <div className="entry-strategy">
             {buyStrategy.inBuyZone && (
               <IndicatorSignal type="bullish">
-                Current price is in the buy zone
+                Aktuální cena je v nákupní zóně
               </IndicatorSignal>
             )}
             <div className="strategy-grid">
               <MetricCard
-                label="Buy Zone"
+                label="Nákupní zóna"
                 value={
                   buyStrategy.buyZoneLow && buyStrategy.buyZoneHigh
                     ? `$${buyStrategy.buyZoneLow.toFixed(
@@ -171,7 +171,7 @@ export function ResearchSummary({
                 sentiment={buyStrategy.inBuyZone ? 'positive' : undefined}
               />
               <MetricCard
-                label="Support"
+                label="Podpora"
                 value={
                   buyStrategy.supportPrice
                     ? `$${buyStrategy.supportPrice.toFixed(2)}`
@@ -179,7 +179,7 @@ export function ResearchSummary({
                 }
               />
               <MetricCard
-                label="Risk/Reward"
+                label="Riziko/Výnos"
                 value={
                   buyStrategy.riskRewardRatio
                     ? `${buyStrategy.riskRewardRatio}:1`
@@ -214,7 +214,7 @@ export function ResearchSummary({
       {/* Exit Strategy */}
       {exitStrategy && (
         <section className="summary-section">
-          <CardTitle>Exit Strategy</CardTitle>
+          <CardTitle>Strategie výstupu</CardTitle>
           <div className="entry-strategy">
             <div className="holding-period-badge">
               <Badge
@@ -227,16 +227,16 @@ export function ResearchSummary({
                 }
               >
                 {exitStrategy.holdingPeriod === 'SWING'
-                  ? 'Swing Trade'
+                  ? 'Krátkodobě'
                   : exitStrategy.holdingPeriod === 'MEDIUM'
-                  ? 'Medium Term'
-                  : 'Long Term Hold'}
+                  ? 'Střednědobě'
+                  : 'Dlouhodobě'}
               </Badge>
               <Text color="secondary">{exitStrategy.holdingReason}</Text>
             </div>
             <div className="strategy-grid">
               <MetricCard
-                label="Take Profit 1"
+                label="TP1"
                 value={
                   exitStrategy.takeProfit1
                     ? `$${exitStrategy.takeProfit1.toFixed(2)}`
@@ -255,7 +255,7 @@ export function ResearchSummary({
                 sentiment="positive"
               />
               <MetricCard
-                label="Take Profit 2"
+                label="TP2"
                 value={
                   exitStrategy.takeProfit2
                     ? `$${exitStrategy.takeProfit2.toFixed(2)}`
@@ -274,7 +274,7 @@ export function ResearchSummary({
                 sentiment="positive"
               />
               <MetricCard
-                label="Target"
+                label="Cíl"
                 value={
                   exitStrategy.takeProfit3
                     ? `$${exitStrategy.takeProfit3.toFixed(2)}`
@@ -313,8 +313,8 @@ export function ResearchSummary({
             </div>
             {exitStrategy.trailingStopPercent && (
               <IndicatorSignal type="info">
-                Consider {exitStrategy.trailingStopPercent}% trailing stop after
-                first target
+                Zvažte {exitStrategy.trailingStopPercent}% trailing stop po
+                prvním cíli
               </IndicatorSignal>
             )}
           </div>
@@ -324,10 +324,10 @@ export function ResearchSummary({
       {/* Analyst Consensus - always show */}
       <section className="summary-section">
         <div className="section-title-row">
-          <CardTitle>Analyst Consensus</CardTitle>
+          <CardTitle>Konsenzus analytiků</CardTitle>
           {analystData.numberOfAnalysts && analystData.numberOfAnalysts > 0 && (
             <Text color="secondary" size="sm">
-              {analystData.numberOfAnalysts} analysts
+              {analystData.numberOfAnalysts} analytiků
             </Text>
           )}
         </div>
@@ -342,7 +342,7 @@ export function ResearchSummary({
             />
           ) : (
             <div className="no-analyst-data">
-              <Muted>No analyst coverage available</Muted>
+              <Muted>Není k dispozici pokrytí analytiky</Muted>
             </div>
           )}
         </div>
@@ -353,7 +353,7 @@ export function ResearchSummary({
         analystData.insiderSentiment.mspr !== null && (
           <section className="summary-section">
             <div className="section-title-row">
-              <CardTitle>Insider Sentiment</CardTitle>
+              <CardTitle>Insider sentiment</CardTitle>
             </div>
             <div className="strategy-grid insider-grid">
               <MetricCard
@@ -385,13 +385,13 @@ export function ResearchSummary({
                 />
               )}
               <MetricCard
-                label="Signal"
+                label="Signál"
                 value={
                   analystData.insiderSentiment.mspr > 15
-                    ? 'Buying'
+                    ? 'Nákupy'
                     : analystData.insiderSentiment.mspr < -15
-                    ? 'Selling'
-                    : 'Neutral'
+                    ? 'Prodeje'
+                    : 'Neutrální'
                 }
                 sentiment={
                   analystData.insiderSentiment.mspr > 15

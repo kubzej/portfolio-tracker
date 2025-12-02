@@ -603,17 +603,17 @@ export function ResearchPeers({
   );
 
   if (loading) {
-    return <LoadingSpinner text="Loading peers data..." />;
+    return <LoadingSpinner text="Načítám data konkurence..." />;
   }
 
   if (error || !data) {
-    return <ErrorState message={error || 'Failed to load data'} />;
+    return <ErrorState message={error || 'Nepodařilo se načíst data'} />;
   }
 
   if (data.peers.length === 0) {
     return (
       <div className="peers-empty">
-        <Muted>No peer data available for this ticker.</Muted>
+        <Muted>Pro tento ticker nejsou dostupná data o konkurenci.</Muted>
       </div>
     );
   }
@@ -634,14 +634,14 @@ export function ResearchPeers({
       {/* Header with Overall Ranking */}
       <div className="peers-header">
         <div className="peers-header-main">
-          <CardTitle>Peer Comparison</CardTitle>
+          <CardTitle>Srovnání s konkurencí</CardTitle>
           <Text color="secondary" size="sm">
-            Comparing with {data.peers.length} competitors
+            Porovnání s {data.peers.length} konkurenty
           </Text>
         </div>
         {avgRank !== null && (
           <div className="overall-rank">
-            <MetricLabel>Overall Rank</MetricLabel>
+            <MetricLabel>Celkové pořadí</MetricLabel>
             <MetricValue size="lg">
               #{Math.round(avgRank)}
               <Text as="span" color="muted" size="sm">
@@ -657,7 +657,7 @@ export function ResearchPeers({
       {insights.length > 0 && (
         <div className="peers-insights">
           <CardTitle>
-            Key Insights
+            Klíčové poznatky
             <InfoTooltip text="**Klíčové poznatky** | Automaticky generované postřehy na základě porovnání s konkurencí." />
           </CardTitle>
           <div className="insights-list">
@@ -673,7 +673,7 @@ export function ResearchPeers({
       {/* Radar Chart */}
       <div className="peers-radar">
         <CardTitle>
-          Performance Profile
+          Výkonnostní profil
           <InfoTooltip text="**Výkonnostní profil** | Vizuální porovnání klíčových metrik s průměrem konkurence. | Vyšší = lepší." />
         </CardTitle>
         <div className="radar-chart-container">
@@ -732,7 +732,7 @@ export function ResearchPeers({
       {/* Historical Performance */}
       <div className="peers-performance">
         <CardTitle>
-          Historical Returns
+          Historické výnosy
           <InfoTooltip text="**Historické výnosy** | Výkonnost akcií za různá období. | Klikni na záhlaví pro řazení." />
         </CardTitle>
         <div className="performance-table-wrapper">
@@ -814,7 +814,7 @@ export function ResearchPeers({
       {/* Valuation Score */}
       <div className="peers-valuation-scores">
         <CardTitle>
-          Valuation Score
+          Valuační skóre
           <InfoTooltip text="**Valuační skóre** | Kombinované hodnocení valuace na základě P/E a EV/EBITDA. | Vyšší = levnější." />
         </CardTitle>
         <div className="valuation-bars">
@@ -853,7 +853,7 @@ export function ResearchPeers({
       {/* Main Comparison Table */}
       <div className="peers-table-section">
         <CardTitle>
-          Detailed Comparison
+          Detailní porovnání
           <InfoTooltip text="**Detailní porovnání** | Podrobné porovnání všech klíčových metrik." />
         </CardTitle>
         <div className="peers-table-wrapper">
