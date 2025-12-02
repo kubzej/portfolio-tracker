@@ -67,6 +67,95 @@ type FilterType =
   | 'trim';
 type GroupBy = 'signal' | 'score' | 'conviction' | 'none';
 
+// Helper: Get entry action based on signal type
+function getEntryAction(signalType: SignalType): {
+  action: string;
+  description: string;
+  variant: 'buy' | 'hold' | 'sell' | 'info' | 'warning';
+} {
+  switch (signalType) {
+    case 'DIP_OPPORTUNITY':
+      return {
+        action: 'Přikoupit',
+        description: 'Výhodná cena – využij příležitost k nákupu',
+        variant: 'buy',
+      };
+    case 'GOOD_ENTRY':
+      return {
+        action: 'Přikoupit',
+        description: 'Pod cílovou cenou analytiků – vhodné k nákupu',
+        variant: 'buy',
+      };
+    case 'ACCUMULATE':
+      return {
+        action: 'Přikupovat postupně',
+        description: 'Kvalitní akcie – pokračuj v DCA strategii',
+        variant: 'buy',
+      };
+    case 'MOMENTUM':
+    case 'BREAKOUT':
+    case 'REVERSAL':
+      return {
+        action: 'Přikoupit',
+        description: 'Technický signál – momentum je na tvé straně',
+        variant: 'buy',
+      };
+    case 'UNDERVALUED':
+      return {
+        action: 'Přikoupit',
+        description: 'Podhodnoceno – potenciál růstu 30%+',
+        variant: 'buy',
+      };
+    case 'WAIT_FOR_DIP':
+      return {
+        action: 'Vyčkat',
+        description: 'Kvalitní akcie, ale cena vysoká – počkej na pokles',
+        variant: 'warning',
+      };
+    case 'NEAR_TARGET':
+    case 'OVERBOUGHT':
+      return {
+        action: 'Nepřikupovat',
+        description: 'Cena blízko cíle nebo překoupeno',
+        variant: 'sell',
+      };
+    case 'TAKE_PROFIT':
+    case 'CONSIDER_TRIM':
+      return {
+        action: 'Nepřikupovat',
+        description: 'Zvažuj realizaci zisku, ne další nákup',
+        variant: 'sell',
+      };
+    case 'CONVICTION':
+    case 'QUALITY_CORE':
+    case 'STRONG_TREND':
+      return {
+        action: 'Držet / DCA',
+        description: 'Kvalitní akcie – drž nebo postupně přikupuj',
+        variant: 'hold',
+      };
+    case 'STEADY':
+      return {
+        action: 'Držet',
+        description: 'Stabilní pozice – bez akce',
+        variant: 'hold',
+      };
+    case 'WATCH':
+    case 'WEAK':
+      return {
+        action: 'Nepřikupovat',
+        description: 'Některé metriky se zhoršují – sleduj vývoj',
+        variant: 'warning',
+      };
+    default:
+      return {
+        action: 'Držet',
+        description: 'Žádný silný signál – bez akce',
+        variant: 'info',
+      };
+  }
+}
+
 export function Recommendations({
   recommendations,
   portfolioId,
@@ -591,10 +680,10 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
             }
           >
             {rec.convictionLevel === 'HIGH'
-              ? 'Vysoká'
+              ? 'Vysoké'
               : rec.convictionLevel === 'MEDIUM'
               ? 'Střední'
-              : 'Nízká'}
+              : 'Nízké'}
           </Badge>
         </div>
 
@@ -639,10 +728,10 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
           <Text color="muted">{signalInfo.description}</Text>
         </div>
 
-        {/* Key Metrics - unified grid */}
+        {/* Key Metrics - position info */}
         <div className="modal-section">
           <div className="section-header">
-            <CardTitle>Klíčové metriky</CardTitle>
+            <CardTitle>Pozice</CardTitle>
           </div>
           <div className="metrics-grid">
             <div className="metric-cell">
@@ -682,6 +771,28 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                 </MetricValue>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Entry Strategy */}
+        <div className="modal-section">
+          <div className="section-header">
+            <CardTitle>Strategie vstupu</CardTitle>
+          </div>
+          {(() => {
+            const entryAction = getEntryAction(rec.primarySignal.type);
+            return (
+              <div className="entry-action-header">
+                <Badge variant={entryAction.variant} size="base">
+                  {entryAction.action}
+                </Badge>
+                <Text size="sm" color="muted">
+                  {entryAction.description}
+                </Text>
+              </div>
+            );
+          })()}
+          <div className="metrics-grid">
             {rec.buyStrategy.buyZoneLow !== null &&
               rec.buyStrategy.buyZoneHigh !== null && (
                 <div className="metric-cell">
@@ -752,137 +863,138 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Exit Strategy */}
-          {rec.exitStrategy && (
-            <div className="exit-strategy-section">
-              <div className="section-header">
-                <CardTitle>Strategie výstupu</CardTitle>
-              </div>
-              <div className="exit-header">
-                <Badge
-                  variant={
-                    rec.exitStrategy.holdingPeriod === 'SWING'
-                      ? 'warning'
-                      : rec.exitStrategy.holdingPeriod === 'MEDIUM'
-                      ? 'hold'
-                      : 'buy'
-                  }
-                >
-                  {rec.exitStrategy.holdingPeriod === 'SWING'
-                    ? 'Krátkodobě'
+        {/* Exit Strategy */}
+        {rec.exitStrategy && (
+          <div className="modal-section exit-strategy-section">
+            <div className="section-header">
+              <CardTitle>Strategie výstupu</CardTitle>
+            </div>
+            <div className="exit-header">
+              <Badge
+                variant={
+                  rec.exitStrategy.holdingPeriod === 'SWING'
+                    ? 'warning'
                     : rec.exitStrategy.holdingPeriod === 'MEDIUM'
-                    ? 'Střednědobě'
-                    : 'Dlouhodobě'}
-                </Badge>
-                <Text size="sm" color="muted">
-                  {rec.exitStrategy.holdingReason}
-                </Text>
-              </div>
-              <div className="metrics-grid">
-                {rec.exitStrategy.takeProfit1 !== null && (
-                  <div className="metric-cell">
-                    <MetricLabel>TP1</MetricLabel>
-                    <MetricValue sentiment="positive">
-                      ${rec.exitStrategy.takeProfit1.toFixed(0)}
-                      <Text size="xs" color="success">
-                        {' '}
-                        (+
-                        {(
-                          ((rec.exitStrategy.takeProfit1 - rec.currentPrice) /
-                            rec.currentPrice) *
-                          100
-                        ).toFixed(0)}
-                        %)
-                      </Text>
-                    </MetricValue>
-                  </div>
-                )}
-                {rec.exitStrategy.takeProfit2 !== null && (
-                  <div className="metric-cell">
-                    <MetricLabel>TP2</MetricLabel>
-                    <MetricValue sentiment="positive">
-                      ${rec.exitStrategy.takeProfit2.toFixed(0)}
-                      <Text size="xs" color="success">
-                        {' '}
-                        (+
-                        {(
-                          ((rec.exitStrategy.takeProfit2 - rec.currentPrice) /
-                            rec.currentPrice) *
-                          100
-                        ).toFixed(0)}
-                        %)
-                      </Text>
-                    </MetricValue>
-                  </div>
-                )}
-                {rec.exitStrategy.takeProfit3 !== null && (
-                  <div className="metric-cell">
-                    <MetricLabel>Cíl</MetricLabel>
-                    <MetricValue sentiment="positive">
-                      ${rec.exitStrategy.takeProfit3.toFixed(0)}
-                      <Text size="xs" color="success">
-                        {' '}
-                        (+
-                        {(
-                          ((rec.exitStrategy.takeProfit3 - rec.currentPrice) /
-                            rec.currentPrice) *
-                          100
-                        ).toFixed(0)}
-                        %)
-                      </Text>
-                    </MetricValue>
-                  </div>
-                )}
-                {rec.exitStrategy.stopLoss !== null && (
-                  <div className="metric-cell">
-                    <MetricLabel>Stop Loss</MetricLabel>
-                    <MetricValue sentiment="negative">
-                      ${rec.exitStrategy.stopLoss.toFixed(0)}
-                      <Text size="xs" color="danger">
-                        {' '}
-                        (
-                        {(
-                          ((rec.exitStrategy.stopLoss - rec.currentPrice) /
-                            rec.currentPrice) *
-                          100
-                        ).toFixed(0)}
-                        %)
-                      </Text>
-                    </MetricValue>
-                  </div>
-                )}
-                {rec.exitStrategy.resistanceLevel !== null && (
-                  <div className="metric-cell">
-                    <MetricLabel>Odpor</MetricLabel>
-                    <MetricValue>
-                      ${rec.exitStrategy.resistanceLevel.toFixed(0)}
-                      <Text size="xs" color="muted">
-                        {' '}
-                        (+
-                        {(
-                          ((rec.exitStrategy.resistanceLevel -
-                            rec.currentPrice) /
-                            rec.currentPrice) *
-                          100
-                        ).toFixed(0)}
-                        %)
-                      </Text>
-                    </MetricValue>
-                  </div>
-                )}
-              </div>
-              {rec.exitStrategy.trailingStopPercent && (
-                <Caption>
-                  Zvažte {rec.exitStrategy.trailingStopPercent}% trailing stop
-                  po TP1
-                </Caption>
+                    ? 'hold'
+                    : 'buy'
+                }
+              >
+                {rec.exitStrategy.holdingPeriod === 'SWING'
+                  ? 'Krátkodobě'
+                  : rec.exitStrategy.holdingPeriod === 'MEDIUM'
+                  ? 'Střednědobě'
+                  : 'Dlouhodobě'}
+              </Badge>
+              <Text size="sm" color="muted">
+                {rec.exitStrategy.holdingReason}
+              </Text>
+            </div>
+            <div className="metrics-grid">
+              {rec.exitStrategy.takeProfit1 !== null && (
+                <div className="metric-cell">
+                  <MetricLabel>TP1</MetricLabel>
+                  <MetricValue sentiment="positive">
+                    ${rec.exitStrategy.takeProfit1.toFixed(0)}
+                    <Text size="xs" color="success">
+                      {' '}
+                      (+
+                      {(
+                        ((rec.exitStrategy.takeProfit1 - rec.currentPrice) /
+                          rec.currentPrice) *
+                        100
+                      ).toFixed(0)}
+                      %)
+                    </Text>
+                  </MetricValue>
+                </div>
+              )}
+              {rec.exitStrategy.takeProfit2 !== null && (
+                <div className="metric-cell">
+                  <MetricLabel>TP2</MetricLabel>
+                  <MetricValue sentiment="positive">
+                    ${rec.exitStrategy.takeProfit2.toFixed(0)}
+                    <Text size="xs" color="success">
+                      {' '}
+                      (+
+                      {(
+                        ((rec.exitStrategy.takeProfit2 - rec.currentPrice) /
+                          rec.currentPrice) *
+                        100
+                      ).toFixed(0)}
+                      %)
+                    </Text>
+                  </MetricValue>
+                </div>
+              )}
+              {rec.exitStrategy.takeProfit3 !== null && (
+                <div className="metric-cell">
+                  <MetricLabel>Cíl</MetricLabel>
+                  <MetricValue sentiment="positive">
+                    ${rec.exitStrategy.takeProfit3.toFixed(0)}
+                    <Text size="xs" color="success">
+                      {' '}
+                      (+
+                      {(
+                        ((rec.exitStrategy.takeProfit3 - rec.currentPrice) /
+                          rec.currentPrice) *
+                        100
+                      ).toFixed(0)}
+                      %)
+                    </Text>
+                  </MetricValue>
+                </div>
+              )}
+              {rec.exitStrategy.stopLoss !== null && (
+                <div className="metric-cell">
+                  <MetricLabel>Stop Loss</MetricLabel>
+                  <MetricValue sentiment="negative">
+                    ${rec.exitStrategy.stopLoss.toFixed(0)}
+                    <Text size="xs" color="danger">
+                      {' '}
+                      (
+                      {(
+                        ((rec.exitStrategy.stopLoss - rec.currentPrice) /
+                          rec.currentPrice) *
+                        100
+                      ).toFixed(0)}
+                      %)
+                    </Text>
+                  </MetricValue>
+                </div>
+              )}
+              {rec.exitStrategy.resistanceLevel !== null && (
+                <div className="metric-cell">
+                  <MetricLabel>Odpor</MetricLabel>
+                  <MetricValue>
+                    ${rec.exitStrategy.resistanceLevel.toFixed(0)}
+                    <Text size="xs" color="muted">
+                      {' '}
+                      (+
+                      {(
+                        ((rec.exitStrategy.resistanceLevel - rec.currentPrice) /
+                          rec.currentPrice) *
+                        100
+                      ).toFixed(0)}
+                      %)
+                    </Text>
+                  </MetricValue>
+                </div>
               )}
             </div>
-          )}
+            {rec.exitStrategy.trailingStopPercent && (
+              <Caption>
+                Zvažte {rec.exitStrategy.trailingStopPercent}% trailing stop po
+                TP1
+              </Caption>
+            )}
+          </div>
+        )}
 
-          {/* 52-Week Range */}
-          {rec.fiftyTwoWeekHigh !== null && rec.fiftyTwoWeekLow !== null && (
+        {/* 52-Week Range */}
+        {rec.fiftyTwoWeekHigh !== null && rec.fiftyTwoWeekLow !== null && (
+          <div className="modal-section">
             <div className="week-range">
               <div className="range-header">
                 <MetricLabel>52týdní rozsah</MetricLabel>
@@ -917,8 +1029,8 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
                 </Text>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Score Breakdown */}
         <div className="modal-section">
