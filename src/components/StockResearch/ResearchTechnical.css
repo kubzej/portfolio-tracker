@@ -4,217 +4,299 @@
   gap: 1.5rem;
 }
 
-.technical-section {
+.research-technical__loading,
+.research-technical__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+/* Main Price Chart Section */
+.research-technical__price-chart {
   background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
   border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 640px) {
+  .research-technical__price-chart {
+    padding: 1rem;
+    border-radius: var(--radius-md);
+  }
+}
+
+/* RSI Display - copied from Analysis.css */
+.rsi-display {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: 1.25rem;
 }
 
-.technical-section > .card-title {
-  margin-bottom: 1rem;
+.rsi-gauge {
+  width: 100%;
 }
 
-.no-data {
-  text-align: center;
-  padding: 3rem;
-  color: var(--text-muted);
-}
-
-/* Technical Outlook */
-.technical-outlook {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-  flex-wrap: wrap;
-}
-
-.technical-score {
-  flex: 1;
-  min-width: 150px;
-}
-
-/* Metrics Grid - same as Fundamentals/Valuation */
-.research-technical .metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-}
-
-.sma-interpretation {
-  margin-top: 1rem;
-}
-
-/* Momentum Grid - compact 3 columns */
-.momentum-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-}
-
-.momentum-card {
-  background: transparent;
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
-  padding: 1rem 1.25rem;
-}
-
-.momentum-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.75rem;
-}
-
-.momentum-value-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-/* RSI Bar - compact */
 .rsi-bar {
-  flex: 1;
-}
-
-.rsi-bar-track {
-  position: relative;
-  height: 6px;
-  border-radius: 3px;
-  overflow: visible;
   display: flex;
+  height: 40px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  position: relative;
 }
 
 .rsi-zone {
-  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 .rsi-zone.oversold {
-  flex: 30;
-  background: rgba(16, 185, 129, 0.25);
-  border-radius: 3px 0 0 3px;
+  background: linear-gradient(90deg, #22c55e, #86efac);
 }
 
 .rsi-zone.neutral {
-  flex: 40;
-  background: rgba(107, 114, 128, 0.15);
+  background: linear-gradient(90deg, #86efac, #fde68a, #fca5a5);
 }
 
 .rsi-zone.overbought {
-  flex: 30;
-  background: rgba(239, 68, 68, 0.25);
-  border-radius: 0 3px 3px 0;
+  background: linear-gradient(90deg, #fca5a5, #ef4444);
 }
 
-.rsi-marker {
+.rsi-indicator {
   position: absolute;
   top: 50%;
-  width: 10px;
-  height: 10px;
-  background: var(--text-primary);
-  border-radius: 50%;
   transform: translate(-50%, -50%);
-  border: 2px solid white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-/* Stochastic compact */
-.stoch-values {
+  z-index: 10;
   display: flex;
-  gap: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--bg-primary);
+  border: 3px solid var(--border-medium);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.stoch-item {
+.rsi-scale {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0.25rem 0;
+}
+
+.rsi-info-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.rsi-info-card {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.25rem;
+  padding: 0.75rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  text-align: center;
+  position: relative;
 }
 
-/* MACD compact row */
-.macd-row {
+.rsi-info-card .info-tooltip {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+}
+
+.rsi-current {
+  text-align: center;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Chart wrapper */
+.chart-wrapper {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Chart legend info */
+.chart-legend-info {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
-}
-
-.macd-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  flex: 1;
-}
-
-/* MACD Divergence indicator */
-.macd-divergence {
   margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+.legend-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background: var(--bg-primary);
-  border-radius: var(--radius-sm);
 }
 
-/* Bollinger Signal */
-.bollinger-signal-row {
-  margin-top: 1rem;
-  display: flex;
-  justify-content: flex-start;
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
 }
 
-/* Fibonacci current level */
-.fib-current {
-  margin-top: 1rem;
-  padding: 0.75rem 1rem;
-  background: transparent;
-  border: 1px solid var(--border-light);
+/* Indicator position block */
+.indicator-position-block {
+  padding: 1rem;
+  background: var(--bg-tertiary);
   border-radius: var(--radius-md);
-  text-align: center;
+  margin-top: 0.75rem;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .research-technical .metrics-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+.position-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
 
-  .momentum-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.position-bar {
+  height: 8px;
+  background: linear-gradient(90deg, var(--color-positive), var(--text-muted), var(--color-negative));
+  border-radius: 4px;
+  position: relative;
+}
 
-  .momentum-grid .momentum-card:last-child {
-    grid-column: span 2;
+.position-indicator {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  background: var(--bg-primary);
+  border: 3px solid var(--accent-primary);
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.position-zones {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+}
+
+/* Usage guide */
+.usage-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.usage-item {
+  padding: 1rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+/* Fibonacci visual */
+.fibonacci-visual {
+  position: relative;
+  margin: 1.5rem 0;
+}
+
+.fib-price-bar {
+  position: relative;
+  background: linear-gradient(to bottom, 
+    rgba(34, 197, 94, 0.25) 0%,
+    rgba(34, 197, 94, 0.15) 23.6%,
+    rgba(59, 130, 246, 0.2) 38.2%,
+    rgba(139, 92, 246, 0.2) 50%,
+    rgba(245, 158, 11, 0.2) 61.8%,
+    rgba(239, 68, 68, 0.15) 78.6%,
+    rgba(239, 68, 68, 0.25) 100%
+  );
+  border-radius: var(--radius-md);
+  padding: 0.5rem;
+  min-height: 300px;
+}
+
+.fib-level {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px dashed var(--border-color);
+  font-size: 0.875rem;
+}
+
+.fib-level:last-of-type {
+  border-bottom: none;
+}
+
+.fib-current-price {
+  position: absolute;
+  right: -10px;
+  transform: translateY(-50%);
+  background: var(--accent-primary);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.fib-current-price .text {
+  color: white;
+}
+
+.fib-current-price::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-right-color: var(--accent-primary);
+}
+
+/* Mobile adjustments for Fibonacci */
+@media (max-width: 600px) {
+  .fib-current-price {
+    right: 5px;
+    font-size: 0.65rem;
+    padding: 0.2rem 0.5rem;
+  }
+  
+  .fib-price-bar {
+    min-height: 250px;
+  }
+  
+  .fib-level {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
   }
 }
 
+/* Mobile adjustments */
 @media (max-width: 640px) {
-  .technical-section {
-    padding: 1rem;
-  }
-
-  .technical-outlook {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .technical-outlook .badge {
-    text-align: center;
-    width: 100%;
-  }
-
-  .momentum-grid {
+  .rsi-info-cards {
     grid-template-columns: 1fr;
   }
-
-  .momentum-grid .momentum-card:last-child {
-    grid-column: span 1;
-  }
-
-  .momentum-card {
-    padding: 0.875rem 1rem;
-  }
-
-  .research-technical .metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
+  
+  .chart-legend-info {
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }

@@ -283,6 +283,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                 analysisResult.rateLimited?.yahoo ??
                 technicalResult.rateLimited?.yahoo ??
                 false,
+              alpha: analysisResult.rateLimited?.alpha ?? false,
             }
           : undefined;
 

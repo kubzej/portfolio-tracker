@@ -2084,8 +2084,8 @@ function calculateExitStrategy(
     resistanceLevels.push(item.fiftyTwoWeekHigh);
   }
 
-  // Fibonacci levels (if in downtrend, retracement levels are resistance)
-  if (fib && fib.trend === 'downtrend') {
+  // Fibonacci levels - use as potential resistance in any trend
+  if (fib) {
     resistanceLevels.push(fib.level382, fib.level500, fib.level618);
   }
 
@@ -2094,6 +2094,17 @@ function calculateExitStrategy(
     const aboveCurrent = resistanceLevels.filter((r) => r > currentPrice);
     if (aboveCurrent.length > 0) {
       resistanceLevel = Math.min(...aboveCurrent);
+    } else if (item.fiftyTwoWeekHigh !== null) {
+      // Price is at/above all time high - calculate projected resistance
+      // Use ATR if available, otherwise use 5% above current price
+      if (tech?.atr14 !== null && tech?.atr14 !== undefined) {
+        // Next resistance = current price + 1.5x ATR (reasonable swing target)
+        resistanceLevel =
+          Math.round((currentPrice + tech.atr14 * 1.5) * 100) / 100;
+      } else {
+        // Fallback: 5% above current price as psychological resistance
+        resistanceLevel = Math.round(currentPrice * 1.05 * 100) / 100;
+      }
     }
   }
 

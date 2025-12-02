@@ -17,7 +17,6 @@ import {
   LoadingSpinner,
   ErrorState,
   PriceDisplay,
-  SignalBadge,
   InfoTooltip,
   Button,
 } from '@/components/shared';
@@ -25,7 +24,6 @@ import {
   Ticker,
   MetricLabel,
   MetricValue,
-  Description,
   Badge,
   Text,
 } from '@/components/shared/Typography';
@@ -35,6 +33,7 @@ import { ResearchValuation } from './ResearchValuation';
 import { ResearchTechnical } from './ResearchTechnical';
 import { ResearchFundamentals } from './ResearchFundamentals';
 import { ResearchPeers } from './ResearchPeers';
+import { AddStockForm } from '@/components/Watchlists/AddStockForm';
 import './StockResearch.css';
 
 // Debug info for data loading status
@@ -74,6 +73,7 @@ export function StockResearch({
   const [activeTab, setActiveTab] = useState('summary');
   const [retryCount, setRetryCount] = useState(0);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  const [showWatchlistModal, setShowWatchlistModal] = useState(false);
   const [dataLoadStatus, setDataLoadStatus] = useState<DataLoadStatus>({
     analyst: false,
     fundamentals: false,
@@ -354,7 +354,7 @@ export function StockResearch({
         </div>
       )}
 
-      {/* Price & Signal */}
+      {/* Price */}
       <div className="stock-research-price-bar">
         <PriceDisplay
           price={analystData.currentPrice}
@@ -362,14 +362,6 @@ export function StockResearch({
           changePercent={analystData.priceChangePercent}
           size="lg"
         />
-        {recommendation && (
-          <div className="stock-research-signal">
-            <SignalBadge type={recommendation.primarySignal.type} size="md" />
-            <Description>
-              {recommendation.primarySignal.description}
-            </Description>
-          </div>
-        )}
       </div>
 
       {/* Quick Stats Bar */}
@@ -412,6 +404,7 @@ export function StockResearch({
           <ResearchSummary
             recommendation={recommendation}
             analystData={analystData}
+            onAddToWatchlist={() => setShowWatchlistModal(true)}
           />
         )}
 
@@ -431,9 +424,9 @@ export function StockResearch({
 
         {activeTab === 'technical' && (
           <ResearchTechnical
-            technicalData={technicalData}
-            recommendation={recommendation}
             ticker={ticker}
+            data={technicalData}
+            isLoading={loading && !technicalData}
           />
         )}
 
@@ -445,8 +438,80 @@ export function StockResearch({
           />
         )}
       </div>
+
+      {/* Add to Watchlist Modal */}
+      {showWatchlistModal && (
+        <AddStockForm
+          prefillTicker={ticker}
+          prefillName={stockName || analystData.stockName || ticker}
+          suggestedBuyPrice={getSuggestedBuyPrice(
+            recommendation,
+            analystData.currentPrice,
+            technicalData?.fibonacciLevels,
+            analystData.fiftyTwoWeekLow
+          )}
+          suggestedSellPrice={analystData.analystTargetPrice ?? undefined}
+          onClose={() => setShowWatchlistModal(false)}
+          onSuccess={() => setShowWatchlistModal(false)}
+        />
+      )}
     </div>
   );
+}
+
+/**
+ * Calculate suggested buy price based on verdict
+ * - Good Entry: use current price (it's a good time to buy)
+ * - Wait: use support level (Fib 38.2% or 61.8%) or 52W low + buffer
+ * - Pass: leave empty
+ */
+function getSuggestedBuyPrice(
+  recommendation: StockRecommendation | null,
+  currentPrice: number | null | undefined,
+  fibLevels: { level382: number; level618: number } | null | undefined,
+  fiftyTwoWeekLow: number | null | undefined
+): number | undefined {
+  if (!recommendation || !currentPrice) return undefined;
+
+  const verdict =
+    recommendation.compositeScore >= 60 &&
+    (recommendation.targetUpside ?? 0) > 10 &&
+    (recommendation.technicalBias === 'BULLISH' ||
+      recommendation.technicalScore >= 50)
+      ? 'good-entry'
+      : recommendation.compositeScore >= 50 &&
+        recommendation.fundamentalScore >= 55
+      ? 'wait'
+      : 'pass';
+
+  switch (verdict) {
+    case 'good-entry':
+      // Current price is good
+      return currentPrice;
+
+    case 'wait':
+      // Use Fibonacci support level or 52W low with 5% buffer
+      if (fibLevels) {
+        // If current price is above 38.2%, suggest 38.2% level
+        // If current price is below 38.2%, suggest 61.8% level
+        const suggestedLevel =
+          currentPrice > fibLevels.level382
+            ? fibLevels.level382
+            : fibLevels.level618;
+        return Math.round(suggestedLevel * 100) / 100;
+      }
+      if (fiftyTwoWeekLow) {
+        // 52W low + 5% buffer
+        return Math.round(fiftyTwoWeekLow * 1.05 * 100) / 100;
+      }
+      // Fallback: 10% below current price
+      return Math.round(currentPrice * 0.9 * 100) / 100;
+
+    case 'pass':
+    default:
+      // Don't suggest a price for stocks to avoid
+      return undefined;
+  }
 }
 
 // Quick stat component for the stats bar
