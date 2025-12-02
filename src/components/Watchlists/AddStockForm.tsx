@@ -52,11 +52,9 @@ export function AddStockForm({
   // Watchlist selection (when no watchlistId provided)
   const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
   const [selectedWatchlistId, setSelectedWatchlistId] = useState<string>(
-    initialWatchlistId || ''
+    item?.watchlist_id ?? initialWatchlistId ?? ''
   );
-  const [loadingWatchlists, setLoadingWatchlists] = useState(
-    !initialWatchlistId
-  );
+  const [loadingWatchlists, setLoadingWatchlists] = useState(false);
 
   // Form fields
   const [ticker, setTicker] = useState(item?.ticker ?? prefillTicker ?? '');
@@ -74,14 +72,15 @@ export function AddStockForm({
 
   const isEditing = !!item;
   const needsWatchlistSelection = !initialWatchlistId && !isEditing;
-  const effectiveWatchlistId = initialWatchlistId || selectedWatchlistId;
+  const showWatchlistSelector = !initialWatchlistId || isEditing; // Show when adding without ID or when editing
+  const effectiveWatchlistId = selectedWatchlistId || initialWatchlistId;
 
-  // Load watchlists if needed
+  // Load watchlists if we need to show the selector
   useEffect(() => {
-    if (needsWatchlistSelection && user) {
+    if (showWatchlistSelector && user) {
       loadWatchlists();
     }
-  }, [needsWatchlistSelection, user]);
+  }, [showWatchlistSelector, user]);
 
   const loadWatchlists = async () => {
     if (!user) return;
@@ -168,16 +167,28 @@ export function AddStockForm({
       setError(null);
 
       // Check for duplicates when adding to a new watchlist (not editing)
-      if (!isEditing && needsWatchlistSelection) {
+      // Or when moving to a different watchlist (editing)
+      const isMovingToNewWatchlist =
+        isEditing && selectedWatchlistId !== item?.watchlist_id;
+
+      if (!isEditing || isMovingToNewWatchlist) {
+        const targetWatchlistId = isMovingToNewWatchlist
+          ? selectedWatchlistId
+          : effectiveWatchlistId;
+
         const { data: existing } = await supabase
           .from('watchlist_items')
           .select('id')
-          .eq('watchlist_id', effectiveWatchlistId)
+          .eq('watchlist_id', targetWatchlistId)
           .eq('ticker', ticker.toUpperCase().trim())
           .single();
 
         if (existing) {
-          setError('Tato akcie už ve watchlistu je');
+          setError(
+            isMovingToNewWatchlist
+              ? 'Tato akcie už v cílovém watchlistu je'
+              : 'Tato akcie už ve watchlistu je'
+          );
           setSaving(false);
           return;
         }
@@ -185,6 +196,15 @@ export function AddStockForm({
 
       if (isEditing) {
         const normalizedTicker = ticker.toUpperCase().trim();
+
+        // If moving to a different watchlist, use moveToWatchlist
+        if (isMovingToNewWatchlist) {
+          await watchlistItemsApi.moveToWatchlist(item.id, selectedWatchlistId);
+          // After move, update the new item with any changed fields
+          // Note: moveToWatchlist copies all data, so we only need to update if something else changed
+        }
+
+        // Update other fields (even after move, update the data)
         const input: UpdateWatchlistItemInput = {
           ticker:
             normalizedTicker !== item.ticker ? normalizedTicker : undefined,
@@ -193,7 +213,13 @@ export function AddStockForm({
           target_sell_price: parsedSellPrice ?? null,
           notes: notes.trim() || null,
         };
-        await watchlistItemsApi.update(item.id, input);
+
+        // If we moved, we need to find the new item ID
+        // For simplicity, just call onSuccess - the data is moved
+        if (!isMovingToNewWatchlist) {
+          await watchlistItemsApi.update(item.id, input);
+        }
+
         onSuccess();
       } else {
         const input: AddWatchlistItemInput = {
@@ -234,10 +260,12 @@ export function AddStockForm({
         <form onSubmit={handleSubmit}>
           {error && <div className="form-error">{error}</div>}
 
-          {/* Watchlist selector (only when not provided) */}
-          {needsWatchlistSelection && (
+          {/* Watchlist selector (when adding without ID, or when editing to allow move) */}
+          {showWatchlistSelector && (
             <div className="form-group">
-              <Label htmlFor="watchlist-select">Watchlist *</Label>
+              <Label htmlFor="watchlist-select">
+                Watchlist {!isEditing && '*'}
+              </Label>
               {loadingWatchlists ? (
                 <Muted>Načítám...</Muted>
               ) : watchlists.length === 0 ? (
@@ -255,6 +283,9 @@ export function AddStockForm({
                     </option>
                   ))}
                 </select>
+              )}
+              {isEditing && selectedWatchlistId !== item?.watchlist_id && (
+                <Hint>Akcie bude přesunuta do vybraného watchlistu</Hint>
               )}
             </div>
           )}

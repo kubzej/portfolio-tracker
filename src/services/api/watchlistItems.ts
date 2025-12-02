@@ -274,6 +274,22 @@ export const watchlistItemsApi = {
   },
 
   /**
+   * Move item to another watchlist (copy + delete original)
+   */
+  async moveToWatchlist(
+    itemId: string,
+    targetWatchlistId: string
+  ): Promise<WatchlistItemWithCalculations> {
+    // Copy to target watchlist
+    const copied = await this.copyToWatchlist(itemId, targetWatchlistId);
+
+    // Delete original
+    await this.remove(itemId);
+
+    return copied;
+  },
+
+  /**
    * Get all items across all watchlists (for batch price update)
    */
   async getAllItems(): Promise<WatchlistItem[]> {
