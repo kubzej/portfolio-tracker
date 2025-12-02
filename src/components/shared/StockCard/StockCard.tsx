@@ -41,7 +41,7 @@ export function StockCard({
               marketStatus.nextChange || ''
             }`}
           >
-            {marketStatus.isOpen ? 'Open' : marketStatus.statusText}
+            {marketStatus.isOpen ? 'Otevřeno' : marketStatus.statusText}
           </Tag>
           {exchange && <Tag size="xs">{exchange}</Tag>}
         </div>
@@ -52,14 +52,14 @@ export function StockCard({
       </StockName>
 
       <div className="stock-card__meta">
-        <Muted>{sectorName || 'No sector'}</Muted>
+        <Muted>{sectorName || 'Žádný sektor'}</Muted>
         <Tag size="xs">{currency}</Tag>
       </div>
 
       {targetPrice && (
         <div className="stock-card__target">
           <Text size="sm" weight="medium" color="success">
-            Target: {formatPrice(targetPrice, currency)}
+            Cílová cena: {formatPrice(targetPrice, currency)}
           </Text>
         </div>
       )}

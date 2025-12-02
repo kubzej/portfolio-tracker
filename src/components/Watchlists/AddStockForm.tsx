@@ -43,12 +43,12 @@ export function AddStockForm({
     const normalized = value.toUpperCase().trim();
 
     if (!normalized) {
-      return 'Ticker symbol is required';
+      return 'Ticker symbol je povinný';
     }
 
     // Allow letters, numbers, dots (for exchange suffix like .HK, .DE)
     if (!/^[A-Z0-9]{1,10}(\.[A-Z]{1,2})?$/.test(normalized)) {
-      return 'Invalid ticker symbol (e.g., AAPL, SAP.DE, 1211.HK)';
+      return 'Neplatný ticker symbol (např. AAPL, SAP.DE, 1211.HK)';
     }
 
     // Check for duplicates (allow keeping the same ticker when editing)
@@ -57,7 +57,7 @@ export function AddStockForm({
       (!isEditing || isChangingTicker) &&
       existingTickers.includes(normalized)
     ) {
-      return `${normalized} is already in this watchlist`;
+      return `${normalized} již je v tomto watchlistu`;
     }
 
     return null;
@@ -80,12 +80,12 @@ export function AddStockForm({
       : undefined;
 
     if (targetBuyPrice && (isNaN(parsedBuyPrice!) || parsedBuyPrice! <= 0)) {
-      setError('Buy target must be a positive number');
+      setError('Nákupní cíl musí být kladné číslo');
       return;
     }
 
     if (targetSellPrice && (isNaN(parsedSellPrice!) || parsedSellPrice! <= 0)) {
-      setError('Sell target must be a positive number');
+      setError('Prodejní cíl musí být kladné číslo');
       return;
     }
 
@@ -128,20 +128,20 @@ export function AddStockForm({
     <Modal
       isOpen={true}
       onClose={onClose}
-      title={isEditing ? `Edit ${item.ticker}` : 'Add Stock'}
+      title={isEditing ? `Upravit ${item.ticker}` : 'Přidat akcii'}
       size="md"
     >
       <form onSubmit={handleSubmit}>
         {error && <div className="form-error">{error}</div>}
 
         <div className="form-group">
-          <Label htmlFor="stock-ticker">Ticker Symbol *</Label>
+          <Label htmlFor="stock-ticker">Ticker symbol *</Label>
           <Input
             id="stock-ticker"
             type="text"
             value={ticker}
             onChange={(e) => setTicker(e.target.value.toUpperCase())}
-            placeholder="e.g., AAPL, SAP.DE, 1211.HK"
+            placeholder="např. AAPL, SAP.DE, 1211.HK"
             autoFocus={!isEditing}
             maxLength={15}
             fullWidth
@@ -149,13 +149,13 @@ export function AddStockForm({
         </div>
 
         <div className="form-group">
-          <Label htmlFor="stock-name">Company Name</Label>
+          <Label htmlFor="stock-name">Název společnosti</Label>
           <Input
             id="stock-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g., Apple Inc."
+            placeholder="např. Apple Inc."
             maxLength={100}
             fullWidth
           />
@@ -163,7 +163,7 @@ export function AddStockForm({
 
         <div className="form-row">
           <div className="form-group">
-            <Label htmlFor="buy-target">Buy Target ($)</Label>
+            <Label htmlFor="buy-target">Nákupní cíl ($)</Label>
             <Input
               id="buy-target"
               type="number"
@@ -171,14 +171,14 @@ export function AddStockForm({
               min="0"
               value={targetBuyPrice}
               onChange={(e) => setTargetBuyPrice(e.target.value)}
-              placeholder="Optional"
+              placeholder="Volitelné"
               fullWidth
             />
-            <Hint>Alert when price drops to this</Hint>
+            <Hint>Upozornit, když cena klesne na tuto úroveň</Hint>
           </div>
 
           <div className="form-group">
-            <Label htmlFor="sell-target">Sell Target ($)</Label>
+            <Label htmlFor="sell-target">Prodejní cíl ($)</Label>
             <Input
               id="sell-target"
               type="number"
@@ -186,20 +186,20 @@ export function AddStockForm({
               min="0"
               value={targetSellPrice}
               onChange={(e) => setTargetSellPrice(e.target.value)}
-              placeholder="Optional"
+              placeholder="Volitelné"
               fullWidth
             />
-            <Hint>Alert when price rises to this</Hint>
+            <Hint>Upozornit, když cena stoupne na tuto úroveň</Hint>
           </div>
         </div>
 
         <div className="form-group">
-          <Label htmlFor="stock-notes">Notes</Label>
+          <Label htmlFor="stock-notes">Poznámky</Label>
           <TextArea
             id="stock-notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Why are you watching this stock? Investment thesis, key metrics to watch..."
+            placeholder="Proč sledujete tuto akcii? Investiční teze, klíčové metriky..."
             rows={4}
             fullWidth
           />
@@ -207,10 +207,14 @@ export function AddStockForm({
 
         <div className="form-actions">
           <Button variant="outline" type="button" onClick={onClose}>
-            Cancel
+            Zrušit
           </Button>
           <Button variant="primary" type="submit" disabled={saving}>
-            {saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Add Stock'}
+            {saving
+              ? 'Ukládám...'
+              : isEditing
+              ? 'Uložit změny'
+              : 'Přidat akcii'}
           </Button>
         </div>
       </form>

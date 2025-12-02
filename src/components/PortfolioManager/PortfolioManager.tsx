@@ -58,7 +58,7 @@ export function PortfolioManager({
       const data = await portfoliosApi.getAll();
       setPortfolios(data);
     } catch (err) {
-      setError('Failed to load portfolios');
+      setError('Nepodařilo se načíst portfolia');
     } finally {
       setLoading(false);
     }
@@ -98,13 +98,13 @@ export function PortfolioManager({
   const handleDelete = async (id: string) => {
     const portfolio = portfolios.find((p) => p.id === id);
     if (portfolio?.is_default) {
-      setError('Cannot delete the default portfolio');
+      setError('Nelze smazat výchozí portfolio');
       return;
     }
 
     if (
       !confirm(
-        'Delete this portfolio? All transactions in it will need to be reassigned.'
+        'Smazat toto portfolio? Všechny transakce v něm bude třeba přiřadit jinam.'
       )
     ) {
       return;
@@ -146,13 +146,13 @@ export function PortfolioManager({
     <div className="portfolio-manager-overlay" onClick={onClose}>
       <div className="portfolio-manager" onClick={(e) => e.stopPropagation()}>
         <div className="pm-header">
-          <SectionTitle>Manage Portfolios</SectionTitle>
+          <SectionTitle>Správa portfolií</SectionTitle>
           <Button
             variant="ghost"
             size="sm"
             icon
             onClick={onClose}
-            aria-label="Close"
+            aria-label="Zavřít"
           >
             ×
           </Button>
@@ -165,7 +165,7 @@ export function PortfolioManager({
         )}
 
         {loading ? (
-          <LoadingSpinner text="Loading..." size="sm" />
+          <LoadingSpinner text="Načítám..." size="sm" />
         ) : (
           <>
             <div className="pm-list">
@@ -181,7 +181,7 @@ export function PortfolioManager({
                         <Text weight="semibold">{portfolio.name}</Text>
                         {portfolio.is_default && (
                           <Badge variant="info" size="xs">
-                            Default
+                            Výchozí
                           </Badge>
                         )}
                       </div>
@@ -198,7 +198,7 @@ export function PortfolioManager({
                         variant="ghost"
                         size="sm"
                         onClick={() => handleSetDefault(portfolio.id)}
-                        title="Set as default"
+                        title="Nastavit jako výchozí"
                         className="pm-btn-default"
                       >
                         ★
@@ -209,7 +209,7 @@ export function PortfolioManager({
                       size="sm"
                       onClick={() => handleEdit(portfolio)}
                     >
-                      Edit
+                      Upravit
                     </Button>
                     {!portfolio.is_default && (
                       <Button
@@ -217,7 +217,7 @@ export function PortfolioManager({
                         size="sm"
                         onClick={() => handleDelete(portfolio.id)}
                       >
-                        Delete
+                        Smazat
                       </Button>
                     )}
                   </div>
@@ -228,11 +228,11 @@ export function PortfolioManager({
             {showAddForm ? (
               <form className="pm-form" onSubmit={handleSubmit}>
                 <CardTitle>
-                  {editingId ? 'Edit Portfolio' : 'Add Portfolio'}
+                  {editingId ? 'Upravit portfolio' : 'Přidat portfolio'}
                 </CardTitle>
 
                 <div className="pm-form-group">
-                  <Label htmlFor="name">Name *</Label>
+                  <Label htmlFor="name">Název *</Label>
                   <Input
                     type="text"
                     id="name"
@@ -242,13 +242,13 @@ export function PortfolioManager({
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
-                    placeholder="e.g., Long-term IRA"
+                    placeholder="např. Dlouhodobé investice"
                     required
                   />
                 </div>
 
                 <div className="pm-form-group">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description">Popis</Label>
                   <Input
                     type="text"
                     id="description"
@@ -258,12 +258,12 @@ export function PortfolioManager({
                     onChange={(e) =>
                       setFormData({ ...formData, description: e.target.value })
                     }
-                    placeholder="Optional description"
+                    placeholder="Volitelný popis"
                   />
                 </div>
 
                 <div className="pm-form-group">
-                  <Label>Color</Label>
+                  <Label>Barva</Label>
                   <div className="pm-color-picker">
                     {COLORS.map((color) => (
                       <Button
@@ -289,10 +289,10 @@ export function PortfolioManager({
                     variant="secondary"
                     onClick={handleCancel}
                   >
-                    Cancel
+                    Zrušit
                   </Button>
                   <Button type="submit" variant="primary">
-                    {editingId ? 'Save Changes' : 'Add Portfolio'}
+                    {editingId ? 'Uložit změny' : 'Přidat portfolio'}
                   </Button>
                 </div>
               </form>
@@ -304,7 +304,7 @@ export function PortfolioManager({
                   className="pm-add-btn"
                   onClick={() => setShowAddForm(true)}
                 >
-                  + Add New Portfolio
+                  + Přidat nové portfolio
                 </Button>
               </div>
             )}

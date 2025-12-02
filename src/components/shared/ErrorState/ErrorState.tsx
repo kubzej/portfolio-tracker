@@ -14,7 +14,7 @@ export function ErrorState({ message, onRetry }: ErrorStateProps) {
       <Text color="danger">{message}</Text>
       {onRetry && (
         <Button variant="outline" size="sm" onClick={onRetry}>
-          Try Again
+          Zkusit znovu
         </Button>
       )}
     </div>

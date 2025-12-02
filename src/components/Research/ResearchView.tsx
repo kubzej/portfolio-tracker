@@ -25,7 +25,7 @@ export function ResearchView() {
     <div className="research-view">
       {/* Quick Research Input */}
       <div className="research-search-section">
-        <SectionTitle>Průzkum akcií</SectionTitle>
+        <SectionTitle>Vyhledávání akcií</SectionTitle>
         <Description>Zadejte ticker pro komplexní analýzu akcie</Description>
         <form className="research-search-form" onSubmit={handleSubmit}>
           <Input

@@ -24,7 +24,7 @@ export function BottomSheetSelect({
   value,
   onChange,
   options,
-  placeholder = 'Select...',
+  placeholder = 'Vybrat...',
   label,
   title,
   required,
@@ -113,7 +113,7 @@ export function BottomSheetSelect({
           <BottomSheet
             isOpen={isOpen}
             onClose={() => setIsOpen(false)}
-            title={title || label || 'Select'}
+            title={title || label || 'Vybrat'}
           >
             <div className="bottom-sheet-options">
               {options.map((option) => (

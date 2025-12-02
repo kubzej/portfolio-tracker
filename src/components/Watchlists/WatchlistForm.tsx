@@ -44,7 +44,7 @@ export function WatchlistForm({
     e.preventDefault();
 
     if (!name.trim()) {
-      setError('Name is required');
+      setError('Název je povinný');
       return;
     }
 
@@ -80,39 +80,39 @@ export function WatchlistForm({
     <Modal
       isOpen={true}
       onClose={onClose}
-      title={isEditing ? 'Edit Watchlist' : 'New Watchlist'}
+      title={isEditing ? 'Upravit watchlist' : 'Nový watchlist'}
       size="sm"
     >
       <form onSubmit={handleSubmit} className="watchlist-form">
         {error && <div className="form-error">{error}</div>}
 
         <div className="form-group">
-          <Label htmlFor="watchlist-name">Name *</Label>
+          <Label htmlFor="watchlist-name">Název *</Label>
           <Input
             id="watchlist-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g., Tech Stocks to Buy"
+            placeholder="např. Tech akcie k nákupu"
             autoFocus
             fullWidth
           />
         </div>
 
         <div className="form-group">
-          <Label htmlFor="watchlist-description">Description</Label>
+          <Label htmlFor="watchlist-description">Popis</Label>
           <TextArea
             id="watchlist-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Optional notes about this watchlist..."
+            placeholder="Volitelné poznámky k watchlistu..."
             rows={3}
             fullWidth
           />
         </div>
 
         <div className="form-group">
-          <Label>Color</Label>
+          <Label>Barva</Label>
           <div className="color-picker">
             {PRESET_COLORS.map((c) => (
               <button
@@ -129,10 +129,10 @@ export function WatchlistForm({
 
         <div className="form-actions">
           <Button variant="outline" type="button" onClick={onClose}>
-            Cancel
+            Zrušit
           </Button>
           <Button variant="primary" type="submit" disabled={saving}>
-            {saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Create'}
+            {saving ? 'Ukládám...' : isEditing ? 'Uložit změny' : 'Vytvořit'}
           </Button>
         </div>
       </form>

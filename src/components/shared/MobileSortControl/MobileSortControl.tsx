@@ -17,7 +17,7 @@ interface MobileSortControlProps {
 }
 
 export function MobileSortControl({
-  label = 'Sort by',
+  label = 'Řadit podle',
   fields,
   selectedField,
   direction,
@@ -48,7 +48,7 @@ export function MobileSortControl({
         type="button"
         className="mobile-sort-control__direction"
         onClick={toggleDirection}
-        aria-label={direction === 'asc' ? 'Sort ascending' : 'Sort descending'}
+        aria-label={direction === 'asc' ? 'Řadit vzestupně' : 'Řadit sestupně'}
       >
         <svg
           width="16"

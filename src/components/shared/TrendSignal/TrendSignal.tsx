@@ -59,7 +59,7 @@ export function MACard({
       {crossSignal && (
         <div className={`ma-cross-signal ${crossSignal}`}>
           <Text size="sm" weight="medium">
-            {crossSignal === 'golden' ? 'Golden Cross' : 'Death Cross'}
+            {crossSignal === 'golden' ? 'Zlatý kříž' : 'Smrtící kříž'}
           </Text>
         </div>
       )}

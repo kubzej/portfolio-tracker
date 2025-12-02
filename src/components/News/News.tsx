@@ -419,7 +419,7 @@ export function News({ portfolioId }: NewsProps) {
   if (loading) {
     return (
       <div className="news-container">
-        <LoadingSpinner text="Loading news..." />
+        <LoadingSpinner text="Načítám novinky..." />
       </div>
     );
   }
@@ -439,10 +439,10 @@ export function News({ portfolioId }: NewsProps) {
         <div className="news-title-section">
           <SectionTitle>
             {newsMode === 'market'
-              ? 'Market News'
+              ? 'Tržní zprávy'
               : newsMode === 'stock'
-              ? 'Stock News'
-              : 'Portfolio News'}
+              ? 'Zprávy o akciích'
+              : 'Zprávy z portfolia'}
             {newsMode === 'stock' && searchedTicker && ` - ${searchedTicker}`}
           </SectionTitle>
         </div>
@@ -464,7 +464,7 @@ export function News({ portfolioId }: NewsProps) {
           />
           {newsMode !== 'stock' && (
             <Button variant="outline" onClick={loadNews} disabled={loading}>
-              Refresh
+              Obnovit
             </Button>
           )}
         </div>
@@ -479,7 +479,7 @@ export function News({ portfolioId }: NewsProps) {
               value={searchTicker}
               onChange={(e) => setSearchTicker(e.target.value.toUpperCase())}
               onKeyDown={handleKeyDown}
-              placeholder="Enter ticker (e.g. AAPL, MSFT, TSLA)"
+              placeholder="Zadejte ticker (např. AAPL, MSFT, TSLA)"
               maxLength={10}
               fullWidth
             />
@@ -488,12 +488,12 @@ export function News({ portfolioId }: NewsProps) {
               onClick={handleTickerSearch}
               disabled={loading || !searchTicker.trim()}
             >
-              {loading ? 'Loading...' : 'Search'}
+              {loading ? 'Načítám...' : 'Hledat'}
             </Button>
           </div>
           {searchedTicker && newsData && (
             <Caption>
-              Found {newsData.stats.totalArticles} articles for{' '}
+              Nalezeno {newsData.stats.totalArticles} článků pro{' '}
               <Ticker>{searchedTicker}</Ticker>
             </Caption>
           )}
@@ -504,11 +504,11 @@ export function News({ portfolioId }: NewsProps) {
       {newsData && (
         <div className="news-stats desktop-only">
           <MetricCard
-            label="Total Articles"
+            label="Celkem článků"
             value={newsData.stats.totalArticles}
           />
           <MetricCard
-            label={newsMode === 'market' ? 'Topics Tracked' : 'Stocks Covered'}
+            label={newsMode === 'market' ? 'Sledovaná témata' : 'Pokryté akcie'}
             value={
               newsMode === 'market'
                 ? MARKET_TOPICS.length
@@ -516,7 +516,7 @@ export function News({ portfolioId }: NewsProps) {
             }
           />
           <MetricCard
-            label="Avg Sentiment"
+            label="Prům. sentiment"
             value={
               newsData.stats.overallSentiment !== null
                 ? (newsData.stats.overallSentiment > 0 ? '+' : '') +
@@ -544,27 +544,27 @@ export function News({ portfolioId }: NewsProps) {
             value={filterTicker}
             onChange={setFilterTicker}
             options={[
-              { value: 'all', label: 'All Stocks' },
+              { value: 'all', label: 'Všechny akcie' },
               ...uniqueTickers.map((ticker) => ({
                 value: ticker,
                 label: ticker,
               })),
             ]}
-            label="Stock"
-            title="Filter by Stock"
+            label="Akcie"
+            title="Filtrovat podle akcie"
           />
         )}
         <BottomSheetSelect
           value={filterSentiment}
           onChange={setFilterSentiment}
           options={[
-            { value: 'all', label: 'All Sentiment' },
-            { value: 'positive', label: 'Positive' },
-            { value: 'neutral', label: 'Neutral' },
-            { value: 'negative', label: 'Negative' },
+            { value: 'all', label: 'Všechny sentimenty' },
+            { value: 'positive', label: 'Pozitivní' },
+            { value: 'neutral', label: 'Neutrální' },
+            { value: 'negative', label: 'Negativní' },
           ]}
           label="Sentiment"
-          title="Filter by Sentiment"
+          title="Filtrovat podle sentimentu"
         />
         <div className="filter-results">
           {filteredArticles.length} / {newsData?.stats.totalArticles || 0}
@@ -632,7 +632,7 @@ export function News({ portfolioId }: NewsProps) {
               className="topics-toggle mobile-only"
             >
               <Text size="sm" weight="semibold">
-                Stocks (
+                Akcie (
                 {newsData.stats.byTicker.filter((t) => t.count > 0).length})
               </Text>
               <Muted>{showTopics ? '▲' : '▼'}</Muted>
@@ -671,7 +671,7 @@ export function News({ portfolioId }: NewsProps) {
                           '%'
                         : 'N/A'}
                     </MetricValue>
-                    <Caption>{ticker.count} articles</Caption>
+                    <Caption>{ticker.count} článků</Caption>
                   </div>
                 ))}
             </div>
@@ -682,7 +682,9 @@ export function News({ portfolioId }: NewsProps) {
       <div className="articles-list">
         {filteredArticles.length === 0 ? (
           <div className="no-articles">
-            <Muted>No articles found matching your filters.</Muted>
+            <Muted>
+              Žádné články odpovídající vašim filtrům nebyly nalezeny.
+            </Muted>
           </div>
         ) : (
           filteredArticles.map((article) => (

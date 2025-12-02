@@ -153,7 +153,7 @@ export function TransactionModal({
 
   const stockOptions: SelectOption[] = useMemo(
     () => [
-      { value: '', label: 'Select stock...' },
+      { value: '', label: 'Vyberte akcii...' },
       ...stocks.map((s) => ({
         value: s.id,
         label: `${s.ticker} - ${s.name}`,
@@ -164,7 +164,7 @@ export function TransactionModal({
 
   const portfolioOptions: SelectOption[] = useMemo(
     () => [
-      { value: '', label: 'Select portfolio...' },
+      { value: '', label: 'Vyberte portfolio...' },
       ...portfolios.map((p) => ({ value: p.id, label: p.name })),
     ],
     [portfolios]
@@ -207,7 +207,7 @@ export function TransactionModal({
       setError(
         err instanceof Error
           ? err.message
-          : `Failed to ${isEditMode ? 'update' : 'create'} transaction`
+          : `Nepodařilo se ${isEditMode ? 'upravit' : 'vytvořit'} transakci`
       );
     } finally {
       setLoading(false);
@@ -243,14 +243,14 @@ export function TransactionModal({
     ? totalWithFees * formData.exchange_rate_to_czk
     : null;
 
-  const title = isEditMode ? 'Edit Transaction' : 'Add Transaction';
+  const title = isEditMode ? 'Upravit transakci' : 'Přidat transakci';
   const submitLabel = isEditMode
     ? loading
-      ? 'Saving...'
-      : 'Save Changes'
+      ? 'Ukládám...'
+      : 'Uložit změny'
     : loading
-    ? 'Adding...'
-    : `Add ${formData.type}`;
+    ? 'Přidávám...'
+    : `Přidat ${formData.type === 'BUY' ? 'nákup' : 'prodej'}`;
 
   // Check if user has required data
   const hasNoPortfolios = portfolios.length === 0;
@@ -263,19 +263,19 @@ export function TransactionModal({
         <div className="transaction-modal-empty">
           {hasNoPortfolios ? (
             <EmptyState
-              title="No Portfolios"
-              description="You need to create a portfolio first before adding transactions."
+              title="Žádná portfolia"
+              description="Nejprve musíte vytvořit portfolio, než můžete přidávat transakce."
               action={{
-                label: 'Close',
+                label: 'Zavřít',
                 onClick: onClose,
               }}
             />
           ) : (
             <EmptyState
-              title="No Stocks"
-              description="You need to add a stock first before adding transactions. Use the 'Add Stock' button in the navigation."
+              title="Žádné akcie"
+              description="Nejprve musíte přidat akcii, než můžete přidávat transakce. Použijte tlačítko 'Přidat akcii' v navigaci."
               action={{
-                label: 'Close',
+                label: 'Zavřít',
                 onClick: onClose,
               }}
             />
@@ -296,8 +296,8 @@ export function TransactionModal({
               handleTypeChange(value as TransactionType)
             }
             options={[
-              { value: 'BUY', label: 'BUY' },
-              { value: 'SELL', label: 'SELL' },
+              { value: 'BUY', label: 'NÁKUP' },
+              { value: 'SELL', label: 'PRODEJ' },
             ]}
             variant="transaction"
           />
@@ -310,13 +310,13 @@ export function TransactionModal({
               onChange={(value) =>
                 setFormData((prev) => ({ ...prev, portfolio_id: value }))
               }
-              placeholder="Select portfolio..."
+              placeholder="Vyberte portfolio..."
               required
               disabled={isEditMode || !!portfolioId}
             />
 
             <BottomSheetSelect
-              label="Stock"
+              label="Akcie"
               options={stockOptions}
               value={formData.stock_id}
               onChange={(value) => {
@@ -327,7 +327,7 @@ export function TransactionModal({
                   currency: selectedStock?.currency || prev.currency,
                 }));
               }}
-              placeholder="Select stock..."
+              placeholder="Vyberte akcii..."
               required
               disabled={isEditMode}
             />
@@ -335,7 +335,7 @@ export function TransactionModal({
 
           <div className="form-row">
             <div className="form-group">
-              <Label htmlFor="date">Date *</Label>
+              <Label htmlFor="date">Datum *</Label>
               <Input
                 type="date"
                 id="date"
@@ -348,7 +348,7 @@ export function TransactionModal({
             </div>
 
             <div className="form-group">
-              <Label htmlFor="quantity">Quantity *</Label>
+              <Label htmlFor="quantity">Množství *</Label>
               <Input
                 type="number"
                 id="quantity"
@@ -366,7 +366,7 @@ export function TransactionModal({
 
           <div className="form-row">
             <div className="form-group">
-              <Label htmlFor="price_per_share">Price per Share *</Label>
+              <Label htmlFor="price_per_share">Cena za akcii *</Label>
               <Input
                 type="number"
                 id="price_per_share"
@@ -382,7 +382,7 @@ export function TransactionModal({
             </div>
 
             <BottomSheetSelect
-              label="Currency"
+              label="Měna"
               options={CURRENCY_OPTIONS}
               value={formData.currency || 'USD'}
               onChange={(value) =>
@@ -394,23 +394,23 @@ export function TransactionModal({
 
           <div className="form-row">
             <div className="form-group">
-              <Label htmlFor="exchange_rate_to_czk">Exchange Rate to CZK</Label>
+              <Label htmlFor="exchange_rate_to_czk">Kurz k CZK</Label>
               <Input
                 type="number"
                 id="exchange_rate_to_czk"
                 name="exchange_rate_to_czk"
                 value={formData.exchange_rate_to_czk || ''}
                 onChange={handleNumberChange}
-                placeholder="e.g. 23.50"
+                placeholder="např. 23.50"
                 step="0.0001"
                 min="0"
                 fullWidth
               />
-              <Hint>Leave empty to auto-fetch</Hint>
+              <Hint>Nechte prázdné pro auto-doplnění</Hint>
             </div>
 
             <div className="form-group">
-              <Label htmlFor="fees">Fees ({formData.currency})</Label>
+              <Label htmlFor="fees">Poplatky ({formData.currency})</Label>
               <Input
                 type="number"
                 id="fees"
@@ -428,28 +428,28 @@ export function TransactionModal({
           {/* Total display */}
           <div className="transaction-totals">
             <div className="total-row">
-              <Label>Total Amount</Label>
+              <Label>Celková částka</Label>
               <MetricValue>
                 {totalAmount.toFixed(2)} {formData.currency}
-                {formData.fees ? ` + ${formData.fees.toFixed(2)} fees` : ''}
+                {formData.fees ? ` + ${formData.fees.toFixed(2)} poplatky` : ''}
               </MetricValue>
             </div>
             {totalInCzk !== null && (
               <div className="total-row">
-                <Label>Total in CZK</Label>
+                <Label>Celkem v CZK</Label>
                 <MetricValue>{totalInCzk.toFixed(2)} Kč</MetricValue>
               </div>
             )}
           </div>
 
           <div className="form-group notes-section">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes">Poznámky</Label>
             <TextArea
               id="notes"
               name="notes"
               value={formData.notes || ''}
               onChange={handleChange}
-              placeholder="Any notes about this transaction..."
+              placeholder="Jakékoli poznámky k této transakci..."
               rows={2}
               fullWidth
             />
@@ -457,7 +457,7 @@ export function TransactionModal({
 
           <div className="form-actions">
             <Button type="button" variant="secondary" onClick={onClose}>
-              Cancel
+              Zrušit
             </Button>
             <Button type="submit" variant="primary" disabled={loading}>
               {submitLabel}

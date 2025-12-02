@@ -371,14 +371,14 @@ export function PriceChart({
             size="sm"
             onClick={() => setChartType('area')}
           >
-            Area
+            Křivka
           </Button>
           <Button
             variant={chartType === 'candlestick' ? 'primary' : 'ghost'}
             size="sm"
             onClick={() => setChartType('candlestick')}
           >
-            Candle
+            Svíčky
           </Button>
         </div>
 
@@ -728,7 +728,7 @@ export function PriceChart({
       {/* Empty state */}
       {chartData.length === 0 && !loadingIntraday && (
         <div className="price-chart__empty">
-          <Text color="secondary">No price data available</Text>
+          <Text color="secondary">Žádná cenová data</Text>
         </div>
       )}
     </div>

@@ -66,30 +66,30 @@ export function StockDetail({
       setStock(stockData);
       setTransactions(transactionsData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load stock');
+      setError(
+        err instanceof Error ? err.message : 'Nepodařilo se načíst akcii'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteStock = async () => {
-    if (
-      !confirm(
-        `Delete ${stock?.ticker}? This will also delete all transactions.`
-      )
-    ) {
+    if (!confirm(`Smazat ${stock?.ticker}? Toto smaže i všechny transakce.`)) {
       return;
     }
     try {
       await stocksApi.delete(stockId);
       onDeleted();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete stock');
+      setError(
+        err instanceof Error ? err.message : 'Nepodařilo se smazat akcii'
+      );
     }
   };
 
   const handleDeleteTransaction = async (transactionId: string) => {
-    if (!confirm('Delete this transaction?')) {
+    if (!confirm('Smazat tuto transakci?')) {
       return;
     }
     try {
@@ -97,7 +97,7 @@ export function StockDetail({
       await loadData();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to delete transaction'
+        err instanceof Error ? err.message : 'Nepodařilo se smazat transakci'
       );
     }
   };
@@ -115,7 +115,7 @@ export function StockDetail({
   };
 
   if (loading) {
-    return <LoadingSpinner text="Loading stock..." />;
+    return <LoadingSpinner text="Načítám akcii..." />;
   }
 
   if (error) {
@@ -123,7 +123,7 @@ export function StockDetail({
   }
 
   if (!stock) {
-    return <ErrorState message="Stock not found" />;
+    return <ErrorState message="Akcie nenalezena" />;
   }
 
   // Calculate summary
@@ -153,14 +153,14 @@ export function StockDetail({
       {/* Header */}
       <div className="stock-detail-header">
         <Button variant="secondary" onClick={onBack}>
-          ← Back
+          ← Zpět
         </Button>
         <div className="header-actions">
           <Button variant="secondary" onClick={() => setShowEditStock(true)}>
-            Edit
+            Upravit
           </Button>
           <Button variant="danger" onClick={handleDeleteStock}>
-            Delete
+            Smazat
           </Button>
         </div>
       </div>
@@ -173,19 +173,19 @@ export function StockDetail({
         </div>
         <div className="stock-meta">
           <div className="meta-item">
-            <MetricLabel>Sector</MetricLabel>
+            <MetricLabel>Sektor</MetricLabel>
             <MetricValue>{stock.sector_name || '—'}</MetricValue>
           </div>
           <div className="meta-item">
-            <MetricLabel>Exchange</MetricLabel>
+            <MetricLabel>Burza</MetricLabel>
             <MetricValue>{stock.exchange || '—'}</MetricValue>
           </div>
           <div className="meta-item">
-            <MetricLabel>Currency</MetricLabel>
+            <MetricLabel>Měna</MetricLabel>
             <MetricValue>{stock.currency}</MetricValue>
           </div>
           <div className="meta-item">
-            <MetricLabel>Target Price</MetricLabel>
+            <MetricLabel>Cílová cena</MetricLabel>
             <MetricValue>
               {stock.target_price
                 ? formatPrice(stock.target_price, stock.currency)
@@ -195,7 +195,7 @@ export function StockDetail({
         </div>
         {stock.notes && (
           <div className="stock-notes">
-            <MetricLabel>Notes</MetricLabel>
+            <MetricLabel>Poznámky</MetricLabel>
             <Description>{stock.notes}</Description>
           </div>
         )}
@@ -204,23 +204,23 @@ export function StockDetail({
       {/* Summary */}
       <div className="summary-cards">
         <div className="summary-card">
-          <MetricLabel>Total Shares</MetricLabel>
+          <MetricLabel>Celkem akcií</MetricLabel>
           <MetricValue size="lg">{formatShares(totalShares)}</MetricValue>
         </div>
         <div className="summary-card">
-          <MetricLabel>Avg. Buy Price</MetricLabel>
+          <MetricLabel>Prům. nákupní cena</MetricLabel>
           <MetricValue size="lg">
             {formatPrice(avgPrice, stock.currency)}
           </MetricValue>
         </div>
         <div className="summary-card">
-          <MetricLabel>Total Invested (CZK)</MetricLabel>
+          <MetricLabel>Celkem investováno (CZK)</MetricLabel>
           <MetricValue size="lg">
             {formatCurrency(totalInvested, 'CZK')}
           </MetricValue>
         </div>
         <div className="summary-card">
-          <MetricLabel>Transactions</MetricLabel>
+          <MetricLabel>Transakcí</MetricLabel>
           <MetricValue size="lg">{transactions.length}</MetricValue>
         </div>
       </div>
@@ -228,14 +228,14 @@ export function StockDetail({
       {/* Transactions */}
       <div className="transactions-section">
         <div className="section-header">
-          <SectionTitle>Transactions</SectionTitle>
+          <SectionTitle>Transakce</SectionTitle>
           <Button variant="primary" onClick={() => setShowAddTransaction(true)}>
-            + Add Transaction
+            + Přidat transakci
           </Button>
         </div>
 
         {transactions.length === 0 ? (
-          <EmptyState title="No transactions yet" />
+          <EmptyState title="Žádné transakce" />
         ) : (
           <>
             {/* Mobile Cards View */}
@@ -273,23 +273,23 @@ export function StockDetail({
                   </div>
                   <div className="transaction-card-body">
                     <div className="transaction-card-stat">
-                      <MetricLabel>Quantity</MetricLabel>
+                      <MetricLabel>Množství</MetricLabel>
                       <MetricValue>{formatShares(tx.quantity)}</MetricValue>
                     </div>
                     <div className="transaction-card-stat">
-                      <MetricLabel>Price</MetricLabel>
+                      <MetricLabel>Cena</MetricLabel>
                       <MetricValue>
                         {formatPrice(tx.price_per_share, stock.currency)}
                       </MetricValue>
                     </div>
                     <div className="transaction-card-stat">
-                      <MetricLabel>Total</MetricLabel>
+                      <MetricLabel>Celkem</MetricLabel>
                       <MetricValue>
                         {formatPrice(tx.total_amount, stock.currency)}
                       </MetricValue>
                     </div>
                     <div className="transaction-card-stat">
-                      <MetricLabel>Total CZK</MetricLabel>
+                      <MetricLabel>Celkem CZK</MetricLabel>
                       <MetricValue>
                         {formatCurrency(tx.total_amount_czk, 'CZK')}
                       </MetricValue>
@@ -304,14 +304,14 @@ export function StockDetail({
               <table className="transactions-table">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th className="right">Quantity</th>
-                    <th className="right">Price</th>
-                    <th className="right">Total</th>
-                    <th className="right">Fees</th>
-                    <th className="right">Total CZK</th>
-                    <th>Actions</th>
+                    <th>Datum</th>
+                    <th>Typ</th>
+                    <th className="right">Množství</th>
+                    <th className="right">Cena</th>
+                    <th className="right">Celkem</th>
+                    <th className="right">Poplatky</th>
+                    <th className="right">Celkem CZK</th>
+                    <th>Akce</th>
                   </tr>
                 </thead>
                 <tbody>

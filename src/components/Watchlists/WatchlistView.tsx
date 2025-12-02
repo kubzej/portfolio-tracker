@@ -40,16 +40,16 @@ type SortFieldKey =
 
 const SORT_FIELDS: MobileSortField[] = [
   { value: 'ticker', label: 'Ticker', defaultDirection: 'asc' },
-  { value: 'last_price', label: 'Price', defaultDirection: 'desc' },
+  { value: 'last_price', label: 'Cena', defaultDirection: 'desc' },
   {
     value: 'last_price_change_percent',
-    label: 'Change',
+    label: 'Změna',
     defaultDirection: 'desc',
   },
-  { value: 'target_buy_price', label: 'Buy Target', defaultDirection: 'asc' },
+  { value: 'target_buy_price', label: 'Nákupní cíl', defaultDirection: 'asc' },
   {
     value: 'target_sell_price',
-    label: 'Sell Target',
+    label: 'Prodejní cíl',
     defaultDirection: 'desc',
   },
 ];
@@ -191,7 +191,7 @@ export function WatchlistView({
   };
 
   const handleRemoveItem = async (itemId: string, ticker: string) => {
-    if (!confirm(`Remove ${ticker} from this watchlist?`)) {
+    if (!confirm(`Odebrat ${ticker} z tohoto watchlistu?`)) {
       return;
     }
 
@@ -228,7 +228,7 @@ export function WatchlistView({
   if (loading) {
     return (
       <div className="watchlist-view">
-        <LoadingSpinner text="Loading watchlist..." fullPage />
+        <LoadingSpinner text="Načítám watchlist..." fullPage />
       </div>
     );
   }
@@ -236,7 +236,7 @@ export function WatchlistView({
   if (!watchlist) {
     return (
       <div className="watchlist-view">
-        <ErrorState message="Watchlist not found" onRetry={onBack} />
+        <ErrorState message="Watchlist nenalezen" onRetry={onBack} />
       </div>
     );
   }
@@ -246,7 +246,7 @@ export function WatchlistView({
       <div className="watchlist-view-header">
         <div className="header-left">
           <Button variant="ghost" size="sm" onClick={onBack}>
-            ← Back
+            ← Zpět
           </Button>
           <div className="watchlist-info">
             <SectionTitle>{watchlist.name}</SectionTitle>
@@ -261,10 +261,10 @@ export function WatchlistView({
             onClick={handleRefreshPrices}
             disabled={refreshing || items.length === 0}
           >
-            {refreshing ? 'Refreshing...' : 'Refresh Prices'}
+            {refreshing ? 'Obnovuji...' : 'Obnovit ceny'}
           </Button>
           <Button variant="primary" onClick={handleAddStock}>
-            + Add Stock
+            + Přidat akcii
           </Button>
         </div>
       </div>
@@ -273,9 +273,9 @@ export function WatchlistView({
 
       {items.length === 0 ? (
         <EmptyState
-          title="No stocks yet"
-          description="Add stocks to this watchlist to start tracking them."
-          action={{ label: 'Add Stock', onClick: handleAddStock }}
+          title="Žádné akcie"
+          description="Přidejte akcie do watchlistu a začněte je sledovat."
+          action={{ label: 'Přidat akcii', onClick: handleAddStock }}
         />
       ) : (
         <div className="watchlist-items">
@@ -314,7 +314,7 @@ export function WatchlistView({
                   )}
                   onClick={() => handleSort('last_price')}
                 >
-                  Price {getSortIndicator('last_price')}
+                  Cena {getSortIndicator('last_price')}
                 </th>
                 <th
                   className={cn(
@@ -324,7 +324,7 @@ export function WatchlistView({
                   )}
                   onClick={() => handleSort('last_price_change_percent')}
                 >
-                  Change {getSortIndicator('last_price_change_percent')}
+                  Změna {getSortIndicator('last_price_change_percent')}
                 </th>
                 <th
                   className={cn(
@@ -334,7 +334,7 @@ export function WatchlistView({
                   )}
                   onClick={() => handleSort('target_buy_price')}
                 >
-                  Buy Target {getSortIndicator('target_buy_price')}
+                  Nákupní cíl {getSortIndicator('target_buy_price')}
                 </th>
                 <th
                   className={cn(
@@ -344,10 +344,10 @@ export function WatchlistView({
                   )}
                   onClick={() => handleSort('target_sell_price')}
                 >
-                  Sell Target {getSortIndicator('target_sell_price')}
+                  Prodejní cíl {getSortIndicator('target_sell_price')}
                 </th>
                 <th>Status</th>
-                <th>Notes</th>
+                <th>Poznámky</th>
                 <th></th>
               </tr>
             </thead>
@@ -364,7 +364,7 @@ export function WatchlistView({
                           item.finnhub_ticker ?? undefined
                         )
                       }
-                      title="Open research"
+                      title="Otevřít research"
                     >
                       <Ticker>{item.ticker}</Ticker>
                     </button>
@@ -468,7 +468,7 @@ export function WatchlistView({
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEditItem(item)}
-                      title="Edit"
+                      title="Upravit"
                     >
                       <EditIcon size={14} />
                     </Button>
@@ -476,7 +476,7 @@ export function WatchlistView({
                       variant="ghost"
                       size="sm"
                       onClick={() => handleRemoveItem(item.id, item.ticker)}
-                      title="Remove"
+                      title="Odebrat"
                     >
                       <TrashIcon size={14} />
                     </Button>
@@ -559,7 +559,7 @@ export function WatchlistView({
                         item.at_buy_target && 'target-hit'
                       )}
                     >
-                      <MetricLabel>Buy:</MetricLabel>
+                      <MetricLabel>Nákup:</MetricLabel>
                       <Text size="sm" weight="medium">
                         {formatCurrency(
                           item.target_buy_price,
@@ -581,7 +581,7 @@ export function WatchlistView({
                         item.at_sell_target && 'target-hit'
                       )}
                     >
-                      <MetricLabel>Sell:</MetricLabel>
+                      <MetricLabel>Prodej:</MetricLabel>
                       <Text size="sm" weight="medium">
                         {formatCurrency(
                           item.target_sell_price,
