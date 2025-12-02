@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import type { StockRecommendation, SignalType } from '@/utils/recommendations';
 import { SIGNAL_CONFIG } from '@/utils/signals';
 import { formatDateShort, formatReturn, getReturnClass } from '@/utils/format';
@@ -83,13 +83,23 @@ export function Recommendations({
   >([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [autoLogStatus, setAutoLogStatus] = useState<string | null>(null);
+  const isLoggingRef = useRef(false);
 
-  // Auto-log signals when recommendations change
+  // Auto-log signals when recommendations load (with mutex to prevent race conditions)
   useEffect(() => {
-    if (recommendations.length > 0 && portfolioId && !loading) {
-      autoLogSignals();
+    if (
+      recommendations.length > 0 &&
+      portfolioId &&
+      !loading &&
+      !isLoggingRef.current
+    ) {
+      isLoggingRef.current = true;
+      autoLogSignals().finally(() => {
+        isLoggingRef.current = false;
+      });
     }
-  }, [recommendations, portfolioId, loading]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recommendations.length, portfolioId, loading]);
 
   const autoLogSignals = async () => {
     if (!portfolioId || recommendations.length === 0) return;
@@ -100,7 +110,7 @@ export function Recommendations({
       if (signalsToLog.length === 0) return;
       const result = await logMultipleSignals(portfolioId, signalsToLog);
       if (result.logged > 0) {
-        setAutoLogStatus(`${result.logged} new signals logged`);
+        setAutoLogStatus(`${result.logged} nových signálů zalogováno`);
         setTimeout(() => setAutoLogStatus(null), 3000);
         if (showHistory) loadSignalHistory();
       }
