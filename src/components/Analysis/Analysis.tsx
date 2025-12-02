@@ -3,6 +3,7 @@ import {
   fetchAnalystData,
   type FundamentalMetrics,
   type EarningsData,
+  type RateLimitInfo,
 } from '@/services/api/analysis';
 import {
   fetchTechnicalData,
@@ -65,6 +66,25 @@ import {
 import { ColumnPicker } from './ColumnPicker';
 import './Analysis.css';
 
+// Debug info for tracking data load status per stock
+interface StockDataStatus {
+  ticker: string;
+  hasAnalyst: boolean;
+  hasFundamentals: boolean;
+  hasTechnical: boolean;
+  hasNews: boolean;
+  isValid: boolean; // Has minimum required data for recommendation
+}
+
+// Overall data load status
+interface DataLoadStatus {
+  stocks: StockDataStatus[];
+  rateLimited?: { finnhub: boolean; yahoo: boolean };
+  totalStocks: number;
+  validStocks: number;
+  errors: string[];
+}
+
 interface AnalysisProps {
   portfolioId: string | null;
 }
@@ -119,6 +139,15 @@ export function Analysis({ portfolioId }: AnalysisProps) {
     []
   );
 
+  // Data load status for debug panel
+  const [dataLoadStatus, setDataLoadStatus] = useState<DataLoadStatus>({
+    stocks: [],
+    totalStocks: 0,
+    validStocks: 0,
+    errors: [],
+  });
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
+
   // Mobile tooltip state
   const [mobileTooltip, setMobileTooltip] = useState<{
     text: string;
@@ -162,16 +191,30 @@ export function Analysis({ portfolioId }: AnalysisProps) {
 
   // Regenerate recommendations when insider time range changes
   useEffect(() => {
-    if (analystData.length > 0) {
+    if (analystData.length > 0 && dataLoadStatus.stocks.length > 0) {
+      // Filter to only stocks with valid data
+      const validEnriched = analystData.filter((stock) => {
+        const status = dataLoadStatus.stocks.find(
+          (s) => s.ticker === stock.ticker
+        );
+        return status?.isValid ?? false;
+      });
+
       const recs = generateAllRecommendations(
-        analystData,
+        validEnriched,
         technicalData,
         newsArticles,
         insiderTimeRange
       );
       setRecommendations(recs);
     }
-  }, [insiderTimeRange, analystData, technicalData, newsArticles]);
+  }, [
+    insiderTimeRange,
+    analystData,
+    technicalData,
+    newsArticles,
+    dataLoadStatus.stocks,
+  ]);
 
   const loadIndicators = async () => {
     try {
@@ -206,13 +249,22 @@ export function Analysis({ portfolioId }: AnalysisProps) {
     try {
       setLoading(true);
       setError(null);
+      setDataLoadStatus({
+        stocks: [],
+        totalStocks: 0,
+        validStocks: 0,
+        errors: [],
+      });
 
       // Fetch ALL data in parallel: analyst, holdings, technical, and news
       const [analysisResult, holdings, technicalResult, newsResult] =
         await Promise.all([
           fetchAnalystData(portfolioId),
           holdingsApi.getPortfolioSummary(portfolioId),
-          fetchTechnicalData(portfolioId).catch(() => ({ data: [] })),
+          fetchTechnicalData(portfolioId).catch(() => ({
+            data: [],
+            rateLimited: undefined,
+          })),
           fetchPortfolioNews(portfolioId).catch(() => ({ articles: [] })),
         ]);
 
@@ -221,6 +273,18 @@ export function Analysis({ portfolioId }: AnalysisProps) {
       const news = newsResult.articles || [];
       setTechnicalData(techData);
       setNewsArticles(news);
+
+      // Track rate limiting - combine from all sources
+      const rateLimited: RateLimitInfo | undefined =
+        analysisResult.rateLimited || technicalResult.rateLimited
+          ? {
+              finnhub: analysisResult.rateLimited?.finnhub ?? false,
+              yahoo:
+                analysisResult.rateLimited?.yahoo ??
+                technicalResult.rateLimited?.yahoo ??
+                false,
+            }
+          : undefined;
 
       // Calculate total portfolio value
       const totalValue = holdings.reduce(
@@ -261,12 +325,83 @@ export function Analysis({ portfolioId }: AnalysisProps) {
         })
         .filter((item): item is EnrichedAnalystData => item !== null);
 
+      // Build data load status for each stock
+      const stockStatuses: StockDataStatus[] = enriched.map((stock) => {
+        const techForStock = techData.find((t) => t.ticker === stock.ticker);
+
+        // Technical: need RSI or MACD with actual values
+        const hasTech = !!(
+          techForStock &&
+          (typeof techForStock.rsi14 === 'number' ||
+            typeof techForStock.macd === 'number')
+        );
+
+        const hasStockNews = news.some((n) => n.ticker === stock.ticker);
+
+        // Fundamentals: need at least 2 actual metric values
+        const f = stock.fundamentals;
+        const fundamentalValues = f
+          ? [
+              f.peRatio,
+              f.roe,
+              f.netMargin,
+              f.grossMargin,
+              f.revenueGrowth,
+              f.debtToEquity,
+              f.pbRatio,
+            ].filter((v) => typeof v === 'number')
+          : [];
+        const hasFundamentals = fundamentalValues.length >= 2;
+
+        // Analyst: need price AND (recommendation data OR consensus score)
+        const hasPrice =
+          typeof stock.currentPrice === 'number' && stock.currentPrice > 0;
+        const hasRecommendation = !!(
+          stock.recommendationKey ||
+          typeof stock.consensusScore === 'number' ||
+          typeof stock.numberOfAnalysts === 'number'
+        );
+        const hasAnalyst = hasPrice && hasRecommendation;
+
+        // Stock is valid for recommendation only if it has ALL required data:
+        // - Price (required for any calculation)
+        // - Analyst data (recommendations/consensus)
+        // - Fundamentals (at least 2 metrics)
+        // - Technical data (RSI or MACD)
+        const isValid = hasPrice && hasAnalyst && hasFundamentals && hasTech;
+
+        return {
+          ticker: stock.ticker,
+          hasAnalyst,
+          hasFundamentals,
+          hasTechnical: hasTech,
+          hasNews: hasStockNews,
+          isValid,
+        };
+      });
+
+      const validStocks = stockStatuses.filter((s) => s.isValid).length;
+
+      setDataLoadStatus({
+        stocks: stockStatuses,
+        rateLimited,
+        totalStocks: enriched.length,
+        validStocks,
+        errors: analysisResult.errors || [],
+      });
+
       setAnalystData(enriched);
 
-      // Generate recommendations immediately with all prefetched data
+      // Generate recommendations only for valid stocks
       if (enriched.length > 0) {
+        // Filter to only stocks with valid data
+        const validEnriched = enriched.filter((stock) => {
+          const status = stockStatuses.find((s) => s.ticker === stock.ticker);
+          return status?.isValid ?? false;
+        });
+
         const recs = generateAllRecommendations(
-          enriched,
+          validEnriched,
           techData,
           news,
           insiderTimeRange
@@ -528,26 +663,159 @@ export function Analysis({ portfolioId }: AnalysisProps) {
     );
   }
 
+  // Compute debug status colors
+  const allValid = dataLoadStatus.validStocks === dataLoadStatus.totalStocks;
+  const hasRateLimited = !!(
+    dataLoadStatus.rateLimited?.finnhub || dataLoadStatus.rateLimited?.yahoo
+  );
+  const debugBgColor = hasRateLimited
+    ? '#f8d7da' // red - rate limited
+    : allValid
+    ? '#d4edda' // green - all OK
+    : dataLoadStatus.validStocks > 0
+    ? '#fff3cd' // yellow - partial
+    : '#f5f5f5'; // neutral
+
   return (
     <div className="analysis">
-      {/* Debug */}
+      {/* Debug Panel Header */}
       <div
         style={{
           fontSize: '9px',
           fontFamily: 'monospace',
-          color: '#666',
-          padding: '2px 4px',
-          background: '#f5f5f5',
+          color: '#333',
+          padding: '4px 8px',
+          background: debugBgColor,
           display: 'flex',
           flexWrap: 'wrap',
-          gap: '8px',
+          gap: '12px',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          cursor: 'pointer',
         }}
+        onClick={() => setShowDebugPanel(!showDebugPanel)}
       >
-        <Text size="sm" color="muted">
-          stocks: {analystData.length} | tech: {technicalData.length} | news:{' '}
+        <span>
+          stocks: {dataLoadStatus.totalStocks} | valid:{' '}
+          {dataLoadStatus.validStocks} | tech: {technicalData.length} | news:{' '}
           {newsArticles.length} | recs: {recommendations.length}
-        </Text>
+          {hasRateLimited && (
+            <span
+              style={{ color: '#c00', fontWeight: 'bold', marginLeft: '8px' }}
+            >
+              RATE LIMITED: {dataLoadStatus.rateLimited?.finnhub && 'Finnhub '}
+              {dataLoadStatus.rateLimited?.yahoo && 'Yahoo'}
+            </span>
+          )}
+        </span>
+        <span style={{ color: '#666' }}>
+          {showDebugPanel ? '▼ hide' : '▶ show details'}
+        </span>
       </div>
+
+      {/* Expanded Debug Panel */}
+      {showDebugPanel && dataLoadStatus.stocks.length > 0 && (
+        <div
+          style={{
+            fontSize: '9px',
+            fontFamily: 'monospace',
+            padding: '8px',
+            background: '#fafafa',
+            border: '1px solid #ddd',
+            borderTop: 'none',
+            maxHeight: '200px',
+            overflowY: 'auto',
+          }}
+        >
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid #ccc' }}>
+                <th style={{ textAlign: 'left', padding: '2px 4px' }}>
+                  Ticker
+                </th>
+                <th style={{ textAlign: 'center', padding: '2px 4px' }}>
+                  Analyst
+                </th>
+                <th style={{ textAlign: 'center', padding: '2px 4px' }}>
+                  Fund.
+                </th>
+                <th style={{ textAlign: 'center', padding: '2px 4px' }}>
+                  Tech
+                </th>
+                <th style={{ textAlign: 'center', padding: '2px 4px' }}>
+                  News
+                </th>
+                <th style={{ textAlign: 'center', padding: '2px 4px' }}>
+                  Valid
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {dataLoadStatus.stocks.map((stock) => (
+                <tr
+                  key={stock.ticker}
+                  style={{
+                    background: stock.isValid ? 'transparent' : '#fee',
+                  }}
+                >
+                  <td style={{ padding: '2px 4px', fontWeight: 'bold' }}>
+                    {stock.ticker}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'center',
+                      color: stock.hasAnalyst ? '#28a745' : '#dc3545',
+                    }}
+                  >
+                    {stock.hasAnalyst ? '✓' : '✗'}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'center',
+                      color: stock.hasFundamentals ? '#28a745' : '#dc3545',
+                    }}
+                  >
+                    {stock.hasFundamentals ? '✓' : '✗'}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'center',
+                      color: stock.hasTechnical ? '#28a745' : '#ffc107',
+                    }}
+                  >
+                    {stock.hasTechnical ? '✓' : '○'}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'center',
+                      color: stock.hasNews ? '#28a745' : '#999',
+                    }}
+                  >
+                    {stock.hasNews ? '✓' : '○'}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'center',
+                      fontWeight: 'bold',
+                      color: stock.isValid ? '#28a745' : '#dc3545',
+                    }}
+                  >
+                    {stock.isValid ? '✓' : '✗'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {dataLoadStatus.errors.length > 0 && (
+            <div style={{ marginTop: '8px', color: '#c00' }}>
+              Errors: {dataLoadStatus.errors.join(', ')}
+            </div>
+          )}
+          <div style={{ marginTop: '8px', color: '#666' }}>
+            Legend: ✓ = OK, ✗ = missing (required), ○ = missing (optional)
+          </div>
+        </div>
+      )}
 
       <div className="analysis-header">
         <SectionTitle>Analýza portfolia</SectionTitle>

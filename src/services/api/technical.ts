@@ -158,6 +158,9 @@ export interface TechnicalData {
 export interface TechnicalResult {
   data: TechnicalData[];
   errors: string[];
+  rateLimited?: {
+    yahoo: boolean;
+  };
 }
 
 /**
