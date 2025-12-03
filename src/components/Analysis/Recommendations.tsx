@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import type { StockRecommendation, SignalType } from '@/utils/recommendations';
 import { SIGNAL_CONFIG } from '@/utils/signals';
-import { formatDateShort, formatReturn, getReturnClass } from '@/utils/format';
 import { Tabs } from '@/components/shared/Tabs';
 import { Button } from '@/components/shared/Button';
 import {
@@ -9,18 +8,12 @@ import {
   type ToggleOption,
 } from '@/components/shared/ToggleGroup';
 import {
-  BottomSheetSelect,
-  type SelectOption,
-} from '@/components/shared/BottomSheet';
-import {
   LoadingSpinner,
   EmptyState,
   SignalBadge,
-  MetricCard,
   SignalCheckGroup,
 } from '@/components/shared';
 import {
-  SectionTitle,
   CardTitle,
   Text,
   Badge,
@@ -30,15 +23,8 @@ import {
   MetricLabel,
   MetricValue,
   Caption,
-  Muted,
 } from '@/components/shared/Typography';
-import {
-  logMultipleSignals,
-  getRecentSignals,
-  getSignalPerformance,
-  type SignalLogEntry,
-  type SignalPerformance,
-} from '@/services/api/signals';
+import { logMultipleSignals } from '@/services/api/signals';
 import './Recommendations.css';
 
 const GROUPING_OPTIONS = [
@@ -189,13 +175,6 @@ export function Recommendations({
   const [groupBy, setGroupBy] = useState<GroupBy>('none');
   const [selectedStock, setSelectedStock] =
     useState<StockRecommendation | null>(null);
-  const [showHistory, setShowHistory] = useState(false);
-  const [signalHistory, setSignalHistory] = useState<SignalLogEntry[]>([]);
-  const [signalPerformance, setSignalPerformance] = useState<
-    SignalPerformance[]
-  >([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [autoLogStatus, setAutoLogStatus] = useState<string | null>(null);
   const isLoggingRef = useRef(false);
 
   // Auto-log signals when recommendations load (with mutex to prevent race conditions)
@@ -221,37 +200,9 @@ export function Recommendations({
         (r) => r.primarySignal.type !== 'NEUTRAL'
       );
       if (signalsToLog.length === 0) return;
-      const result = await logMultipleSignals(portfolioId, signalsToLog);
-      if (result.logged > 0) {
-        setAutoLogStatus(`${result.logged} nových signálů zalogováno`);
-        setTimeout(() => setAutoLogStatus(null), 3000);
-        if (showHistory) loadSignalHistory();
-      }
+      await logMultipleSignals(portfolioId, signalsToLog);
     } catch (err) {
       console.error('Error auto-logging signals:', err);
-    }
-  };
-
-  useEffect(() => {
-    if (showHistory && portfolioId) {
-      loadSignalHistory();
-    }
-  }, [showHistory, portfolioId]);
-
-  const loadSignalHistory = async () => {
-    if (!portfolioId) return;
-    setHistoryLoading(true);
-    try {
-      const [history, performance] = await Promise.all([
-        getRecentSignals(portfolioId, 50),
-        getSignalPerformance(portfolioId),
-      ]);
-      setSignalHistory(history);
-      setSignalPerformance(performance);
-    } catch (err) {
-      console.error('Error loading signal history:', err);
-    } finally {
-      setHistoryLoading(false);
     }
   };
 
@@ -474,84 +425,51 @@ export function Recommendations({
 
   return (
     <div className="recommendations">
-      {/* Header */}
-      <div className="rec-header">
-        <div className="rec-header-left">
-          <SectionTitle>Chytré analýzy</SectionTitle>
-          {autoLogStatus && <Badge variant="buy">{autoLogStatus}</Badge>}
-        </div>
-        <div className="rec-header-right">
-          <Button
-            variant="outline"
-            size="sm"
-            isActive={showHistory}
-            onClick={() => setShowHistory(!showHistory)}
-          >
-            Historie signálů
-          </Button>
+      {/* Filters */}
+      <div className="rec-filters">
+        <ToggleGroup
+          value={filter}
+          onChange={(value) => setFilter(value as FilterType)}
+          options={filterOptions}
+          variant="signal"
+          hideEmpty
+        />
+
+        <div className="filter-options">
+          <Tabs
+            options={GROUPING_OPTIONS}
+            value={groupBy}
+            onChange={(value) => setGroupBy(value as GroupBy)}
+          />
         </div>
       </div>
 
-      {/* Filters - only show when not in history mode */}
-      {!showHistory && (
-        <div className="rec-filters">
-          <ToggleGroup
-            value={filter}
-            onChange={(value) => setFilter(value as FilterType)}
-            options={filterOptions}
-            variant="signal"
-            hideEmpty
-          />
-
-          <div className="filter-options">
-            <Tabs
-              options={GROUPING_OPTIONS}
-              value={groupBy}
-              onChange={(value) => setGroupBy(value as GroupBy)}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* History Panel - Full screen when active */}
-      {showHistory ? (
-        <SignalHistoryPanel
-          history={signalHistory}
-          performance={signalPerformance}
-          loading={historyLoading}
-          onClose={() => setShowHistory(false)}
-        />
-      ) : (
-        <>
-          {/* Stock Grid */}
-          <div className="rec-content">
-            {Object.entries(groupedRecs).map(([groupName, recs]) => (
-              <div key={groupName} className="rec-group">
-                {groupBy !== 'none' && (
-                  <div className="group-header">
-                    <Text weight="semibold">
-                      {groupBy === 'signal'
-                        ? SIGNAL_CONFIG[groupName as SignalType]?.label ||
-                          groupName
-                        : groupName}
-                    </Text>
-                    <Count>{recs.length}</Count>
-                  </div>
-                )}
-                <div className="stock-grid">
-                  {recs.map((rec) => (
-                    <StockTile
-                      key={rec.ticker}
-                      rec={rec}
-                      onClick={() => setSelectedStock(rec)}
-                    />
-                  ))}
-                </div>
+      {/* Stock Grid */}
+      <div className="rec-content">
+        {Object.entries(groupedRecs).map(([groupName, recs]) => (
+          <div key={groupName} className="rec-group">
+            {groupBy !== 'none' && (
+              <div className="group-header">
+                <Text weight="semibold">
+                  {groupBy === 'signal'
+                    ? SIGNAL_CONFIG[groupName as SignalType]?.label || groupName
+                    : groupName}
+                </Text>
+                <Count>{recs.length}</Count>
               </div>
-            ))}
+            )}
+            <div className="stock-grid">
+              {recs.map((rec) => (
+                <StockTile
+                  key={rec.ticker}
+                  rec={rec}
+                  onClick={() => setSelectedStock(rec)}
+                />
+              ))}
+            </div>
           </div>
-        </>
-      )}
+        ))}
+      </div>
 
       {/* Detail Modal */}
       {selectedStock && (
@@ -1263,251 +1181,6 @@ function StockDetailModal({ rec, onClose }: StockDetailModalProps) {
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-// ============================================================================
-// SIGNAL HISTORY PANEL
-// ============================================================================
-
-interface HistoryPanelProps {
-  history: SignalLogEntry[];
-  performance: SignalPerformance[];
-  loading: boolean;
-  onClose: () => void;
-}
-
-const ITEMS_PER_PAGE = 25;
-
-function SignalHistoryPanel({
-  history,
-  performance: _performance,
-  loading,
-  onClose,
-}: HistoryPanelProps) {
-  const [tickerFilter, setTickerFilter] = useState<string>('');
-  const [signalFilter, setSignalFilter] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-
-  // Get unique tickers for filter dropdown
-  const uniqueTickers = useMemo(() => {
-    const tickers = [...new Set(history.map((h) => h.ticker))].sort();
-    return tickers;
-  }, [history]);
-
-  // Filter history
-  const filteredHistory = useMemo(() => {
-    return history.filter((sig) => {
-      const matchesTicker = !tickerFilter || sig.ticker === tickerFilter;
-      const matchesSignal =
-        signalFilter === 'all' || sig.signal_type === signalFilter;
-      return matchesTicker && matchesSignal;
-    });
-  }, [history, tickerFilter, signalFilter]);
-
-  // Pagination
-  const totalPages = Math.ceil(filteredHistory.length / ITEMS_PER_PAGE);
-  const paginatedHistory = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredHistory.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredHistory, currentPage]);
-
-  // Reset page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [tickerFilter, signalFilter]);
-
-  // Stats
-  const stats = useMemo(() => {
-    const signalsWithReturns = filteredHistory.filter(
-      (s) => s.price_1w !== null
-    );
-    const avgReturn1w =
-      signalsWithReturns.length > 0
-        ? signalsWithReturns.reduce(
-            (sum, s) =>
-              sum +
-              ((s.price_1w! - s.price_at_signal) / s.price_at_signal) * 100,
-            0
-          ) / signalsWithReturns.length
-        : 0;
-    const winRate =
-      signalsWithReturns.length > 0
-        ? (signalsWithReturns.filter((s) => s.price_1w! > s.price_at_signal)
-            .length /
-            signalsWithReturns.length) *
-          100
-        : 0;
-    return { total: filteredHistory.length, avgReturn1w, winRate };
-  }, [filteredHistory]);
-
-  // Ticker options for filter dropdown
-  const tickerOptions: SelectOption[] = useMemo(() => {
-    return [
-      { value: '', label: 'Všechny tickery' },
-      ...uniqueTickers.map((t) => ({ value: t, label: t })),
-    ];
-  }, [uniqueTickers]);
-
-  // Signal options for filter dropdown
-  const signalOptions: SelectOption[] = useMemo(() => {
-    return [
-      { value: 'all', label: 'Všechny signály' },
-      ...Object.entries(SIGNAL_CONFIG).map(([key, val]) => ({
-        value: key,
-        label: val.label,
-      })),
-    ];
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="history-fullscreen">
-        <LoadingSpinner text="Načítám historii..." />
-      </div>
-    );
-  }
-
-  return (
-    <div className="history-fullscreen">
-      {/* Header */}
-      <div className="history-header">
-        <div className="history-title">
-          <SectionTitle>Historie signálů</SectionTitle>
-          <Muted>{stats.total} signálů</Muted>
-        </div>
-        <Button variant="ghost" size="sm" icon onClick={onClose}>
-          ×
-        </Button>
-      </div>
-
-      {/* Stats Bar */}
-      <div className="history-stats">
-        <MetricCard label="Celkem signálů" value={stats.total} size="sm" />
-        <MetricCard
-          label="Prům. výnos 1T"
-          value={`${
-            stats.avgReturn1w >= 0 ? '+' : ''
-          }${stats.avgReturn1w.toFixed(1)}`}
-          suffix="%"
-          sentiment={stats.avgReturn1w >= 0 ? 'positive' : 'negative'}
-          size="sm"
-        />
-        <MetricCard
-          label="Úspěšnost (1T)"
-          value={stats.winRate.toFixed(0)}
-          suffix="%"
-          sentiment={stats.winRate >= 50 ? 'positive' : 'negative'}
-          size="sm"
-        />
-      </div>
-
-      {/* Filters */}
-      <div className="history-filters">
-        <BottomSheetSelect
-          value={tickerFilter}
-          onChange={setTickerFilter}
-          options={tickerOptions}
-          placeholder="Všechny tickery"
-          title="Filtr podle tickeru"
-        />
-        <BottomSheetSelect
-          value={signalFilter}
-          onChange={setSignalFilter}
-          options={signalOptions}
-          placeholder="Všechny signály"
-          title="Filtr podle signálu"
-        />
-      </div>
-
-      {/* Table */}
-      {filteredHistory.length === 0 ? (
-        <Muted>Žádné signály neodpovídají filtrům.</Muted>
-      ) : (
-        <>
-          <div className="history-table-wrapper">
-            <table className="history-table">
-              <thead>
-                <tr>
-                  <th>Datum</th>
-                  <th>Ticker</th>
-                  <th>Signál</th>
-                  <th>Cena</th>
-                  <th>1D</th>
-                  <th>1T</th>
-                  <th>1M</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedHistory.map((sig) => (
-                  <tr key={sig.id}>
-                    <td>{formatDateShort(sig.created_at)}</td>
-                    <td>
-                      <Ticker>{sig.ticker}</Ticker>
-                    </td>
-                    <td>
-                      <SignalBadge type={sig.signal_type} size="sm" />
-                    </td>
-                    <td>${sig.price_at_signal.toFixed(2)}</td>
-                    <td
-                      className={getReturnClass(
-                        sig.price_at_signal,
-                        sig.price_1d
-                      )}
-                    >
-                      {formatReturn(sig.price_at_signal, sig.price_1d)}
-                    </td>
-                    <td
-                      className={getReturnClass(
-                        sig.price_at_signal,
-                        sig.price_1w
-                      )}
-                    >
-                      {formatReturn(sig.price_at_signal, sig.price_1w)}
-                    </td>
-                    <td
-                      className={getReturnClass(
-                        sig.price_at_signal,
-                        sig.price_1m
-                      )}
-                    >
-                      {formatReturn(sig.price_at_signal, sig.price_1m)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="history-pagination">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-              >
-                ← Předchozí
-              </Button>
-              <Text size="sm" color="muted">
-                Stránka {currentPage} z {totalPages}
-              </Text>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(totalPages, p + 1))
-                }
-                disabled={currentPage === totalPages}
-              >
-                Další →
-              </Button>
-            </div>
-          )}
-        </>
-      )}
     </div>
   );
 }

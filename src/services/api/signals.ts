@@ -15,15 +15,20 @@ export interface SignalLogEntry {
   id: string;
   created_at: string;
   portfolio_id: string;
+  user_id: string | null;
+  source: 'portfolio' | 'research' | null;
   ticker: string;
   stock_name: string | null;
   signal_type: SignalType;
   signal_strength: number | null;
+  quality_signal: string | null;
+  conviction_level: string | null;
   composite_score: number | null;
   fundamental_score: number | null;
   technical_score: number | null;
   analyst_score: number | null;
   news_score: number | null;
+  insider_score: number | null;
   conviction_score: number | null;
   dip_score: number | null;
   price_at_signal: number;
@@ -58,7 +63,9 @@ export interface SignalPerformance {
 }
 
 export interface SignalLogInput {
-  portfolioId: string;
+  portfolioId?: string; // Optional for research signals
+  userId?: string; // Required for research signals
+  source?: 'portfolio' | 'research';
   recommendation: StockRecommendation;
   signalType?: SignalType; // If not provided, uses primarySignal
 }
@@ -71,7 +78,7 @@ export interface SignalLogInput {
  * Check if a similar signal already exists in the last N days
  */
 export async function signalExists(
-  portfolioId: string,
+  identifier: { portfolioId?: string; userId?: string },
   ticker: string,
   signalType: SignalType,
   daysWindow: number = 7
@@ -79,14 +86,22 @@ export async function signalExists(
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - daysWindow);
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('signal_log')
     .select('id')
-    .eq('portfolio_id', portfolioId)
     .eq('ticker', ticker)
     .eq('signal_type', signalType)
     .gte('created_at', cutoffDate.toISOString())
     .limit(1);
+
+  // Filter by portfolio or user
+  if (identifier.portfolioId) {
+    query = query.eq('portfolio_id', identifier.portfolioId);
+  } else if (identifier.userId) {
+    query = query.eq('user_id', identifier.userId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('Error checking signal existence:', error);
@@ -107,11 +122,12 @@ export async function signalExists(
 export async function logSignal(
   input: SignalLogInput
 ): Promise<SignalLogEntry | null> {
-  const { portfolioId, recommendation, signalType } = input;
+  const { portfolioId, userId, source, recommendation, signalType } = input;
   const type = signalType ?? recommendation.primarySignal.type;
 
   // Check for duplicates
-  const exists = await signalExists(portfolioId, recommendation.ticker, type);
+  const identifier = portfolioId ? { portfolioId } : { userId };
+  const exists = await signalExists(identifier, recommendation.ticker, type);
   if (exists) {
     console.log(
       `Signal ${type} for ${recommendation.ticker} already exists (deduplicated)`
@@ -122,16 +138,21 @@ export async function logSignal(
   const { data, error } = await supabase
     .from('signal_log')
     .insert({
-      portfolio_id: portfolioId,
+      portfolio_id: portfolioId || null,
+      user_id: userId || null,
+      source: source || 'portfolio',
       ticker: recommendation.ticker,
       stock_name: recommendation.stockName,
       signal_type: type,
       signal_strength: recommendation.primarySignal.strength,
+      quality_signal: recommendation.qualitySignal?.type || null,
+      conviction_level: recommendation.convictionLevel,
       composite_score: recommendation.compositeScore,
       fundamental_score: recommendation.fundamentalScore,
       technical_score: recommendation.technicalScore,
       analyst_score: recommendation.analystScore,
       news_score: recommendation.newsScore,
+      insider_score: recommendation.insiderScore,
       conviction_score: recommendation.convictionScore,
       dip_score: recommendation.dipScore,
       price_at_signal: recommendation.currentPrice,
@@ -140,7 +161,6 @@ export async function logSignal(
         ? parseFloat(recommendation.metadata.macdSignal)
         : null,
       metadata: {
-        convictionLevel: recommendation.convictionLevel,
         isDip: recommendation.isDip,
         dipQualityCheck: recommendation.dipQualityCheck,
         technicalBias: recommendation.technicalBias,
