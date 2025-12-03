@@ -3324,14 +3324,15 @@ function generateExplanation(
     ],
   });
 
-  // FUNDAMENTALLY_WEAK (Portfolio only - weak fundamentals but OK technicals)
+  // WATCH (action signal - "sleduj", some metrics deteriorating)
   signalEvaluation.push({
-    signal: 'FUNDAMENTALLY_WEAK',
+    signal: 'WATCH',
     category: 'action',
     passed:
-      portfolioComponent !== null &&
-      fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_MODERATE &&
-      technicalComponent.percent >= SIGNAL_THRESHOLDS.TECH_MODERATE,
+      portfolioComponent !== null && // Holdings only
+      (fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_WATCH ||
+        insiderComponent.percent < SIGNAL_THRESHOLDS.INSIDER_WEAK ||
+        newsComponent.percent < SIGNAL_THRESHOLDS.NEWS_WATCH),
     conditions: [
       {
         name: 'isPortfolio',
@@ -3342,74 +3343,20 @@ function generateExplanation(
       {
         name: 'fundamentalScore',
         actual: Math.round(fundamentalComponent.percent),
-        required: `< ${SIGNAL_THRESHOLDS.FUND_MODERATE}`,
-        passed: fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_MODERATE,
+        required: `< ${SIGNAL_THRESHOLDS.FUND_WATCH}`,
+        passed: fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_WATCH,
       },
       {
-        name: 'technicalScore',
-        actual: Math.round(technicalComponent.percent),
-        required: `≥ ${SIGNAL_THRESHOLDS.TECH_MODERATE}`,
-        passed: technicalComponent.percent >= SIGNAL_THRESHOLDS.TECH_MODERATE,
-      },
-    ],
-  });
-
-  // TECHNICALLY_WEAK (Portfolio only - OK fundamentals but weak technicals)
-  signalEvaluation.push({
-    signal: 'TECHNICALLY_WEAK',
-    category: 'action',
-    passed:
-      portfolioComponent !== null &&
-      fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE &&
-      technicalComponent.percent < SIGNAL_THRESHOLDS.TECH_MODERATE,
-    conditions: [
-      {
-        name: 'isPortfolio',
-        actual: portfolioComponent !== null ? 'ano' : 'ne',
-        required: 'ano',
-        passed: portfolioComponent !== null,
+        name: 'insiderScore',
+        actual: Math.round(insiderComponent.percent),
+        required: `< ${SIGNAL_THRESHOLDS.INSIDER_WEAK}`,
+        passed: insiderComponent.percent < SIGNAL_THRESHOLDS.INSIDER_WEAK,
       },
       {
-        name: 'fundamentalScore',
-        actual: Math.round(fundamentalComponent.percent),
-        required: `≥ ${SIGNAL_THRESHOLDS.FUND_MODERATE}`,
-        passed: fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE,
-      },
-      {
-        name: 'technicalScore',
-        actual: Math.round(technicalComponent.percent),
-        required: `< ${SIGNAL_THRESHOLDS.TECH_MODERATE}`,
-        passed: technicalComponent.percent < SIGNAL_THRESHOLDS.TECH_MODERATE,
-      },
-    ],
-  });
-
-  // PROBLEMATIC (Portfolio only - both fundamentals and technicals weak)
-  signalEvaluation.push({
-    signal: 'PROBLEMATIC',
-    category: 'action',
-    passed:
-      portfolioComponent !== null &&
-      fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_MODERATE &&
-      technicalComponent.percent < SIGNAL_THRESHOLDS.TECH_MODERATE,
-    conditions: [
-      {
-        name: 'isPortfolio',
-        actual: portfolioComponent !== null ? 'ano' : 'ne',
-        required: 'ano',
-        passed: portfolioComponent !== null,
-      },
-      {
-        name: 'fundamentalScore',
-        actual: Math.round(fundamentalComponent.percent),
-        required: `< ${SIGNAL_THRESHOLDS.FUND_MODERATE}`,
-        passed: fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_MODERATE,
-      },
-      {
-        name: 'technicalScore',
-        actual: Math.round(technicalComponent.percent),
-        required: `< ${SIGNAL_THRESHOLDS.TECH_MODERATE}`,
-        passed: technicalComponent.percent < SIGNAL_THRESHOLDS.TECH_MODERATE,
+        name: 'newsScore',
+        actual: Math.round(newsComponent.percent),
+        required: `< ${SIGNAL_THRESHOLDS.NEWS_WATCH}`,
+        passed: newsComponent.percent < SIGNAL_THRESHOLDS.NEWS_WATCH,
       },
     ],
   });
@@ -3540,6 +3487,75 @@ function generateExplanation(
     ],
   });
 
+  // FUNDAMENTALLY_WEAK (weak fundamentals but OK technicals)
+  signalEvaluation.push({
+    signal: 'FUNDAMENTALLY_WEAK',
+    category: 'quality',
+    passed:
+      fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_MODERATE &&
+      technicalComponent.percent >= SIGNAL_THRESHOLDS.TECH_MODERATE,
+    conditions: [
+      {
+        name: 'fundamentalScore',
+        actual: Math.round(fundamentalComponent.percent),
+        required: `< ${SIGNAL_THRESHOLDS.FUND_MODERATE}`,
+        passed: fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_MODERATE,
+      },
+      {
+        name: 'technicalScore',
+        actual: Math.round(technicalComponent.percent),
+        required: `≥ ${SIGNAL_THRESHOLDS.TECH_MODERATE}`,
+        passed: technicalComponent.percent >= SIGNAL_THRESHOLDS.TECH_MODERATE,
+      },
+    ],
+  });
+
+  // TECHNICALLY_WEAK (OK fundamentals but weak technicals)
+  signalEvaluation.push({
+    signal: 'TECHNICALLY_WEAK',
+    category: 'quality',
+    passed:
+      fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE &&
+      technicalComponent.percent < SIGNAL_THRESHOLDS.TECH_MODERATE,
+    conditions: [
+      {
+        name: 'fundamentalScore',
+        actual: Math.round(fundamentalComponent.percent),
+        required: `≥ ${SIGNAL_THRESHOLDS.FUND_MODERATE}`,
+        passed: fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE,
+      },
+      {
+        name: 'technicalScore',
+        actual: Math.round(technicalComponent.percent),
+        required: `< ${SIGNAL_THRESHOLDS.TECH_MODERATE}`,
+        passed: technicalComponent.percent < SIGNAL_THRESHOLDS.TECH_MODERATE,
+      },
+    ],
+  });
+
+  // PROBLEMATIC (both fundamentals and technicals weak)
+  signalEvaluation.push({
+    signal: 'PROBLEMATIC',
+    category: 'quality',
+    passed:
+      fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_MODERATE &&
+      technicalComponent.percent < SIGNAL_THRESHOLDS.TECH_MODERATE,
+    conditions: [
+      {
+        name: 'fundamentalScore',
+        actual: Math.round(fundamentalComponent.percent),
+        required: `< ${SIGNAL_THRESHOLDS.FUND_MODERATE}`,
+        passed: fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_MODERATE,
+      },
+      {
+        name: 'technicalScore',
+        actual: Math.round(technicalComponent.percent),
+        required: `< ${SIGNAL_THRESHOLDS.TECH_MODERATE}`,
+        passed: technicalComponent.percent < SIGNAL_THRESHOLDS.TECH_MODERATE,
+      },
+    ],
+  });
+
   // OVERBOUGHT
   signalEvaluation.push({
     signal: 'OVERBOUGHT',
@@ -3562,36 +3578,6 @@ function generateExplanation(
         actual: stochK !== null ? Math.round(stochK) : 'N/A',
         required: '> 80',
         passed: stochK !== null && stochK > 80,
-      },
-    ],
-  });
-
-  // WATCH
-  signalEvaluation.push({
-    signal: 'WATCH',
-    category: 'quality',
-    passed:
-      fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_WATCH ||
-      insiderComponent.percent < SIGNAL_THRESHOLDS.INSIDER_WEAK ||
-      newsComponent.percent < SIGNAL_THRESHOLDS.NEWS_WATCH,
-    conditions: [
-      {
-        name: 'fundamentalScore',
-        actual: Math.round(fundamentalComponent.percent),
-        required: `< ${SIGNAL_THRESHOLDS.FUND_WATCH}`,
-        passed: fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_WATCH,
-      },
-      {
-        name: 'insiderScore',
-        actual: Math.round(insiderComponent.percent),
-        required: `< ${SIGNAL_THRESHOLDS.INSIDER_WEAK}`,
-        passed: insiderComponent.percent < SIGNAL_THRESHOLDS.INSIDER_WEAK,
-      },
-      {
-        name: 'newsScore',
-        actual: Math.round(newsComponent.percent),
-        required: `< ${SIGNAL_THRESHOLDS.NEWS_WATCH}`,
-        passed: newsComponent.percent < SIGNAL_THRESHOLDS.NEWS_WATCH,
       },
     ],
   });
