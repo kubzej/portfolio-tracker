@@ -50,38 +50,38 @@ export interface ScoreComponent {
 
 /** Signal types that can be generated */
 export type SignalType =
-  // === ACTION SIGNALS (what to do) ===
-  | 'DIP_OPPORTUNITY' // Oversold + fundamentals OK
-  | 'BREAKOUT' // Price breaking out with volume
-  | 'REVERSAL' // MACD divergence + oversold = potential reversal
-  | 'MOMENTUM' // Technical bullish trend
-  | 'ACCUMULATE' // Good stock, wait for better price or DCA
-  | 'GOOD_ENTRY' // Research: quality stock below analyst target
-  | 'WAIT_FOR_DIP' // Research: quality stock but price too high
-  | 'NEAR_TARGET' // Close to target - consider action
-  | 'TAKE_PROFIT' // Large gains - consider realizing
-  | 'CONSIDER_TRIM' // Overbought + high weight
-  | 'HOLD' // Quality stock, no specific action - continue holding
-  | 'FUNDAMENTALLY_WEAK' // Weak fundamentals but OK technicals
-  | 'TECHNICALLY_WEAK' // OK fundamentals but weak technicals
-  | 'PROBLEMATIC' // Both fundamentals and technicals weak
-  // === QUALITY SIGNALS (stock assessment) ===
-  | 'CONVICTION' // High conviction - top tier
-  | 'QUALITY_CORE' // Strong fundamentals + analysts
-  | 'UNDERVALUED' // Big upside potential
-  | 'STRONG_TREND' // ADX strong + bullish
-  | 'STEADY' // Solid, no action needed
-  | 'WATCH' // Deteriorating metrics
-  | 'WEAK' // Poor fundamentals/trend
-  | 'OVERBOUGHT' // RSI + Stoch overbought
-  | 'NEUTRAL'; // No strong signals
+  // === ACTION SIGNALS (what to do - verbs) ===
+  | 'DIP_OPPORTUNITY' // Koupit dip
+  | 'BREAKOUT' // Nakoupit průlom
+  | 'REVERSAL' // Chytat obrat
+  | 'MOMENTUM' // Jet s trendem
+  | 'ACCUMULATE' // Akumulovat (DCA)
+  | 'GOOD_ENTRY' // Vstoupit (Research)
+  | 'WAIT_FOR_DIP' // Počkat na pokles
+  | 'NEAR_TARGET' // Připravit exit
+  | 'TAKE_PROFIT' // Vybrat zisk
+  | 'TRIM' // Redukovat (renamed from CONSIDER_TRIM)
+  | 'WATCH' // Sledovat (moved from Quality)
+  | 'HOLD' // Držet
+  // === QUALITY SIGNALS (stock assessment - adjectives) ===
+  | 'CONVICTION' // Nejvyšší kvalita
+  | 'QUALITY_CORE' // Kvalitní
+  | 'UNDERVALUED' // Podhodnocená
+  | 'STRONG_TREND' // Silný trend
+  | 'STEADY' // Stabilní
+  | 'FUNDAMENTALLY_WEAK' // Slabé fundamenty (moved from Action)
+  | 'TECHNICALLY_WEAK' // Slabá technika (moved from Action)
+  | 'PROBLEMATIC' // Problémová (moved from Action)
+  | 'WEAK' // Slabá
+  | 'OVERBOUGHT' // Překoupená
+  | 'NEUTRAL'; // Neutrální
 
 /** Signal category - separates action signals from quality signals */
 export type SignalCategory = 'action' | 'quality';
 
 /** Mapping of signal types to their categories */
 export const SIGNAL_CATEGORIES: Record<SignalType, SignalCategory> = {
-  // Action signals - what to do
+  // Action signals - what to do (verbs)
   DIP_OPPORTUNITY: 'action',
   BREAKOUT: 'action',
   REVERSAL: 'action',
@@ -91,19 +91,19 @@ export const SIGNAL_CATEGORIES: Record<SignalType, SignalCategory> = {
   WAIT_FOR_DIP: 'action',
   NEAR_TARGET: 'action',
   TAKE_PROFIT: 'action',
-  CONSIDER_TRIM: 'action',
+  TRIM: 'action',
+  WATCH: 'action', // Moved from quality - "sledovat" is an action
   HOLD: 'action',
-  FUNDAMENTALLY_WEAK: 'action',
-  TECHNICALLY_WEAK: 'action',
-  PROBLEMATIC: 'action',
 
-  // Quality signals - stock quality assessment
+  // Quality signals - stock assessment (adjectives)
   CONVICTION: 'quality',
   QUALITY_CORE: 'quality',
   UNDERVALUED: 'quality',
   STRONG_TREND: 'quality',
   STEADY: 'quality',
-  WATCH: 'quality',
+  FUNDAMENTALLY_WEAK: 'quality', // Moved from action - describes state
+  TECHNICALLY_WEAK: 'quality', // Moved from action - describes state
+  PROBLEMATIC: 'quality', // Moved from action - describes state
   WEAK: 'quality',
   OVERBOUGHT: 'quality',
   NEUTRAL: 'quality',
@@ -356,7 +356,7 @@ const SCORE_WEIGHTS_RESEARCH = {
 
 /** Signal priorities (lower = higher priority) */
 const SIGNAL_PRIORITIES: Record<SignalType, number> = {
-  // Action signals (priority 1-14)
+  // Action signals (priority 1-12)
   DIP_OPPORTUNITY: 1,
   BREAKOUT: 2,
   REVERSAL: 3,
@@ -366,21 +366,21 @@ const SIGNAL_PRIORITIES: Record<SignalType, number> = {
   WAIT_FOR_DIP: 7,
   NEAR_TARGET: 8,
   TAKE_PROFIT: 9,
-  CONSIDER_TRIM: 10,
-  HOLD: 11,
-  FUNDAMENTALLY_WEAK: 12,
-  TECHNICALLY_WEAK: 13,
-  PROBLEMATIC: 14,
-  // Quality signals (priority 15-24)
-  CONVICTION: 15,
-  QUALITY_CORE: 16,
-  UNDERVALUED: 17,
-  STRONG_TREND: 18,
-  STEADY: 19,
-  WATCH: 20,
+  TRIM: 10, // Renamed from CONSIDER_TRIM
+  WATCH: 11, // Moved from quality
+  HOLD: 12,
+  // Quality signals (priority 13-23)
+  CONVICTION: 13,
+  QUALITY_CORE: 14,
+  UNDERVALUED: 15,
+  STRONG_TREND: 16,
+  STEADY: 17,
+  FUNDAMENTALLY_WEAK: 18, // Moved from action
+  TECHNICALLY_WEAK: 19, // Moved from action
+  PROBLEMATIC: 20, // Moved from action
   WEAK: 21,
   OVERBOUGHT: 22,
-  NEUTRAL: 24,
+  NEUTRAL: 23,
 };
 
 /**
@@ -430,7 +430,8 @@ const SIGNAL_THRESHOLDS = {
 
   // Position thresholds
   WEIGHT_OVERWEIGHT: 8,
-  WEIGHT_MAX: 15,
+  WEIGHT_DCA_MAX: 10, // Max weight for regular DCA (ACCUMULATE)
+  WEIGHT_DIP_MAX: 15, // Max weight for DIP_OPPORTUNITY (real dip = OK to add more)
 
   // Target thresholds
   TARGET_NEAR: 10, // Within 10% of target
@@ -2500,7 +2501,14 @@ function generateSignals(
   let actionSignal: StockSignal | null = null;
 
   // === DIP OPPORTUNITY === (highest priority action)
-  if (dipScore >= SIGNAL_THRESHOLDS.DIP_TRIGGER && dipQualityPasses) {
+  // v3.5: For Holdings, max weight 15% (real dip = OK to add more than regular DCA)
+  // For Research, no weight check (no position yet)
+  const dipWeightOk = isResearch || weight <= SIGNAL_THRESHOLDS.WEIGHT_DIP_MAX;
+  if (
+    dipScore >= SIGNAL_THRESHOLDS.DIP_TRIGGER &&
+    dipQualityPasses &&
+    dipWeightOk
+  ) {
     actionSignal = {
       type: 'DIP_OPPORTUNITY',
       category: 'action',
@@ -2563,13 +2571,17 @@ function generateSignals(
     };
   }
 
-  // === ACCUMULATE === (quality stock, moderate dip)
+  // === ACCUMULATE === (quality stock, moderate dip, not overweight)
+  // v3.5: Weight limit reduced to 10% for regular DCA
+  // Holdings only - can't accumulate a position you don't have
   if (
     !actionSignal &&
+    !isResearch && // Holdings only
     convictionLevel !== 'LOW' &&
     dipScore >= SIGNAL_THRESHOLDS.DIP_ACCUMULATE_MIN &&
     dipScore < SIGNAL_THRESHOLDS.DIP_ACCUMULATE_MAX &&
-    fundamentalScore >= SIGNAL_THRESHOLDS.FUND_MODERATE
+    fundamentalScore >= SIGNAL_THRESHOLDS.FUND_MODERATE &&
+    weight <= SIGNAL_THRESHOLDS.WEIGHT_DCA_MAX // Max 10% for regular DCA
   ) {
     actionSignal = {
       type: 'ACCUMULATE',
@@ -2594,7 +2606,7 @@ function generateSignals(
       type: 'GOOD_ENTRY',
       category: 'action',
       strength: Math.min(80, 50 + targetUpside / 3),
-      title: 'Příležitost k nákupu',
+      title: 'Vstoupit',
       description: `Kvalitní akcie s +${targetUpside.toFixed(0)}% potenciálem.`,
       priority: SIGNAL_PRIORITIES.GOOD_ENTRY,
     };
@@ -2631,10 +2643,10 @@ function generateSignals(
       type: 'NEAR_TARGET',
       category: 'action',
       strength: Math.round(100 - targetUpside * 5),
-      title: 'Blízko cíle',
+      title: 'Připravit exit',
       description: `${targetUpside.toFixed(
         1
-      )}% do cílové ceny. Zvažte strategii.`,
+      )}% do cílové ceny. Připrav strategii.`,
       priority: SIGNAL_PRIORITIES.NEAR_TARGET,
     };
   }
@@ -2657,7 +2669,7 @@ function generateSignals(
     };
   }
 
-  // === CONSIDER TRIM === (overbought + overweight)
+  // === TRIM === (overbought + overweight)
   if (
     !actionSignal &&
     rsiValue !== null &&
@@ -2665,12 +2677,31 @@ function generateSignals(
     weight > SIGNAL_THRESHOLDS.WEIGHT_OVERWEIGHT
   ) {
     actionSignal = {
-      type: 'CONSIDER_TRIM',
+      type: 'TRIM',
       category: 'action',
       strength: 65,
       title: 'Redukovat',
-      description: 'Překoupeno s vysokou vahou. Zvažte redukci pozice.',
-      priority: SIGNAL_PRIORITIES.CONSIDER_TRIM,
+      description: 'Překoupeno s vysokou vahou. Sniž pozici.',
+      priority: SIGNAL_PRIORITIES.TRIM,
+    };
+  }
+
+  // === WATCH === (deteriorating metrics - moved from Quality)
+  // This is an ACTION because "sledovat" = verb, telling you to monitor
+  if (
+    !actionSignal &&
+    !isResearch &&
+    (fundamentalScore < SIGNAL_THRESHOLDS.FUND_WATCH ||
+      insiderScore < SIGNAL_THRESHOLDS.INSIDER_WEAK ||
+      newsScore < SIGNAL_THRESHOLDS.NEWS_WATCH)
+  ) {
+    actionSignal = {
+      type: 'WATCH',
+      category: 'action',
+      strength: 45,
+      title: 'Sledovat',
+      description: 'Některé metriky se zhoršují. Dávej pozor.',
+      priority: SIGNAL_PRIORITIES.WATCH,
     };
   }
 
@@ -2686,59 +2717,8 @@ function generateSignals(
       category: 'action',
       strength: 50,
       title: 'Držet',
-      description: 'Kvalitní akcie. Pokračuj v držení, případně DCA.',
+      description: 'Kvalitní akcie. Pokračuj v držení.',
       priority: SIGNAL_PRIORITIES.HOLD,
-    };
-  }
-
-  // === FUNDAMENTALLY_WEAK === (weak fundamentals but OK technicals)
-  if (
-    !actionSignal &&
-    !isResearch &&
-    fundamentalScore < SIGNAL_THRESHOLDS.FUND_MODERATE &&
-    technicalScore >= SIGNAL_THRESHOLDS.TECH_MODERATE
-  ) {
-    actionSignal = {
-      type: 'FUNDAMENTALLY_WEAK',
-      category: 'action',
-      strength: 40,
-      title: 'Fundamentálně slabá',
-      description: 'Slabé fundamenty, ale technicky OK. Riskantní pozice.',
-      priority: SIGNAL_PRIORITIES.FUNDAMENTALLY_WEAK,
-    };
-  }
-
-  // === TECHNICALLY_WEAK === (OK fundamentals but weak technicals)
-  if (
-    !actionSignal &&
-    !isResearch &&
-    fundamentalScore >= SIGNAL_THRESHOLDS.FUND_MODERATE &&
-    technicalScore < SIGNAL_THRESHOLDS.TECH_MODERATE
-  ) {
-    actionSignal = {
-      type: 'TECHNICALLY_WEAK',
-      category: 'action',
-      strength: 40,
-      title: 'Technicky slabá',
-      description: 'Dobré fundamenty, ale špatný timing. Vyčkej.',
-      priority: SIGNAL_PRIORITIES.TECHNICALLY_WEAK,
-    };
-  }
-
-  // === PROBLEMATIC === (both fundamentals and technicals weak)
-  if (
-    !actionSignal &&
-    !isResearch &&
-    fundamentalScore < SIGNAL_THRESHOLDS.FUND_MODERATE &&
-    technicalScore < SIGNAL_THRESHOLDS.TECH_MODERATE
-  ) {
-    actionSignal = {
-      type: 'PROBLEMATIC',
-      category: 'action',
-      strength: 30,
-      title: 'Problémová',
-      description: 'Slabé fundamenty i technika. Zvažuj prodej.',
-      priority: SIGNAL_PRIORITIES.PROBLEMATIC,
     };
   }
 
@@ -2786,7 +2766,7 @@ function generateSignals(
       type: 'UNDERVALUED',
       category: 'quality',
       strength: Math.min(85, 50 + targetUpside / 2),
-      title: 'Růstový potenciál',
+      title: 'Podhodnocená',
       description: `+${targetUpside.toFixed(0)}% potenciál dle analytiků.`,
       priority: SIGNAL_PRIORITIES.UNDERVALUED,
     };
@@ -2821,8 +2801,56 @@ function generateSignals(
       category: 'quality',
       strength: Math.round((fundamentalScore + technicalScore) / 2),
       title: 'Stabilní',
-      description: 'Solidní akcie. Pokračujte v držení.',
+      description: 'Solidní akcie bez výrazných problémů.',
       priority: SIGNAL_PRIORITIES.STEADY,
+    };
+  }
+
+  // === FUNDAMENTALLY_WEAK === (weak fundamentals but OK technicals - moved from Action)
+  if (
+    !qualitySignal &&
+    fundamentalScore < SIGNAL_THRESHOLDS.FUND_MODERATE &&
+    technicalScore >= SIGNAL_THRESHOLDS.TECH_MODERATE
+  ) {
+    qualitySignal = {
+      type: 'FUNDAMENTALLY_WEAK',
+      category: 'quality',
+      strength: 40,
+      title: 'Slabé fundamenty',
+      description: 'Slabé fundamenty, ale technicky OK.',
+      priority: SIGNAL_PRIORITIES.FUNDAMENTALLY_WEAK,
+    };
+  }
+
+  // === TECHNICALLY_WEAK === (OK fundamentals but weak technicals - moved from Action)
+  if (
+    !qualitySignal &&
+    fundamentalScore >= SIGNAL_THRESHOLDS.FUND_MODERATE &&
+    technicalScore < SIGNAL_THRESHOLDS.TECH_MODERATE
+  ) {
+    qualitySignal = {
+      type: 'TECHNICALLY_WEAK',
+      category: 'quality',
+      strength: 40,
+      title: 'Slabá technika',
+      description: 'Dobré fundamenty, ale špatný timing.',
+      priority: SIGNAL_PRIORITIES.TECHNICALLY_WEAK,
+    };
+  }
+
+  // === PROBLEMATIC === (both fundamentals and technicals weak - moved from Action)
+  if (
+    !qualitySignal &&
+    fundamentalScore < SIGNAL_THRESHOLDS.FUND_MODERATE &&
+    technicalScore < SIGNAL_THRESHOLDS.TECH_MODERATE
+  ) {
+    qualitySignal = {
+      type: 'PROBLEMATIC',
+      category: 'quality',
+      strength: 30,
+      title: 'Problémová',
+      description: 'Slabé fundamenty i technika.',
+      priority: SIGNAL_PRIORITIES.PROBLEMATIC,
     };
   }
 
@@ -2838,26 +2866,9 @@ function generateSignals(
       type: 'OVERBOUGHT',
       category: 'quality',
       strength: 60,
-      title: 'Překoupeno',
+      title: 'Překoupená',
       description: 'RSI a Stochastic ukazují překoupenost.',
       priority: SIGNAL_PRIORITIES.OVERBOUGHT,
-    };
-  }
-
-  // === WATCH === (deteriorating metrics)
-  if (
-    !qualitySignal &&
-    (fundamentalScore < SIGNAL_THRESHOLDS.FUND_WATCH ||
-      insiderScore < SIGNAL_THRESHOLDS.INSIDER_WEAK ||
-      newsScore < SIGNAL_THRESHOLDS.NEWS_WATCH)
-  ) {
-    qualitySignal = {
-      type: 'WATCH',
-      category: 'quality',
-      strength: 45,
-      title: 'Sledovat',
-      description: 'Některé metriky se zhoršují.',
-      priority: SIGNAL_PRIORITIES.WATCH,
     };
   }
 
@@ -2970,10 +2981,16 @@ function generateExplanation(
   // === ACTION SIGNALS ===
 
   // DIP_OPPORTUNITY
+  // DIP_OPPORTUNITY (v3.5: added weight check for Holdings)
+  const dipWeightCheck =
+    portfolioComponent === null || weight <= SIGNAL_THRESHOLDS.WEIGHT_DIP_MAX;
   signalEvaluation.push({
     signal: 'DIP_OPPORTUNITY',
     category: 'action',
-    passed: dipScore >= SIGNAL_THRESHOLDS.DIP_TRIGGER && dipQualityPasses,
+    passed:
+      dipScore >= SIGNAL_THRESHOLDS.DIP_TRIGGER &&
+      dipQualityPasses &&
+      dipWeightCheck,
     conditions: [
       {
         name: 'dipScore',
@@ -2986,6 +3003,15 @@ function generateExplanation(
         actual: dipQualityPasses ? 'ano' : 'ne',
         required: 'ano',
         passed: dipQualityPasses,
+      },
+      {
+        name: 'weight (Holdings)',
+        actual:
+          portfolioComponent !== null
+            ? `${weight.toFixed(1)}%`
+            : 'N/A (Research)',
+        required: `≤ ${SIGNAL_THRESHOLDS.WEIGHT_DIP_MAX}% nebo Research`,
+        passed: dipWeightCheck,
       },
     ],
   });
@@ -3069,16 +3095,24 @@ function generateExplanation(
     ],
   });
 
-  // ACCUMULATE
+  // ACCUMULATE (v3.5: weight limit 10% for regular DCA, Holdings only)
   signalEvaluation.push({
     signal: 'ACCUMULATE',
     category: 'action',
     passed:
+      portfolioComponent !== null && // Holdings only
       convictionLevel !== 'LOW' &&
       dipScore >= SIGNAL_THRESHOLDS.DIP_ACCUMULATE_MIN &&
       dipScore < SIGNAL_THRESHOLDS.DIP_ACCUMULATE_MAX &&
-      fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE,
+      fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE &&
+      weight <= SIGNAL_THRESHOLDS.WEIGHT_DCA_MAX,
     conditions: [
+      {
+        name: 'isPortfolio',
+        actual: portfolioComponent !== null ? 'ano' : 'ne',
+        required: 'ano',
+        passed: portfolioComponent !== null,
+      },
       {
         name: 'convictionLevel',
         actual: convictionLevel,
@@ -3098,6 +3132,12 @@ function generateExplanation(
         actual: Math.round(fundamentalComponent.percent),
         required: `≥ ${SIGNAL_THRESHOLDS.FUND_MODERATE}`,
         passed: fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE,
+      },
+      {
+        name: 'weight',
+        actual: `${weight.toFixed(1)}%`,
+        required: `≤ ${SIGNAL_THRESHOLDS.WEIGHT_DCA_MAX}%`,
+        passed: weight <= SIGNAL_THRESHOLDS.WEIGHT_DCA_MAX,
       },
     ],
   });
@@ -3229,9 +3269,9 @@ function generateExplanation(
     ],
   });
 
-  // CONSIDER_TRIM
+  // TRIM (renamed from CONSIDER_TRIM)
   signalEvaluation.push({
-    signal: 'CONSIDER_TRIM',
+    signal: 'TRIM',
     category: 'action',
     passed:
       rsiValue !== null &&
@@ -3284,14 +3324,15 @@ function generateExplanation(
     ],
   });
 
-  // FUNDAMENTALLY_WEAK (Portfolio only - weak fundamentals but OK technicals)
+  // WATCH (action signal - "sleduj", some metrics deteriorating)
   signalEvaluation.push({
-    signal: 'FUNDAMENTALLY_WEAK',
+    signal: 'WATCH',
     category: 'action',
     passed:
-      portfolioComponent !== null &&
-      fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_MODERATE &&
-      technicalComponent.percent >= SIGNAL_THRESHOLDS.TECH_MODERATE,
+      portfolioComponent !== null && // Holdings only
+      (fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_WATCH ||
+        insiderComponent.percent < SIGNAL_THRESHOLDS.INSIDER_WEAK ||
+        newsComponent.percent < SIGNAL_THRESHOLDS.NEWS_WATCH),
     conditions: [
       {
         name: 'isPortfolio',
@@ -3302,74 +3343,20 @@ function generateExplanation(
       {
         name: 'fundamentalScore',
         actual: Math.round(fundamentalComponent.percent),
-        required: `< ${SIGNAL_THRESHOLDS.FUND_MODERATE}`,
-        passed: fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_MODERATE,
+        required: `< ${SIGNAL_THRESHOLDS.FUND_WATCH}`,
+        passed: fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_WATCH,
       },
       {
-        name: 'technicalScore',
-        actual: Math.round(technicalComponent.percent),
-        required: `≥ ${SIGNAL_THRESHOLDS.TECH_MODERATE}`,
-        passed: technicalComponent.percent >= SIGNAL_THRESHOLDS.TECH_MODERATE,
-      },
-    ],
-  });
-
-  // TECHNICALLY_WEAK (Portfolio only - OK fundamentals but weak technicals)
-  signalEvaluation.push({
-    signal: 'TECHNICALLY_WEAK',
-    category: 'action',
-    passed:
-      portfolioComponent !== null &&
-      fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE &&
-      technicalComponent.percent < SIGNAL_THRESHOLDS.TECH_MODERATE,
-    conditions: [
-      {
-        name: 'isPortfolio',
-        actual: portfolioComponent !== null ? 'ano' : 'ne',
-        required: 'ano',
-        passed: portfolioComponent !== null,
+        name: 'insiderScore',
+        actual: Math.round(insiderComponent.percent),
+        required: `< ${SIGNAL_THRESHOLDS.INSIDER_WEAK}`,
+        passed: insiderComponent.percent < SIGNAL_THRESHOLDS.INSIDER_WEAK,
       },
       {
-        name: 'fundamentalScore',
-        actual: Math.round(fundamentalComponent.percent),
-        required: `≥ ${SIGNAL_THRESHOLDS.FUND_MODERATE}`,
-        passed: fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE,
-      },
-      {
-        name: 'technicalScore',
-        actual: Math.round(technicalComponent.percent),
-        required: `< ${SIGNAL_THRESHOLDS.TECH_MODERATE}`,
-        passed: technicalComponent.percent < SIGNAL_THRESHOLDS.TECH_MODERATE,
-      },
-    ],
-  });
-
-  // PROBLEMATIC (Portfolio only - both fundamentals and technicals weak)
-  signalEvaluation.push({
-    signal: 'PROBLEMATIC',
-    category: 'action',
-    passed:
-      portfolioComponent !== null &&
-      fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_MODERATE &&
-      technicalComponent.percent < SIGNAL_THRESHOLDS.TECH_MODERATE,
-    conditions: [
-      {
-        name: 'isPortfolio',
-        actual: portfolioComponent !== null ? 'ano' : 'ne',
-        required: 'ano',
-        passed: portfolioComponent !== null,
-      },
-      {
-        name: 'fundamentalScore',
-        actual: Math.round(fundamentalComponent.percent),
-        required: `< ${SIGNAL_THRESHOLDS.FUND_MODERATE}`,
-        passed: fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_MODERATE,
-      },
-      {
-        name: 'technicalScore',
-        actual: Math.round(technicalComponent.percent),
-        required: `< ${SIGNAL_THRESHOLDS.TECH_MODERATE}`,
-        passed: technicalComponent.percent < SIGNAL_THRESHOLDS.TECH_MODERATE,
+        name: 'newsScore',
+        actual: Math.round(newsComponent.percent),
+        required: `< ${SIGNAL_THRESHOLDS.NEWS_WATCH}`,
+        passed: newsComponent.percent < SIGNAL_THRESHOLDS.NEWS_WATCH,
       },
     ],
   });
@@ -3500,6 +3487,75 @@ function generateExplanation(
     ],
   });
 
+  // FUNDAMENTALLY_WEAK (weak fundamentals but OK technicals)
+  signalEvaluation.push({
+    signal: 'FUNDAMENTALLY_WEAK',
+    category: 'quality',
+    passed:
+      fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_MODERATE &&
+      technicalComponent.percent >= SIGNAL_THRESHOLDS.TECH_MODERATE,
+    conditions: [
+      {
+        name: 'fundamentalScore',
+        actual: Math.round(fundamentalComponent.percent),
+        required: `< ${SIGNAL_THRESHOLDS.FUND_MODERATE}`,
+        passed: fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_MODERATE,
+      },
+      {
+        name: 'technicalScore',
+        actual: Math.round(technicalComponent.percent),
+        required: `≥ ${SIGNAL_THRESHOLDS.TECH_MODERATE}`,
+        passed: technicalComponent.percent >= SIGNAL_THRESHOLDS.TECH_MODERATE,
+      },
+    ],
+  });
+
+  // TECHNICALLY_WEAK (OK fundamentals but weak technicals)
+  signalEvaluation.push({
+    signal: 'TECHNICALLY_WEAK',
+    category: 'quality',
+    passed:
+      fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE &&
+      technicalComponent.percent < SIGNAL_THRESHOLDS.TECH_MODERATE,
+    conditions: [
+      {
+        name: 'fundamentalScore',
+        actual: Math.round(fundamentalComponent.percent),
+        required: `≥ ${SIGNAL_THRESHOLDS.FUND_MODERATE}`,
+        passed: fundamentalComponent.percent >= SIGNAL_THRESHOLDS.FUND_MODERATE,
+      },
+      {
+        name: 'technicalScore',
+        actual: Math.round(technicalComponent.percent),
+        required: `< ${SIGNAL_THRESHOLDS.TECH_MODERATE}`,
+        passed: technicalComponent.percent < SIGNAL_THRESHOLDS.TECH_MODERATE,
+      },
+    ],
+  });
+
+  // PROBLEMATIC (both fundamentals and technicals weak)
+  signalEvaluation.push({
+    signal: 'PROBLEMATIC',
+    category: 'quality',
+    passed:
+      fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_MODERATE &&
+      technicalComponent.percent < SIGNAL_THRESHOLDS.TECH_MODERATE,
+    conditions: [
+      {
+        name: 'fundamentalScore',
+        actual: Math.round(fundamentalComponent.percent),
+        required: `< ${SIGNAL_THRESHOLDS.FUND_MODERATE}`,
+        passed: fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_MODERATE,
+      },
+      {
+        name: 'technicalScore',
+        actual: Math.round(technicalComponent.percent),
+        required: `< ${SIGNAL_THRESHOLDS.TECH_MODERATE}`,
+        passed: technicalComponent.percent < SIGNAL_THRESHOLDS.TECH_MODERATE,
+      },
+    ],
+  });
+
   // OVERBOUGHT
   signalEvaluation.push({
     signal: 'OVERBOUGHT',
@@ -3522,36 +3578,6 @@ function generateExplanation(
         actual: stochK !== null ? Math.round(stochK) : 'N/A',
         required: '> 80',
         passed: stochK !== null && stochK > 80,
-      },
-    ],
-  });
-
-  // WATCH
-  signalEvaluation.push({
-    signal: 'WATCH',
-    category: 'quality',
-    passed:
-      fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_WATCH ||
-      insiderComponent.percent < SIGNAL_THRESHOLDS.INSIDER_WEAK ||
-      newsComponent.percent < SIGNAL_THRESHOLDS.NEWS_WATCH,
-    conditions: [
-      {
-        name: 'fundamentalScore',
-        actual: Math.round(fundamentalComponent.percent),
-        required: `< ${SIGNAL_THRESHOLDS.FUND_WATCH}`,
-        passed: fundamentalComponent.percent < SIGNAL_THRESHOLDS.FUND_WATCH,
-      },
-      {
-        name: 'insiderScore',
-        actual: Math.round(insiderComponent.percent),
-        required: `< ${SIGNAL_THRESHOLDS.INSIDER_WEAK}`,
-        passed: insiderComponent.percent < SIGNAL_THRESHOLDS.INSIDER_WEAK,
-      },
-      {
-        name: 'newsScore',
-        actual: Math.round(newsComponent.percent),
-        required: `< ${SIGNAL_THRESHOLDS.NEWS_WATCH}`,
-        passed: newsComponent.percent < SIGNAL_THRESHOLDS.NEWS_WATCH,
       },
     ],
   });
@@ -3884,7 +3910,7 @@ export function generateRecommendation(
   if (primarySignal.type === 'CONVICTION') {
     actionItems.push('Držte i přes krátkodobou volatilitu');
   }
-  if (primarySignal.type === 'CONSIDER_TRIM') {
+  if (primarySignal.type === 'TRIM') {
     actionItems.push('Zvažte částečný výběr zisků');
   }
   if (primarySignal.type === 'WATCH') {

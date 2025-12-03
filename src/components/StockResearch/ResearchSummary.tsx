@@ -19,12 +19,18 @@ interface ResearchSummaryProps {
   recommendation: StockRecommendation;
   analystData: AnalystData;
   onAddToWatchlist?: () => void;
+  onTrack?: () => void;
+  isTracked?: boolean;
+  trackLoading?: boolean;
 }
 
 export function ResearchSummary({
   recommendation,
   analystData,
   onAddToWatchlist,
+  onTrack,
+  isTracked,
+  trackLoading,
 }: ResearchSummaryProps) {
   const { breakdown } = recommendation;
 
@@ -34,6 +40,9 @@ export function ResearchSummary({
       <ResearchVerdict
         recommendation={recommendation}
         onAddToWatchlist={onAddToWatchlist}
+        onTrack={onTrack}
+        isTracked={isTracked}
+        trackLoading={trackLoading}
       />
 
       {/* Score Overview - Composite + Conviction */}

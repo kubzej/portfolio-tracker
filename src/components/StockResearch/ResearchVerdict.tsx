@@ -7,6 +7,9 @@ import './ResearchVerdict.css';
 interface ResearchVerdictProps {
   recommendation: StockRecommendation;
   onAddToWatchlist?: () => void;
+  onTrack?: () => void;
+  isTracked?: boolean;
+  trackLoading?: boolean;
 }
 
 type Verdict = 'good-entry' | 'wait' | 'pass' | 'insufficient-data';
@@ -118,6 +121,9 @@ function calculateVerdict(rec: StockRecommendation): VerdictResult {
 export function ResearchVerdict({
   recommendation,
   onAddToWatchlist,
+  onTrack,
+  isTracked,
+  trackLoading,
 }: ResearchVerdictProps) {
   const verdictResult = calculateVerdict(recommendation);
 
@@ -133,15 +139,31 @@ export function ResearchVerdict({
           Verdikt
           <InfoTooltip text="Celkové zhodnocení akcie pro nákup. | • Dobrý vstup = vhodný čas na nákup | • Počkat = čekat na lepší příležitost | • Nezajímavé = aktuálně nedoporučeno" />
         </CardTitle>
-        {onAddToWatchlist && (
-          <button
-            className="research-verdict__watchlist-btn"
-            onClick={onAddToWatchlist}
-            type="button"
-          >
-            + Watchlist
-          </button>
-        )}
+        <div className="research-verdict__actions">
+          {onTrack && (
+            <button
+              className={cn(
+                'research-verdict__track-btn',
+                isTracked && 'research-verdict__track-btn--active'
+              )}
+              onClick={onTrack}
+              type="button"
+              disabled={trackLoading}
+              title={isTracked ? 'Přestat sledovat' : 'Přidat do sledování'}
+            >
+              {trackLoading ? '...' : isTracked ? '✓ Sledováno' : '+ Sledovat'}
+            </button>
+          )}
+          {onAddToWatchlist && (
+            <button
+              className="research-verdict__watchlist-btn"
+              onClick={onAddToWatchlist}
+              type="button"
+            >
+              + Watchlist
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="research-verdict__content">

@@ -12,6 +12,7 @@ import { PortfolioSelector } from './components/PortfolioSelector';
 import { Analysis } from './components/Analysis';
 import { News } from './components/News';
 import { WatchlistManager, WatchlistView } from './components/Watchlists';
+import { Tracker } from './components/Tracker';
 import { Login } from './components/Login';
 import { Onboarding } from './components/Onboarding';
 import { DebugShowcase } from './components/Debug';
@@ -33,6 +34,7 @@ type View =
   | 'news'
   | 'watchlists'
   | 'watchlist-detail'
+  | 'tracker'
   | 'debug';
 
 // Valid views for URL persistence
@@ -43,6 +45,7 @@ const VALID_VIEWS: View[] = [
   'news',
   'research',
   'watchlists',
+  'tracker',
   ...(import.meta.env.DEV ? ['debug' as View] : []),
 ];
 
@@ -318,6 +321,13 @@ function App() {
           >
             Vyhledávání
           </Button>
+          <Button
+            variant="ghost"
+            isActive={currentView === 'tracker'}
+            onClick={() => setCurrentView('tracker')}
+          >
+            Tracker
+          </Button>
           <Button variant="outline" onClick={() => setShowAddStockModal(true)}>
             + Přidat akcii
           </Button>
@@ -387,6 +397,12 @@ function App() {
             stockName={researchStockName}
             finnhubTicker={researchFinnhubTicker}
             onBack={handleBackFromResearch}
+          />
+        )}
+        {currentView === 'tracker' && (
+          <Tracker
+            key={`tracker-${refreshKey}`}
+            onOpenResearch={handleOpenResearch}
           />
         )}
         {currentView === 'debug' && <DebugShowcase />}

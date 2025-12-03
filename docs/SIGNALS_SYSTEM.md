@@ -75,36 +75,36 @@
 
 ### Action Signals (14 typů)
 
-| Signál               | Priorita | Badge Class          | Popis                              |
-| -------------------- | -------- | -------------------- | ---------------------------------- |
-| `DIP_OPPORTUNITY`    | 1        | `dip`                | Přeprodané s kvalitními fundamenty |
-| `BREAKOUT`           | 2        | `breakout`           | Cenový průlom s vysokým objemem    |
-| `REVERSAL`           | 3        | `reversal`           | MACD divergence naznačuje obrat    |
-| `MOMENTUM`           | 4        | `momentum`           | Býčí technický trend               |
-| `ACCUMULATE`         | 5        | `accumulate`         | Kvalitní akcie, prostor pro DCA    |
-| `GOOD_ENTRY`         | 6        | `good-entry`         | **Research:** Pod cílem analytiků  |
-| `WAIT_FOR_DIP`       | 7        | `wait`               | **Holdings:** Kvalitní, ale drahá  |
-| `NEAR_TARGET`        | 8        | `target`             | Blízko cílové ceny                 |
-| `TAKE_PROFIT`        | 9        | `take-profit`        | Vysoký zisk, zvážit realizaci      |
-| `CONSIDER_TRIM`      | 10       | `trim`               | Překoupeno + vysoká váha           |
-| `HOLD`               | 11       | `hold`               | Kvalitní, bez specifické akce      |
-| `FUNDAMENTALLY_WEAK` | 12       | `fundamentally-weak` | Slabé fundamenty, OK technika      |
-| `TECHNICALLY_WEAK`   | 13       | `technically-weak`   | OK fundamenty, slabá technika      |
-| `PROBLEMATIC`        | 14       | `problematic`        | Obojí slabé                        |
+| Signál            | Priorita | Badge Class   | Popis                              |
+| ----------------- | -------- | ------------- | ---------------------------------- |
+| `DIP_OPPORTUNITY` | 1        | `dip`         | Přeprodané s kvalitními fundamenty |
+| `BREAKOUT`        | 2        | `breakout`    | Cenový průlom s vysokým objemem    |
+| `REVERSAL`        | 3        | `reversal`    | MACD divergence naznačuje obrat    |
+| `MOMENTUM`        | 4        | `momentum`    | Býčí technický trend               |
+| `ACCUMULATE`      | 5        | `accumulate`  | Kvalitní akcie, prostor pro DCA    |
+| `GOOD_ENTRY`      | 6        | `good-entry`  | **Research:** Pod cílem analytiků  |
+| `WAIT_FOR_DIP`    | 7        | `wait`        | **Holdings:** Kvalitní, ale drahá  |
+| `NEAR_TARGET`     | 8        | `target`      | Blízko cílové ceny                 |
+| `TAKE_PROFIT`     | 9        | `take-profit` | Vysoký zisk, zvážit realizaci      |
+| `TRIM`            | 10       | `trim`        | Překoupeno + vysoká váha           |
+| `WATCH`           | 11       | `watch`       | Sledovat - některé metriky slabnou |
+| `HOLD`            | 12       | `hold`        | Kvalitní, bez specifické akce      |
 
-### Quality Signals (9 typů)
+### Quality Signals (11 typů)
 
-| Signál         | Priorita | Badge Class    | Popis                          |
-| -------------- | -------- | -------------- | ------------------------------ |
-| `CONVICTION`   | 15       | `conviction`   | Nejvyšší kvalita, long-term    |
-| `QUALITY_CORE` | 16       | `quality`      | Silné fundamenty + analytici   |
-| `UNDERVALUED`  | 17       | `undervalued`  | 30%+ potenciál růstu           |
-| `STRONG_TREND` | 18       | `strong-trend` | Silný ADX trend                |
-| `STEADY`       | 19       | `steady`       | Solidní, bez akce              |
-| `WATCH`        | 20       | `watch`        | Některé metriky se zhoršují    |
-| `WEAK`         | 21       | `weak`         | Slabé fundamenty/technika      |
-| `OVERBOUGHT`   | 22       | `overbought`   | RSI + Stochastic překoupeno    |
-| `NEUTRAL`      | 24       | `neutral`      | Žádné silné signály (fallback) |
+| Signál               | Priorita | Badge Class          | Popis                          |
+| -------------------- | -------- | -------------------- | ------------------------------ |
+| `CONVICTION`         | 13       | `conviction`         | Nejvyšší kvalita, long-term    |
+| `QUALITY_CORE`       | 14       | `quality`            | Silné fundamenty + analytici   |
+| `UNDERVALUED`        | 15       | `undervalued`        | 30%+ potenciál růstu           |
+| `STRONG_TREND`       | 16       | `strong-trend`       | Silný ADX trend                |
+| `STEADY`             | 17       | `steady`             | Solidní, bez akce              |
+| `FUNDAMENTALLY_WEAK` | 18       | `fundamentally-weak` | Slabé fundamenty, OK technika  |
+| `TECHNICALLY_WEAK`   | 19       | `technically-weak`   | OK fundamenty, slabá technika  |
+| `PROBLEMATIC`        | 20       | `problematic`        | Obojí slabé                    |
+| `WEAK`               | 21       | `weak`               | Slabé fundamenty/technika      |
+| `OVERBOUGHT`         | 22       | `overbought`         | RSI + Stochastic překoupeno    |
+| `NEUTRAL`            | 23       | `neutral`            | Žádné silné signály (fallback) |
 
 ---
 
@@ -117,7 +117,7 @@
 **Podmínky:**
 
 ```typescript
-dipScore >= 50 && dipQualityPasses === true;
+dipScore >= 50 && dipQualityPasses === true && (isResearch || weight <= 15); // v3.5: max 15% váha pro Holdings
 ```
 
 **DIP Score komponenty (0-100):**
@@ -204,17 +204,19 @@ technicalScore >= 60 && // TECH_STRONG
 
 ---
 
-### 3.5 ACCUMULATE
+### 3.5 ACCUMULATE ⚠️ Holdings only
 
 **Účel:** Doporučení pro DCA u kvalitních akcií v mírném poklesu.
 
 **Podmínky:**
 
 ```typescript
-convictionLevel !== 'LOW' &&
-  dipScore >= 15 && // DIP_ACCUMULATE_MIN (rozšířeno z 20)
+isResearch === false && // Holdings only - nelze akumulovat pozici, kterou nemáš
+  convictionLevel !== 'LOW' &&
+  dipScore >= 20 && // DIP_ACCUMULATE_MIN
   dipScore < 50 && // DIP_ACCUMULATE_MAX
-  fundamentalScore >= 40; // FUND_MODERATE (40% z 140 = 56b)
+  fundamentalScore >= 40 && // FUND_MODERATE
+  weight <= 10; // WEIGHT_DCA_MAX - max 10% váha pro běžné DCA (v3.5)
 ```
 
 **Use case:**
@@ -222,7 +224,16 @@ convictionLevel !== 'LOW' &&
 - Microsoft s conviction MEDIUM
 - Dip score 32 (mírný pokles)
 - Fundamenty 85b
+- Váha pozice 5% (pod 10%)
 - → ACCUMULATE signál pro postupný nákup
+
+**Poznámka (v3.5):**
+
+- Pro běžné DCA je limit **10%** váhy
+- Pro skutečný dip (DIP_OPPORTUNITY) je limit **15%** váhy
+- Nad 15% se žádný nákupní signál negeneruje
+
+**Poznámka:** V Research view se místo ACCUMULATE používá GOOD_ENTRY nebo DIP_OPPORTUNITY.
 
 ---
 
@@ -307,7 +318,7 @@ gainPercentage >= 50 && // GAIN_TAKE_PROFIT
 
 ---
 
-### 3.10 CONSIDER_TRIM
+### 3.10 TRIM
 
 **Účel:** Doporučení redukce převážené pozice.
 
@@ -322,7 +333,7 @@ rsiValue > 70 && // RSI_OVERBOUGHT
 
 - MSFT tvoří 12% portfolia
 - RSI = 75 (překoupeno)
-- → CONSIDER_TRIM
+- → TRIM
 
 ---
 
@@ -518,7 +529,7 @@ START
   ├─► Zkontroluj TAKE_PROFIT
   │     └─ ...
   │
-  ├─► Zkontroluj CONSIDER_TRIM
+  ├─► Zkontroluj TRIM
   │     └─ ...
   │
   ├─► Zkontroluj HOLD (pouze Holdings, fallback kvalitních)
@@ -570,8 +581,9 @@ const SIGNAL_THRESHOLDS = {
   DIP_ACCUMULATE_MAX: 50, // Max pro ACCUMULATE (jinak je to už DIP)
 
   // === Position ===
-  WEIGHT_OVERWEIGHT: 8, // Pro CONSIDER_TRIM
-  WEIGHT_MAX: 15, // Absolutní max váha
+  WEIGHT_OVERWEIGHT: 8, // Pro TRIM
+  WEIGHT_DCA_MAX: 10, // Max váha pro běžné DCA (ACCUMULATE)
+  WEIGHT_DIP_MAX: 15, // Max váha pro DIP_OPPORTUNITY
 
   // === Target ===
   TARGET_NEAR: 10, // 10% do cíle = NEAR_TARGET
@@ -649,16 +661,15 @@ Debug panel v Analysis zobrazuje status dat pro každou akcii:
 
 ### Signály dostupné pouze v kontextu
 
-| Signál               | Holdings | Research | Důvod                               |
-| -------------------- | -------- | -------- | ----------------------------------- |
-| `GOOD_ENTRY`         | ❌       | ✅       | Research: hledání nových pozic      |
-| `WAIT_FOR_DIP`       | ✅       | ❌       | Holdings: čekat na lepší cenu k DCA |
-| `HOLD`               | ✅       | ❌       | Holdings: akce "drž co máš"         |
-| `FUNDAMENTALLY_WEAK` | ✅       | ❌       | Holdings: varování o pozici         |
-| `TECHNICALLY_WEAK`   | ✅       | ❌       | Holdings: varování o pozici         |
-| `PROBLEMATIC`        | ✅       | ❌       | Holdings: varování o pozici         |
-| `TAKE_PROFIT`        | ✅       | ❌       | Holdings: má unrealized gain        |
-| `CONSIDER_TRIM`      | ✅       | ❌       | Holdings: má weight                 |
+| Signál         | Holdings | Research | Důvod                               |
+| -------------- | -------- | -------- | ----------------------------------- |
+| `GOOD_ENTRY`   | ❌       | ✅       | Research: hledání nových pozic      |
+| `ACCUMULATE`   | ✅       | ❌       | Holdings: DCA existující pozice     |
+| `WAIT_FOR_DIP` | ✅       | ❌       | Holdings: čekat na lepší cenu k DCA |
+| `HOLD`         | ✅       | ❌       | Holdings: akce "drž co máš"         |
+| `WATCH`        | ✅       | ❌       | Holdings: akce "sleduj"             |
+| `TAKE_PROFIT`  | ✅       | ❌       | Holdings: má unrealized gain        |
+| `TRIM`         | ✅       | ❌       | Holdings: má weight                 |
 
 ### Scoring rozdíly
 
@@ -933,18 +944,18 @@ type FilterType =
 
 ### Kdy dostanu který signál?
 
-| Situace                           | Action Signal      | Quality Signal |
-| --------------------------------- | ------------------ | -------------- |
-| RSI=25, fundamenty OK             | DIP_OPPORTUNITY    | záleží         |
-| RSI=55, tech score 75, momentum   | MOMENTUM           | STRONG_TREND?  |
-| Conviction HIGH, RSI=50           | HOLD/ACCUMULATE    | CONVICTION     |
-| +60% gain, conviction MEDIUM      | TAKE_PROFIT        | záleží         |
-| RSI=75, weight=12%                | CONSIDER_TRIM      | OVERBOUGHT     |
-| Research, +25% upside, fund OK    | GOOD_ENTRY         | UNDERVALUED    |
-| Holdings, kvalitní, RSI=60, dip=8 | WAIT_FOR_DIP       | STEADY         |
-| Fund 30, tech 45                  | FUNDAMENTALLY_WEAK | WATCH          |
-| Fund 50, tech 25                  | TECHNICALLY_WEAK   | WATCH          |
-| Fund 25, tech 20                  | PROBLEMATIC        | WEAK           |
+| Situace                           | Action Signal   | Quality Signal     |
+| --------------------------------- | --------------- | ------------------ |
+| RSI=25, fundamenty OK             | DIP_OPPORTUNITY | záleží             |
+| RSI=55, tech score 75, momentum   | MOMENTUM        | STRONG_TREND?      |
+| Conviction HIGH, RSI=50           | HOLD/ACCUMULATE | CONVICTION         |
+| +60% gain, conviction MEDIUM      | TAKE_PROFIT     | záleží             |
+| RSI=75, weight=12%                | TRIM            | OVERBOUGHT         |
+| Research, +25% upside, fund OK    | GOOD_ENTRY      | UNDERVALUED        |
+| Holdings, kvalitní, RSI=60, dip=8 | WAIT_FOR_DIP    | STEADY             |
+| Fund 30, tech 45                  | WATCH           | FUNDAMENTALLY_WEAK |
+| Fund 50, tech 25                  | WATCH           | TECHNICALLY_WEAK   |
+| Fund 25, tech 20                  | WATCH           | PROBLEMATIC        |
 
 ---
 

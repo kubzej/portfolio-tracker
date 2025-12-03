@@ -42,81 +42,6 @@
 }
 
 /* ============================================================================
-   HEADER
-   ============================================================================ */
-
-.rec-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-}
-
-.rec-header-left {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.rec-header h3 {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.auto-log-badge {
-  font-size: 0.6875rem;
-  padding: 0.25rem 0.625rem;
-  background: var(--success-light);
-  color: var(--success-dark);
-  border-radius: var(--radius-full);
-  font-weight: 500;
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.rec-header-right {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.history-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 1rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
-  color: var(--accent-primary);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-}
-
-.history-btn:hover {
-  background: var(--accent-primary);
-  border-color: var(--accent-primary);
-  color: white;
-}
-
-.history-btn:active {
-  transform: scale(0.97);
-}
-
-.history-btn.active {
-  background: var(--accent-primary);
-  border-color: var(--accent-primary);
-  color: white;
-}
-
-/* ============================================================================
    FILTERS
    ============================================================================ */
 
@@ -1121,108 +1046,6 @@
 }
 
 /* ============================================================================
-   HISTORY FULLSCREEN
-   ============================================================================ */
-
-.history-fullscreen {
-  background: var(--bg-primary);
-  padding: 0;
-}
-
-.history-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 0;
-  margin-bottom: 1rem;
-}
-
-.history-title {
-  display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
-}
-
-/* History Stats - uses MetricCard */
-.history-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.history-stats .metric-card {
-  background: var(--bg-secondary);
-}
-
-/* History Filters - uses BottomSheetSelect */
-.history-filters {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.history-filters .form-group {
-  flex: 1;
-  max-width: 12rem;
-  margin: 0;
-}
-
-/* History Table */
-.history-table-wrapper {
-  overflow-x: auto;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
-}
-
-.history-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.8125rem;
-}
-
-.history-table th,
-.history-table td {
-  padding: 0.75rem 0.625rem;
-  text-align: left;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.history-table tr:last-child td {
-  border-bottom: none;
-}
-
-.history-table th {
-  font-size: 0.625rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  background: var(--bg-tertiary);
-  position: sticky;
-  top: 0;
-}
-
-.history-table .ticker {
-  font-weight: 600;
-  color: var(--accent-primary);
-}
-
-.history-table td.positive { color: var(--success); font-weight: 600; }
-.history-table td.negative { color: var(--danger); font-weight: 600; }
-
-/* Pagination - uses Button component */
-.history-pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 1rem;
-  padding: 0.75rem 0;
-}
-
-/* ============================================================================
    RESPONSIVE
    ============================================================================ */
 
@@ -1240,18 +1063,6 @@
 
   .two-col {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 480px) {
-  .rec-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-
-  .rec-header-right {
-    width: 100%;
   }
 }
 
@@ -1327,41 +1138,5 @@
 
   .exit-header {
     gap: 0.5rem;
-  }
-
-  /* History panel adjustments */
-  .history-stats {
-    gap: 0.5rem;
-  }
-
-  .history-filters {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .history-filters .form-group {
-    max-width: 100%;
-  }
-
-  .history-table th,
-  .history-table td {
-    padding: 0.5rem 0.375rem;
-    font-size: 0.75rem;
-  }
-
-  /* DCA badges - stack vertically on mobile, prevent overflow */
-  .dca-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.375rem;
-  }
-
-  .dca-content .badge {
-    max-width: 100%;
-    white-space: normal;
-    word-break: break-word;
-    text-align: left;
-    font-size: 0.6875rem;
-    padding: 0.25rem 0.5rem;
   }
 }

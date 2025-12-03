@@ -3,6 +3,12 @@ import { supabase } from '@/lib/supabase';
 import { fetchSingleTechnicalData } from '@/services/api/technical';
 import { fetchTickerNews } from '@/services/api/news';
 import { fetchPeersData } from '@/services/api/peers';
+import {
+  addResearchTracked,
+  getTrackedId,
+  removeResearchTracked,
+} from '@/services/api/tracker';
+import { logSignal } from '@/services/api/signals';
 import type { AnalystData, RateLimitInfo } from '@/services/api/analysis';
 import type { TechnicalData } from '@/services/api/technical';
 import type { NewsArticle } from '@/services/api/news';
@@ -74,6 +80,9 @@ export function StockResearch({
   const [retryCount, setRetryCount] = useState(0);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [showWatchlistModal, setShowWatchlistModal] = useState(false);
+  const [isTracked, setIsTracked] = useState(false);
+  const [trackedId, setTrackedId] = useState<string | null>(null);
+  const [trackLoading, setTrackLoading] = useState(false);
   const [dataLoadStatus, setDataLoadStatus] = useState<DataLoadStatus>({
     analyst: false,
     fundamentals: false,
@@ -164,6 +173,16 @@ export function StockResearch({
 
           lastFetchedRef.current = fetchKey;
 
+          // Check if ticker is already tracked
+          try {
+            const id = await getTrackedId(ticker);
+            setTrackedId(id);
+            setIsTracked(!!id);
+          } catch {
+            setTrackedId(null);
+            setIsTracked(false);
+          }
+
           // Error if no analyst data (critical)
           if (!analyst && analystResult.error) {
             throw new Error(analystResult.error.message);
@@ -191,6 +210,81 @@ export function StockResearch({
 
   const handleRetry = () => {
     setRetryCount((c) => c + 1);
+  };
+
+  const handleTrack = async () => {
+    if (trackLoading) return;
+
+    try {
+      setTrackLoading(true);
+
+      // If already tracked, remove from tracking
+      if (isTracked && trackedId) {
+        await removeResearchTracked(trackedId);
+        setIsTracked(false);
+        setTrackedId(null);
+        return;
+      }
+
+      // Otherwise add to tracking
+      if (!analystData || !recommendation) return;
+
+      // Get user ID for research signal logging
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        console.error('Not authenticated');
+        return;
+      }
+
+      // Add to research_tracked table
+      await addResearchTracked(
+        ticker,
+        stockName || analystData.stockName || null,
+        finnhubTicker || null,
+        analystData.currentPrice ?? null,
+        recommendation?.primarySignal?.type ?? null,
+        recommendation?.compositeScore ?? null,
+        recommendation?.convictionScore
+          ? recommendation.convictionScore >= 70
+            ? 'HIGH'
+            : recommendation.convictionScore >= 45
+            ? 'MEDIUM'
+            : 'LOW'
+          : null
+      );
+
+      // Log signal to signal_log with source='research'
+      try {
+        console.log('Attempting to log research signal:', {
+          userId: user.id,
+          source: 'research',
+          ticker: recommendation.ticker,
+          signalType: recommendation.primarySignal.type,
+          price: recommendation.currentPrice,
+        });
+        const logResult = await logSignal({
+          userId: user.id,
+          source: 'research',
+          recommendation,
+        });
+        console.log('Research signal log result:', logResult);
+      } catch (signalErr) {
+        // Don't fail the whole track if signal logging fails
+        console.error('Failed to log research signal:', signalErr);
+      }
+
+      // Get the new tracked ID
+      const newId = await getTrackedId(ticker);
+      setTrackedId(newId);
+      setIsTracked(true);
+    } catch (err) {
+      console.error('Failed to track/untrack stock:', err);
+    } finally {
+      setTrackLoading(false);
+    }
   };
 
   // Generate recommendation using existing scoring system
@@ -405,6 +499,9 @@ export function StockResearch({
             recommendation={recommendation}
             analystData={analystData}
             onAddToWatchlist={() => setShowWatchlistModal(true)}
+            onTrack={handleTrack}
+            isTracked={isTracked}
+            trackLoading={trackLoading}
           />
         )}
 

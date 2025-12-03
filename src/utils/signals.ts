@@ -20,39 +20,39 @@ export interface SignalConfig {
  * Used for displaying signal badges consistently across the app
  *
  * Categories:
- * - ACTION: What to do (DIP, BREAKOUT, MOMENTUM, ACCUMULATE, etc.)
- * - QUALITY: Stock assessment (CONVICTION, QUALITY_CORE, STEADY, etc.)
+ * - ACTION: What to do (verbs - koupit, akumulovat, držet, etc.)
+ * - QUALITY: Stock assessment (adjectives - kvalitní, stabilní, slabá, etc.)
  */
 export const SIGNAL_CONFIG: Record<SignalType, SignalConfig> = {
-  // === ACTION SIGNALS (what to do) ===
+  // === ACTION SIGNALS (what to do - verbs) ===
   DIP_OPPORTUNITY: {
-    label: 'Výhodná cena',
+    label: 'Koupit dip',
     class: 'dip',
     description:
       'Přeprodáno se solidními fundamenty – potenciální příležitost k nákupu',
   },
   BREAKOUT: {
-    label: 'Průlom objemu',
+    label: 'Nakoupit průlom',
     class: 'breakout',
     description: 'Cena prorazila nad Bollinger Band s vysokým objemem',
   },
   REVERSAL: {
-    label: 'Začátek růstu',
+    label: 'Chytat obrat',
     class: 'reversal',
     description: 'MACD divergence naznačuje potenciální obrat trendu',
   },
   MOMENTUM: {
-    label: 'Pokračující růst',
+    label: 'Jet s trendem',
     class: 'momentum',
     description: 'Technické indikátory ukazují býčí momentum',
   },
   ACCUMULATE: {
-    label: 'Akumulovat DCA',
+    label: 'Akumulovat',
     class: 'accumulate',
-    description: 'Kvalitní akcie – pokračuj v postupném nákupu',
+    description: 'Kvalitní akcie – pokračuj v postupném nákupu (DCA)',
   },
   GOOD_ENTRY: {
-    label: 'Příležitost k nákupu',
+    label: 'Vstoupit',
     class: 'good-entry',
     description: 'Kvalitní akcie pod cílovou cenou analytiků – vhodné k nákupu',
   },
@@ -62,42 +62,32 @@ export const SIGNAL_CONFIG: Record<SignalType, SignalConfig> = {
     description: 'Kvalitní akcie, ale cena příliš vysoká – vyčkej na pokles',
   },
   NEAR_TARGET: {
-    label: 'Blízko cíle',
+    label: 'Připravit exit',
     class: 'target',
-    description: 'Blíží se k cílové ceně analytiků',
+    description: 'Blíží se k cílové ceně – připrav strategii výstupu',
   },
   TAKE_PROFIT: {
     label: 'Vybrat zisk',
     class: 'take-profit',
     description: 'Vysoký zisk (+50%) – zvažte částečnou realizaci',
   },
-  CONSIDER_TRIM: {
+  TRIM: {
     label: 'Redukovat',
     class: 'trim',
-    description: 'Překoupeno s vysokou vahou – zvažte realizaci zisku',
+    description: 'Překoupeno s vysokou vahou – sniž pozici',
+  },
+  WATCH: {
+    label: 'Sledovat',
+    class: 'watch',
+    description: 'Některé metriky se zhoršují – dávej pozor',
   },
   HOLD: {
     label: 'Držet',
     class: 'hold',
-    description: 'Kvalitní akcie – pokračuj v držení, případně DCA',
-  },
-  FUNDAMENTALLY_WEAK: {
-    label: 'Fundamentálně slabá',
-    class: 'fundamentally-weak',
-    description: 'Slabé fundamenty, ale technicky OK – riskantní pozice',
-  },
-  TECHNICALLY_WEAK: {
-    label: 'Technicky slabá',
-    class: 'technically-weak',
-    description: 'Dobré fundamenty, ale špatný timing – vyčkej',
-  },
-  PROBLEMATIC: {
-    label: 'Problémová',
-    class: 'problematic',
-    description: 'Slabé fundamenty i technika – zvažuj prodej',
+    description: 'Kvalitní akcie – pokračuj v držení',
   },
 
-  // === QUALITY SIGNALS (stock assessment) ===
+  // === QUALITY SIGNALS (stock assessment - adjectives) ===
   CONVICTION: {
     label: 'Nejvyšší kvalita',
     class: 'conviction',
@@ -109,7 +99,7 @@ export const SIGNAL_CONFIG: Record<SignalType, SignalConfig> = {
     description: 'Vysoké fundamenty a pozitivní sentiment analytiků',
   },
   UNDERVALUED: {
-    label: 'Růstový potenciál',
+    label: 'Podhodnocená',
     class: 'undervalued',
     description: 'Potenciál 30%+ růst dle cílové ceny analytiků',
   },
@@ -121,20 +111,30 @@ export const SIGNAL_CONFIG: Record<SignalType, SignalConfig> = {
   STEADY: {
     label: 'Stabilní',
     class: 'steady',
-    description: 'Solidní akcie – pokračujte v držení, žádná akce',
+    description: 'Solidní akcie bez výrazných problémů',
   },
-  WATCH: {
-    label: 'Sledovat',
-    class: 'watch',
-    description: 'Některé metriky se zhoršují – monitorujte',
+  FUNDAMENTALLY_WEAK: {
+    label: 'Slabé fundamenty',
+    class: 'fundamentally-weak',
+    description: 'Slabé fundamenty, ale technicky OK',
+  },
+  TECHNICALLY_WEAK: {
+    label: 'Slabá technika',
+    class: 'technically-weak',
+    description: 'Dobré fundamenty, ale špatný timing',
+  },
+  PROBLEMATIC: {
+    label: 'Problémová',
+    class: 'problematic',
+    description: 'Slabé fundamenty i technika',
   },
   WEAK: {
-    label: 'Slabé',
+    label: 'Slabá',
     class: 'weak',
     description: 'Slabé fundamenty nebo trend',
   },
   OVERBOUGHT: {
-    label: 'Překoupeno',
+    label: 'Překoupená',
     class: 'overbought',
     description: 'RSI a Stochastic ukazují překoupenou zónu',
   },

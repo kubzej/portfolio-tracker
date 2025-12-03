@@ -1,25 +1,25 @@
-# GitHub Actions workflow for updating signal prices
-# Runs daily to evaluate signal performance
+# GitHub Actions workflow for creating daily portfolio snapshots
+# Runs daily to capture portfolio and research state
 
-name: Update Signal Prices
+name: Create Daily Snapshot
 
 on:
   schedule:
-    # Run every day at 6:00 AM UTC (after US market close, before EU market open)
-    - cron: "0 6 * * *"
+    # Run every day at 5:30 AM UTC (before signal prices update at 6:00)
+    - cron: "30 5 * * *"
 
   # Allow manual trigger
   workflow_dispatch:
 
 jobs:
-  update-prices:
+  create-snapshot:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Update Signal Prices
+      - name: Create Daily Snapshot
         run: |
           response=$(curl -s -w "\n%{http_code}" -X POST \
-            "${{ secrets.SUPABASE_URL }}/functions/v1/update-signal-prices" \
+            "${{ secrets.SUPABASE_URL }}/functions/v1/create-daily-snapshot" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Content-Type: application/json")
 
@@ -41,7 +41,7 @@ jobs:
         if: always()
         run: |
           if [ "${{ job.status }}" == "success" ]; then
-            echo "✅ Signal prices updated successfully"
+            echo "✅ Daily snapshot created successfully"
           else
-            echo "❌ Signal price update failed"
+            echo "❌ Daily snapshot creation failed"
           fi

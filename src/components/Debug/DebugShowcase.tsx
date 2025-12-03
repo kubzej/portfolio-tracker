@@ -708,7 +708,7 @@ function BadgesSection() {
           <SignalBadge type="MOMENTUM" size="md" showTooltip />
           <SignalBadge type="CONVICTION" size="md" showTooltip />
           <SignalBadge type="NEAR_TARGET" size="md" showTooltip />
-          <SignalBadge type="CONSIDER_TRIM" size="md" showTooltip />
+          <SignalBadge type="TRIM" size="md" showTooltip />
           <SignalBadge type="WATCH" size="md" showTooltip />
           <SignalBadge type="ACCUMULATE" size="md" showTooltip />
           <SignalBadge type="NEUTRAL" size="md" showTooltip />

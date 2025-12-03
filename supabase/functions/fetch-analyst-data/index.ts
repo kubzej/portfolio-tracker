@@ -667,48 +667,136 @@ function getDateMonthsAgo(months: number): string {
   return date.toISOString().split('T')[0];
 }
 
+// Check if ticker is non-US (has exchange suffix like .DE, .HK, .L)
+function isNonUsTicker(ticker: string): boolean {
+  return ticker.includes('.');
+}
+
+// US exchanges in Yahoo Search results
+const US_EXCHANGES = ['NMS', 'NYQ', 'NGM', 'PCX', 'PNK', 'ASE', 'NCM'];
+
+// Get company name from Yahoo Finance chart endpoint
+async function getCompanyName(ticker: string): Promise<string | null> {
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
+      ticker
+    )}?interval=1d&range=1d`;
+    const response = await safeFetch(url, 'yahoo');
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const meta = data?.chart?.result?.[0]?.meta;
+    return meta?.longName || meta?.shortName || null;
+  } catch {
+    return null;
+  }
+}
+
+// Search Yahoo Finance for ticker variants
+interface YahooSearchResult {
+  symbol: string;
+  exchange: string;
+  quoteType: string;
+  longname?: string;
+  shortname?: string;
+}
+
+async function yahooSearch(query: string): Promise<YahooSearchResult[]> {
+  try {
+    const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(
+      query
+    )}&quotesCount=15&newsCount=0`;
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+      },
+    });
+    if (!response.ok) return [];
+
+    const data = await response.json();
+    return data?.quotes || [];
+  } catch {
+    return [];
+  }
+}
+
+// Find US ADR ticker for a non-US stock via Yahoo Search
+// Flow: VOW3.DE -> "Volkswagen AG" -> search -> VWAGY (PNK exchange)
+// Fallback: Try ticker patterns like BOSSY, BOSSF for OTC stocks
+async function findUsAdrTicker(yahooTicker: string): Promise<string | null> {
+  // Get company name from Yahoo
+  const companyName = await getCompanyName(yahooTicker);
+  if (!companyName) {
+    console.log(`Could not get company name for ${yahooTicker}`);
+    return null;
+  }
+
+  console.log(`Searching US ADR for ${yahooTicker} (${companyName})`);
+
+  // Strategy 1: Search by company name (works for NYSE/NASDAQ listed ADRs like BABA)
+  const results = await yahooSearch(companyName);
+
+  // Find US ticker (no dot in symbol, US exchange)
+  const usTicker = results.find(
+    (r) =>
+      !r.symbol.includes('.') &&
+      r.quoteType === 'EQUITY' &&
+      US_EXCHANGES.includes(r.exchange)
+  );
+
+  if (usTicker) {
+    console.log(
+      `Found US ADR via name search: ${yahooTicker} -> ${usTicker.symbol} (${usTicker.exchange})`
+    );
+    return usTicker.symbol;
+  }
+
+  // Strategy 2: Try common OTC ticker patterns (for smaller ADRs not found by name)
+  // Extract base ticker: VOW3.DE -> VOW3, BOSS.DE -> BOSS
+  const baseTicker = yahooTicker.split('.')[0].replace(/[0-9]+$/, ''); // Remove trailing numbers too
+  const baseTickerWithNum = yahooTicker.split('.')[0]; // Keep numbers: VOW3
+
+  // Common ADR suffixes: Y (most common), F (sometimes used)
+  const patternsToTry = [
+    `${baseTicker}Y`, // BOSS -> BOSSY
+    `${baseTickerWithNum}Y`, // VOW3 -> VOW3Y (less common)
+    `${baseTicker}F`, // BOSS -> BOSSF
+  ];
+
+  for (const pattern of patternsToTry) {
+    const patternResults = await yahooSearch(pattern);
+    const otcMatch = patternResults.find(
+      (r) =>
+        r.symbol === pattern &&
+        r.quoteType === 'EQUITY' &&
+        US_EXCHANGES.includes(r.exchange)
+    );
+
+    if (otcMatch) {
+      console.log(
+        `Found US ADR via pattern: ${yahooTicker} -> ${otcMatch.symbol} (${otcMatch.exchange})`
+      );
+      return otcMatch.symbol;
+    }
+  }
+
+  console.log(`No US ADR found for ${yahooTicker}`);
+  return null;
+}
+
 // Convert Yahoo Finance ticker to Finnhub ticker
-// Finnhub uses different formats for non-US stocks
-function yahooToFinnhubTicker(yahooTicker: string): string {
-  // German stocks: ZAL.DE -> ZAL (XETRA)
-  if (yahooTicker.endsWith('.DE')) {
-    return yahooTicker.replace('.DE', '');
+// For US stocks: use as-is
+// For non-US stocks: find US ADR ticker via Yahoo Search
+async function yahooToFinnhubTicker(yahooTicker: string): Promise<string> {
+  // US ticker (no suffix) - use directly
+  if (!isNonUsTicker(yahooTicker)) {
+    return yahooTicker;
   }
-  // London stocks: LLOY.L -> LLOY
-  if (yahooTicker.endsWith('.L')) {
-    return yahooTicker.replace('.L', '');
-  }
-  // Paris stocks: BNP.PA -> BNP
-  if (yahooTicker.endsWith('.PA')) {
-    return yahooTicker.replace('.PA', '');
-  }
-  // Amsterdam: ASML.AS -> ASML
-  if (yahooTicker.endsWith('.AS')) {
-    return yahooTicker.replace('.AS', '');
-  }
-  // Swiss: NESN.SW -> NESN
-  if (yahooTicker.endsWith('.SW')) {
-    return yahooTicker.replace('.SW', '');
-  }
-  // Milan: ENI.MI -> ENI
-  if (yahooTicker.endsWith('.MI')) {
-    return yahooTicker.replace('.MI', '');
-  }
-  // Madrid: SAN.MC -> SAN
-  if (yahooTicker.endsWith('.MC')) {
-    return yahooTicker.replace('.MC', '');
-  }
-  // Toronto: TD.TO -> TD
-  if (yahooTicker.endsWith('.TO')) {
-    return yahooTicker.replace('.TO', '');
-  }
-  // Hong Kong: 0005.HK -> 5 (Finnhub uses different format)
-  if (yahooTicker.endsWith('.HK')) {
-    const num = yahooTicker.replace('.HK', '').replace(/^0+/, '');
-    return num + '.HK'; // Keep .HK for Finnhub
-  }
-  // US stocks - no change needed
-  return yahooTicker;
+
+  // Non-US ticker - try to find US ADR
+  const adrTicker = await findUsAdrTicker(yahooTicker);
+  return adrTicker || yahooTicker; // Fallback to original if no ADR found
 }
 
 // Convert Yahoo Finance ticker to Alpha Vantage ticker
@@ -775,10 +863,13 @@ serve(async (req) => {
 
     // If single ticker is provided, fetch just that one
     if (ticker) {
+      // Use provided finnhubTicker, or auto-detect US ADR for non-US stocks
+      const resolvedFinnhubTicker =
+        finnhubTicker || (await yahooToFinnhubTicker(ticker));
       const data = await fetchAnalystData(
         ticker,
         stockName || ticker,
-        finnhubTicker || yahooToFinnhubTicker(ticker)
+        resolvedFinnhubTicker
       );
 
       return new Response(
@@ -843,15 +934,15 @@ serve(async (req) => {
 
     // Fetch in batches to avoid rate limiting
     for (const holding of uniqueHoldings) {
-      // Use finnhub_ticker from DB if available, otherwise derive from Yahoo ticker
-      const finnhubTicker =
+      // Use finnhub_ticker from DB if available, otherwise auto-detect US ADR
+      const resolvedFinnhubTicker =
         finnhubTickerMap[holding.ticker] ||
-        yahooToFinnhubTicker(holding.ticker);
+        (await yahooToFinnhubTicker(holding.ticker));
 
       const data = await fetchAnalystData(
         holding.ticker,
         holding.stock_name,
-        finnhubTicker
+        resolvedFinnhubTicker
       );
 
       if (data.error) {
