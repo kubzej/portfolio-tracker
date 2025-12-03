@@ -65,7 +65,7 @@ type FilterType =
   | 'wait_for_dip'
   | 'near_target'
   | 'take_profit'
-  | 'consider_trim'
+  | 'trim'
   | 'hold'
   | 'fundamentally_weak'
   | 'technically_weak'
@@ -125,7 +125,7 @@ function getEntryAction(signalType: SignalType): {
         variant: 'sell',
       };
     case 'TAKE_PROFIT':
-    case 'CONSIDER_TRIM':
+    case 'TRIM':
       return {
         action: 'Nepřikupovat',
         description: 'Zvažuj realizaci zisku, ne další nákup',
@@ -294,10 +294,8 @@ export function Recommendations({
         return recommendations.filter(
           (r) => r.primarySignal.type === 'TAKE_PROFIT'
         );
-      case 'consider_trim':
-        return recommendations.filter(
-          (r) => r.primarySignal.type === 'CONSIDER_TRIM'
-        );
+      case 'trim':
+        return recommendations.filter((r) => r.primarySignal.type === 'TRIM');
       case 'hold':
         return recommendations.filter((r) => r.primarySignal.type === 'HOLD');
       case 'fundamentally_weak':
@@ -362,7 +360,7 @@ export function Recommendations({
       wait_for_dip: countBySignal('WAIT_FOR_DIP'),
       near_target: countBySignal('NEAR_TARGET'),
       take_profit: countBySignal('TAKE_PROFIT'),
-      consider_trim: countBySignal('CONSIDER_TRIM'),
+      trim: countBySignal('TRIM'),
       hold: countBySignal('HOLD'),
       fundamentally_weak: countBySignal('FUNDAMENTALLY_WEAK'),
       technically_weak: countBySignal('TECHNICALLY_WEAK'),
@@ -433,9 +431,9 @@ export function Recommendations({
         color: 'orange',
       },
       {
-        value: 'consider_trim',
+        value: 'trim',
         label: 'Redukovat',
-        count: stats.consider_trim,
+        count: stats.trim,
         color: 'orange',
       },
       // Problem signals (red/warning)

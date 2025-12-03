@@ -75,11 +75,12 @@ A comprehensive stock portfolio tracking application with advanced analysis, rec
 | ------------------ | ---------------------------------------- |
 | 🟢 DIP_OPPORTUNITY | Stock is oversold with good fundamentals |
 | 🟢 MOMENTUM        | Strong positive trend                    |
-| 🟡 CONVICTION_HOLD | High quality, keep holding               |
-| 🟡 ACCUMULATE      | Good time to add more                    |
+| 🟢 ACCUMULATE      | Good time to add more (DCA)              |
+| 🟡 CONVICTION      | High quality, keep holding               |
+| 🟡 HOLD            | Quality stock, no specific action        |
 | 🟠 NEAR_TARGET     | Approaching target price                 |
-| 🔴 CONSIDER_TRIM   | Consider reducing position               |
-| ⚪ WATCH_CLOSELY   | Needs attention                          |
+| 🟠 TRIM            | Consider reducing position               |
+| 🔴 WATCH           | Needs attention                          |
 | ⚪ NEUTRAL         | No strong signal                         |
 
 ---
