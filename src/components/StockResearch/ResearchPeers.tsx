@@ -70,7 +70,8 @@ const METRICS: MetricConfig[] = [
   {
     key: 'peRatio',
     label: 'P/E',
-    tooltip: '**Price-to-Earnings (P/E)** | Poměr ceny akcie k zisku na akcii. | • Nižší = Levnější akcie (hodnotová) | • Vyšší = Dražší akcie (růstová)',
+    tooltip:
+      '**Price-to-Earnings (P/E)** | Poměr ceny akcie k zisku na akcii. | • Nižší = Levnější akcie (hodnotová) | • Vyšší = Dražší akcie (růstová)',
     format: (v) => (v !== null ? formatNumber(v, 1) : '—'),
     higherIsBetter: false,
     lowerIsBetterIfPositive: true,
@@ -117,7 +118,8 @@ const METRICS: MetricConfig[] = [
   {
     key: 'targetUpside',
     label: 'Upside',
-    tooltip: '**Upside** | Potenciální růst k průměrné cílové ceně analytiků. | • Kladné = Analytici čekají růst | • Záporné = Analytici čekají pokles.',
+    tooltip:
+      '**Upside** | Potenciální růst k průměrné cílové ceně analytiků. | • Kladné = Analytici čekají růst | • Záporné = Analytici čekají pokles.',
     format: (v) =>
       v !== null ? `${v > 0 ? '+' : ''}${formatNumber(v, 1)}%` : '—',
     higherIsBetter: true,
@@ -127,7 +129,8 @@ const METRICS: MetricConfig[] = [
     key: 'return1M',
     label: '1M Return',
     shortLabel: '1M',
-    tooltip: '**1M výnos** | Změna ceny akcie za poslední měsíc. | • Porovnejte s konkurencí pro zjištění relativní síly.',
+    tooltip:
+      '**1M výnos** | Změna ceny akcie za poslední měsíc. | • Porovnejte s konkurencí pro zjištění relativní síly.',
     format: (v) =>
       v !== null ? `${v > 0 ? '+' : ''}${formatNumber(v, 1)}%` : '—',
     higherIsBetter: true,
@@ -137,7 +140,8 @@ const METRICS: MetricConfig[] = [
     key: 'return3M',
     label: '3M Return',
     shortLabel: '3M',
-    tooltip: '**3M výnos** | Změna ceny akcie za poslední 3 měsíce. | • Porovnejte s konkurencí pro zjištění relativní síly.',
+    tooltip:
+      '**3M výnos** | Změna ceny akcie za poslední 3 měsíce. | • Porovnejte s konkurencí pro zjištění relativní síly.',
     format: (v) =>
       v !== null ? `${v > 0 ? '+' : ''}${formatNumber(v, 1)}%` : '—',
     higherIsBetter: true,
@@ -147,7 +151,8 @@ const METRICS: MetricConfig[] = [
     key: 'return6M',
     label: '6M Return',
     shortLabel: '6M',
-    tooltip: '**6M výnos** | Změna ceny akcie za posledních 6 měsíců. | • Porovnejte s konkurencí pro zjištění relativní síly.',
+    tooltip:
+      '**6M výnos** | Změna ceny akcie za posledních 6 měsíců. | • Porovnejte s konkurencí pro zjištění relativní síly.',
     format: (v) =>
       v !== null ? `${v > 0 ? '+' : ''}${formatNumber(v, 1)}%` : '—',
     higherIsBetter: true,
@@ -157,7 +162,8 @@ const METRICS: MetricConfig[] = [
     key: 'return1Y',
     label: '1Y Return',
     shortLabel: '1Y',
-    tooltip: '**1Y výnos** | Změna ceny akcie za poslední rok. | • Porovnejte s konkurencí pro zjištění relativní síly.',
+    tooltip:
+      '**1Y výnos** | Změna ceny akcie za poslední rok. | • Porovnejte s konkurencí pro zjištění relativní síly.',
     format: (v) =>
       v !== null ? `${v > 0 ? '+' : ''}${formatNumber(v, 1)}%` : '—',
     higherIsBetter: true,
@@ -166,7 +172,8 @@ const METRICS: MetricConfig[] = [
   {
     key: 'marketCap',
     label: 'Market Cap',
-    tooltip: '**Tržní kapitalizace** | Celková hodnota firmy na burze (počet akcií × cena). | • Velké firmy (Large Cap) jsou stabilnější | • Malé firmy (Small Cap) mohou rychleji růst, ale jsou rizikovější.',
+    tooltip:
+      '**Tržní kapitalizace** | Celková hodnota firmy na burze (počet akcií × cena). | • Velké firmy (Large Cap) jsou stabilnější | • Malé firmy (Small Cap) mohou rychleji růst, ale jsou rizikovější.',
     format: (v) => (v !== null ? formatLargeNumber(v) : '—'),
     higherIsBetter: false,
     category: 'size',
