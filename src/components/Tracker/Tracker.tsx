@@ -1228,18 +1228,9 @@ export function Tracker({ onOpenResearch }: TrackerProps) {
   // ============================================================================
 
   const renderSignalsTab = () => {
-    if (signalHistory.length === 0) {
-      return (
-        <EmptyState
-          title="Žádná historie signálů"
-          description="Zatím nebyly zaznamenány žádné signály."
-        />
-      );
-    }
-
     return (
       <div className="tracker-tab-content">
-        {/* Filters */}
+        {/* Filters - always visible */}
         <div className="tracker-filters">
           <ToggleGroup
             value={sourceFilter}
@@ -1250,23 +1241,183 @@ export function Tracker({ onOpenResearch }: TrackerProps) {
           <span className="filter-count">{signalHistory.length} signálů</span>
         </div>
 
-        {/* Desktop table */}
-        <div className="tracker-table-wrapper">
-          <table className="tracker-table">
-            <thead>
-              <tr>
-                <th>Datum</th>
-                <th>Akcie</th>
-                <th>Signál</th>
-                <th>Zdroj</th>
-                <th className="text-right">Cena (USD)</th>
-                <th className="text-right">+1D</th>
-                <th className="text-right">+1W</th>
-                <th className="text-right">+1M</th>
-                <th className="text-right">+3M</th>
-              </tr>
-            </thead>
-            <tbody>
+        {signalHistory.length === 0 ? (
+          <EmptyState
+            title="Žádná historie signálů"
+            description={
+              sourceFilter === 'all'
+                ? 'Zatím nebyly zaznamenány žádné signály.'
+                : sourceFilter === 'portfolio'
+                ? 'Žádné signály pro portfolio.'
+                : 'Žádné signály pro sledované akcie.'
+            }
+          />
+        ) : (
+          <>
+            {/* Desktop table */}
+            <div className="tracker-table-wrapper">
+              <table className="tracker-table">
+                <thead>
+                  <tr>
+                    <th>Datum</th>
+                    <th>Akcie</th>
+                    <th>Signál</th>
+                    <th>Zdroj</th>
+                    <th className="text-right">Cena (USD)</th>
+                    <th className="text-right">+1D</th>
+                    <th className="text-right">+1W</th>
+                    <th className="text-right">+1M</th>
+                    <th className="text-right">+3M</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {signalHistory.map((s) => {
+                    const calc1d =
+                      s.price_1d && s.price_at_signal
+                        ? ((s.price_1d - s.price_at_signal) /
+                            s.price_at_signal) *
+                          100
+                        : null;
+                    const calc1w =
+                      s.price_1w && s.price_at_signal
+                        ? ((s.price_1w - s.price_at_signal) /
+                            s.price_at_signal) *
+                          100
+                        : null;
+                    const calc1m =
+                      s.price_1m && s.price_at_signal
+                        ? ((s.price_1m - s.price_at_signal) /
+                            s.price_at_signal) *
+                          100
+                        : null;
+                    const calc3m =
+                      s.price_3m && s.price_at_signal
+                        ? ((s.price_3m - s.price_at_signal) /
+                            s.price_at_signal) *
+                          100
+                        : null;
+
+                    return (
+                      <tr key={s.id}>
+                        <td>
+                          <Text size="sm">{formatDate(s.created_at)}</Text>
+                        </td>
+                        <td>
+                          <button
+                            className="ticker-link"
+                            onClick={() => onOpenResearch?.(s.ticker)}
+                          >
+                            <Ticker>{s.ticker}</Ticker>
+                          </button>
+                        </td>
+                        <td>
+                          <SignalBadge
+                            type={s.signal_type as SignalType}
+                            size="sm"
+                          />
+                        </td>
+                        <td>
+                          <Badge
+                            variant={
+                              s.source === 'portfolio' || !s.source
+                                ? 'info'
+                                : 'warning'
+                            }
+                            size="sm"
+                          >
+                            {s.source || 'portfolio'}
+                          </Badge>
+                        </td>
+                        <td className="text-right">
+                          <Text size="sm" weight="medium">
+                            ${s.price_at_signal.toFixed(2)}
+                          </Text>
+                        </td>
+                        <td className="text-right">
+                          {calc1d !== null ? (
+                            <MetricValue
+                              size="sm"
+                              sentiment={
+                                calc1d > 0
+                                  ? 'positive'
+                                  : calc1d < 0
+                                  ? 'negative'
+                                  : 'neutral'
+                              }
+                            >
+                              {calc1d > 0 ? '+' : ''}
+                              {calc1d.toFixed(1)}%
+                            </MetricValue>
+                          ) : (
+                            <Muted>—</Muted>
+                          )}
+                        </td>
+                        <td className="text-right">
+                          {calc1w !== null ? (
+                            <MetricValue
+                              size="sm"
+                              sentiment={
+                                calc1w > 0
+                                  ? 'positive'
+                                  : calc1w < 0
+                                  ? 'negative'
+                                  : 'neutral'
+                              }
+                            >
+                              {calc1w > 0 ? '+' : ''}
+                              {calc1w.toFixed(1)}%
+                            </MetricValue>
+                          ) : (
+                            <Muted>—</Muted>
+                          )}
+                        </td>
+                        <td className="text-right">
+                          {calc1m !== null ? (
+                            <MetricValue
+                              size="sm"
+                              sentiment={
+                                calc1m > 0
+                                  ? 'positive'
+                                  : calc1m < 0
+                                  ? 'negative'
+                                  : 'neutral'
+                              }
+                            >
+                              {calc1m > 0 ? '+' : ''}
+                              {calc1m.toFixed(1)}%
+                            </MetricValue>
+                          ) : (
+                            <Muted>—</Muted>
+                          )}
+                        </td>
+                        <td className="text-right">
+                          {calc3m !== null ? (
+                            <MetricValue
+                              size="sm"
+                              sentiment={
+                                calc3m > 0
+                                  ? 'positive'
+                                  : calc3m < 0
+                                  ? 'negative'
+                                  : 'neutral'
+                              }
+                            >
+                              {calc3m > 0 ? '+' : ''}
+                              {calc3m.toFixed(1)}%
+                            </MetricValue>
+                          ) : (
+                            <Muted>—</Muted>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="tracker-cards">
               {signalHistory.map((s) => {
                 const calc1d =
                   s.price_1d && s.price_at_signal
@@ -1290,25 +1441,21 @@ export function Tracker({ onOpenResearch }: TrackerProps) {
                     : null;
 
                 return (
-                  <tr key={s.id}>
-                    <td>
-                      <Text size="sm">{formatDate(s.created_at)}</Text>
-                    </td>
-                    <td>
+                  <div key={s.id} className="tracker-card">
+                    <div className="card-header">
                       <button
                         className="ticker-link"
                         onClick={() => onOpenResearch?.(s.ticker)}
                       >
-                        <Ticker>{s.ticker}</Ticker>
+                        <Ticker size="lg">{s.ticker}</Ticker>
                       </button>
-                    </td>
-                    <td>
-                      <SignalBadge
-                        type={s.signal_type as SignalType}
-                        size="sm"
-                      />
-                    </td>
-                    <td>
+                      <Text size="sm" color="secondary">
+                        {formatDate(s.created_at)}
+                      </Text>
+                    </div>
+
+                    <div className="card-signals">
+                      <SignalBadge type={s.signal_type as SignalType} />
                       <Badge
                         variant={
                           s.source === 'portfolio' || !s.source
@@ -1319,219 +1466,90 @@ export function Tracker({ onOpenResearch }: TrackerProps) {
                       >
                         {s.source || 'portfolio'}
                       </Badge>
-                    </td>
-                    <td className="text-right">
-                      <Text size="sm" weight="medium">
-                        ${s.price_at_signal.toFixed(2)}
-                      </Text>
-                    </td>
-                    <td className="text-right">
-                      {calc1d !== null ? (
-                        <MetricValue
-                          size="sm"
-                          sentiment={
-                            calc1d > 0
-                              ? 'positive'
-                              : calc1d < 0
-                              ? 'negative'
-                              : 'neutral'
-                          }
-                        >
-                          {calc1d > 0 ? '+' : ''}
-                          {calc1d.toFixed(1)}%
-                        </MetricValue>
-                      ) : (
-                        <Muted>—</Muted>
+                    </div>
+
+                    <div className="card-metrics">
+                      <div className="card-metric">
+                        <MetricLabel>Cena</MetricLabel>
+                        <Text weight="medium">
+                          ${s.price_at_signal.toFixed(2)}
+                        </Text>
+                      </div>
+                      {calc1d !== null && (
+                        <div className="card-metric">
+                          <MetricLabel>+1 den</MetricLabel>
+                          <MetricValue
+                            sentiment={
+                              calc1d > 0
+                                ? 'positive'
+                                : calc1d < 0
+                                ? 'negative'
+                                : 'neutral'
+                            }
+                          >
+                            {calc1d > 0 ? '+' : ''}
+                            {calc1d.toFixed(1)}%
+                          </MetricValue>
+                        </div>
                       )}
-                    </td>
-                    <td className="text-right">
-                      {calc1w !== null ? (
-                        <MetricValue
-                          size="sm"
-                          sentiment={
-                            calc1w > 0
-                              ? 'positive'
-                              : calc1w < 0
-                              ? 'negative'
-                              : 'neutral'
-                          }
-                        >
-                          {calc1w > 0 ? '+' : ''}
-                          {calc1w.toFixed(1)}%
-                        </MetricValue>
-                      ) : (
-                        <Muted>—</Muted>
+                      {calc1w !== null && (
+                        <div className="card-metric">
+                          <MetricLabel>+1 týden</MetricLabel>
+                          <MetricValue
+                            sentiment={
+                              calc1w > 0
+                                ? 'positive'
+                                : calc1w < 0
+                                ? 'negative'
+                                : 'neutral'
+                            }
+                          >
+                            {calc1w > 0 ? '+' : ''}
+                            {calc1w.toFixed(1)}%
+                          </MetricValue>
+                        </div>
                       )}
-                    </td>
-                    <td className="text-right">
-                      {calc1m !== null ? (
-                        <MetricValue
-                          size="sm"
-                          sentiment={
-                            calc1m > 0
-                              ? 'positive'
-                              : calc1m < 0
-                              ? 'negative'
-                              : 'neutral'
-                          }
-                        >
-                          {calc1m > 0 ? '+' : ''}
-                          {calc1m.toFixed(1)}%
-                        </MetricValue>
-                      ) : (
-                        <Muted>—</Muted>
+                      {calc1m !== null && (
+                        <div className="card-metric">
+                          <MetricLabel>+1 měsíc</MetricLabel>
+                          <MetricValue
+                            sentiment={
+                              calc1m > 0
+                                ? 'positive'
+                                : calc1m < 0
+                                ? 'negative'
+                                : 'neutral'
+                            }
+                          >
+                            {calc1m > 0 ? '+' : ''}
+                            {calc1m.toFixed(1)}%
+                          </MetricValue>
+                        </div>
                       )}
-                    </td>
-                    <td className="text-right">
-                      {calc3m !== null ? (
-                        <MetricValue
-                          size="sm"
-                          sentiment={
-                            calc3m > 0
-                              ? 'positive'
-                              : calc3m < 0
-                              ? 'negative'
-                              : 'neutral'
-                          }
-                        >
-                          {calc3m > 0 ? '+' : ''}
-                          {calc3m.toFixed(1)}%
-                        </MetricValue>
-                      ) : (
-                        <Muted>—</Muted>
+                      {calc3m !== null && (
+                        <div className="card-metric">
+                          <MetricLabel>+3 měsíce</MetricLabel>
+                          <MetricValue
+                            sentiment={
+                              calc3m > 0
+                                ? 'positive'
+                                : calc3m < 0
+                                ? 'negative'
+                                : 'neutral'
+                            }
+                          >
+                            {calc3m > 0 ? '+' : ''}
+                            {calc3m.toFixed(1)}%
+                          </MetricValue>
+                        </div>
                       )}
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Mobile cards */}
-        <div className="tracker-cards">
-          {signalHistory.map((s) => {
-            const calc1d =
-              s.price_1d && s.price_at_signal
-                ? ((s.price_1d - s.price_at_signal) / s.price_at_signal) * 100
-                : null;
-            const calc1w =
-              s.price_1w && s.price_at_signal
-                ? ((s.price_1w - s.price_at_signal) / s.price_at_signal) * 100
-                : null;
-            const calc1m =
-              s.price_1m && s.price_at_signal
-                ? ((s.price_1m - s.price_at_signal) / s.price_at_signal) * 100
-                : null;
-            const calc3m =
-              s.price_3m && s.price_at_signal
-                ? ((s.price_3m - s.price_at_signal) / s.price_at_signal) * 100
-                : null;
-
-            return (
-              <div key={s.id} className="tracker-card">
-                <div className="card-header">
-                  <button
-                    className="ticker-link"
-                    onClick={() => onOpenResearch?.(s.ticker)}
-                  >
-                    <Ticker size="lg">{s.ticker}</Ticker>
-                  </button>
-                  <Text size="sm" color="secondary">
-                    {formatDate(s.created_at)}
-                  </Text>
-                </div>
-
-                <div className="card-signals">
-                  <SignalBadge type={s.signal_type as SignalType} />
-                  <Badge
-                    variant={
-                      s.source === 'portfolio' || !s.source ? 'info' : 'warning'
-                    }
-                    size="sm"
-                  >
-                    {s.source || 'portfolio'}
-                  </Badge>
-                </div>
-
-                <div className="card-metrics">
-                  <div className="card-metric">
-                    <MetricLabel>Cena</MetricLabel>
-                    <Text weight="medium">${s.price_at_signal.toFixed(2)}</Text>
-                  </div>
-                  {calc1d !== null && (
-                    <div className="card-metric">
-                      <MetricLabel>+1 den</MetricLabel>
-                      <MetricValue
-                        sentiment={
-                          calc1d > 0
-                            ? 'positive'
-                            : calc1d < 0
-                            ? 'negative'
-                            : 'neutral'
-                        }
-                      >
-                        {calc1d > 0 ? '+' : ''}
-                        {calc1d.toFixed(1)}%
-                      </MetricValue>
-                    </div>
-                  )}
-                  {calc1w !== null && (
-                    <div className="card-metric">
-                      <MetricLabel>+1 týden</MetricLabel>
-                      <MetricValue
-                        sentiment={
-                          calc1w > 0
-                            ? 'positive'
-                            : calc1w < 0
-                            ? 'negative'
-                            : 'neutral'
-                        }
-                      >
-                        {calc1w > 0 ? '+' : ''}
-                        {calc1w.toFixed(1)}%
-                      </MetricValue>
-                    </div>
-                  )}
-                  {calc1m !== null && (
-                    <div className="card-metric">
-                      <MetricLabel>+1 měsíc</MetricLabel>
-                      <MetricValue
-                        sentiment={
-                          calc1m > 0
-                            ? 'positive'
-                            : calc1m < 0
-                            ? 'negative'
-                            : 'neutral'
-                        }
-                      >
-                        {calc1m > 0 ? '+' : ''}
-                        {calc1m.toFixed(1)}%
-                      </MetricValue>
-                    </div>
-                  )}
-                  {calc3m !== null && (
-                    <div className="card-metric">
-                      <MetricLabel>+3 měsíce</MetricLabel>
-                      <MetricValue
-                        sentiment={
-                          calc3m > 0
-                            ? 'positive'
-                            : calc3m < 0
-                            ? 'negative'
-                            : 'neutral'
-                        }
-                      >
-                        {calc3m > 0 ? '+' : ''}
-                        {calc3m.toFixed(1)}%
-                      </MetricValue>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+            </div>
+          </>
+        )}
       </div>
     );
   };

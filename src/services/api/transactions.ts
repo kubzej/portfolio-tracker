@@ -4,6 +4,7 @@ import type {
   TransactionWithStock,
   CreateTransactionInput,
   UpdateTransactionInput,
+  AvailableLot,
 } from '@/types';
 
 export const transactionsApi = {
@@ -90,6 +91,7 @@ export const transactionsApi = {
         exchange_rate_to_czk: input.exchange_rate_to_czk,
         fees: input.fees || 0,
         notes: input.notes,
+        source_transaction_id: input.source_transaction_id || null,
       })
       .select()
       .single();
@@ -165,5 +167,78 @@ export const transactionsApi = {
 
     if (error) throw error;
     return data || [];
+  },
+
+  /**
+   * Get available lots for selling a specific stock in a portfolio
+   * Returns BUY transactions with remaining shares (not fully sold yet)
+   */
+  async getAvailableLots(
+    stockId: string,
+    portfolioId: string
+  ): Promise<AvailableLot[]> {
+    // Get all BUY transactions for this stock/portfolio
+    const { data: buyTransactions, error: buyError } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('stock_id', stockId)
+      .eq('portfolio_id', portfolioId)
+      .eq('type', 'BUY')
+      .order('date', { ascending: true });
+
+    if (buyError) throw buyError;
+
+    // Get all SELL transactions that reference specific lots
+    const { data: sellTransactions, error: sellError } = await supabase
+      .from('transactions')
+      .select('source_transaction_id, quantity')
+      .eq('stock_id', stockId)
+      .eq('portfolio_id', portfolioId)
+      .eq('type', 'SELL')
+      .not('source_transaction_id', 'is', null);
+
+    if (sellError) throw sellError;
+
+    // Calculate sold quantities per lot
+    const soldPerLot = new Map<string, number>();
+    for (const sell of sellTransactions || []) {
+      if (sell.source_transaction_id) {
+        const current = soldPerLot.get(sell.source_transaction_id) || 0;
+        soldPerLot.set(sell.source_transaction_id, current + sell.quantity);
+      }
+    }
+
+    // Build available lots with remaining shares
+    const availableLots: AvailableLot[] = [];
+    for (const buy of buyTransactions || []) {
+      const soldFromLot = soldPerLot.get(buy.id) || 0;
+      const remaining = buy.quantity - soldFromLot;
+
+      if (remaining > 0) {
+        availableLots.push({
+          id: buy.id,
+          date: buy.date,
+          quantity: buy.quantity,
+          remaining_shares: remaining,
+          price_per_share: buy.price_per_share,
+          currency: buy.currency,
+          total_amount: buy.total_amount,
+        });
+      }
+    }
+
+    return availableLots;
+  },
+
+  /**
+   * Get total available shares for a stock in a portfolio
+   * (sum of all remaining shares across all lots)
+   */
+  async getTotalAvailableShares(
+    stockId: string,
+    portfolioId: string
+  ): Promise<number> {
+    const lots = await this.getAvailableLots(stockId, portfolioId);
+    return lots.reduce((sum, lot) => sum + lot.remaining_shares, 0);
   },
 };

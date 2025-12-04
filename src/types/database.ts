@@ -59,6 +59,8 @@ export interface Transaction {
   total_amount: number;
   total_amount_czk: number;
   notes: string | null;
+  // For SELL: reference to specific BUY lot. NULL = sell entire position
+  source_transaction_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -66,6 +68,17 @@ export interface Transaction {
 // Transaction with stock info (joined)
 export interface TransactionWithStock extends Transaction {
   stock?: Stock;
+}
+
+// Available lot for selling (BUY transaction with remaining shares)
+export interface AvailableLot {
+  id: string; // BUY transaction ID
+  date: string;
+  quantity: number; // Original quantity bought
+  remaining_shares: number; // Shares still available to sell
+  price_per_share: number;
+  currency: string;
+  total_amount: number;
 }
 
 // Current price cache
@@ -164,6 +177,8 @@ export interface CreateTransactionInput {
   exchange_rate_to_czk?: number;
   fees?: number;
   notes?: string;
+  // For SELL: reference to specific BUY lot. NULL = sell entire position
+  source_transaction_id?: string | null;
 }
 
 export interface UpdateTransactionInput {

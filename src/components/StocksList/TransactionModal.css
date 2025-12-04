@@ -34,6 +34,84 @@
   margin-top: 1.5rem;
 }
 
+/* Sell Section */
+.transaction-modal-form .sell-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.transaction-modal-form .sell-no-lots {
+  padding: var(--spacing-sm);
+  background: var(--bg-error);
+  border-radius: var(--radius-sm);
+}
+
+.transaction-modal-form .sell-mode-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.transaction-modal-form .sell-lots-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.transaction-modal-form .lots-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.transaction-modal-form .lot-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-primary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  text-align: left;
+}
+
+.transaction-modal-form .lot-card:hover {
+  border-color: var(--color-primary);
+  background: var(--bg-hover);
+}
+
+.transaction-modal-form .lot-card--selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light, rgba(59, 130, 246, 0.1));
+}
+
+.transaction-modal-form .lot-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.transaction-modal-form .lot-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.transaction-modal-form .lot-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .modal-content .transaction-modal-form .transaction-totals {
   display: flex;
   flex-direction: column;
@@ -92,5 +170,13 @@
   .modal-content .transaction-modal-form .form-actions {
     flex-direction: row;
     margin-top: 0.75rem;
+  }
+  
+  .transaction-modal-form .sell-section {
+    margin-bottom: 0.5rem;
+  }
+  
+  .transaction-modal-form .lots-grid {
+    max-height: 150px;
   }
 }

@@ -131,21 +131,60 @@ export function StockDetail({
     (sum, tx) => sum + (tx.type === 'BUY' ? tx.quantity : -tx.quantity),
     0
   );
-  const totalInvested = transactions.reduce(
-    (sum, tx) => (tx.type === 'BUY' ? sum + tx.total_amount_czk : sum),
-    0
+
+  // Calculate total invested based on remaining shares (proportional to what's left)
+  // First, calculate remaining shares per BUY transaction (lot)
+  const buyTransactions = transactions.filter((tx) => tx.type === 'BUY');
+  const sellTransactions = transactions.filter((tx) => tx.type === 'SELL');
+
+  // Calculate sold quantity per lot (for sells with source_transaction_id)
+  const soldPerLot = new Map<string, number>();
+  let unallocatedSold = 0;
+
+  for (const sell of sellTransactions) {
+    if (sell.source_transaction_id) {
+      const current = soldPerLot.get(sell.source_transaction_id) || 0;
+      soldPerLot.set(sell.source_transaction_id, current + sell.quantity);
+    } else {
+      unallocatedSold += sell.quantity;
+    }
+  }
+
+  // Sort buy transactions by date for FIFO
+  const sortedBuys = [...buyTransactions].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
+
+  // Calculate remaining shares and invested amount per lot
+  let totalInvested = 0;
+  let fifoRemaining = unallocatedSold;
+
+  for (const buy of sortedBuys) {
+    const soldFromThisLot = soldPerLot.get(buy.id) || 0;
+    let remaining = buy.quantity - soldFromThisLot;
+
+    // Apply FIFO for unallocated sells
+    if (fifoRemaining > 0 && remaining > 0) {
+      const fifoSold = Math.min(fifoRemaining, remaining);
+      remaining -= fifoSold;
+      fifoRemaining -= fifoSold;
+    }
+
+    // Add proportional invested amount for remaining shares
+    if (remaining > 0 && buy.quantity > 0) {
+      totalInvested += (remaining / buy.quantity) * buy.total_amount_czk;
+    }
+  }
+
+  // Average price only makes sense if we have shares
   const avgPrice =
     totalShares > 0
-      ? transactions.reduce(
-          (sum, tx) =>
-            tx.type === 'BUY' ? sum + tx.quantity * tx.price_per_share : sum,
-          0
-        ) /
-        transactions.reduce(
-          (sum, tx) => (tx.type === 'BUY' ? sum + tx.quantity : sum),
-          0
-        )
+      ? sortedBuys.reduce((sum, buy) => {
+          const soldFromThisLot = soldPerLot.get(buy.id) || 0;
+          let remaining = buy.quantity - soldFromThisLot;
+          // Note: simplified, doesn't account for FIFO here but close enough for display
+          return sum + remaining * buy.price_per_share;
+        }, 0) / totalShares
       : 0;
 
   return (

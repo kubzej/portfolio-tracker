@@ -6,6 +6,7 @@ import type {
   Transaction,
   CreateTransactionInput,
   TransactionType,
+  AvailableLot,
 } from '@/types/database';
 import {
   Modal,
@@ -15,11 +16,18 @@ import {
   TextArea,
   EmptyState,
 } from '@/components/shared';
-import { Label, Hint, Text, MetricValue } from '@/components/shared/Typography';
+import {
+  Label,
+  Hint,
+  Text,
+  MetricValue,
+  MetricLabel,
+} from '@/components/shared/Typography';
 import {
   BottomSheetSelect,
   type SelectOption,
 } from '@/components/shared/BottomSheet';
+import { formatPrice, formatDate, formatShares } from '@/utils/format';
 import './TransactionModal.css';
 
 const CURRENCY_OPTIONS: SelectOption[] = [
@@ -46,7 +54,11 @@ const EMPTY_FORM: CreateTransactionInput = {
   exchange_rate_to_czk: undefined,
   fees: 0,
   notes: '',
+  source_transaction_id: null,
 };
+
+// Sell mode: entire position, specific lot, or partial lot
+type SellMode = 'entire' | 'lot' | 'partial';
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -75,6 +87,12 @@ export function TransactionModal({
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<CreateTransactionInput>(EMPTY_FORM);
 
+  // Sell-specific state
+  const [availableLots, setAvailableLots] = useState<AvailableLot[]>([]);
+  const [sellMode, setSellMode] = useState<SellMode>('entire');
+  const [selectedLotId, setSelectedLotId] = useState<string | null>(null);
+  const [lotsLoading, setLotsLoading] = useState(false);
+
   useEffect(() => {
     if (isOpen) {
       loadData();
@@ -92,7 +110,13 @@ export function TransactionModal({
           exchange_rate_to_czk: transaction.exchange_rate_to_czk ?? undefined,
           fees: transaction.fees ?? 0,
           notes: transaction.notes ?? '',
+          source_transaction_id: transaction.source_transaction_id,
         });
+        // Set sell mode based on existing transaction
+        if (transaction.type === 'SELL') {
+          setSellMode(transaction.source_transaction_id ? 'lot' : 'entire');
+          setSelectedLotId(transaction.source_transaction_id);
+        }
       } else {
         // Add mode - reset form with preselected values
         setFormData({
@@ -100,10 +124,46 @@ export function TransactionModal({
           stock_id: preselectedStockId || '',
           portfolio_id: portfolioId || '',
         });
+        setSellMode('entire');
+        setSelectedLotId(null);
       }
       setError(null);
+      setAvailableLots([]);
     }
   }, [isOpen, transaction, portfolioId, preselectedStockId]);
+
+  // Load available lots when switching to SELL mode or changing stock/portfolio
+  useEffect(() => {
+    if (
+      formData.type === 'SELL' &&
+      formData.stock_id &&
+      formData.portfolio_id
+    ) {
+      loadAvailableLots();
+    }
+  }, [formData.type, formData.stock_id, formData.portfolio_id]);
+
+  const loadAvailableLots = async () => {
+    if (!formData.stock_id || !formData.portfolio_id) return;
+
+    setLotsLoading(true);
+    try {
+      const lots = await transactionsApi.getAvailableLots(
+        formData.stock_id,
+        formData.portfolio_id
+      );
+      setAvailableLots(lots);
+
+      // Auto-select first lot if switching to lot mode and nothing selected
+      if (lots.length > 0 && !selectedLotId && sellMode === 'lot') {
+        setSelectedLotId(lots[0].id);
+      }
+    } catch (err) {
+      console.error('Failed to load available lots:', err);
+    } finally {
+      setLotsLoading(false);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -175,6 +235,24 @@ export function TransactionModal({
     setLoading(true);
     setError(null);
 
+    // Validation for SELL
+    if (formData.type === 'SELL' && !isEditMode) {
+      if (formData.quantity <= 0) {
+        setError('Zadejte počet akcií k prodeji');
+        setLoading(false);
+        return;
+      }
+      if (formData.quantity > maxSellQuantity) {
+        setError(
+          `Nemůžete prodat více akcií než máte k dispozici (${formatShares(
+            maxSellQuantity
+          )})`
+        );
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       if (isEditMode && transaction) {
         await transactionsApi.update(transaction.id, {
@@ -194,11 +272,15 @@ export function TransactionModal({
         // Reset form but keep stock, portfolio, and date
         setFormData((prev) => ({
           ...prev,
+          type: 'BUY',
           quantity: 0,
           price_per_share: 0,
           fees: 0,
           notes: '',
+          source_transaction_id: null,
         }));
+        setSellMode('entire');
+        setSelectedLotId(null);
       }
 
       onSuccess();
@@ -232,9 +314,88 @@ export function TransactionModal({
     }));
   };
 
-  const handleTypeChange = (type: TransactionType) => {
-    setFormData((prev) => ({ ...prev, type }));
+  // Special handler for quantity that respects max limit for SELL
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value === '' ? 0 : parseFloat(e.target.value);
+    setFormData((prev) => ({
+      ...prev,
+      quantity: value,
+    }));
   };
+
+  const handleTypeChange = (type: TransactionType) => {
+    setFormData((prev) => ({
+      ...prev,
+      type,
+      source_transaction_id: null,
+      quantity: 0,
+    }));
+    // Reset sell mode when switching types
+    if (type === 'BUY') {
+      setSellMode('entire');
+      setSelectedLotId(null);
+    }
+  };
+
+  const handleSellModeChange = (mode: SellMode) => {
+    setSellMode(mode);
+
+    if (mode === 'entire') {
+      // Sell all - use total available shares
+      const totalShares = availableLots.reduce(
+        (sum, lot) => sum + lot.remaining_shares,
+        0
+      );
+      setFormData((prev) => ({
+        ...prev,
+        quantity: totalShares,
+        source_transaction_id: null,
+      }));
+      setSelectedLotId(null);
+    } else if (mode === 'lot' && availableLots.length > 0) {
+      // Select first lot by default
+      const firstLot = availableLots[0];
+      setSelectedLotId(firstLot.id);
+      setFormData((prev) => ({
+        ...prev,
+        quantity: firstLot.remaining_shares,
+        source_transaction_id: firstLot.id,
+      }));
+    } else if (mode === 'partial') {
+      // Partial - need to select lot first
+      if (availableLots.length > 0) {
+        const firstLot = availableLots[0];
+        setSelectedLotId(firstLot.id);
+        setFormData((prev) => ({
+          ...prev,
+          quantity: 0, // User enters custom quantity
+          source_transaction_id: firstLot.id,
+        }));
+      }
+    }
+  };
+
+  const handleLotSelect = (lotId: string) => {
+    const lot = availableLots.find((l) => l.id === lotId);
+    if (!lot) return;
+
+    setSelectedLotId(lotId);
+    setFormData((prev) => ({
+      ...prev,
+      source_transaction_id: lotId,
+      quantity: sellMode === 'lot' ? lot.remaining_shares : prev.quantity,
+    }));
+  };
+
+  const selectedLot = availableLots.find((l) => l.id === selectedLotId);
+  const totalAvailableShares = availableLots.reduce(
+    (sum, lot) => sum + lot.remaining_shares,
+    0
+  );
+  const maxSellQuantity =
+    sellMode === 'entire'
+      ? totalAvailableShares
+      : selectedLot?.remaining_shares || 0;
 
   // Calculate totals for display
   const totalAmount = formData.quantity * formData.price_per_share;
@@ -333,6 +494,104 @@ export function TransactionModal({
             />
           </div>
 
+          {/* Sell Mode Selection - only show when SELL and has lots */}
+          {formData.type === 'SELL' &&
+            !isEditMode &&
+            formData.stock_id &&
+            formData.portfolio_id && (
+              <div className="sell-section">
+                {lotsLoading ? (
+                  <Text color="muted">Načítám dostupné pozice...</Text>
+                ) : availableLots.length === 0 ? (
+                  <div className="sell-no-lots">
+                    <Text color="danger">
+                      Nemáte žádné akcie k prodeji v tomto portfoliu.
+                    </Text>
+                  </div>
+                ) : (
+                  <>
+                    <div className="sell-mode-toggle">
+                      <Label>Způsob prodeje</Label>
+                      <ToggleGroup
+                        value={sellMode}
+                        onChange={(value: string) =>
+                          handleSellModeChange(value as SellMode)
+                        }
+                        options={[
+                          {
+                            value: 'entire',
+                            label: `Celá pozice (${formatShares(
+                              totalAvailableShares
+                            )})`,
+                          },
+                          { value: 'lot', label: 'Celý lot' },
+                          { value: 'partial', label: 'Část lotu' },
+                        ]}
+                        size="sm"
+                      />
+                    </div>
+
+                    {/* Lot selection for lot/partial modes */}
+                    {(sellMode === 'lot' || sellMode === 'partial') && (
+                      <div className="sell-lots-list">
+                        <Label>Vyberte lot</Label>
+                        <div className="lots-grid">
+                          {availableLots.map((lot) => (
+                            <button
+                              key={lot.id}
+                              type="button"
+                              className={`lot-card ${
+                                selectedLotId === lot.id
+                                  ? 'lot-card--selected'
+                                  : ''
+                              }`}
+                              onClick={() => handleLotSelect(lot.id)}
+                            >
+                              <div className="lot-card-header">
+                                <Text weight="semibold">
+                                  {formatDate(lot.date)}
+                                </Text>
+                                <MetricValue size="sm">
+                                  {formatShares(lot.remaining_shares)} ks
+                                </MetricValue>
+                              </div>
+                              <div className="lot-card-body">
+                                <div className="lot-card-row">
+                                  <MetricLabel>Nákupní cena</MetricLabel>
+                                  <Text>
+                                    {formatPrice(
+                                      lot.price_per_share,
+                                      lot.currency
+                                    )}
+                                  </Text>
+                                </div>
+                                {lot.quantity !== lot.remaining_shares && (
+                                  <div className="lot-card-row">
+                                    <MetricLabel>Původně</MetricLabel>
+                                    <Text color="muted">
+                                      {formatShares(lot.quantity)} ks
+                                    </Text>
+                                  </div>
+                                )}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Show max quantity hint for partial mode */}
+                    {sellMode === 'partial' && selectedLot && (
+                      <Hint>
+                        Max. {formatShares(selectedLot.remaining_shares)} ks z
+                        tohoto lotu
+                      </Hint>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
           <div className="form-row">
             <div className="form-group">
               <Label htmlFor="date">Datum *</Label>
@@ -348,18 +607,48 @@ export function TransactionModal({
             </div>
 
             <div className="form-group">
-              <Label htmlFor="quantity">Množství *</Label>
+              <Label htmlFor="quantity">
+                Množství *
+                {formData.type === 'SELL' && maxSellQuantity > 0 && (
+                  <Text as="span" size="sm" color="muted">
+                    {' '}
+                    (max {formatShares(maxSellQuantity)})
+                  </Text>
+                )}
+              </Label>
               <Input
                 type="number"
                 id="quantity"
                 name="quantity"
                 value={formData.quantity || ''}
-                onChange={handleNumberChange}
+                onChange={handleQuantityChange}
+                onBlur={() => {
+                  // Clamp value to max on blur for SELL
+                  if (
+                    formData.type === 'SELL' &&
+                    maxSellQuantity > 0 &&
+                    formData.quantity > maxSellQuantity
+                  ) {
+                    setFormData((prev) => ({
+                      ...prev,
+                      quantity: maxSellQuantity,
+                    }));
+                  }
+                }}
                 placeholder="0"
                 step="0.000001"
                 min="0"
+                max={
+                  formData.type === 'SELL' && maxSellQuantity > 0
+                    ? maxSellQuantity
+                    : undefined
+                }
                 required
                 fullWidth
+                disabled={
+                  formData.type === 'SELL' &&
+                  (sellMode === 'entire' || sellMode === 'lot')
+                }
               />
             </div>
           </div>
