@@ -70,7 +70,7 @@ const METRICS: MetricConfig[] = [
   {
     key: 'peRatio',
     label: 'P/E',
-    tooltip: '**P/E Ratio** | Poměr ceny k zisku. | • Nižší = levnější valuace',
+    tooltip: '**Price-to-Earnings (P/E)** | Poměr ceny akcie k zisku na akcii. | • Nižší = Levnější akcie (hodnotová) | • Vyšší = Dražší akcie (růstová)',
     format: (v) => (v !== null ? formatNumber(v, 1) : '—'),
     higherIsBetter: false,
     lowerIsBetterIfPositive: true,
@@ -80,7 +80,7 @@ const METRICS: MetricConfig[] = [
     key: 'evEbitda',
     label: 'EV/EBITDA',
     tooltip:
-      '**EV/EBITDA** | Hodnota firmy / provozní zisk. | • Nižší = levnější',
+      '**EV/EBITDA** | Celková hodnota firmy dělená provozním ziskem. | • Nižší = Levnější (lepší pro akvizice) | • Lepší než P/E pro srovnání firem s dluhem.',
     format: (v) => (v !== null ? formatNumber(v, 1) : '—'),
     higherIsBetter: false,
     lowerIsBetterIfPositive: true,
@@ -89,7 +89,8 @@ const METRICS: MetricConfig[] = [
   {
     key: 'roe',
     label: 'ROE',
-    tooltip: '**ROE** | Návratnost vlastního kapitálu. | • Vyšší = lepší',
+    tooltip:
+      '**Return on Equity (ROE)** | Návratnost vlastního kapitálu. | • Vyšší = Firma efektivněji zhodnocuje peníze akcionářů.',
     format: (v) => (v !== null ? formatPercent(v) : '—'),
     higherIsBetter: true,
     category: 'profitability',
@@ -98,7 +99,7 @@ const METRICS: MetricConfig[] = [
     key: 'netMargin',
     label: 'Margin',
     tooltip:
-      '**Čistá marže** | Kolik % tržeb zůstane jako zisk. | • Vyšší = lepší',
+      '**Čistá zisková marže** | Kolik procent z tržeb zůstane jako čistý zisk. | • Vyšší = Firma má větší cenovou sílu nebo nižší náklady.',
     format: (v) => (v !== null ? formatPercent(v) : '—'),
     higherIsBetter: true,
     category: 'profitability',
@@ -108,7 +109,7 @@ const METRICS: MetricConfig[] = [
     label: 'Rev Growth',
     shortLabel: 'Growth',
     tooltip:
-      '**Růst tržeb** | Meziroční změna tržeb. | • Vyšší = rychlejší růst',
+      '**Růst tržeb** | Meziroční změna tržeb. | • Vyšší = Firma rychleji roste a získává podíl na trhu.',
     format: (v) => (v !== null ? formatPercent(v) : '—'),
     higherIsBetter: true,
     category: 'growth',
@@ -116,7 +117,7 @@ const METRICS: MetricConfig[] = [
   {
     key: 'targetUpside',
     label: 'Upside',
-    tooltip: '**Upside** | Potenciální růst k cílovému kurzu analytiků.',
+    tooltip: '**Upside** | Potenciální růst k průměrné cílové ceně analytiků. | • Kladné = Analytici čekají růst | • Záporné = Analytici čekají pokles.',
     format: (v) =>
       v !== null ? `${v > 0 ? '+' : ''}${formatNumber(v, 1)}%` : '—',
     higherIsBetter: true,
@@ -126,7 +127,7 @@ const METRICS: MetricConfig[] = [
     key: 'return1M',
     label: '1M Return',
     shortLabel: '1M',
-    tooltip: '**1M výnos** | Výkonnost za poslední měsíc.',
+    tooltip: '**1M výnos** | Změna ceny akcie za poslední měsíc. | • Porovnejte s konkurencí pro zjištění relativní síly.',
     format: (v) =>
       v !== null ? `${v > 0 ? '+' : ''}${formatNumber(v, 1)}%` : '—',
     higherIsBetter: true,
@@ -136,7 +137,7 @@ const METRICS: MetricConfig[] = [
     key: 'return3M',
     label: '3M Return',
     shortLabel: '3M',
-    tooltip: '**3M výnos** | Výkonnost za poslední 3 měsíce.',
+    tooltip: '**3M výnos** | Změna ceny akcie za poslední 3 měsíce. | • Porovnejte s konkurencí pro zjištění relativní síly.',
     format: (v) =>
       v !== null ? `${v > 0 ? '+' : ''}${formatNumber(v, 1)}%` : '—',
     higherIsBetter: true,
@@ -146,7 +147,7 @@ const METRICS: MetricConfig[] = [
     key: 'return6M',
     label: '6M Return',
     shortLabel: '6M',
-    tooltip: '**6M výnos** | Výkonnost za posledních 6 měsíců.',
+    tooltip: '**6M výnos** | Změna ceny akcie za posledních 6 měsíců. | • Porovnejte s konkurencí pro zjištění relativní síly.',
     format: (v) =>
       v !== null ? `${v > 0 ? '+' : ''}${formatNumber(v, 1)}%` : '—',
     higherIsBetter: true,
@@ -156,7 +157,7 @@ const METRICS: MetricConfig[] = [
     key: 'return1Y',
     label: '1Y Return',
     shortLabel: '1Y',
-    tooltip: '**1Y výnos** | Výkonnost za poslední rok.',
+    tooltip: '**1Y výnos** | Změna ceny akcie za poslední rok. | • Porovnejte s konkurencí pro zjištění relativní síly.',
     format: (v) =>
       v !== null ? `${v > 0 ? '+' : ''}${formatNumber(v, 1)}%` : '—',
     higherIsBetter: true,
@@ -165,7 +166,7 @@ const METRICS: MetricConfig[] = [
   {
     key: 'marketCap',
     label: 'Market Cap',
-    tooltip: '**Tržní kapitalizace** | Celková hodnota všech akcií.',
+    tooltip: '**Tržní kapitalizace** | Celková hodnota firmy na burze (počet akcií × cena). | • Velké firmy (Large Cap) jsou stabilnější | • Malé firmy (Small Cap) mohou rychleji růst, ale jsou rizikovější.',
     format: (v) => (v !== null ? formatLargeNumber(v) : '—'),
     higherIsBetter: false,
     category: 'size',

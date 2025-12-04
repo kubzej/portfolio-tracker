@@ -264,7 +264,6 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.8125rem;
-  table-layout: fixed;
 }
 
 .watchlist-table th,
@@ -274,40 +273,55 @@
   border-bottom: 1px solid var(--border-light);
 }
 
-/* Column widths */
+/* Column widths - using auto layout */
 .watchlist-table th:nth-child(1),
 .watchlist-table td:nth-child(1) {
-  width: 15%;
+  white-space: nowrap;
 }
 
 .watchlist-table th:nth-child(2),
-.watchlist-table td:nth-child(2),
+.watchlist-table td:nth-child(2) {
+  text-align: right;
+  white-space: nowrap;
+}
+
 .watchlist-table th:nth-child(3),
 .watchlist-table td:nth-child(3) {
-  width: 10%;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .watchlist-table th:nth-child(4),
 .watchlist-table td:nth-child(4),
 .watchlist-table th:nth-child(5),
 .watchlist-table td:nth-child(5) {
-  width: 12%;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .watchlist-table th:nth-child(6),
 .watchlist-table td:nth-child(6) {
-  width: 12%;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .watchlist-table th:nth-child(7),
 .watchlist-table td:nth-child(7) {
-  width: 18%;
+  width: 100%;
+  max-width: 0;
+}
+
+.notes-cell .notes-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .watchlist-table th:nth-child(8),
 .watchlist-table td:nth-child(8) {
-  width: 70px;
+  white-space: nowrap;
   text-align: right;
+  padding-right: 0.75rem;
 }
 
 .watchlist-table .notes-cell {
@@ -357,6 +371,10 @@
   text-align: right;
 }
 
+.text-center {
+  text-align: center;
+}
+
 .ticker-cell {
   font-weight: 600;
 }
@@ -396,7 +414,7 @@
 .dual-value {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   gap: 0.125rem;
 }
 
@@ -421,6 +439,7 @@
 
 .status-cell {
   white-space: nowrap;
+  text-align: center;
 }
 
 .status-cell .badge {
@@ -438,6 +457,21 @@
 .actions-cell {
   white-space: nowrap;
   text-align: right;
+}
+
+.actions-cell button {
+  color: var(--text-secondary);
+  opacity: 0.7;
+  transition: opacity var(--transition-fast), color var(--transition-fast);
+}
+
+.actions-cell button:hover {
+  opacity: 1;
+  color: var(--text-primary);
+}
+
+.actions-cell button:last-child:hover {
+  color: var(--danger);
 }
 
 .notes-cell {

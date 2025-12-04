@@ -1637,7 +1637,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                   value={getWeightedAverage('peRatio').toFixed(1)}
                   suffix="x"
                   tooltip={
-                    <InfoTooltip text="**Price-to-Earnings (P/E)** | Poměr ceny akcie k zisku na akcii. | • Pod 15 = levné | • 15-25 = normální | • Nad 25 = drahé nebo růstové | Nižší P/E může znamenat podhodnocenou akcii." />
+                    <InfoTooltip text="**Price-to-Earnings (P/E)** | Poměr ceny akcie k zisku na akcii. Říká, kolik dolarů platíte za každý dolar zisku firmy. | • Pod 15 = Akcie je levná (hodnotová investice) | • 15-25 = Férová cena (průměr trhu) | • Nad 25 = Akcie je drahá nebo se očekává velký růst | Nízké P/E může znamenat příležitost, ale i problémy firmy." />
                   }
                 />
                 <MetricCard
@@ -1645,7 +1645,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                   value={getWeightedAverage('forwardPe').toFixed(1)}
                   suffix="x"
                   tooltip={
-                    <InfoTooltip text="**Forward P/E** | P/E založené na očekávaných budoucích ziscích. | • Fwd P/E < P/E = očekává se růst zisků | • Fwd P/E > P/E = očekává se pokles zisků" />
+                    <InfoTooltip text="**Forward P/E** | P/E vypočítané z očekávaných zisků na příštích 12 měsíců. Ukazuje, jak je akcie drahá vůči budoucnosti. | • Fwd P/E < P/E = Analytici čekají růst zisků (akcie 'zlevní') | • Fwd P/E > P/E = Analytici čekají pokles zisků (akcie 'zdraží')" />
                   }
                 />
                 <MetricCard
@@ -1653,7 +1653,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                   value={getWeightedAverage('pbRatio').toFixed(2)}
                   suffix="x"
                   tooltip={
-                    <InfoTooltip text="**Price-to-Book (P/B)** | Poměr ceny akcie k účetní hodnotě. | • Pod 1 = akcie pod hodnotou majetku | • Nad 3 = drahá nebo velká hodnota značky | Tech firmy mají běžně vysoké P/B." />
+                    <InfoTooltip text="**Price-to-Book (P/B)** | Poměr ceny akcie k účetní hodnotě majetku firmy (po odečtení dluhů). | • Pod 1.0 = Akcie se prodává pod cenou majetku (potenciálně podhodnocená) | • Nad 3.0 = Investoři platí za značku a know-how (běžné u tech firem) | Nízké P/B je typické pro banky a průmysl." />
                   }
                 />
                 <MetricCard
@@ -1661,7 +1661,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                   value={getWeightedAverage('evEbitda').toFixed(1)}
                   suffix="x"
                   tooltip={
-                    <InfoTooltip text="**EV/EBITDA** | Hodnota firmy dělená provozním ziskem. | • Pod 10 = levné | • 10-15 = normální | • Nad 15 = drahé | Lepší pro srovnání firem s různým zadlužením." />
+                    <InfoTooltip text="**EV/EBITDA** | Celková hodnota firmy (včetně dluhu) dělená provozním ziskem. Je to přesnější než P/E pro firmy s velkým dluhem. | • Pod 10 = Levná firma (možný cíl převzetí) | • 10-15 = Férové ocenění | • Nad 15 = Prémiová cena | Čím nižší, tím levnější firma je." />
                   }
                 />
               </div>
@@ -1679,7 +1679,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     getWeightedAverage('roe') > 15 ? 'positive' : undefined
                   }
                   tooltip={
-                    <InfoTooltip text="**Return on Equity (ROE)** | Návratnost vlastního kapitálu. | • Nad 15% = dobré | • Nad 20% = výborné | • Pod 10% = slabé | Ukazuje efektivitu využití peněz akcionářů." />
+                    <InfoTooltip text="**Return on Equity (ROE)** | Návratnost vlastního kapitálu. Ukazuje, kolik procent zisku firma vygeneruje z peněz akcionářů. | • Nad 15% = Firma efektivně zhodnocuje kapitál | • Nad 20% = Špičková efektivita (konkurenční výhoda) | • Pod 10% = Neefektivní využití kapitálu | Klíčový ukazatel kvality managementu." />
                   }
                 />
                 <MetricCard
@@ -1692,7 +1692,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                       : undefined
                   }
                   tooltip={
-                    <InfoTooltip text="**Čistá zisková marže** | Kolik procent tržeb zůstane jako čistý zisk. | • Nad 10% = dobré | • Nad 20% = výborné | Závisí na odvětví - tech firmy mají vyšší marže." />
+                    <InfoTooltip text="**Čistá zisková marže** | Kolik procent z každého utrženého dolaru firmě zůstane jako čistý zisk po zaplacení všech nákladů a daní. | • Nad 10% = Zdravá ziskovost | • Nad 20% = Velmi vysoká ziskovost (často software/služby) | • Nízká marže (pod 5%) je riziková při poklesu tržeb." />
                   }
                 />
                 <MetricCard
@@ -1700,7 +1700,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                   value={getWeightedAverage('grossMargin').toFixed(1)}
                   suffix="%"
                   tooltip={
-                    <InfoTooltip text="**Hrubá marže** | Tržby minus náklady na výrobu/služby. | • Nad 40% = dobré | • Nad 60% = silné konkurenční výhody | Vyšší = větší cenová síla." />
+                    <InfoTooltip text="**Hrubá marže** | Zisk pouze po odečtení přímých nákladů na výrobu. Ukazuje sílu značky a cenotvorbu. | • Nad 40% = Firma má silnou pozici na trhu | • Nad 60% = Obrovská konkurenční výhoda (moat) | Stabilní vysoká hrubá marže je znakem kvalitního byznysu." />
                   }
                 />
                 <MetricCard
@@ -1712,7 +1712,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                   }
                   subValue={analystData.length}
                   tooltip={
-                    <InfoTooltip text="**Dividendové akcie** | Počet akcií v portfoliu, které vyplácejí dividendy. | • Více dividend = stabilnější příjem | • Růstové firmy často dividendy nevyplácejí" />
+                    <InfoTooltip text="**Dividendové akcie** | Počet firem ve vašem portfoliu, které pravidelně vyplácejí podíl na zisku (dividendu). | • Dividendy poskytují stabilní cashflow i při poklesu trhu | • Růstové firmy (tech) často dividendy neplatí a raději reinvestují do rozvoje." />
                   }
                 />
               </div>
@@ -1733,7 +1733,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                       : undefined
                   }
                   tooltip={
-                    <InfoTooltip text="**Beta** | Míra volatility ve srovnání s trhem (S&P 500). | • Beta = 1 = pohyb s trhem | • Beta > 1 = větší výkyvy (riskantnejší) | • Beta < 1 = menší výkyvy (stabilnější)" />
+                    <InfoTooltip text="**Beta** | Měří, jak moc akcie 'skáče' oproti trhu (S&P 500). | • Beta 1.0 = Akcie se hýbe stejně jako trh | • Beta > 1.5 = Vysoká volatilita (agresivní růst nebo risk) | • Beta < 0.8 = Nízká volatilita (defenzivní akcie, např. Coca-Cola) | Vyšší Beta znamená vyšší riziko, ale i potenciál zisku." />
                   }
                 />
                 <MetricCard
@@ -1747,7 +1747,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                       : undefined
                   }
                   tooltip={
-                    <InfoTooltip text="**Debt-to-Equity (D/E)** | Poměr dluhu k vlastnímu kapitálu. | • Pod 0.5 = nízký dluh (výborné) | • 0.5-2 = normální | • Nad 2 = vysoký dluh (rizikovější)" />
+                    <InfoTooltip text="**Debt-to-Equity (D/E)** | Poměr dluhu k vlastnímu jmění. Ukazuje, jak moc je firma financovaná dluhem. | • Pod 0.5 = Velmi bezpečné, firma má málo dluhů | • Nad 2.0 = Rizikové, firma je silně zadlužená | V době vysokých úroků je vysoký dluh nebezpečný." />
                   }
                 />
                 <MetricCard
@@ -1764,7 +1764,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                       : undefined
                   }
                   tooltip={
-                    <InfoTooltip text="**Růst tržeb** | Meziroční změna tržeb. | • Kladné = firma roste | • Záporné = tržby klesají | Růstové firmy: +15% a více. Pokles = varovný signál." />
+                    <InfoTooltip text="**Růst tržeb** | O kolik procent vzrostly tržby firmy oproti minulému roku. | • Nad 15% = Rychle rostoucí firma (Growth) | • 0-5% = Pomalý, stabilní růst (Mature) | • Záporný růst = Firma se zmenšuje (varovný signál) | Růst tržeb je motor budoucích zisků." />
                   }
                 />
                 <MetricCard
@@ -1787,7 +1787,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                   }
                   sentiment="positive"
                   tooltip={
-                    <InfoTooltip text="**Insider nákupy** | Počet akcií, kde vedenie nakupuje vlastní akcie. | • Nákup insiderů = pozitivní signál | • Prodej nemusí být negativní (potřeba hotovosti) | Více firem s insider buying = dobré znamení." />
+                    <InfoTooltip text="**Insider nákupy** | Sleduje, zda manažeři a ředitelé nakupují akcie vlastní firmy. | • Nákupy jsou silný signál důvěry ('věříme, že cena poroste') | • Prodeje nemusí být špatné (často jde o plánované odměny) | Pokud vedení nakupuje za své peníze, je to velmi pozitivní." />
                   }
                 />
               </div>
@@ -1829,11 +1829,11 @@ export function Analysis({ portfolioId }: AnalysisProps) {
                     <th className="right">52W Max</th>
                     <th className="center">
                       Pozice v 52W rozmezí{' '}
-                      <InfoTooltip text="**52W Range Position** | Pozice ceny v rámci ročního rozpětí. | • 0% = roční minimum | • 100% = roční maximum | • Nad 80% = silné momentum nebo překoupená | • Pod 20% = slabé momentum nebo příležitost" />
+                      <InfoTooltip text="**Pozice v 52T rozsahu** | Kde se nachází cena mezi ročním minimem (0%) a maximem (100%). | • Blízko 0% = Akcie je u dna (možná sleva, nebo problém) | • Blízko 100% = Akcie je na vrcholu (silné momentum) | Pomáhá určit, zda kupujete 've slevě' nebo 'na vrcholu'." />
                     </th>
                     <th className="left">
                       Konkurenti{' '}
-                      <InfoTooltip text="**Peers** | Konkurenti ve stejném odvětví. | Můžete porovnat metriky s konkurenty a zjistit, zda je akcie lepší nebo horší." />
+                      <InfoTooltip text="**Konkurenti (Peers)** | Seznam firem, které podnikají ve stejném oboru. | • Slouží pro srovnání valuace a výkonnosti | • Pokud je vaše akcie levnější než konkurence, může být podhodnocená." />
                     </th>
                   </tr>
                 </thead>

@@ -442,7 +442,7 @@ export function ResearchTechnical({
               <Text size="xs" color="secondary">
                 Možný pokles
               </Text>
-              <InfoTooltip text="**Překoupená (>70)** | Akcie hodně rostla a může být drahá. | • Možná není nejlepší čas na nákup | • Cena může brzy klesnout" />
+              <InfoTooltip text="**Překoupená (>70)** | Akcie rostla příliš rychle a může být 'přehřátá'. | • Často následuje korekce (pokles ceny) | • Rizikový čas pro nákup, možný čas pro prodej." />
             </div>
             <div className="rsi-info-card">
               <Text size="sm" weight="semibold" color="secondary">
@@ -451,7 +451,7 @@ export function ResearchTechnical({
               <Text size="xs" color="secondary">
                 Normální momentum
               </Text>
-              <InfoTooltip text="**Neutrální (30-70)** | Normální obchodní podmínky. | • Můžete nakupovat/prodávat dle jiných faktorů | • Sledujte směr RSI" />
+              <InfoTooltip text="**Neutrální (30-70)** | Cena se pohybuje v normálním rozmezí. | • RSI nad 50 značí spíše rostoucí trend | • RSI pod 50 značí spíše klesající trend." />
             </div>
             <div className="rsi-info-card">
               <Text size="sm" weight="semibold" color="success">
@@ -460,7 +460,7 @@ export function ResearchTechnical({
               <Text size="xs" color="secondary">
                 Možný odraz
               </Text>
-              <InfoTooltip text="**Přeprodaná (<30)** | Akcie hodně klesala a může být levná. | • Možná dobrá příležitost k nákupu | • Pozor - někdy klesá z dobrého důvodu" />
+              <InfoTooltip text="**Přeprodaná (<30)** | Akcie klesla příliš rychle a může být 've slevě'. | • Často následuje odraz ceny nahoru (rebound) | • Může být dobrá příležitost k nákupu (pokud je firma zdravá)." />
             </div>
           </div>
           <div className="rsi-current">
@@ -487,7 +487,7 @@ export function ResearchTechnical({
       {/* Section 4: MACD */}
       <ChartSection
         title="MACD (Moving Average Convergence Divergence)"
-        tooltip="**MACD** | Ukazatel směru a síly momenta. | • MACD nad Signal = bullish (nákupní) | • MACD pod Signal = bearish (prodejní) | • Zelený histogram = momentum roste | • Červený histogram = momentum klesá"
+        tooltip="**MACD** | Ukazatel trendu a momenta. Sleduje vztah mezi dvěma klouzavými průměry. | • MACD překříží Signal nahoru = Nákupní signál (Bullish) | • MACD překříží Signal dolů = Prodejní signál (Bearish) | • Histogram ukazuje sílu trendu (čím vyšší sloupce, tím silnější trend)."
         timeRange={macdTimeRange}
         onTimeRangeChange={setMacdTimeRange}
       >

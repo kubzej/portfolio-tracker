@@ -44,7 +44,7 @@ export function ResearchValuation({
             label="P/E Ratio"
             value={f.peRatio?.toFixed(2) ?? null}
             tooltip={
-              <InfoTooltip text="**P/E Ratio** | Poměr ceny k zisku na akcii. | • Pod 15 = levné | • 15-25 = normální | • Nad 25 = drahé nebo růstové" />
+              <InfoTooltip text="**Price-to-Earnings (P/E)** | Poměr ceny akcie k zisku na akcii. Říká, kolik dolarů platíte za každý dolar zisku firmy. | • Pod 15 = Akcie je levná (hodnotová investice) | • 15-25 = Férová cena (průměr trhu) | • Nad 25 = Akcie je drahá nebo se očekává velký růst | Nízké P/E může znamenat příležitost, ale i problémy firmy." />
             }
             sentiment={getPESentiment(f.peRatio)}
           />
@@ -52,7 +52,7 @@ export function ResearchValuation({
             label="Forward P/E"
             value={f.forwardPe?.toFixed(2) ?? null}
             tooltip={
-              <InfoTooltip text="**Forward P/E** | P/E na základě očekávaných zisků. | • Fwd P/E < P/E = očekávaný růst zisků | • Fwd P/E > P/E = očekávaný pokles zisků" />
+              <InfoTooltip text="**Forward P/E** | P/E vypočítané z očekávaných zisků na příštích 12 měsíců. Ukazuje, jak je akcie drahá vůči budoucnosti. | • Fwd P/E < P/E = Analytici čekají růst zisků (akcie 'zlevní') | • Fwd P/E > P/E = Analytici čekají pokles zisků (akcie 'zdraží')" />
             }
             sentiment={getPESentiment(f.forwardPe)}
           />
@@ -60,7 +60,7 @@ export function ResearchValuation({
             label="PEG Ratio"
             value={f.pegRatio?.toFixed(3) ?? null}
             tooltip={
-              <InfoTooltip text="**PEG Ratio** | P/E dělené růstem zisku. | • Pod 1 = podhodnoceno vzhledem k růstu | • 1-1.5 = férová hodnota | • Nad 2 = drahé" />
+              <InfoTooltip text="**PEG Ratio** | P/E poměr upravený o růst zisků (P/E děleno růstem). | • Pod 1.0 = Akcie je levná vzhledem k tomu, jak rychle roste | • 1.0 - 1.5 = Férová cena | • Nad 2.0 = Akcie je drahá i přes svůj růst | Nejlepší ukazatel pro růstové firmy." />
             }
             sentiment={getPEGSentiment(f.pegRatio)}
           />
@@ -68,7 +68,7 @@ export function ResearchValuation({
             label="P/B Ratio"
             value={f.pbRatio?.toFixed(3) ?? null}
             tooltip={
-              <InfoTooltip text="**P/B Ratio** | Poměr ceny k účetní hodnotě. | • Pod 1 = potenciálně levná | • 1-3 = normální | • Nad 3 = drahá nebo silná značka" />
+              <InfoTooltip text="**Price-to-Book (P/B)** | Poměr ceny akcie k účetní hodnotě majetku firmy (po odečtení dluhů). | • Pod 1.0 = Akcie se prodává pod cenou majetku (potenciálně podhodnocená) | • Nad 3.0 = Investoři platí za značku a know-how (běžné u tech firem) | Nízké P/B je typické pro banky a průmysl." />
             }
             sentiment={getPBSentiment(f.pbRatio)}
           />
@@ -76,7 +76,7 @@ export function ResearchValuation({
             label="P/S Ratio"
             value={f.psRatio?.toFixed(2) ?? null}
             tooltip={
-              <InfoTooltip text="**P/S Ratio** | Poměr ceny k tržbám. | • Pod 2 = levné | • 2-5 = normální | • Nad 10 = drahé | Užitečné pro firmy bez zisku." />
+              <InfoTooltip text="**Price-to-Sales (P/S)** | Poměr ceny akcie k tržbám na akcii. Říká, kolik platíte za každý dolar tržeb. | • Pod 2.0 = Levná akcie | • Nad 10.0 = Velmi drahá (bublina?) | Klíčový ukazatel pro firmy, které ještě nemají zisk (startupy, bio-tech)." />
             }
             sentiment={getPSSentiment(f.psRatio)}
           />
@@ -84,7 +84,7 @@ export function ResearchValuation({
             label="EV/EBITDA"
             value={f.evEbitda?.toFixed(2) ?? null}
             tooltip={
-              <InfoTooltip text="**EV/EBITDA** | Hodnota firmy dělená provozním ziskem. | • Pod 10 = levné | • 10-15 = normální | • Nad 15 = drahé" />
+              <InfoTooltip text="**EV/EBITDA** | Celková hodnota firmy (včetně dluhu) dělená provozním ziskem. Je to přesnější než P/E pro firmy s velkým dluhem. | • Pod 10 = Levná firma (možný cíl převzetí) | • 10-15 = Férové ocenění | • Nad 15 = Prémiová cena | Čím nižší, tím levnější firma je." />
             }
             sentiment={getEVEBITDASentiment(f.evEbitda)}
           />

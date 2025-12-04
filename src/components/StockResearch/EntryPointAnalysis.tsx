@@ -126,7 +126,7 @@ export function EntryPointAnalysis({
     <section className="entry-point-analysis">
       <CardTitle>
         Vstupní analýza
-        <InfoTooltip text="**Vstupní analýza** | Porovnání aktuální ceny s klíčovými cenovými úrovněmi. | • Cíl analytiků = průměrná cílová cena | • 52T rozsah = min/max za posledních 52 týdnů | • Support/Resistance = technické úrovně" />
+        <InfoTooltip text="**Vstupní analýza** | Pomáhá určit správnou cenu pro nákup. | • Cíl analytiků = Kam až může cena vyrůst podle expertů | • 52T rozsah = Kde je cena v rámci ročního minima a maxima | • Support/Resistance = Hranice, kde se cena často otáčí." />
       </CardTitle>
 
       <div className="entry-point-analysis__content">
@@ -189,21 +189,21 @@ export function EntryPointAnalysis({
                 : undefined
             }
             tooltip={
-              <InfoTooltip text="**Cílová cena analytiků** | Průměrná cílová cena od profesionálních analytiků pokrývajících tuto akcii." />
+              <InfoTooltip text="**Cílová cena analytiků** | Průměrná cena, kterou analytici z Wall Street očekávají za 12 měsíců. | • Pokud je aktuální cena výrazně nižší, akcie má 'upside' (potenciál růstu)." />
             }
           />
           <MetricCard
             label="Support"
             value={formatPrice(data.support)}
             tooltip={
-              <InfoTooltip text="**Support** | Cenová úroveň, kde se očekává zájem kupujících. Potenciální vstupní bod." />
+              <InfoTooltip text="**Support (Podpora)** | Cena, pod kterou akcie historicky nechtěla klesnout. | • Funguje jako 'podlaha' | • Dobré místo pro zadání nákupního příkazu (Limit Buy)." />
             }
           />
           <MetricCard
             label="Resistance"
             value={formatPrice(data.resistance)}
             tooltip={
-              <InfoTooltip text="**Resistance** | Cenová úroveň, kde se očekává prodejní tlak. Potenciální cílový bod." />
+              <InfoTooltip text="**Resistance (Odpor)** | Cena, nad kterou akcie historicky nechtěla růst. | • Funguje jako 'strop' | • Dobré místo pro prodej nebo vybírání zisků." />
             }
           />
         </div>

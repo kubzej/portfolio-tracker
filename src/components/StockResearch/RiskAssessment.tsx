@@ -131,7 +131,7 @@ export function RiskAssessment({
     <section className="risk-assessment">
       <CardTitle>
         Riziková analýza
-        <InfoTooltip text="**Riziková analýza** | Hodnocení rizikového profilu akcie. | • Beta = volatilita vs S&P 500 | • Debt/Equity = úroveň zadlužení | • Current Ratio = likvidita" />
+        <InfoTooltip text="**Riziková analýza** | Hodnocení bezpečnosti investice. | • Nízké riziko = Stabilní firma, malé výkyvy | • Vysoké riziko = Velké výkyvy, dluhy nebo ztráta | Vhodné pro konzervativní investory." />
       </CardTitle>
 
       <div className="risk-assessment__content">

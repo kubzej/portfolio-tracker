@@ -328,7 +328,7 @@ export function WatchlistView({
                 </th>
                 <th
                   className={cn(
-                    'text-right',
+                    'text-center',
                     'sortable',
                     isSorted('target_buy_price') && 'sorted'
                   )}
@@ -338,7 +338,7 @@ export function WatchlistView({
                 </th>
                 <th
                   className={cn(
-                    'text-right',
+                    'text-center',
                     'sortable',
                     isSorted('target_sell_price') && 'sorted'
                   )}
@@ -346,7 +346,7 @@ export function WatchlistView({
                 >
                   Prodejní cíl {getSortIndicator('target_sell_price')}
                 </th>
-                <th>Status</th>
+                <th className="text-center">Status</th>
                 <th>Poznámky</th>
                 <th></th>
               </tr>
@@ -405,7 +405,7 @@ export function WatchlistView({
                       <Muted>—</Muted>
                     )}
                   </td>
-                  <td className="text-right">
+                  <td className="text-center">
                     {item.target_buy_price ? (
                       <div className="dual-value">
                         <Text
@@ -428,7 +428,7 @@ export function WatchlistView({
                       <Muted>—</Muted>
                     )}
                   </td>
-                  <td className="text-right">
+                  <td className="text-center">
                     {item.target_sell_price ? (
                       <div className="dual-value">
                         <Text
@@ -454,12 +454,8 @@ export function WatchlistView({
                   <td className="status-cell">{getTargetStatus(item)}</td>
                   <td className="notes-cell">
                     {item.notes && (
-                      <div title={item.notes}>
-                        <Caption>
-                          {item.notes.length > 30
-                            ? item.notes.slice(0, 30) + '...'
-                            : item.notes}
-                        </Caption>
+                      <div className="notes-text" title={item.notes}>
+                        <Caption>{item.notes}</Caption>
                       </div>
                     )}
                   </td>

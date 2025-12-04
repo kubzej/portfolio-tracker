@@ -137,7 +137,7 @@ export function ResearchVerdict({
       <div className="research-verdict__header">
         <CardTitle>
           Verdikt
-          <InfoTooltip text="Celkové zhodnocení akcie pro nákup. | • Dobrý vstup = vhodný čas na nákup | • Počkat = čekat na lepší příležitost | • Nezajímavé = aktuálně nedoporučeno" />
+          <InfoTooltip text="**Verdikt** | Souhrnné doporučení založené na fundamentech, technické analýze a názorech analytiků. | • Dobrý vstup = Akcie je kvalitní a cena je příznivá | • Počkat = Akcie je kvalitní, ale cena je vysoko (čekejte na pokles) | • Vynechat = Akcie má slabé výsledky nebo je příliš drahá." />
         </CardTitle>
         <div className="research-verdict__actions">
           {onTrack && (
