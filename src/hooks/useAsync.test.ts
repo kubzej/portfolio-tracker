@@ -97,7 +97,7 @@ describe('useAsync', () => {
       const asyncFn = vi.fn().mockResolvedValue('result');
       const { result } = renderHook(() => useAsync(asyncFn));
 
-      let returnValue: string | null = null;
+      let returnValue: unknown = null;
       await act(async () => {
         returnValue = await result.current.execute();
       });

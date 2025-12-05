@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   signalExists,
   logSignal,
-  logMultipleSignals,
   getRecentSignals,
   getSignalsForTicker,
   getSignalsByType,
@@ -11,6 +10,7 @@ import {
   deleteSignal,
   clearAllSignals,
 } from './signals';
+import type { StockRecommendation } from '@/utils/recommendations';
 
 // Mock supabase
 const mockSelect = vi.fn();
@@ -26,19 +26,32 @@ const mockFrom = vi.fn(() => ({
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
-    from: (...args: unknown[]) => mockFrom(...args),
+    from: (...args: Parameters<typeof mockFrom>) => mockFrom(...args),
   },
 }));
 
 describe('signals API', () => {
   // Track chain state for assertions
-  let chainMock: ReturnType<typeof createChainMock>;
+  interface ChainMock {
+    eq: ReturnType<typeof vi.fn>;
+    gte: ReturnType<typeof vi.fn>;
+    order: ReturnType<typeof vi.fn>;
+    limit: ReturnType<typeof vi.fn>;
+    select: ReturnType<typeof vi.fn>;
+    single: ReturnType<typeof vi.fn>;
+    then: (
+      resolve: (val: { data: unknown; error: unknown }) => void
+    ) => ChainMock;
+    _setResponse: (data: unknown, error?: unknown) => void;
+  }
 
-  function createChainMock(defaultData: any = []) {
+  let chainMock: ChainMock;
+
+  function createChainMock(defaultData: unknown = []): ChainMock {
     let resolveData = defaultData;
-    let resolveError: any = null;
+    let resolveError: unknown = null;
 
-    const mock: any = {
+    const mock: ChainMock = {
       eq: vi.fn(),
       gte: vi.fn(),
       order: vi.fn(),
@@ -46,12 +59,12 @@ describe('signals API', () => {
       select: vi.fn(),
       single: vi.fn(),
       // Make it thenable for await
-      then: (resolve: (val: any) => void) => {
+      then: (resolve: (val: { data: unknown; error: unknown }) => void) => {
         resolve({ data: resolveData, error: resolveError });
         return mock;
       },
       // Allow setting response for specific test
-      _setResponse: (data: any, error: any = null) => {
+      _setResponse: (data: unknown, error: unknown = null) => {
         resolveData = data;
         resolveError = error;
       },
@@ -131,33 +144,165 @@ describe('signals API', () => {
   });
 
   describe('logSignal', () => {
-    const mockRecommendation = {
+    const mockRecommendation: StockRecommendation = {
       ticker: 'AAPL',
       stockName: 'Apple Inc.',
       currentPrice: 180,
-      primarySignal: { type: 'DIP_OPPORTUNITY' as const, strength: 80 },
-      signals: [{ type: 'DIP_OPPORTUNITY' as const, strength: 80 }],
+      avgBuyPrice: 150,
+      distanceFromAvg: 20,
+      weight: 5,
+      gainPercentage: 10,
+      primarySignal: {
+        type: 'DIP_OPPORTUNITY',
+        category: 'action',
+        strength: 80,
+        title: 'DIP',
+        description: 'Test',
+        priority: 1,
+      },
+      signals: [
+        {
+          type: 'DIP_OPPORTUNITY',
+          category: 'action',
+          strength: 80,
+          title: 'DIP',
+          description: 'Test',
+          priority: 1,
+        },
+      ],
+      actionSignal: null,
+      qualitySignal: null,
       compositeScore: 75,
       fundamentalScore: 70,
       technicalScore: 65,
       analystScore: 80,
       newsScore: 60,
       insiderScore: 55,
+      portfolioScore: 50,
       convictionScore: 72,
+      convictionLevel: 'HIGH',
       dipScore: 85,
-      convictionLevel: 'high' as const,
       isDip: true,
-      dipQualityCheck: { fundamentals: true, analyst: true, news: true },
-      technicalBias: 'bullish' as const,
+      dipQualityCheck: true,
+      breakdown: [],
+      strengths: [],
+      concerns: [],
+      actionItems: [],
+      targetPrice: null,
+      targetUpside: null,
+      fiftyTwoWeekHigh: null,
+      fiftyTwoWeekLow: null,
+      distanceFrom52wHigh: null,
+      technicalBias: 'BULLISH',
+      buyStrategy: {
+        buyZoneLow: null,
+        buyZoneHigh: null,
+        inBuyZone: false,
+        dcaRecommendation: 'NORMAL',
+        dcaReason: 'Test',
+        maxAddPercent: 5,
+        riskRewardRatio: null,
+        supportPrice: null,
+      },
+      exitStrategy: {
+        takeProfit1: null,
+        takeProfit2: null,
+        takeProfit3: null,
+        stopLoss: null,
+        trailingStopPercent: null,
+        holdingPeriod: 'MEDIUM',
+        holdingReason: 'Test',
+        resistanceLevel: null,
+      },
       metadata: {
         rsiValue: 28,
         macdSignal: '0.5',
+        bollingerPosition: null,
+        newsSentiment: null,
+        insiderMspr: null,
       },
-      targetPrice: null,
-      targetUpside: null,
-      weight: 5,
-      gainPercentage: 10,
-      qualitySignal: null,
+      explanation: {
+        technicalIndicators: {
+          rsi14: null,
+          macdHistogram: null,
+          macdSignalLine: null,
+          stochK: null,
+          stochD: null,
+          adx: null,
+          bollingerUpper: null,
+          bollingerLower: null,
+          bollingerMiddle: null,
+          sma20: null,
+          sma50: null,
+          sma200: null,
+          atr14: null,
+        },
+        fundamentalData: {
+          peRatio: null,
+          forwardPE: null,
+          pegRatio: null,
+          roe: null,
+          profitMargin: null,
+          debtToEquity: null,
+          revenueGrowth: null,
+          epsGrowth: null,
+          currentRatio: null,
+        },
+        analystData: {
+          targetPrice: null,
+          currentPrice: null,
+          upside: null,
+          strongBuy: 0,
+          buy: 0,
+          hold: 0,
+          sell: 0,
+          strongSell: 0,
+          totalAnalysts: 0,
+          consensusScore: null,
+        },
+        scoreBreakdown: {
+          fundamental: { points: 0, maxPoints: 100, percent: 0 },
+          technical: { points: 0, maxPoints: 100, percent: 0 },
+          analyst: { points: 0, maxPoints: 100, percent: 0 },
+          news: { points: 0, maxPoints: 100, percent: 0 },
+          insider: { points: 0, maxPoints: 100, percent: 0 },
+          portfolio: null,
+          composite: { points: 0, maxPoints: 100, percent: 0 },
+        },
+        signalEvaluation: [],
+        decisionPath: {
+          actionSignal: { chosen: null, reason: 'Test' },
+          qualitySignal: { chosen: null, reason: 'Test' },
+        },
+        // Cast to proper type - actual values don't matter for tests
+        thresholds: {
+          TECH_STRONG: 60,
+          TECH_MODERATE: 40,
+          TECH_WEAK: 30,
+          FUND_QUALITY: 60,
+          FUND_STRONG: 50,
+          FUND_MODERATE: 40,
+          FUND_WATCH: 35,
+          FUND_WEAK: 25,
+          ANALYST_QUALITY: 55,
+          INSIDER_WEAK: 35,
+          NEWS_WATCH: 40,
+          DIP_TRIGGER: 50,
+          DIP_ACCUMULATE_MIN: 20,
+          DIP_ACCUMULATE_MAX: 50,
+          WEIGHT_OVERWEIGHT: 8,
+          WEIGHT_DCA_MAX: 10,
+          WEIGHT_DIP_MAX: 15,
+          TARGET_NEAR: 10,
+          TARGET_UPSIDE_HIGH: 30,
+          TARGET_LOW_UPSIDE: 5,
+          GAIN_TAKE_PROFIT: 50,
+          RSI_OVERBOUGHT: 70,
+          RSI_OVERSOLD: 30,
+          ADX_STRONG: 25,
+          ADX_WEAK: 20,
+        },
+      },
     };
 
     it('should log a new signal', async () => {
@@ -292,9 +437,21 @@ describe('signals API', () => {
   describe('calculateWinRate', () => {
     it('should calculate win rate for 1d', () => {
       const perf = {
+        portfolio_id: 'p1',
+        signal_type: 'DIP_OPPORTUNITY' as const,
+        total_signals: 10,
         evaluated_1d: 10,
         winners_1d: 7,
-      } as any;
+        avg_return_1d: null,
+        evaluated_1w: 0,
+        winners_1w: 0,
+        avg_return_1w: null,
+        evaluated_1m: 0,
+        winners_1m: 0,
+        avg_return_1m: null,
+        avg_composite_score: null,
+        avg_signal_strength: null,
+      };
 
       const result = calculateWinRate(perf, '1d');
 
@@ -303,9 +460,21 @@ describe('signals API', () => {
 
     it('should calculate win rate for 1w', () => {
       const perf = {
+        portfolio_id: 'p1',
+        signal_type: 'DIP_OPPORTUNITY' as const,
+        total_signals: 20,
+        evaluated_1d: 0,
+        winners_1d: 0,
+        avg_return_1d: null,
         evaluated_1w: 20,
         winners_1w: 12,
-      } as any;
+        avg_return_1w: null,
+        evaluated_1m: 0,
+        winners_1m: 0,
+        avg_return_1m: null,
+        avg_composite_score: null,
+        avg_signal_strength: null,
+      };
 
       const result = calculateWinRate(perf, '1w');
 
@@ -314,9 +483,21 @@ describe('signals API', () => {
 
     it('should return null when no evaluations', () => {
       const perf = {
+        portfolio_id: 'p1',
+        signal_type: 'DIP_OPPORTUNITY' as const,
+        total_signals: 0,
         evaluated_1d: 0,
         winners_1d: 0,
-      } as any;
+        avg_return_1d: null,
+        evaluated_1w: 0,
+        winners_1w: 0,
+        avg_return_1w: null,
+        evaluated_1m: 0,
+        winners_1m: 0,
+        avg_return_1m: null,
+        avg_composite_score: null,
+        avg_signal_strength: null,
+      };
 
       const result = calculateWinRate(perf, '1d');
 

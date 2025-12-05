@@ -31,7 +31,7 @@ const mockGetUser = vi.fn();
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
-    from: (...args: unknown[]) => mockFrom(...args),
+    from: (...args: Parameters<typeof mockFrom>) => mockFrom(...args),
     auth: {
       getUser: () => mockGetUser(),
     },

@@ -3,8 +3,6 @@ import {
   getSnapshots,
   getLatestSnapshot,
   getSnapshotWithHoldings,
-  getTickerHistory,
-  getChanges,
   getLatestHoldings,
   getResearchTracked,
   addResearchTracked,
@@ -33,7 +31,7 @@ const mockGetUser = vi.fn();
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
-    from: (...args: unknown[]) => mockFrom(...args),
+    from: (...args: Parameters<typeof mockFrom>) => mockFrom(...args),
     auth: {
       getUser: () => mockGetUser(),
     },
@@ -42,13 +40,31 @@ vi.mock('@/lib/supabase', () => ({
 
 describe('tracker API', () => {
   // Create chainable mock with thenable for await
-  let chainMock: ReturnType<typeof createChainMock>;
+  interface ChainMock {
+    eq: ReturnType<typeof vi.fn>;
+    gte: ReturnType<typeof vi.fn>;
+    lte: ReturnType<typeof vi.fn>;
+    order: ReturnType<typeof vi.fn>;
+    limit: ReturnType<typeof vi.fn>;
+    select: ReturnType<typeof vi.fn>;
+    single: ReturnType<typeof vi.fn>;
+    maybeSingle: ReturnType<typeof vi.fn>;
+    then: (
+      resolve: (val: { data: unknown; error: unknown }) => void
+    ) => ChainMock;
+    _setResponse: (data: unknown, error?: unknown) => void;
+  }
 
-  function createChainMock(defaultData: any = [], defaultError: any = null) {
+  let chainMock: ChainMock;
+
+  function createChainMock(
+    defaultData: unknown = [],
+    defaultError: unknown = null
+  ): ChainMock {
     let resolveData = defaultData;
     let resolveError = defaultError;
 
-    const mock: any = {
+    const mock: ChainMock = {
       eq: vi.fn(),
       gte: vi.fn(),
       lte: vi.fn(),
@@ -58,11 +74,11 @@ describe('tracker API', () => {
       single: vi.fn(),
       maybeSingle: vi.fn(),
       // Make it thenable for await
-      then: (resolve: (val: any) => void) => {
+      then: (resolve: (val: { data: unknown; error: unknown }) => void) => {
         resolve({ data: resolveData, error: resolveError });
         return mock;
       },
-      _setResponse: (data: any, error: any = null) => {
+      _setResponse: (data: unknown, error: unknown = null) => {
         resolveData = data;
         resolveError = error;
       },
@@ -165,7 +181,9 @@ describe('tracker API', () => {
 
       // First call returns snapshot, second call returns holdings
       let callCount = 0;
-      chainMock.then = (resolve: (val: any) => void) => {
+      chainMock.then = (
+        resolve: (val: { data: unknown; error: unknown }) => void
+      ) => {
         callCount++;
         if (callCount === 1) {
           resolve({ data: mockSnapshot, error: null });
@@ -196,7 +214,7 @@ describe('tracker API', () => {
 
       chainMock._setResponse(mockHoldings);
 
-      const result = await getLatestHoldings();
+      await getLatestHoldings();
 
       expect(mockFrom).toHaveBeenCalledWith('latest_snapshots');
     });

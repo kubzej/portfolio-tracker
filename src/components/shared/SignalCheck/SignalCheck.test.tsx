@@ -1,47 +1,45 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { SignalCheckItem } from './SignalCheck';
 import type { SignalEvaluationResult } from '@/utils/recommendations';
 
 describe('SignalCheckItem', () => {
   const passedEvaluation: SignalEvaluationResult = {
     signal: 'DIP_OPPORTUNITY',
+    category: 'action',
     passed: true,
     conditions: [
       {
         name: 'Condition 1',
         passed: true,
         actual: 80,
-        required: 70,
-        operator: '>=',
+        required: '≥ 70',
       },
       {
         name: 'Condition 2',
         passed: true,
         actual: 50,
-        required: 40,
-        operator: '>=',
+        required: '≥ 40',
       },
     ],
   };
 
   const failedEvaluation: SignalEvaluationResult = {
     signal: 'MOMENTUM',
+    category: 'action',
     passed: false,
     conditions: [
       {
         name: 'Condition 1',
         passed: true,
         actual: 80,
-        required: 70,
-        operator: '>=',
+        required: '≥ 70',
       },
       {
         name: 'Condition 2',
         passed: false,
         actual: 30,
-        required: 50,
-        operator: '>=',
+        required: '≥ 50',
       },
     ],
   };

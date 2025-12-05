@@ -30,7 +30,10 @@ describe('StockCard', () => {
     const { container } = render(
       <StockCard ticker="AAPL" name="Apple" currency="USD" onClick={onClick} />
     );
-    container.querySelector('.stock-card')?.click();
+    const card = container.querySelector('.stock-card');
+    if (card) {
+      (card as HTMLElement).click();
+    }
     expect(onClick).toHaveBeenCalled();
   });
 });

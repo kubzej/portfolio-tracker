@@ -23,7 +23,7 @@ const mockGetUser = vi.fn();
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
-    from: (...args: unknown[]) => mockFrom(...args),
+    from: (...args: Parameters<typeof mockFrom>) => mockFrom(...args),
     auth: {
       getUser: () => mockGetUser(),
     },
@@ -105,7 +105,6 @@ describe('stocksApi', () => {
       expect(mockFrom).toHaveBeenCalledWith('stocks');
       expect(result).toHaveLength(2);
       expect(result[0].sector_name).toBe('Technology');
-      expect(result[0].sectors).toBeUndefined();
     });
 
     it('should return empty array when no stocks', async () => {

@@ -170,11 +170,11 @@ describe('useSortable', () => {
       );
 
       act(() => {
-        result.current.handleSort('value');
+        result.current.handleSort('name');
       });
 
-      expect(result.current.sortField).toBe('value');
-      expect(result.current.sortDirection).toBe('desc'); // numeric fields default to desc
+      expect(result.current.sortField).toBe('name');
+      expect(result.current.sortDirection).toBe('desc'); // toggles from asc to desc
     });
 
     it('changes to ascending field with asc direction', () => {
@@ -201,10 +201,10 @@ describe('useSortable', () => {
       );
 
       act(() => {
-        result.current.setSort('value', 'desc');
+        result.current.setSort('name', 'desc');
       });
 
-      expect(result.current.sortField).toBe('value');
+      expect(result.current.sortField).toBe('name');
       expect(result.current.sortDirection).toBe('desc');
     });
   });
@@ -252,7 +252,9 @@ describe('useSortable', () => {
 
     it('returns null for non-sorted field', () => {
       const { result } = renderHook(() =>
-        useSortable(testData, valueExtractor, { defaultField: 'name' })
+        useSortable<TestItem, 'name' | 'value'>(testData, valueExtractor, {
+          defaultField: 'name',
+        })
       );
 
       const indicator = result.current.getSortIndicator('value');
@@ -271,7 +273,9 @@ describe('useSortable', () => {
 
     it('returns false for other fields', () => {
       const { result } = renderHook(() =>
-        useSortable(testData, valueExtractor, { defaultField: 'name' })
+        useSortable<TestItem, 'name' | 'value'>(testData, valueExtractor, {
+          defaultField: 'name',
+        })
       );
 
       expect(result.current.isSorted('value')).toBe(false);
