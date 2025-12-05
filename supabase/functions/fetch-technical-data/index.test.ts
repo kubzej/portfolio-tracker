@@ -138,7 +138,7 @@ Deno.test('calculateBollingerBands middle equals SMA', () => {
 Deno.test('calculateBollingerBands upper > middle > lower', () => {
   const prices = Array(25)
     .fill(0)
-    .map((_, i) => 100 + Math.random() * 10);
+    .map(() => 100 + Math.random() * 10);
   const result = calculateBollingerBands(prices, 20, 2);
 
   for (let i = 0; i < result.middle.length; i++) {
