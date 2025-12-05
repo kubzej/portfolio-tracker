@@ -130,6 +130,7 @@ export function TransactionModal({
       setError(null);
       setAvailableLots([]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, transaction, portfolioId, preselectedStockId]);
 
   // Load available lots when switching to SELL mode or changing stock/portfolio
@@ -141,6 +142,7 @@ export function TransactionModal({
     ) {
       loadAvailableLots();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.type, formData.stock_id, formData.portfolio_id]);
 
   const loadAvailableLots = async () => {

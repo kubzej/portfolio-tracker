@@ -18,6 +18,56 @@ interface StockQuote {
   currency: string;
 }
 
+// Exported helper: Parse Yahoo Finance chart response into StockQuote
+export function parseYahooWatchlistQuote(
+  data: {
+    chart?: {
+      result?: Array<{
+        meta?: {
+          symbol?: string;
+          regularMarketPrice?: number;
+          currency?: string;
+          previousClose?: number;
+          chartPreviousClose?: number;
+        };
+      }>;
+    };
+  } | null,
+  ticker: string
+): StockQuote | null {
+  const result = data?.chart?.result?.[0];
+  if (!result) return null;
+
+  const meta = result.meta;
+  if (!meta) return null;
+
+  const price = meta.regularMarketPrice;
+  const previousClose = meta.previousClose || meta.chartPreviousClose;
+
+  if (price === undefined || previousClose === undefined) return null;
+
+  return {
+    ticker: meta.symbol || ticker,
+    price: price,
+    change: price - previousClose,
+    changePercent: ((price - previousClose) / previousClose) * 100,
+    currency: meta.currency || 'USD',
+  };
+}
+
+// Exported helper: Build ticker to item IDs map
+export function buildTickerMap(
+  items: Array<{ id: string; ticker: string }>
+): Map<string, string[]> {
+  const tickerMap = new Map<string, string[]>();
+  for (const item of items) {
+    const ids = tickerMap.get(item.ticker) || [];
+    ids.push(item.id);
+    tickerMap.set(item.ticker, ids);
+  }
+  return tickerMap;
+}
+
 async function fetchYahooQuote(ticker: string): Promise<StockQuote | null> {
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
@@ -31,21 +81,7 @@ async function fetchYahooQuote(ticker: string): Promise<StockQuote | null> {
     }
 
     const data = await response.json();
-    const result = data?.chart?.result?.[0];
-
-    if (!result) return null;
-
-    const meta = result.meta;
-    const price = meta.regularMarketPrice;
-    const previousClose = meta.previousClose || meta.chartPreviousClose;
-
-    return {
-      ticker: meta.symbol,
-      price: price,
-      change: price - previousClose,
-      changePercent: ((price - previousClose) / previousClose) * 100,
-      currency: meta.currency || 'USD',
-    };
+    return parseYahooWatchlistQuote(data, ticker);
   } catch (error) {
     console.error(`Error fetching ${ticker}:`, error);
     return null;
@@ -92,13 +128,8 @@ serve(async (req) => {
       );
     }
 
-    // Get unique tickers to avoid duplicate API calls
-    const tickerMap = new Map<string, string[]>(); // ticker -> item ids
-    for (const item of items) {
-      const ids = tickerMap.get(item.ticker) || [];
-      ids.push(item.id);
-      tickerMap.set(item.ticker, ids);
-    }
+    // Get unique tickers to avoid duplicate API calls using exported helper
+    const tickerMap = buildTickerMap(items);
 
     const results = {
       updated: 0,
@@ -144,7 +175,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

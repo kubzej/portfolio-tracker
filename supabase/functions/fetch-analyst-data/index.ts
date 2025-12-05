@@ -656,19 +656,19 @@ async function fetchAnalystData(
 }
 
 // Helper functions for date formatting
-function getTodayDate(): string {
+export function getTodayDate(): string {
   const today = new Date();
   return today.toISOString().split('T')[0];
 }
 
-function getDateMonthsAgo(months: number): string {
+export function getDateMonthsAgo(months: number): string {
   const date = new Date();
   date.setMonth(date.getMonth() - months);
   return date.toISOString().split('T')[0];
 }
 
 // Check if ticker is non-US (has exchange suffix like .DE, .HK, .L)
-function isNonUsTicker(ticker: string): boolean {
+export function isNonUsTicker(ticker: string): boolean {
   return ticker.includes('.');
 }
 
@@ -801,7 +801,7 @@ async function yahooToFinnhubTicker(yahooTicker: string): Promise<string> {
 
 // Convert Yahoo Finance ticker to Alpha Vantage ticker
 // Alpha Vantage uses different exchange suffixes
-function yahooToAlphaVantageTicker(yahooTicker: string): string {
+export function yahooToAlphaVantageTicker(yahooTicker: string): string {
   // German stocks: ZAL.DE -> ZAL.FRK (Frankfurt)
   if (yahooTicker.endsWith('.DE')) {
     return yahooTicker.replace('.DE', '.FRK');
@@ -849,7 +849,7 @@ serve(async (req) => {
   }
 
   // Reset rate limit tracking for each request
-  rateLimitInfo = { finnhub: false, yahoo: false };
+  rateLimitInfo = { finnhub: false, yahoo: false, alpha: false };
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -969,7 +969,8 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

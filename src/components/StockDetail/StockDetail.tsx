@@ -1,29 +1,23 @@
 import { useState, useEffect } from 'react';
 import { stocksApi, transactionsApi } from '@/services/api';
-import type { StockWithSector, Transaction } from '@/types/database';
-import {
-  formatCurrency,
-  formatPrice,
-  formatShares,
-  formatDate,
-} from '@/utils/format';
+import type {
+  StockWithSector,
+  Transaction,
+  TransactionWithStock,
+} from '@/types/database';
+import { formatCurrency, formatPrice, formatShares } from '@/utils/format';
 import { Button } from '@/components/shared/Button';
 import {
   LoadingSpinner,
   ErrorState,
-  EmptyState,
-  EditIcon,
-  TrashIcon,
+  TransactionsList,
 } from '@/components/shared';
 import {
   Ticker,
   StockName,
   MetricLabel,
   MetricValue,
-  SectionTitle,
   Description,
-  Badge,
-  Text,
 } from '@/components/shared/Typography';
 import { StockModal, TransactionModal } from '../StocksList';
 import './StockDetail.css';
@@ -45,15 +39,17 @@ export function StockDetail({
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Modal states
   const [showEditStock, setShowEditStock] = useState(false);
   const [editingTransaction, setEditingTransaction] =
-    useState<Transaction | null>(null);
+    useState<TransactionWithStock | null>(null);
   const [showAddTransaction, setShowAddTransaction] = useState(false);
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stockId, portfolioId]);
 
   const loadData = async () => {
@@ -94,6 +90,7 @@ export function StockDetail({
     }
     try {
       await transactionsApi.delete(transactionId);
+      setRefreshTrigger((prev) => prev + 1);
       await loadData();
     } catch (err) {
       setError(
@@ -102,7 +99,7 @@ export function StockDetail({
     }
   };
 
-  const startEditTransaction = (tx: Transaction) => {
+  const handleEditTransaction = (tx: TransactionWithStock) => {
     setEditingTransaction(tx);
   };
 
@@ -111,6 +108,12 @@ export function StockDetail({
   };
 
   const handleEditModalSuccess = () => {
+    setRefreshTrigger((prev) => prev + 1);
+    loadData();
+  };
+
+  const handleAddTransactionSuccess = () => {
+    setRefreshTrigger((prev) => prev + 1);
     loadData();
   };
 
@@ -181,7 +184,7 @@ export function StockDetail({
     totalShares > 0
       ? sortedBuys.reduce((sum, buy) => {
           const soldFromThisLot = soldPerLot.get(buy.id) || 0;
-          let remaining = buy.quantity - soldFromThisLot;
+          const remaining = buy.quantity - soldFromThisLot;
           // Note: simplified, doesn't account for FIFO here but close enough for display
           return sum + remaining * buy.price_per_share;
         }, 0) / totalShares
@@ -266,143 +269,21 @@ export function StockDetail({
 
       {/* Transactions */}
       <div className="transactions-section">
-        <div className="section-header">
-          <SectionTitle>Transakce</SectionTitle>
-          <Button variant="primary" onClick={() => setShowAddTransaction(true)}>
-            + Přidat transakci
-          </Button>
-        </div>
-
-        {transactions.length === 0 ? (
-          <EmptyState title="Žádné transakce" />
-        ) : (
-          <>
-            {/* Mobile Cards View */}
-            <div className="transactions-cards">
-              {transactions.map((tx) => (
-                <div key={tx.id} className="transaction-card">
-                  <div className="transaction-card-header">
-                    <div className="transaction-card-info">
-                      <Badge variant={tx.type === 'BUY' ? 'buy' : 'sell'}>
-                        {tx.type}
-                      </Badge>
-                      <Text color="muted" size="sm">
-                        {formatDate(tx.date)}
-                      </Text>
-                    </div>
-                    <div className="transaction-card-actions">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        icon
-                        onClick={() => startEditTransaction(tx)}
-                      >
-                        <EditIcon size={14} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        icon
-                        className="danger"
-                        onClick={() => handleDeleteTransaction(tx.id)}
-                      >
-                        <TrashIcon size={14} />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="transaction-card-body">
-                    <div className="transaction-card-stat">
-                      <MetricLabel>Množství</MetricLabel>
-                      <MetricValue>{formatShares(tx.quantity)}</MetricValue>
-                    </div>
-                    <div className="transaction-card-stat">
-                      <MetricLabel>Cena</MetricLabel>
-                      <MetricValue>
-                        {formatPrice(tx.price_per_share, stock.currency)}
-                      </MetricValue>
-                    </div>
-                    <div className="transaction-card-stat">
-                      <MetricLabel>Celkem</MetricLabel>
-                      <MetricValue>
-                        {formatPrice(tx.total_amount, stock.currency)}
-                      </MetricValue>
-                    </div>
-                    <div className="transaction-card-stat">
-                      <MetricLabel>Celkem CZK</MetricLabel>
-                      <MetricValue>
-                        {formatCurrency(tx.total_amount_czk, 'CZK')}
-                      </MetricValue>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Desktop Table View */}
-            <div className="transactions-table-wrapper">
-              <table className="transactions-table">
-                <thead>
-                  <tr>
-                    <th>Datum</th>
-                    <th>Typ</th>
-                    <th className="right">Množství</th>
-                    <th className="right">Cena</th>
-                    <th className="right">Celkem</th>
-                    <th className="right">Poplatky</th>
-                    <th className="right">Celkem CZK</th>
-                    <th>Akce</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.map((tx) => (
-                    <tr key={tx.id}>
-                      <td>{formatDate(tx.date)}</td>
-                      <td>
-                        <Badge variant={tx.type === 'BUY' ? 'buy' : 'sell'}>
-                          {tx.type}
-                        </Badge>
-                      </td>
-                      <td className="right">{formatShares(tx.quantity)}</td>
-                      <td className="right">
-                        {formatPrice(tx.price_per_share, stock.currency)}
-                      </td>
-                      <td className="right">
-                        {formatPrice(tx.total_amount, stock.currency)}
-                      </td>
-                      <td className="right">
-                        {tx.fees ? formatPrice(tx.fees, stock.currency) : '—'}
-                      </td>
-                      <td className="right">
-                        {formatCurrency(tx.total_amount_czk, 'CZK')}
-                      </td>
-                      <td>
-                        <div className="row-actions">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            icon
-                            onClick={() => startEditTransaction(tx)}
-                          >
-                            <EditIcon size={14} />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            icon
-                            className="danger"
-                            onClick={() => handleDeleteTransaction(tx.id)}
-                          >
-                            <TrashIcon size={14} />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
+        <TransactionsList
+          portfolioId={portfolioId}
+          stockId={stockId}
+          stock={stock}
+          showStockColumn={false}
+          showFilters={false}
+          showHeader={true}
+          headerTitle="Transakce"
+          showAddButton={true}
+          onAddTransaction={() => setShowAddTransaction(true)}
+          onEditTransaction={handleEditTransaction}
+          onDeleteTransaction={handleDeleteTransaction}
+          editable={true}
+          refreshTrigger={refreshTrigger}
+        />
       </div>
 
       {/* Edit Stock Modal */}
@@ -425,7 +306,7 @@ export function StockDetail({
       <TransactionModal
         isOpen={showAddTransaction}
         onClose={() => setShowAddTransaction(false)}
-        onSuccess={loadData}
+        onSuccess={handleAddTransactionSuccess}
         portfolioId={portfolioId}
         preselectedStockId={stockId}
       />

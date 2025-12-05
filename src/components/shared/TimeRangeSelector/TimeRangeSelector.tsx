@@ -10,6 +10,7 @@ export interface TimeRangeOption {
 }
 
 // Standard ranges (for price charts, Bollinger - need longer history)
+// eslint-disable-next-line react-refresh/only-export-components
 export const TIME_RANGES_LONG: TimeRangeOption[] = [
   { value: '1M', label: '1M', days: 21 },
   { value: '3M', label: '3M', days: 63 },
@@ -18,6 +19,7 @@ export const TIME_RANGES_LONG: TimeRangeOption[] = [
 ];
 
 // Extended ranges with short intervals (for momentum indicators)
+// eslint-disable-next-line react-refresh/only-export-components
 export const TIME_RANGES_SHORT: TimeRangeOption[] = [
   { value: '1W', label: '1W', days: 5 },
   { value: '2W', label: '2W', days: 10 },
@@ -28,6 +30,7 @@ export const TIME_RANGES_SHORT: TimeRangeOption[] = [
 ];
 
 // Helper to get days from any range
+// eslint-disable-next-line react-refresh/only-export-components
 export const getDaysForRange = (range: TimeRange): number => {
   const found = TIME_RANGES_SHORT.find((r) => r.value === range);
   return found?.days || 21;

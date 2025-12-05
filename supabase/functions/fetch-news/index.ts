@@ -1,5 +1,5 @@
 // Supabase Edge Function for fetching news articles
-// Fetches news from Finnhub API
+// Fetches news from Finnhub API and Polygon.io
 // Deploy with: supabase functions deploy fetch-news
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
@@ -11,8 +11,9 @@ const corsHeaders = {
     'authorization, x-client-info, apikey, content-type',
 };
 
-// Finnhub API key from environment
+// API keys from environment
 const FINNHUB_API_KEY = Deno.env.get('FINNHUB_API_KEY') || '';
+const POLYGON_API_KEY = Deno.env.get('POLYGON_API_KEY') || '';
 
 // News article interface
 interface NewsArticle {
@@ -54,8 +55,37 @@ interface FinnhubArticle {
   category: string;
 }
 
+// Polygon article interface
+interface PolygonArticle {
+  id: string;
+  title: string;
+  author: string;
+  published_utc: string;
+  article_url: string;
+  tickers: string[];
+  image_url?: string;
+  description?: string;
+  keywords?: string[];
+  publisher: {
+    name: string;
+    homepage_url: string;
+    logo_url?: string;
+  };
+  insights?: Array<{
+    ticker: string;
+    sentiment: 'positive' | 'negative' | 'neutral';
+    sentiment_reasoning: string;
+  }>;
+}
+
+interface PolygonResponse {
+  results: PolygonArticle[];
+  status: string;
+  count?: number;
+}
+
 // Get date string in YYYY-MM-DD format
-function getDateString(daysAgo: number = 0): string {
+export function getDateString(daysAgo: number = 0): string {
   const date = new Date();
   date.setDate(date.getDate() - daysAgo);
   return date.toISOString().split('T')[0];
@@ -122,8 +152,88 @@ async function fetchTickerNews(
   }
 }
 
+// Fetch news from Polygon.io (has built-in sentiment)
+async function fetchPolygonNews(
+  ticker: string,
+  stockName: string,
+  finnhubTicker?: string
+): Promise<NewsArticle[]> {
+  if (!POLYGON_API_KEY) {
+    console.log('Polygon API key not configured, skipping');
+    return [];
+  }
+
+  try {
+    // Use finnhub_ticker if available (for US tickers)
+    const searchTicker = finnhubTicker || ticker;
+
+    // Skip non-US tickers (Polygon only supports US)
+    if (searchTicker.includes('.')) {
+      console.log(`Skipping Polygon for non-US ticker: ${searchTicker}`);
+      return [];
+    }
+
+    const url = `https://api.polygon.io/v2/reference/news?ticker=${encodeURIComponent(
+      searchTicker
+    )}&limit=10&apiKey=${POLYGON_API_KEY}`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      console.error(`Polygon API error: ${response.status}`);
+      return [];
+    }
+
+    const data: PolygonResponse = await response.json();
+
+    if (!data.results || data.results.length === 0) {
+      return [];
+    }
+
+    return data.results.map((item, index) => {
+      // Find sentiment for this specific ticker from insights
+      const tickerInsight = item.insights?.find(
+        (i) => i.ticker.toUpperCase() === searchTicker.toUpperCase()
+      );
+
+      // Convert Polygon sentiment to our format
+      let sentimentScore: number | null = null;
+      let sentimentLabel: 'positive' | 'negative' | 'neutral' | null = null;
+
+      if (tickerInsight) {
+        sentimentLabel = tickerInsight.sentiment;
+        sentimentScore =
+          tickerInsight.sentiment === 'positive'
+            ? 0.6
+            : tickerInsight.sentiment === 'negative'
+            ? -0.6
+            : 0;
+      }
+
+      return {
+        id: `polygon-${ticker}-${item.id || index}-${Date.now()}`,
+        title: item.title || 'No title',
+        summary: item.description || '',
+        source: `${item.publisher.name} (via Polygon)`,
+        url: item.article_url || '',
+        publishedAt: item.published_utc || new Date().toISOString(),
+        relatedTickers: item.tickers || [ticker],
+        thumbnail: item.image_url || null,
+        sentiment: {
+          score: sentimentScore,
+          label: sentimentLabel,
+          keywords: item.keywords || [],
+        },
+      };
+    });
+  } catch (error) {
+    console.error(`Error fetching Polygon news for ${ticker}:`, error);
+    return [];
+  }
+}
+
 // Enhanced keyword-based sentiment with weighted scoring
-function analyzeBasicSentiment(
+export function analyzeBasicSentiment(
   title: string,
   summary: string
 ): {
@@ -331,7 +441,7 @@ async function fetchMarketNews(): Promise<NewsArticle[]> {
 }
 
 // Detect topics from article content
-function detectTopics(
+export function detectTopics(
   headline: string,
   summary: string,
   category: string,
@@ -562,13 +672,36 @@ serve(async (req) => {
     if (singleTicker) {
       const result = await fetchTickerNews(singleTicker, singleTicker);
 
-      // Apply basic sentiment if requested
+      // Also fetch from Polygon (for US tickers)
+      const polygonArticles = await fetchPolygonNews(
+        singleTicker,
+        singleTicker
+      );
+
+      // Merge articles, avoiding duplicates by title
+      const existingTitles = new Set(
+        result.articles.map((a) => a.title.toLowerCase())
+      );
+      const newPolygonArticles = polygonArticles.filter(
+        (a) => !existingTitles.has(a.title.toLowerCase())
+      );
+      result.articles = [...result.articles, ...newPolygonArticles];
+
+      // Apply basic sentiment if requested (only for articles without Polygon sentiment)
       if (includeBasicSentiment) {
         result.articles = result.articles.map((article) => ({
           ...article,
-          sentiment: analyzeBasicSentiment(article.title, article.summary),
+          sentiment: article.sentiment?.label
+            ? article.sentiment // Keep Polygon sentiment if available
+            : analyzeBasicSentiment(article.title, article.summary),
         }));
       }
+
+      // Sort by date (newest first)
+      result.articles.sort(
+        (a, b) =>
+          new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+      );
 
       return new Response(JSON.stringify({ data: [result], errors: [] }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -600,14 +733,24 @@ serve(async (req) => {
     // Deduplicate by ticker and extract finnhub_ticker
     const uniqueHoldings = [
       ...new Map(
-        holdings.map((h: any) => [
-          h.ticker,
-          {
-            ticker: h.ticker,
-            stock_name: h.stock_name,
-            finnhub_ticker: h.stocks?.finnhub_ticker || null,
-          },
-        ])
+        holdings.map(
+          (h: {
+            ticker: string;
+            stock_name: string;
+            stocks?:
+              | { finnhub_ticker?: string }[]
+              | { finnhub_ticker?: string };
+          }) => [
+            h.ticker,
+            {
+              ticker: h.ticker,
+              stock_name: h.stock_name,
+              finnhub_ticker: Array.isArray(h.stocks)
+                ? h.stocks[0]?.finnhub_ticker || null
+                : h.stocks?.finnhub_ticker || null,
+            },
+          ]
+        )
       ).values(),
     ] as {
       ticker: string;
@@ -623,22 +766,47 @@ serve(async (req) => {
     const batchSize = 5;
     for (let i = 0; i < uniqueHoldings.length; i += batchSize) {
       const batch = uniqueHoldings.slice(i, i + batchSize);
+
+      // Fetch from both Finnhub and Polygon in parallel
       const batchResults = await Promise.all(
-        batch.map((holding) =>
-          fetchTickerNews(
+        batch.map(async (holding) => {
+          const finnhubResult = await fetchTickerNews(
             holding.ticker,
             holding.stock_name,
             holding.finnhub_ticker || undefined
-          )
-        )
+          );
+
+          // Also fetch from Polygon (for US tickers)
+          const polygonArticles = await fetchPolygonNews(
+            holding.ticker,
+            holding.stock_name,
+            holding.finnhub_ticker || undefined
+          );
+
+          // Merge articles, avoiding duplicates by title
+          const existingTitles = new Set(
+            finnhubResult.articles.map((a) => a.title.toLowerCase())
+          );
+          const newPolygonArticles = polygonArticles.filter(
+            (a) => !existingTitles.has(a.title.toLowerCase())
+          );
+          finnhubResult.articles = [
+            ...finnhubResult.articles,
+            ...newPolygonArticles,
+          ];
+
+          return finnhubResult;
+        })
       );
 
       for (const result of batchResults) {
-        // Apply basic sentiment if requested
+        // Apply basic sentiment if requested (only for articles without Polygon sentiment)
         if (includeBasicSentiment) {
           result.articles = result.articles.map((article) => ({
             ...article,
-            sentiment: analyzeBasicSentiment(article.title, article.summary),
+            sentiment: article.sentiment?.label
+              ? article.sentiment // Keep Polygon sentiment if available
+              : analyzeBasicSentiment(article.title, article.summary),
           }));
         }
 

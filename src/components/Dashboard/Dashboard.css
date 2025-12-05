@@ -364,3 +364,19 @@
     font-size: 0.75rem;
   }
 }
+
+/* Transactions History Section */
+.transactions-history-section {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-top: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+}
+
+@media (min-width: 768px) {
+  .transactions-history-section {
+    padding: 1.5rem;
+  }
+}

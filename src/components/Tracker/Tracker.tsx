@@ -239,6 +239,7 @@ export function Tracker({ onOpenResearch }: TrackerProps) {
   // Load data based on active tab
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     activeTab,
     timeRange,

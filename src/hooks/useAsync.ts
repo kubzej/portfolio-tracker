@@ -117,9 +117,9 @@ export function useAsyncData<T>(
 
   // Auto-execute when dependencies change
   // Note: This is intentionally using the deps array from the parameter
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   React.useEffect(() => {
     execute();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   return {
