@@ -270,6 +270,7 @@ export const watchlistItemsApi = {
       target_buy_price: original.target_buy_price ?? undefined,
       target_sell_price: original.target_sell_price ?? undefined,
       notes: original.notes ?? undefined,
+      sector: original.sector ?? undefined,
     });
   },
 
