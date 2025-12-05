@@ -141,6 +141,8 @@ serve(async (req) => {
             price: quote.price,
             currency: quote.currency,
             exchange_rate_to_czk: exchangeRate,
+            price_change: quote.change,
+            price_change_percent: quote.changePercent,
             updated_at: new Date().toISOString(),
           },
           {

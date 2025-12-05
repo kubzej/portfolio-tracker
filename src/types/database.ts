@@ -133,6 +133,8 @@ export interface PortfolioSummary {
   purchase_count: number;
   current_price: number | null;
   current_exchange_rate: number | null;
+  price_change: number | null;
+  price_change_percent: number | null;
   current_value: number | null;
   current_value_czk: number | null;
   unrealized_gain: number | null;

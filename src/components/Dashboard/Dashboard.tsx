@@ -33,6 +33,7 @@ type SortKey =
   | 'shares'
   | 'avgPrice'
   | 'currentPrice'
+  | 'dailyChange'
   | 'invested'
   | 'current'
   | 'plCzk'
@@ -44,6 +45,7 @@ type SortKey =
 
 const SORT_FIELDS: SortField[] = [
   { value: 'ticker', label: 'Ticker', defaultDirection: 'asc' },
+  { value: 'dailyChange', label: 'Denní %', defaultDirection: 'desc' },
   { value: 'plPercent', label: 'P&L %', defaultDirection: 'desc' },
   { value: 'plCzk', label: 'P&L CZK', defaultDirection: 'desc' },
   { value: 'current', label: 'Hodnota', defaultDirection: 'desc' },
@@ -82,6 +84,8 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
           return item.avg_buy_price;
         case 'currentPrice':
           return item.current_price ?? -Infinity;
+        case 'dailyChange':
+          return item.price_change_percent ?? -Infinity;
         case 'invested':
           return item.total_invested_czk;
         case 'current':
@@ -326,6 +330,26 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                         </MetricValue>
                       </div>
                       <div className="holding-card-stat">
+                        <MetricLabel>Denní změna</MetricLabel>
+                        <MetricValue
+                          sentiment={
+                            holding.price_change_percent !== null
+                              ? holding.price_change_percent >= 0
+                                ? 'positive'
+                                : 'negative'
+                              : undefined
+                          }
+                        >
+                          {holding.price_change_percent !== null
+                            ? formatPercent(
+                                holding.price_change_percent,
+                                2,
+                                true
+                              )
+                            : '—'}
+                        </MetricValue>
+                      </div>
+                      <div className="holding-card-stat">
                         <MetricLabel>Investováno</MetricLabel>
                         <MetricValue>
                           {formatCurrency(holding.total_invested_czk)}
@@ -412,6 +436,11 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                       className="right"
                     />
                     <SortHeader
+                      label="Denní"
+                      sortKeyName="dailyChange"
+                      className="right"
+                    />
+                    <SortHeader
                       label="Investováno"
                       sortKeyName="invested"
                       className="right"
@@ -488,6 +517,25 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
                         <td className="right">
                           <MetricValue>
                             {formatPrice(holding.current_price)}
+                          </MetricValue>
+                        </td>
+                        <td className="right">
+                          <MetricValue
+                            sentiment={
+                              holding.price_change_percent !== null
+                                ? holding.price_change_percent >= 0
+                                  ? 'positive'
+                                  : 'negative'
+                                : undefined
+                            }
+                          >
+                            {holding.price_change_percent !== null
+                              ? formatPercent(
+                                  holding.price_change_percent,
+                                  2,
+                                  true
+                                )
+                              : '—'}
                           </MetricValue>
                         </td>
                         <td className="right">
