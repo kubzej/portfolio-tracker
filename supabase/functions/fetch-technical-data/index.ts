@@ -137,7 +137,7 @@ interface TechnicalData {
 }
 
 // Calculate Simple Moving Average
-function calculateSMA(prices: number[], period: number): number | null {
+export function calculateSMA(prices: number[], period: number): number | null {
   if (prices.length < period) return null;
   const slice = prices.slice(0, period);
   const sum = slice.reduce((acc, val) => acc + val, 0);
@@ -146,7 +146,7 @@ function calculateSMA(prices: number[], period: number): number | null {
 
 // Calculate Exponential Moving Average
 // prices should be in chronological order (oldest first)
-function calculateEMA(prices: number[], period: number): number[] {
+export function calculateEMA(prices: number[], period: number): number[] {
   if (prices.length < period) return [];
 
   const emaValues: number[] = [];
@@ -171,7 +171,7 @@ function calculateEMA(prices: number[], period: number): number[] {
 
 // Calculate MACD (12, 26, 9)
 // Returns arrays aligned so all three arrays have the same length and correspond to the same dates
-function calculateMACD(prices: number[]): {
+export function calculateMACD(prices: number[]): {
   macd: number[];
   signal: number[];
   histogram: number[];
@@ -351,7 +351,7 @@ function detectMACDDivergence(
 // Calculate Stochastic Oscillator (14, 3, 3)
 // Returns %K and %D values
 // prices should be in chronological order (oldest first)
-function calculateStochastic(
+export function calculateStochastic(
   closes: number[],
   highs: number[],
   lows: number[],
@@ -401,7 +401,7 @@ function calculateStochastic(
 }
 
 // Calculate Bollinger Bands (20, 2)
-function calculateBollingerBands(
+export function calculateBollingerBands(
   prices: number[],
   period: number = 20,
   stdDev: number = 2
@@ -442,7 +442,7 @@ function calculateBollingerBands(
 // Calculate ATR (Average True Range)
 // Measures volatility - higher ATR = more volatile
 // prices should be in chronological order (oldest first)
-function calculateATR(
+export function calculateATR(
   closes: number[],
   highs: number[],
   lows: number[],
@@ -494,7 +494,10 @@ function calculateATR(
 }
 
 // Calculate RSI (Relative Strength Index)
-function calculateRSI(prices: number[], period: number = 14): number | null {
+export function calculateRSI(
+  prices: number[],
+  period: number = 14
+): number | null {
   if (prices.length < period + 1) return null;
 
   // Calculate price changes (most recent first, so we need to reverse logic)
@@ -547,6 +550,7 @@ async function fetchTechnicalData(
     macdSignal: null,
     macdHistogram: null,
     macdTrend: null,
+    macdDivergence: null,
     bollingerUpper: null,
     bollingerMiddle: null,
     bollingerLower: null,
@@ -1452,7 +1456,8 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

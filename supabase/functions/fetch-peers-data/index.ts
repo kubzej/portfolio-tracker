@@ -58,6 +58,59 @@ interface PeersResult {
 // Rate limit tracking
 let rateLimitInfo = { finnhub: false, yahoo: false };
 
+// Exported helper: Calculate consensus score from recommendation data
+export function calculateConsensusScore(
+  latestRec: {
+    strongBuy?: number;
+    buy?: number;
+    hold?: number;
+    sell?: number;
+    strongSell?: number;
+  } | null
+): { recommendationKey: string | null; consensusScore: number | null } {
+  if (!latestRec) {
+    return { recommendationKey: null, consensusScore: null };
+  }
+
+  const strongBuy = latestRec.strongBuy ?? 0;
+  const buy = latestRec.buy ?? 0;
+  const hold = latestRec.hold ?? 0;
+  const sell = latestRec.sell ?? 0;
+  const strongSell = latestRec.strongSell ?? 0;
+  const total = strongBuy + buy + hold + sell + strongSell;
+
+  if (total === 0) {
+    return { recommendationKey: null, consensusScore: null };
+  }
+
+  let consensusScore =
+    (strongBuy * 2 + buy * 1 + hold * 0 + sell * -1 + strongSell * -2) / total;
+  consensusScore = Math.round(consensusScore * 100) / 100;
+
+  let recommendationKey: string;
+  const buyTotal = strongBuy + buy;
+  const sellTotal = sell + strongSell;
+  if (buyTotal > sellTotal && buyTotal > hold) {
+    recommendationKey = strongBuy > buy ? 'strong_buy' : 'buy';
+  } else if (sellTotal > buyTotal && sellTotal > hold) {
+    recommendationKey = strongSell > sell ? 'strong_sell' : 'sell';
+  } else {
+    recommendationKey = 'hold';
+  }
+
+  return { recommendationKey, consensusScore };
+}
+
+// Exported helper: Calculate target upside percentage
+export function calculateTargetUpside(
+  currentPrice: number | null,
+  analystTargetPrice: number | null
+): number | null {
+  if (!currentPrice || !analystTargetPrice) return null;
+  const upside = ((analystTargetPrice - currentPrice) / currentPrice) * 100;
+  return Math.round(upside * 10) / 10;
+}
+
 async function safeFetch(
   url: string,
   source: 'finnhub' | 'yahoo'
@@ -153,40 +206,13 @@ async function fetchPeerData(ticker: string): Promise<PeerData> {
     const epsGrowth = metrics.epsGrowthQuarterlyYoy ?? null;
     const marketCap = metrics.marketCapitalization ?? null;
 
-    // Parse recommendations
-    let recommendationKey = null;
-    let consensusScore: number | null = null;
-
+    // Parse recommendations using exported helper
     const latestRec =
       Array.isArray(recommendations) && recommendations.length > 0
         ? recommendations[0]
         : null;
-
-    if (latestRec) {
-      const strongBuy = latestRec.strongBuy ?? 0;
-      const buy = latestRec.buy ?? 0;
-      const hold = latestRec.hold ?? 0;
-      const sell = latestRec.sell ?? 0;
-      const strongSell = latestRec.strongSell ?? 0;
-      const total = strongBuy + buy + hold + sell + strongSell;
-
-      if (total > 0) {
-        consensusScore =
-          (strongBuy * 2 + buy * 1 + hold * 0 + sell * -1 + strongSell * -2) /
-          total;
-        consensusScore = Math.round(consensusScore * 100) / 100;
-
-        const buyTotal = strongBuy + buy;
-        const sellTotal = sell + strongSell;
-        if (buyTotal > sellTotal && buyTotal > hold) {
-          recommendationKey = strongBuy > buy ? 'strong_buy' : 'buy';
-        } else if (sellTotal > buyTotal && sellTotal > hold) {
-          recommendationKey = strongSell > sell ? 'strong_sell' : 'sell';
-        } else {
-          recommendationKey = 'hold';
-        }
-      }
-    }
+    const { recommendationKey, consensusScore } =
+      calculateConsensusScore(latestRec);
 
     // Fetch analyst target from Yahoo
     let analystTargetPrice: number | null = null;
@@ -210,12 +236,11 @@ async function fetchPeerData(ticker: string): Promise<PeerData> {
       // Ignore Yahoo errors
     }
 
-    // Calculate target upside
-    let targetUpside: number | null = null;
-    if (currentPrice && analystTargetPrice) {
-      targetUpside = ((analystTargetPrice - currentPrice) / currentPrice) * 100;
-      targetUpside = Math.round(targetUpside * 10) / 10;
-    }
+    // Calculate target upside using exported helper
+    const targetUpside = calculateTargetUpside(
+      currentPrice,
+      analystTargetPrice
+    );
 
     // Fetch historical returns from Finnhub metrics
     const return1M = metrics['1MonthPriceReturnDaily'] ?? null;

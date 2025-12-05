@@ -66,3 +66,19 @@ jobs:
 
       - name: Run tests
         run: npm run test:ci
+
+  deno-test:
+    name: Edge Functions Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: Run Deno tests
+        run: deno test --allow-env --allow-net supabase/functions/

@@ -18,6 +18,51 @@ interface StockQuote {
   changePercent: number;
 }
 
+// Exported helper: Parse Yahoo Finance chart response into StockQuote
+export function parseYahooChartResponse(
+  data: {
+    chart?: {
+      result?: Array<{
+        meta?: {
+          symbol?: string;
+          regularMarketPrice?: number;
+          currency?: string;
+          previousClose?: number;
+          chartPreviousClose?: number;
+        };
+      }>;
+    };
+  } | null,
+  ticker: string
+): StockQuote | null {
+  const result = data?.chart?.result?.[0];
+  if (!result) return null;
+
+  const meta = result.meta;
+  if (!meta) return null;
+
+  const price = meta.regularMarketPrice;
+  const previousClose = meta.previousClose || meta.chartPreviousClose;
+
+  if (price === undefined || previousClose === undefined) return null;
+
+  return {
+    ticker: meta.symbol || ticker,
+    price: price,
+    currency: meta.currency || 'USD',
+    change: price - previousClose,
+    changePercent: ((price - previousClose) / previousClose) * 100,
+  };
+}
+
+// Exported helper: Calculate exchange rate result
+export function calculatePriceInCzk(
+  price: number,
+  exchangeRate: number
+): number {
+  return price * exchangeRate;
+}
+
 async function fetchYahooQuote(ticker: string): Promise<StockQuote | null> {
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
@@ -31,21 +76,7 @@ async function fetchYahooQuote(ticker: string): Promise<StockQuote | null> {
     }
 
     const data = await response.json();
-    const result = data?.chart?.result?.[0];
-
-    if (!result) return null;
-
-    const meta = result.meta;
-    const price = meta.regularMarketPrice;
-    const previousClose = meta.previousClose || meta.chartPreviousClose;
-
-    return {
-      ticker: meta.symbol,
-      price: price,
-      currency: meta.currency || 'USD',
-      change: price - previousClose,
-      changePercent: ((price - previousClose) / previousClose) * 100,
-    };
+    return parseYahooChartResponse(data, ticker);
   } catch (error) {
     console.error(`Error fetching ${ticker}:`, error);
     return null;
@@ -164,7 +195,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

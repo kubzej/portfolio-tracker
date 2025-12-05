@@ -85,7 +85,7 @@ interface PolygonResponse {
 }
 
 // Get date string in YYYY-MM-DD format
-function getDateString(daysAgo: number = 0): string {
+export function getDateString(daysAgo: number = 0): string {
   const date = new Date();
   date.setDate(date.getDate() - daysAgo);
   return date.toISOString().split('T')[0];
@@ -233,7 +233,7 @@ async function fetchPolygonNews(
 }
 
 // Enhanced keyword-based sentiment with weighted scoring
-function analyzeBasicSentiment(
+export function analyzeBasicSentiment(
   title: string,
   summary: string
 ): {
@@ -441,7 +441,7 @@ async function fetchMarketNews(): Promise<NewsArticle[]> {
 }
 
 // Detect topics from article content
-function detectTopics(
+export function detectTopics(
   headline: string,
   summary: string,
   category: string,
@@ -737,13 +737,17 @@ serve(async (req) => {
           (h: {
             ticker: string;
             stock_name: string;
-            stocks?: { finnhub_ticker?: string };
+            stocks?:
+              | { finnhub_ticker?: string }[]
+              | { finnhub_ticker?: string };
           }) => [
             h.ticker,
             {
               ticker: h.ticker,
               stock_name: h.stock_name,
-              finnhub_ticker: h.stocks?.finnhub_ticker || null,
+              finnhub_ticker: Array.isArray(h.stocks)
+                ? h.stocks[0]?.finnhub_ticker || null
+                : h.stocks?.finnhub_ticker || null,
             },
           ]
         )

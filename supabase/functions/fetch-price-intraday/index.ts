@@ -30,26 +30,74 @@ interface IntradayResponse {
   error?: string;
 }
 
+// Exported helper: Format timestamp to "YYYY-MM-DD HH:MM" format
+export function formatIntradayDate(timestamp: number): string {
+  const dateObj = new Date(timestamp * 1000);
+  return dateObj.toISOString().slice(0, 16).replace('T', ' ');
+}
+
+// Exported helper: Round price to 2 decimal places
+export function roundPrice(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+// Exported helper: Parse a single price point from Yahoo data
+export function parsePricePoint(
+  timestamp: number,
+  open: number | null,
+  close: number | null,
+  high: number | null,
+  low: number | null,
+  volume: number | null
+): PricePoint | null {
+  if (
+    close === null ||
+    close === undefined ||
+    open === null ||
+    high === null ||
+    low === null
+  ) {
+    return null;
+  }
+
+  return {
+    date: formatIntradayDate(timestamp),
+    timestamp,
+    open: roundPrice(open),
+    close: roundPrice(close),
+    high: roundPrice(high),
+    low: roundPrice(low),
+    volume: volume || 0,
+  };
+}
+
+// Exported helper: Get Yahoo Finance interval and range params
+export function getYahooParams(range: '1d' | '1w'): {
+  yahooRange: string;
+  yahooInterval: string;
+} {
+  return {
+    yahooRange: range === '1d' ? '1d' : '5d',
+    yahooInterval: range === '1d' ? '5m' : '15m',
+  };
+}
+
 async function fetchIntradayData(
   ticker: string,
   range: '1d' | '1w'
 ): Promise<IntradayResponse> {
+  const { yahooRange, yahooInterval } = getYahooParams(range);
+
   const baseResponse: IntradayResponse = {
     ticker,
     range,
-    interval: range === '1d' ? '5m' : '15m',
+    interval: yahooInterval,
     currency: 'USD',
     previousClose: null,
     data: [],
   };
 
   try {
-    // Yahoo Finance params for intraday
-    // 1D: 5-minute intervals for current trading day
-    // 1W: 15-minute intervals for last 5 trading days
-    const yahooRange = range === '1d' ? '1d' : '5d';
-    const yahooInterval = range === '1d' ? '5m' : '15m';
-
     const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
       ticker
     )}?interval=${yahooInterval}&range=${yahooRange}&includePrePost=false`;
@@ -77,38 +125,20 @@ async function fetchIntradayData(
       throw new Error('Invalid data structure from Yahoo Finance');
     }
 
-    // Build price array (chronological order - oldest first)
+    // Build price array using exported helper
     const priceData: PricePoint[] = [];
 
     for (let i = 0; i < timestamps.length; i++) {
-      const open = quotes.open[i];
-      const close = quotes.close[i];
-      const high = quotes.high[i];
-      const low = quotes.low[i];
-      const volume = quotes.volume[i];
-
-      if (
-        close !== null &&
-        close !== undefined &&
-        open !== null &&
-        high !== null &&
-        low !== null
-      ) {
-        const timestamp = timestamps[i];
-        const dateObj = new Date(timestamp * 1000);
-
-        // Format: "2024-12-01 09:30" for intraday
-        const date = dateObj.toISOString().slice(0, 16).replace('T', ' ');
-
-        priceData.push({
-          date,
-          timestamp,
-          open: Math.round(open * 100) / 100,
-          close: Math.round(close * 100) / 100,
-          high: Math.round(high * 100) / 100,
-          low: Math.round(low * 100) / 100,
-          volume: volume || 0,
-        });
+      const point = parsePricePoint(
+        timestamps[i],
+        quotes.open[i],
+        quotes.close[i],
+        quotes.high[i],
+        quotes.low[i],
+        quotes.volume[i]
+      );
+      if (point) {
+        priceData.push(point);
       }
     }
 
@@ -161,7 +191,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
