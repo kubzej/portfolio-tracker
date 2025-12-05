@@ -15,16 +15,6 @@ const corsHeaders = {
 // TYPES
 // ============================================================================
 
-interface SignalToUpdate {
-  id: string;
-  ticker: string;
-  created_at: string;
-  price_1d: number | null;
-  price_1w: number | null;
-  price_1m: number | null;
-  price_3m: number | null;
-}
-
 interface UpdateResult {
   signalId: string;
   ticker: string;

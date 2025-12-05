@@ -1203,7 +1203,7 @@ async function fetchTechnicalData(
     // Use last 50 trading days to find swing high/low
     const lookbackDays = Math.min(50, chronologicalCloses.length);
     if (lookbackDays >= 20) {
-      const recentCloses = chronologicalCloses.slice(-lookbackDays);
+      // Note: recentCloses could be used for additional analysis
       const recentHighs = chronologicalHighs.slice(-lookbackDays);
       const recentLows = chronologicalLows.slice(-lookbackDays);
 
@@ -1263,7 +1263,7 @@ async function fetchTechnicalData(
     }
 
     // ============ Fetch 5Y Weekly Data for Long-term Chart ============
-    let historicalPricesWeekly: {
+    const historicalPricesWeekly: {
       date: string;
       open: number;
       close: number;

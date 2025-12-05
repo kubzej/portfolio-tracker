@@ -175,6 +175,7 @@ export function TransactionsList({
   // Load data
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [portfolioId, stockId, refreshTrigger]);
 
   const loadData = async () => {

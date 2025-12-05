@@ -98,7 +98,6 @@ function App() {
       // No user - no need to check portfolios
       setCheckingPortfolios(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const checkPortfolios = async () => {

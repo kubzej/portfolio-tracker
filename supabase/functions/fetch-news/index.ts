@@ -733,14 +733,20 @@ serve(async (req) => {
     // Deduplicate by ticker and extract finnhub_ticker
     const uniqueHoldings = [
       ...new Map(
-        holdings.map((h: any) => [
-          h.ticker,
-          {
-            ticker: h.ticker,
-            stock_name: h.stock_name,
-            finnhub_ticker: h.stocks?.finnhub_ticker || null,
-          },
-        ])
+        holdings.map(
+          (h: {
+            ticker: string;
+            stock_name: string;
+            stocks?: { finnhub_ticker?: string };
+          }) => [
+            h.ticker,
+            {
+              ticker: h.ticker,
+              stock_name: h.stock_name,
+              finnhub_ticker: h.stocks?.finnhub_ticker || null,
+            },
+          ]
+        )
       ).values(),
     ] as {
       ticker: string;

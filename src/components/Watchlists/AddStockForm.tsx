@@ -89,6 +89,7 @@ export function AddStockForm({
     if (showWatchlistSelector && user) {
       loadWatchlists();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showWatchlistSelector, user]);
 
   // Load available sectors from DB

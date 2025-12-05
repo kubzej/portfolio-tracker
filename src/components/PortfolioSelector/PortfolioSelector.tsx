@@ -32,6 +32,7 @@ export function PortfolioSelector({
 
   useEffect(() => {
     loadPortfolios();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadPortfolios = async () => {

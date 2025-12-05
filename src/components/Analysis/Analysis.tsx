@@ -173,6 +173,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
       })
       .filter((opt): opt is SelectOption => opt !== null);
     return [...baseOptions, ...indicatorOptions];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedColumns, indicators]);
 
   // Sort fields for MobileSortControl
@@ -187,6 +188,7 @@ export function Analysis({ portfolioId }: AnalysisProps) {
   useEffect(() => {
     loadData();
     loadIndicators();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [portfolioId]);
 
   // Regenerate recommendations when insider time range changes

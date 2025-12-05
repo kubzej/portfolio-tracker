@@ -49,6 +49,7 @@ export function StockDetail({
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stockId, portfolioId]);
 
   const loadData = async () => {
@@ -183,7 +184,7 @@ export function StockDetail({
     totalShares > 0
       ? sortedBuys.reduce((sum, buy) => {
           const soldFromThisLot = soldPerLot.get(buy.id) || 0;
-          let remaining = buy.quantity - soldFromThisLot;
+          const remaining = buy.quantity - soldFromThisLot;
           // Note: simplified, doesn't account for FIFO here but close enough for display
           return sum + remaining * buy.price_per_share;
         }, 0) / totalShares

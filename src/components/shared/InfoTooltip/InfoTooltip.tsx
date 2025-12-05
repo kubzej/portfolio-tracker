@@ -17,6 +17,7 @@ interface InfoTooltipProps {
  * - Converts | and \n to spaces
  * - Removes bullet points (•)
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function stripTooltipMarkdown(text: string): string {
   return text
     .replace(/\*\*([^*]+)\*\*/g, '$1') // Remove **bold** markers, keep text
