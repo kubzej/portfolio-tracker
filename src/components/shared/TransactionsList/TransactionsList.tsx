@@ -115,7 +115,10 @@ export function TransactionsList({
   // Helper to get first day of current month in YYYY-MM-DD format
   const getFirstDayOfMonth = () => {
     const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+      2,
+      '0'
+    )}-01`;
   };
 
   // Filter states
