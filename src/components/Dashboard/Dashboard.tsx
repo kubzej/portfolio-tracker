@@ -14,6 +14,7 @@ import {
   ErrorState,
   EmptyState,
   MobileSortControl,
+  TransactionsList,
   type SortField,
 } from '@/components/shared';
 import {
@@ -588,6 +589,21 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
           </div>
         </div>
       )}
+
+      {/* Transactions History */}
+      <div className="transactions-history-section">
+        <TransactionsList
+          portfolioId={portfolioId}
+          showStockColumn={true}
+          showFilters={true}
+          showHeader={true}
+          headerTitle="Historie transakcí"
+          showAddButton={false}
+          editable={false}
+          onStockClick={onStockClick}
+          defaultToCurrentMonth={true}
+        />
+      </div>
     </div>
   );
 }

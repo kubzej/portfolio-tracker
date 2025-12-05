@@ -42,6 +42,7 @@ export type {
   ChartDataPoint,
   TooltipData,
 } from './PriceChart';
+export { TransactionsList } from './TransactionsList';
 
 // Typography
 export {
