@@ -33,6 +33,7 @@ import './Watchlists.css';
 
 type SortFieldKey =
   | 'ticker'
+  | 'sector'
   | 'last_price'
   | 'last_price_change_percent'
   | 'target_buy_price'
@@ -40,6 +41,7 @@ type SortFieldKey =
 
 const SORT_FIELDS: MobileSortField[] = [
   { value: 'ticker', label: 'Ticker', defaultDirection: 'asc' },
+  { value: 'sector', label: 'Sektor', defaultDirection: 'asc' },
   { value: 'last_price', label: 'Cena', defaultDirection: 'desc' },
   {
     value: 'last_price_change_percent',
@@ -85,6 +87,8 @@ export function WatchlistView({
       switch (field) {
         case 'ticker':
           return item.ticker;
+        case 'sector':
+          return item.sector ?? ''; // Empty string for items without sector (sort to end)
         case 'last_price':
           return item.last_price;
         case 'last_price_change_percent':
@@ -113,7 +117,7 @@ export function WatchlistView({
     getItemValue,
     {
       defaultField: 'ticker',
-      ascendingFields: ['ticker'],
+      ascendingFields: ['ticker', 'sector'],
     }
   );
 
@@ -307,6 +311,12 @@ export function WatchlistView({
                   Ticker {getSortIndicator('ticker')}
                 </th>
                 <th
+                  className={cn('sortable', isSorted('sector') && 'sorted')}
+                  onClick={() => handleSort('sector')}
+                >
+                  Sektor {getSortIndicator('sector')}
+                </th>
+                <th
                   className={cn(
                     'text-right',
                     'sortable',
@@ -369,6 +379,13 @@ export function WatchlistView({
                       <Ticker>{item.ticker}</Ticker>
                     </button>
                     {item.name && <StockName truncate>{item.name}</StockName>}
+                  </td>
+                  <td className="sector-cell">
+                    {item.sector ? (
+                      <Caption>{item.sector}</Caption>
+                    ) : (
+                      <Muted>—</Muted>
+                    )}
                   </td>
                   <td className="text-right">
                     {item.last_price
@@ -519,6 +536,14 @@ export function WatchlistView({
                     </Button>
                   </div>
                 </div>
+
+                {item.sector && (
+                  <div className="item-card-sector">
+                    <Text size="xs" color="secondary">
+                      {item.sector}
+                    </Text>
+                  </div>
+                )}
 
                 <div className="item-card-price">
                   <Text size="lg" weight="semibold">

@@ -541,6 +541,7 @@ export function StockResearch({
         <AddStockForm
           prefillTicker={ticker}
           prefillName={stockName || analystData.stockName || ticker}
+          prefillSector={analystData.industry ?? undefined}
           suggestedBuyPrice={getSuggestedBuyPrice(
             recommendation,
             analystData.currentPrice,

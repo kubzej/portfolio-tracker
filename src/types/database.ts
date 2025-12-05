@@ -256,6 +256,7 @@ export interface WatchlistItem {
   target_buy_price: number | null;
   target_sell_price: number | null;
   notes: string | null;
+  sector: string | null; // Industry/sector (e.g., Technology, Healthcare)
   // Cached price data
   last_price: number | null;
   last_price_change: number | null;
@@ -311,6 +312,7 @@ export interface AddWatchlistItemInput {
   target_buy_price?: number;
   target_sell_price?: number;
   notes?: string;
+  sector?: string;
 }
 
 export interface UpdateWatchlistItemInput {
@@ -320,6 +322,7 @@ export interface UpdateWatchlistItemInput {
   target_buy_price?: number | null;
   target_sell_price?: number | null;
   notes?: string | null;
+  sector?: string | null;
   // Price cache update (from API)
   last_price?: number;
   last_price_change?: number;

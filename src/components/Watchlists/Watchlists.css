@@ -391,6 +391,13 @@
   max-width: 200px;
 }
 
+.sector-cell {
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .ticker-link {
   background: none;
   border: none;
@@ -729,6 +736,10 @@
   .item-card-actions {
     display: flex;
     gap: 0.25rem;
+  }
+
+  .item-card-sector {
+    margin-bottom: 0.5rem;
   }
 
   .item-card-price {

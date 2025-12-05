@@ -5,8 +5,9 @@ import type {
   WatchlistItemWithCalculations,
   AddWatchlistItemInput,
   UpdateWatchlistItemInput,
+  Sector,
 } from '@/types/database';
-import { watchlistItemsApi } from '@/services/api';
+import { watchlistItemsApi, sectorsApi } from '@/services/api';
 import { Button } from '@/components/shared/Button';
 import { Modal } from '@/components/shared/Modal';
 import { Input, TextArea } from '@/components/shared/Input';
@@ -28,6 +29,8 @@ interface AddStockFormProps {
   prefillTicker?: string;
   /** Pre-fill name (for Research flow) */
   prefillName?: string;
+  /** Pre-fill sector/industry (for Research flow, from Finnhub industry) */
+  prefillSector?: string;
   /** Suggested buy price (e.g. current price from Research) */
   suggestedBuyPrice?: number;
   /** Suggested sell price (e.g. analyst target from Research) */
@@ -42,6 +45,7 @@ export function AddStockForm({
   existingTickers = [],
   prefillTicker,
   prefillName,
+  prefillSector,
   suggestedBuyPrice,
   suggestedSellPrice,
   onClose,
@@ -56,9 +60,14 @@ export function AddStockForm({
   );
   const [loadingWatchlists, setLoadingWatchlists] = useState(false);
 
+  // Available sectors from DB
+  const [availableSectors, setAvailableSectors] = useState<Sector[]>([]);
+  const [loadingSectors, setLoadingSectors] = useState(false);
+
   // Form fields
   const [ticker, setTicker] = useState(item?.ticker ?? prefillTicker ?? '');
   const [name, setName] = useState(item?.name ?? prefillName ?? '');
+  const [sector, setSector] = useState(item?.sector ?? prefillSector ?? '');
   const [targetBuyPrice, setTargetBuyPrice] = useState(
     item?.target_buy_price?.toString() ?? suggestedBuyPrice?.toFixed(2) ?? ''
   );
@@ -81,6 +90,23 @@ export function AddStockForm({
       loadWatchlists();
     }
   }, [showWatchlistSelector, user]);
+
+  // Load available sectors from DB
+  useEffect(() => {
+    loadSectors();
+  }, []);
+
+  const loadSectors = async () => {
+    setLoadingSectors(true);
+    try {
+      const sectors = await sectorsApi.getAll();
+      setAvailableSectors(sectors);
+    } catch (err) {
+      console.error('Error loading sectors:', err);
+    } finally {
+      setLoadingSectors(false);
+    }
+  };
 
   const loadWatchlists = async () => {
     if (!user) return;
@@ -209,6 +235,7 @@ export function AddStockForm({
           ticker:
             normalizedTicker !== item.ticker ? normalizedTicker : undefined,
           name: name.trim() || undefined,
+          sector: sector.trim() || null,
           target_buy_price: parsedBuyPrice ?? null,
           target_sell_price: parsedSellPrice ?? null,
           notes: notes.trim() || null,
@@ -226,6 +253,7 @@ export function AddStockForm({
           watchlist_id: effectiveWatchlistId,
           ticker: ticker.toUpperCase().trim(),
           name: name.trim() || undefined,
+          sector: sector.trim() || undefined,
           target_buy_price: parsedBuyPrice,
           target_sell_price: parsedSellPrice,
           notes: notes.trim() || undefined,
@@ -330,6 +358,42 @@ export function AddStockForm({
               />
             </div>
           )}
+
+          {/* Sector dropdown - combo of prefill from Research + DB sectors */}
+          <div className="form-group">
+            <Label htmlFor="stock-sector">Sektor</Label>
+            {loadingSectors ? (
+              <Muted>Načítám sektory...</Muted>
+            ) : (
+              <>
+                <Input
+                  id="stock-sector"
+                  type="text"
+                  value={sector}
+                  onChange={(e) => setSector(e.target.value)}
+                  placeholder="Vyberte nebo zadejte sektor"
+                  list="sector-options"
+                  maxLength={50}
+                  fullWidth
+                />
+                <datalist id="sector-options">
+                  {/* If prefillSector is provided and not in DB, show it first */}
+                  {prefillSector &&
+                    !availableSectors.some((s) => s.name === prefillSector) && (
+                      <option value={prefillSector}>
+                        {prefillSector} (z Research)
+                      </option>
+                    )}
+                  {availableSectors.map((s) => (
+                    <option key={s.id} value={s.name}>
+                      {s.name}
+                    </option>
+                  ))}
+                </datalist>
+              </>
+            )}
+            <Hint>Z Research se předvyplní, nebo vyberte z existujících</Hint>
+          </div>
 
           <div className="form-row">
             <div className="form-group">
