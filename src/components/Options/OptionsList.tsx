@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { optionsApi } from '@/services/api';
+import { optionsApi, holdingsApi } from '@/services/api';
 import type { OptionHolding, OptionPrice, OptionTransaction } from '@/types';
 import {
   EmptyState,
@@ -58,13 +58,20 @@ interface EnrichedHolding extends OptionHolding {
 
 export function OptionsList({
   portfolioId,
-  stockPrices = {},
+  stockPrices: externalStockPrices = {},
   onEditTransaction,
 }: OptionsListProps) {
   const [holdings, setHoldings] = useState<OptionHolding[]>([]);
   const [prices, setPrices] = useState<Record<string, OptionPrice>>({});
+  const [internalStockPrices, setInternalStockPrices] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Merge external and internal stock prices (external takes precedence)
+  const stockPrices = useMemo(() => ({
+    ...internalStockPrices,
+    ...externalStockPrices,
+  }), [internalStockPrices, externalStockPrices]);
 
   useEffect(() => {
     loadData();
@@ -91,6 +98,19 @@ export function OptionsList({
           pricesMap[p.option_symbol] = p;
         });
         setPrices(pricesMap);
+
+        // Load underlying stock prices from holdings
+        const uniqueSymbols = [...new Set(holdingsData.map((h: OptionHolding) => h.symbol))];
+        console.log('[OptionsList] Loading stock prices for:', uniqueSymbols);
+        const portfolioSummary = await holdingsApi.getPortfolioSummary(portfolioId);
+        const stockPricesMap: Record<string, number> = {};
+        portfolioSummary.forEach((h) => {
+          if (h.current_price !== null && uniqueSymbols.includes(h.ticker)) {
+            stockPricesMap[h.ticker] = h.current_price;
+          }
+        });
+        console.log('[OptionsList] Stock prices loaded:', stockPricesMap);
+        setInternalStockPrices(stockPricesMap);
       }
     } catch (err) {
       console.error('[OptionsList] Error loading data:', err);
@@ -329,6 +349,7 @@ export function OptionsList({
                     <OptionCard
                       key={holding.option_symbol}
                       holding={holding}
+                      stockPrice={stockPrices[holding.symbol]}
                       onEdit={onEditTransaction}
                       onRefresh={loadData}
                     />
@@ -346,11 +367,12 @@ export function OptionsList({
 // Individual option card component
 interface OptionCardProps {
   holding: EnrichedHolding;
+  stockPrice?: number;
   onEdit?: (transaction: OptionTransaction) => void;
   onRefresh?: () => void;
 }
 
-function OptionCard({ holding, onEdit, onRefresh }: OptionCardProps) {
+function OptionCard({ holding, stockPrice, onEdit, onRefresh }: OptionCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [transactions, setTransactions] = useState<OptionTransaction[]>([]);
   const [loadingTx, setLoadingTx] = useState(false);
@@ -515,6 +537,14 @@ function OptionCard({ holding, onEdit, onRefresh }: OptionCardProps) {
         <div className="option-detail">
           {/* Metrics Grid */}
           <div className="option-detail-grid">
+            {/* Underlying Price */}
+            {stockPrice !== undefined && (
+              <div className="detail-item">
+                <MetricLabel>Cena podkladu ({holding.symbol})</MetricLabel>
+                <MetricValue>{formatPrice(stockPrice, 'USD')}</MetricValue>
+              </div>
+            )}
+
             {/* Break-even */}
             <div className="detail-item">
               <MetricLabel>Break-even</MetricLabel>
