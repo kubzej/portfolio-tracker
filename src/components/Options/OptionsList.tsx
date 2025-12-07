@@ -545,7 +545,8 @@ function OptionCard({ holding, onEdit, onRefresh }: OptionCardProps) {
                 <dt>IV Implied Volatility</dt>
                 <dd>
                   Očekávaná volatilita trhem.
-                  <br />• {'<'} 20% = nízká, 20-40% = střední, {'>'} 40% = vysoká
+                  <br />• {'<'} 20% = nízká, 20-40% = střední, {'>'} 40% =
+                  vysoká
                 </dd>
               </dl>
             </div>
