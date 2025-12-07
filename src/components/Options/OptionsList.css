@@ -84,9 +84,9 @@
 
 .option-card {
   display: grid;
-  grid-template-columns: minmax(160px, 1.2fr) minmax(100px, 1fr) minmax(120px, 1fr) minmax(100px, 1fr) minmax(200px, auto);
+  grid-template-columns: 1fr auto auto auto;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: var(--spacing-lg);
   padding: var(--spacing-md) var(--spacing-lg);
   border-bottom: 1px solid var(--border-light);
   transition: background-color 0.15s ease;
@@ -106,11 +106,52 @@
   border-bottom: none;
 }
 
-/* Expanded transactions */
-.option-transactions {
+/* Expand indicator */
+.option-expand {
+  width: 24px;
+  text-align: center;
+}
+
+/* Expanded Detail Panel */
+.option-detail {
   padding: var(--spacing-md) var(--spacing-lg);
   padding-left: calc(var(--spacing-lg) + var(--spacing-md));
   border-bottom: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.option-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Greeks Section in Detail */
+.option-greeks-section {
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-light);
+}
+
+.greeks-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+}
+
+/* Transactions Section */
+.option-transactions-section {
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-light);
 }
 
 .option-transactions-loading {

@@ -336,7 +336,7 @@ export function getMoneynessLabel(moneyness: Moneyness): string {
 // ==========================================
 
 /**
- * Vypočítá break-even cenu pro Long pozici
+ * Vypočítá break-even cenu opce
  *
  * @param optionType 'call' nebo 'put'
  * @param strike Realizační cena
@@ -353,6 +353,104 @@ export function calculateBreakeven(
   } else {
     // Long Put: break-even = strike - premium
     return strike - premium;
+  }
+}
+
+// ==========================================
+// Max Profit / Max Loss Functions
+// ==========================================
+
+export interface MaxProfitLoss {
+  maxProfit: number | 'unlimited';
+  maxLoss: number | 'unlimited';
+  maxProfitDescription: string;
+  maxLossDescription: string;
+}
+
+/**
+ * Vypočítá maximální profit a loss pro opční pozici
+ *
+ * @param optionType 'call' nebo 'put'
+ * @param position 'long' nebo 'short'
+ * @param strike Realizační cena
+ * @param premium Zaplacené/obdržené premium (per share)
+ * @param contracts Počet kontraktů
+ * @param multiplier Násobitel (default 100)
+ */
+export function calculateMaxProfitLoss(
+  optionType: OptionType,
+  position: OptionPosition,
+  strike: number,
+  premium: number,
+  contracts: number = 1,
+  multiplier: number = 100
+): MaxProfitLoss {
+  const totalPremium = premium * contracts * multiplier;
+
+  if (position === 'long') {
+    if (optionType === 'call') {
+      // Long Call: max loss = premium, max profit = unlimited
+      return {
+        maxProfit: 'unlimited',
+        maxLoss: totalPremium,
+        maxProfitDescription: 'Neomezený (akcie může růst neomezeně)',
+        maxLossDescription: `${totalPremium.toFixed(0)} USD (zaplacené premium)`,
+      };
+    } else {
+      // Long Put: max loss = premium, max profit = (strike - premium) × contracts × 100
+      const maxProfit = (strike - premium) * contracts * multiplier;
+      return {
+        maxProfit: Math.max(0, maxProfit),
+        maxLoss: totalPremium,
+        maxProfitDescription: `${maxProfit.toFixed(0)} USD (akcie klesne na 0)`,
+        maxLossDescription: `${totalPremium.toFixed(0)} USD (zaplacené premium)`,
+      };
+    }
+  } else {
+    // Short positions
+    if (optionType === 'call') {
+      // Short Call: max profit = premium, max loss = unlimited
+      return {
+        maxProfit: totalPremium,
+        maxLoss: 'unlimited',
+        maxProfitDescription: `${totalPremium.toFixed(0)} USD (obdržené premium)`,
+        maxLossDescription: 'Neomezená (akcie může růst neomezeně)',
+      };
+    } else {
+      // Short Put: max profit = premium, max loss = (strike - premium) × contracts × 100
+      const maxLoss = (strike - premium) * contracts * multiplier;
+      return {
+        maxProfit: totalPremium,
+        maxLoss: Math.max(0, maxLoss),
+        maxProfitDescription: `${totalPremium.toFixed(0)} USD (obdržené premium)`,
+        maxLossDescription: `${maxLoss.toFixed(0)} USD (akcie klesne na 0)`,
+      };
+    }
+  }
+}
+
+/**
+ * Odhaduje pravděpodobnost profitu z Delta
+ * Delta přibližně odpovídá pravděpodobnosti, že opce expiruje ITM
+ *
+ * @param delta Delta opce (0 až 1 pro calls, -1 až 0 pro puts)
+ * @param position 'long' nebo 'short'
+ */
+export function estimateProbabilityOfProfit(
+  delta: number | null,
+  position: OptionPosition
+): number | null {
+  if (delta === null) return null;
+
+  // Delta přibližně = pravděpodobnost ITM
+  const probITM = Math.abs(delta) * 100;
+
+  if (position === 'long') {
+    // Long opce: profit když ITM
+    return probITM;
+  } else {
+    // Short opce: profit když OTM (opce expiruje bezcenná)
+    return 100 - probITM;
   }
 }
 

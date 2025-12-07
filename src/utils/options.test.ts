@@ -13,6 +13,8 @@ import {
   getMoneyness,
   getMoneynessLabel,
   calculateBreakeven,
+  calculateMaxProfitLoss,
+  estimateProbabilityOfProfit,
   isValidOCCSymbol,
 } from './options';
 
@@ -345,6 +347,61 @@ describe('options utils', () => {
     it('should calculate break-even for long put', () => {
       // Put strike $150, premium $5 → break-even = $145
       expect(calculateBreakeven('put', 150, 5)).toBe(145);
+    });
+  });
+
+  // ==========================================
+  // Max Profit/Loss Functions
+  // ==========================================
+
+  describe('calculateMaxProfitLoss', () => {
+    it('should calculate for long call', () => {
+      const result = calculateMaxProfitLoss('call', 'long', 150, 5, 1);
+      expect(result.maxProfit).toBe('unlimited');
+      expect(result.maxLoss).toBe(500); // 5 × 1 × 100
+    });
+
+    it('should calculate for long put', () => {
+      const result = calculateMaxProfitLoss('put', 'long', 150, 5, 1);
+      expect(result.maxProfit).toBe(14500); // (150 - 5) × 1 × 100
+      expect(result.maxLoss).toBe(500);
+    });
+
+    it('should calculate for short call', () => {
+      const result = calculateMaxProfitLoss('call', 'short', 150, 5, 1);
+      expect(result.maxProfit).toBe(500);
+      expect(result.maxLoss).toBe('unlimited');
+    });
+
+    it('should calculate for short put', () => {
+      const result = calculateMaxProfitLoss('put', 'short', 150, 5, 1);
+      expect(result.maxProfit).toBe(500);
+      expect(result.maxLoss).toBe(14500);
+    });
+
+    it('should handle multiple contracts', () => {
+      const result = calculateMaxProfitLoss('call', 'long', 150, 5, 3);
+      expect(result.maxLoss).toBe(1500); // 5 × 3 × 100
+    });
+  });
+
+  describe('estimateProbabilityOfProfit', () => {
+    it('should return null for null delta', () => {
+      expect(estimateProbabilityOfProfit(null, 'long')).toBeNull();
+    });
+
+    it('should calculate for long position', () => {
+      expect(estimateProbabilityOfProfit(0.5, 'long')).toBe(50);
+      expect(estimateProbabilityOfProfit(0.7, 'long')).toBe(70);
+    });
+
+    it('should calculate for short position', () => {
+      expect(estimateProbabilityOfProfit(0.3, 'short')).toBe(70); // 100 - 30
+      expect(estimateProbabilityOfProfit(0.5, 'short')).toBe(50);
+    });
+
+    it('should handle negative delta (puts)', () => {
+      expect(estimateProbabilityOfProfit(-0.4, 'long')).toBe(40);
     });
   });
 

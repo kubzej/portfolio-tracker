@@ -24,6 +24,9 @@ import {
   calculateOptionValue,
   calculateOptionPL,
   getMoneyness,
+  calculateBreakeven,
+  calculateMaxProfitLoss,
+  estimateProbabilityOfProfit,
 } from '@/utils/options';
 import './OptionsList.css';
 
@@ -359,6 +362,32 @@ function OptionCard({ holding, onEdit, onRefresh }: OptionCardProps) {
   const isLong = holding.position === 'long';
   const typeLabel = holding.option_type === 'call' ? 'C' : 'P';
 
+  // Calculate additional metrics
+  const breakeven =
+    holding.avg_premium !== null
+      ? calculateBreakeven(
+          holding.option_type,
+          holding.strike_price,
+          holding.avg_premium
+        )
+      : null;
+
+  const maxProfitLoss =
+    holding.avg_premium !== null
+      ? calculateMaxProfitLoss(
+          holding.option_type,
+          holding.position,
+          holding.strike_price,
+          holding.avg_premium,
+          holding.contracts
+        )
+      : null;
+
+  const probabilityOfProfit = estimateProbabilityOfProfit(
+    holding.delta,
+    holding.position
+  );
+
   // Load transactions when expanded
   useEffect(() => {
     if (expanded && transactions.length === 0) {
@@ -402,6 +431,7 @@ function OptionCard({ holding, onEdit, onRefresh }: OptionCardProps) {
 
   return (
     <>
+      {/* Collapsed Header - simple summary */}
       <div
         className={`option-card ${expanded ? 'option-card--expanded' : ''}`}
         onClick={() => setExpanded(!expanded)}
@@ -415,64 +445,27 @@ function OptionCard({ holding, onEdit, onRefresh }: OptionCardProps) {
           <Badge variant={isLong ? 'info' : 'warning'}>
             {isLong ? 'LONG' : 'SHORT'}
           </Badge>
-          {holding.moneyness && (
-            <Badge
-              variant={
-                holding.moneyness === 'ITM'
-                  ? 'buy'
-                  : holding.moneyness === 'OTM'
-                  ? 'sell'
-                  : 'info'
-              }
-            >
-              {holding.moneyness}
-            </Badge>
-          )}
         </div>
 
-        {/* Value - current market value of position */}
+        {/* Value & Cost */}
         <div className="option-metric">
-          <MetricLabel>Hodnota</MetricLabel>
           <MetricValue>
             {holding.currentValue !== undefined ? (
               <>
                 {formatPrice(holding.currentValue, 'USD')}
                 <Text size="xs" color="muted">
                   {' '}
-                  ({holding.contracts}×)
+                  / {formatPrice(holding.total_cost, 'USD')}
                 </Text>
               </>
             ) : (
-              <Muted>—</Muted>
-            )}
-          </MetricValue>
-        </div>
-
-        {/* Avg Premium vs Current Price */}
-        <div className="option-metric">
-          <MetricLabel>Cena</MetricLabel>
-          <MetricValue>
-            {holding.current_price !== null ? (
-              <>
-                {formatPrice(holding.current_price, 'USD')}
-                {holding.avg_premium !== null && (
-                  <Text size="xs" color="muted">
-                    {' '}
-                    (avg: {formatPrice(holding.avg_premium, 'USD')})
-                  </Text>
-                )}
-              </>
-            ) : holding.avg_premium !== null ? (
-              formatPrice(holding.avg_premium, 'USD')
-            ) : (
-              <Muted>—</Muted>
+              <Text size="sm">{formatPrice(holding.total_cost, 'USD')}</Text>
             )}
           </MetricValue>
         </div>
 
         {/* P/L */}
         <div className="option-metric">
-          <MetricLabel>P/L</MetricLabel>
           {holding.pl !== undefined ? (
             <MetricValue
               sentiment={
@@ -509,185 +502,269 @@ function OptionCard({ holding, onEdit, onRefresh }: OptionCardProps) {
           )}
         </div>
 
-        {/* Greeks - compact display with tooltip */}
-        <div className="option-greeks">
-          <InfoTooltip position="bottom">
-            <div className="greeks-tooltip">
-              <strong>Řecká písmena (Greeks)</strong>
-              <p>Měří citlivost ceny opce na různé faktory:</p>
-              <dl>
-                <dt>Δ Delta (0 až ±1)</dt>
-                <dd>
-                  Změna ceny opce při pohybu podkladu o $1.
-                  <br />• Call: 0.5 = ATM, {'>'} 0.7 = ITM, {'<'} 0.3 = OTM
-                  <br />• Put: záporné hodnoty
-                  <br />• Tip: Delta ≈ pravděpodobnost expirace ITM
-                </dd>
-                <dt>Γ Gamma (0 až ~0.1)</dt>
-                <dd>
-                  Rychlost změny Delty. Nejvyšší u ATM opcí.
-                  <br />• Vysoká Gamma = Delta se rychle mění
-                  <br />• Důležité pro hedging a risk management
-                </dd>
-                <dt>Θ Theta (záporná)</dt>
-                <dd>
-                  Denní ztráta hodnoty časem (time decay).
-                  <br />• Long pozice: Theta pracuje proti vám
-                  <br />• Short pozice: Theta pracuje pro vás
-                  <br />• Zrychluje se blíže k expiraci
-                </dd>
-                <dt>V Vega (~0.01-0.5)</dt>
-                <dd>
-                  Změna ceny při změně IV o 1%.
-                  <br />• Vysoká IV = drahé opce
-                  <br />• Long pozice: profit z růstu IV
-                </dd>
-                <dt>IV Implied Volatility</dt>
-                <dd>
-                  Očekávaná volatilita trhem.
-                  <br />• {'<'} 20% = nízká, 20-40% = střední, {'>'} 40% =
-                  vysoká
-                </dd>
-              </dl>
-            </div>
-          </InfoTooltip>
-          {holding.delta !== null && (
-            <div className="greek-item">
-              <Text size="xs" color="muted">
-                Δ
-              </Text>
-              <Text size="sm">{holding.delta.toFixed(2)}</Text>
-            </div>
-          )}
-          {holding.gamma !== null && (
-            <div className="greek-item">
-              <Text size="xs" color="muted">
-                Γ
-              </Text>
-              <Text size="sm">{holding.gamma.toFixed(4)}</Text>
-            </div>
-          )}
-          {holding.theta !== null && (
-            <div className="greek-item">
-              <Text size="xs" color="muted">
-                Θ
-              </Text>
-              <Text size="sm" color={holding.theta < 0 ? 'danger' : undefined}>
-                {formatPrice(holding.theta * holding.contracts * 100, 'USD')}
-              </Text>
-            </div>
-          )}
-          {holding.vega !== null && (
-            <div className="greek-item">
-              <Text size="xs" color="muted">
-                V
-              </Text>
-              <Text size="sm">{holding.vega.toFixed(2)}</Text>
-            </div>
-          )}
-          {holding.implied_volatility !== null && (
-            <div className="greek-item">
-              <Text size="xs" color="muted">
-                IV
-              </Text>
-              <Text size="sm">
-                {(holding.implied_volatility * 100).toFixed(0)}%
-              </Text>
-            </div>
-          )}
+        {/* Expand indicator */}
+        <div className="option-expand">
+          <Text size="sm" color="muted">
+            {expanded ? '▲' : '▼'}
+          </Text>
         </div>
       </div>
 
-      {/* Expanded transactions detail */}
+      {/* Expanded Detail */}
       {expanded && (
-        <div className="option-transactions">
-          {loadingTx ? (
-            <div className="option-transactions-loading">
-              <LoadingSpinner size="sm" />
+        <div className="option-detail">
+          {/* Metrics Grid */}
+          <div className="option-detail-grid">
+            {/* Break-even */}
+            <div className="detail-item">
+              <MetricLabel>Break-even</MetricLabel>
+              <MetricValue>
+                {breakeven !== null ? (
+                  formatPrice(breakeven, 'USD')
+                ) : (
+                  <Muted>—</Muted>
+                )}
+              </MetricValue>
             </div>
-          ) : transactions.length === 0 ? (
-            <Text color="muted" size="sm">
-              Žádné transakce
+
+            {/* Current Price */}
+            <div className="detail-item">
+              <MetricLabel>Aktuální cena</MetricLabel>
+              <MetricValue>
+                {holding.current_price !== null ? (
+                  <>
+                    {formatPrice(holding.current_price, 'USD')}
+                    {holding.avg_premium !== null && (
+                      <Text size="xs" color="muted">
+                        {' '}
+                        (avg: {formatPrice(holding.avg_premium, 'USD')})
+                      </Text>
+                    )}
+                  </>
+                ) : (
+                  <Muted>—</Muted>
+                )}
+              </MetricValue>
+            </div>
+
+            {/* Max Profit */}
+            <div className="detail-item">
+              <MetricLabel>Max Profit</MetricLabel>
+              <MetricValue sentiment="positive">
+                {maxProfitLoss ? (
+                  maxProfitLoss.maxProfit === 'unlimited' ? (
+                    '∞'
+                  ) : (
+                    formatPrice(maxProfitLoss.maxProfit, 'USD')
+                  )
+                ) : (
+                  <Muted>—</Muted>
+                )}
+              </MetricValue>
+            </div>
+
+            {/* Max Loss */}
+            <div className="detail-item">
+              <MetricLabel>Max Loss</MetricLabel>
+              <MetricValue sentiment="negative">
+                {maxProfitLoss ? (
+                  maxProfitLoss.maxLoss === 'unlimited' ? (
+                    '∞'
+                  ) : (
+                    formatPrice(maxProfitLoss.maxLoss, 'USD')
+                  )
+                ) : (
+                  <Muted>—</Muted>
+                )}
+              </MetricValue>
+            </div>
+
+            {/* Probability of Profit */}
+            {probabilityOfProfit !== null && (
+              <div className="detail-item">
+                <MetricLabel>
+                  Pravděpodobnost zisku
+                  <InfoTooltip text="Odvozeno z Delta. Přibližný odhad pravděpodobnosti, že opce bude zisková při expiraci." />
+                </MetricLabel>
+                <MetricValue>~{probabilityOfProfit.toFixed(0)}%</MetricValue>
+              </div>
+            )}
+
+            {/* Contracts */}
+            <div className="detail-item">
+              <MetricLabel>Kontrakty</MetricLabel>
+              <MetricValue>{holding.contracts}×</MetricValue>
+            </div>
+          </div>
+
+          {/* Greeks Section */}
+          {(holding.delta !== null ||
+            holding.gamma !== null ||
+            holding.theta !== null ||
+            holding.vega !== null) && (
+            <div className="option-greeks-section">
+              <div className="greeks-header">
+                <Text size="sm" weight="medium">
+                  Greeks
+                </Text>
+                <InfoTooltip position="bottom">
+                  <div className="greeks-tooltip">
+                    <strong>Řecká písmena (Greeks)</strong>
+                    <p>Měří citlivost ceny opce na různé faktory:</p>
+                    <dl>
+                      <dt>Δ Delta (0 až ±1)</dt>
+                      <dd>
+                        Změna ceny opce při pohybu podkladu o $1.
+                        <br />• Call: 0.5 = ATM, {'>'} 0.7 = ITM, {'<'} 0.3 =
+                        OTM
+                        <br />• Tip: Delta ≈ pravděpodobnost expirace ITM
+                      </dd>
+                      <dt>Γ Gamma</dt>
+                      <dd>Rychlost změny Delty. Nejvyšší u ATM opcí.</dd>
+                      <dt>Θ Theta</dt>
+                      <dd>
+                        Denní ztráta hodnoty časem (time decay).
+                        <br />• Long: pracuje proti vám
+                        <br />• Short: pracuje pro vás
+                      </dd>
+                      <dt>V Vega</dt>
+                      <dd>Změna ceny při změně IV o 1%.</dd>
+                    </dl>
+                  </div>
+                </InfoTooltip>
+              </div>
+              <div className="option-greeks">
+                {holding.delta !== null && (
+                  <div className="greek-item">
+                    <Text size="xs" color="muted">
+                      Δ
+                    </Text>
+                    <Text size="sm">{holding.delta.toFixed(2)}</Text>
+                  </div>
+                )}
+                {holding.gamma !== null && (
+                  <div className="greek-item">
+                    <Text size="xs" color="muted">
+                      Γ
+                    </Text>
+                    <Text size="sm">{holding.gamma.toFixed(4)}</Text>
+                  </div>
+                )}
+                {holding.theta !== null && (
+                  <div className="greek-item">
+                    <Text size="xs" color="muted">
+                      Θ
+                    </Text>
+                    <Text
+                      size="sm"
+                      color={holding.theta < 0 ? 'danger' : 'success'}
+                    >
+                      {formatPrice(
+                        holding.theta * holding.contracts * 100,
+                        'USD'
+                      )}
+                      /den
+                    </Text>
+                  </div>
+                )}
+                {holding.vega !== null && (
+                  <div className="greek-item">
+                    <Text size="xs" color="muted">
+                      V
+                    </Text>
+                    <Text size="sm">{holding.vega.toFixed(2)}</Text>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Transactions Section */}
+          <div className="option-transactions-section">
+            <Text size="sm" weight="medium">
+              Transakce
             </Text>
-          ) : (
-            <div className="transactions-list">
-              {transactions.map((tx) => (
-                <div key={tx.id} className="transaction-row">
-                  <div className="transaction-content">
-                    <div className="transaction-info">
-                      <Badge
-                        variant={
-                          tx.action === 'BTO' || tx.action === 'BTC'
-                            ? 'buy'
-                            : tx.action === 'STO' || tx.action === 'STC'
-                            ? 'sell'
-                            : 'info'
-                        }
-                      >
-                        {ACTION_LABELS[tx.action] || tx.action}
-                      </Badge>
-                      <Text size="sm">{formatDate(tx.date)}</Text>
-                      <Text size="sm">{tx.contracts}×</Text>
-                      {tx.premium !== null && (
+            {loadingTx ? (
+              <div className="option-transactions-loading">
+                <LoadingSpinner size="sm" />
+              </div>
+            ) : transactions.length === 0 ? (
+              <Text color="muted" size="sm">
+                Žádné transakce
+              </Text>
+            ) : (
+              <div className="transactions-list">
+                {transactions.map((tx) => (
+                  <div key={tx.id} className="transaction-row">
+                    <div className="transaction-content">
+                      <div className="transaction-info">
+                        <Badge
+                          variant={
+                            tx.action === 'BTO' || tx.action === 'BTC'
+                              ? 'buy'
+                              : tx.action === 'STO' || tx.action === 'STC'
+                              ? 'sell'
+                              : 'info'
+                          }
+                        >
+                          {ACTION_LABELS[tx.action] || tx.action}
+                        </Badge>
+                        <Text size="sm">{formatDate(tx.date)}</Text>
                         <Text size="sm">
-                          @ {formatPrice(tx.premium, tx.currency)}
-                        </Text>
-                      )}
-                      {tx.fees !== null && tx.fees > 0 && (
-                        <Text size="sm" color="muted">
-                          (poplatky: {formatPrice(tx.fees, tx.currency)})
-                        </Text>
-                      )}
-                    </div>
-                    {tx.notes && (
-                      <div className="transaction-notes">
-                        <Text size="sm" color="muted">
-                          {tx.notes}
+                          {tx.contracts}× @ {formatPrice(tx.premium || 0, 'USD')}
                         </Text>
                       </div>
-                    )}
-                  </div>
-                  <div className="transaction-actions">
-                    {onEdit && (
+                      {tx.notes && (
+                        <div className="transaction-notes">
+                          <Text size="xs" color="muted">
+                            {tx.notes}
+                          </Text>
+                        </div>
+                      )}
+                    </div>
+                    <div className="transaction-actions">
+                      {onEdit && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(tx);
+                          }}
+                        >
+                          Upravit
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => onEdit(tx)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteConfirm(tx);
+                        }}
                       >
-                        Upravit
+                        Smazat
                       </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDeleteConfirm(tx)}
-                    >
-                      Smazat
-                    </Button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      {/* Delete confirmation */}
+      {/* Delete confirmation dialog */}
       <ConfirmDialog
-        isOpen={!!deleteConfirm}
+        isOpen={deleteConfirm !== null}
         onClose={() => setDeleteConfirm(null)}
         onConfirm={handleDelete}
         title="Smazat transakci?"
-        message={
-          deleteConfirm
-            ? `Opravdu chcete smazat transakci ${
-                ACTION_LABELS[deleteConfirm.action] || deleteConfirm.action
-              } ze dne ${formatDate(
-                deleteConfirm.date
-              )}? Tuto akci nelze vrátit zpět.`
-            : ''
-        }
+        message={`Opravdu chcete smazat transakci ${
+          deleteConfirm ? ACTION_LABELS[deleteConfirm.action] : ''
+        }?`}
         confirmLabel={deleting ? 'Mažu...' : 'Smazat'}
+        cancelLabel="Zrušit"
         variant="danger"
       />
     </>
