@@ -331,3 +331,135 @@ export interface UpdateWatchlistItemInput {
   last_price_change_percent?: number;
   last_price_updated_at?: string;
 }
+
+// ==========================================
+// Options Trading
+// ==========================================
+
+export type OptionType = 'call' | 'put';
+
+export type OptionAction =
+  | 'BTO' // Buy to Open (Long)
+  | 'STC' // Sell to Close
+  | 'STO' // Sell to Open (Short)
+  | 'BTC' // Buy to Close
+  | 'EXPIRATION' // Opce vypršela bezcenná
+  | 'ASSIGNMENT' // Přiřazení (ITM)
+  | 'EXERCISE'; // Vlastník využil právo
+
+export type OptionPosition = 'long' | 'short';
+
+// Option transaction (single trade)
+export interface OptionTransaction {
+  id: string;
+  portfolio_id: string;
+  symbol: string; // Underlying ticker (AAPL)
+  option_symbol: string; // OCC format (AAPL250117C00150000)
+  option_type: OptionType;
+  strike_price: number;
+  expiration_date: string; // ISO date YYYY-MM-DD
+  action: OptionAction;
+  contracts: number;
+  premium: number | null; // Per share (not per contract)
+  total_premium: number | null; // contracts × 100 × premium
+  currency: string;
+  fees: number;
+  date: string; // ISO date YYYY-MM-DD
+  notes: string | null;
+  linked_stock_tx_id: string | null; // Reference to stock transaction on ASSIGNMENT/EXERCISE
+  created_at: string;
+  updated_at: string;
+}
+
+// Option holding (calculated from transactions)
+export interface OptionHolding {
+  portfolio_id: string;
+  symbol: string; // Underlying ticker
+  option_symbol: string; // OCC format
+  option_type: OptionType;
+  strike_price: number;
+  expiration_date: string;
+  position: OptionPosition; // 'long' or 'short'
+  contracts: number; // Current open contracts
+  avg_premium: number | null; // Average price per share
+  total_cost: number; // Total cost basis
+  total_fees: number;
+  first_transaction: string | null;
+  last_transaction: string | null;
+  dte: number; // Days to expiration
+  // From option_prices cache
+  current_price: number | null;
+  bid: number | null;
+  ask: number | null;
+  implied_volatility: number | null;
+  delta: number | null;
+  gamma: number | null;
+  theta: number | null;
+  vega: number | null;
+  price_updated_at: string | null;
+}
+
+// Option price cache
+export interface OptionPrice {
+  id: string;
+  option_symbol: string;
+  price: number | null;
+  bid: number | null;
+  ask: number | null;
+  volume: number | null;
+  open_interest: number | null;
+  implied_volatility: number | null;
+  delta: number | null;
+  gamma: number | null;
+  theta: number | null;
+  vega: number | null;
+  updated_at: string;
+}
+
+// ==========================================
+// Options Input types
+// ==========================================
+
+export interface CreateOptionTransactionInput {
+  portfolio_id: string;
+  symbol: string;
+  option_type: OptionType;
+  strike_price: number;
+  expiration_date: string;
+  action: OptionAction;
+  contracts: number;
+  premium?: number;
+  currency?: string;
+  fees?: number;
+  date: string;
+  notes?: string;
+}
+
+export interface UpdateOptionTransactionInput {
+  portfolio_id?: string;
+  symbol?: string;
+  option_type?: OptionType;
+  strike_price?: number;
+  expiration_date?: string;
+  option_symbol?: string;
+  action?: OptionAction;
+  contracts?: number;
+  premium?: number | null;
+  fees?: number;
+  date?: string;
+  notes?: string | null;
+}
+
+export interface UpdateOptionPriceInput {
+  option_symbol: string;
+  price?: number;
+  bid?: number;
+  ask?: number;
+  volume?: number;
+  open_interest?: number;
+  implied_volatility?: number;
+  delta?: number;
+  gamma?: number;
+  theta?: number;
+  vega?: number;
+}

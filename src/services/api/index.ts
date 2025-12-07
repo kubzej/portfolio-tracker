@@ -11,3 +11,5 @@ export * from './watchlists';
 export * from './watchlistItems';
 export * from './peers';
 export * from './tracker';
+export * from './options';
+export * from './options';

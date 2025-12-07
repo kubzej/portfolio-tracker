@@ -67,6 +67,19 @@
   border: 1px solid var(--border-light);
 }
 
+.holdings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.holdings-header .tabs {
+  margin-left: auto;
+}
+
 @media (min-width: 768px) {
   .holdings-section {
     padding: 1.5rem;

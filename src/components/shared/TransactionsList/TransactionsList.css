@@ -275,6 +275,12 @@
   .date-filter-item .input {
     width: 100%;
   }
+
+  /* Make Vymazat button go on new row */
+  .date-filters > .btn {
+    width: 100%;
+    margin-top: 0.25rem;
+  }
 }
 
 @media (max-width: 480px) {

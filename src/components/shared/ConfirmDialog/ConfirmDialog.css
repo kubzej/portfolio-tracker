@@ -1,0 +1,11 @@
+.confirm-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+}
