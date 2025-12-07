@@ -63,15 +63,20 @@ export function OptionsList({
 }: OptionsListProps) {
   const [holdings, setHoldings] = useState<OptionHolding[]>([]);
   const [prices, setPrices] = useState<Record<string, OptionPrice>>({});
-  const [internalStockPrices, setInternalStockPrices] = useState<Record<string, number>>({});
+  const [internalStockPrices, setInternalStockPrices] = useState<
+    Record<string, number>
+  >({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Merge external and internal stock prices (external takes precedence)
-  const stockPrices = useMemo(() => ({
-    ...internalStockPrices,
-    ...externalStockPrices,
-  }), [internalStockPrices, externalStockPrices]);
+  const stockPrices = useMemo(
+    () => ({
+      ...internalStockPrices,
+      ...externalStockPrices,
+    }),
+    [internalStockPrices, externalStockPrices]
+  );
 
   useEffect(() => {
     loadData();
@@ -100,9 +105,13 @@ export function OptionsList({
         setPrices(pricesMap);
 
         // Load underlying stock prices from holdings
-        const uniqueSymbols = [...new Set(holdingsData.map((h: OptionHolding) => h.symbol))];
+        const uniqueSymbols = [
+          ...new Set(holdingsData.map((h: OptionHolding) => h.symbol)),
+        ];
         console.log('[OptionsList] Loading stock prices for:', uniqueSymbols);
-        const portfolioSummary = await holdingsApi.getPortfolioSummary(portfolioId);
+        const portfolioSummary = await holdingsApi.getPortfolioSummary(
+          portfolioId
+        );
         const stockPricesMap: Record<string, number> = {};
         portfolioSummary.forEach((h) => {
           if (h.current_price !== null && uniqueSymbols.includes(h.ticker)) {
@@ -372,7 +381,12 @@ interface OptionCardProps {
   onRefresh?: () => void;
 }
 
-function OptionCard({ holding, stockPrice, onEdit, onRefresh }: OptionCardProps) {
+function OptionCard({
+  holding,
+  stockPrice,
+  onEdit,
+  onRefresh,
+}: OptionCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [transactions, setTransactions] = useState<OptionTransaction[]>([]);
   const [loadingTx, setLoadingTx] = useState(false);
