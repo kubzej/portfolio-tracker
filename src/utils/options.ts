@@ -394,7 +394,9 @@ export function calculateMaxProfitLoss(
         maxProfit: 'unlimited',
         maxLoss: totalPremium,
         maxProfitDescription: 'Neomezený (akcie může růst neomezeně)',
-        maxLossDescription: `${totalPremium.toFixed(0)} USD (zaplacené premium)`,
+        maxLossDescription: `${totalPremium.toFixed(
+          0
+        )} USD (zaplacené premium)`,
       };
     } else {
       // Long Put: max loss = premium, max profit = (strike - premium) × contracts × 100
@@ -403,7 +405,9 @@ export function calculateMaxProfitLoss(
         maxProfit: Math.max(0, maxProfit),
         maxLoss: totalPremium,
         maxProfitDescription: `${maxProfit.toFixed(0)} USD (akcie klesne na 0)`,
-        maxLossDescription: `${totalPremium.toFixed(0)} USD (zaplacené premium)`,
+        maxLossDescription: `${totalPremium.toFixed(
+          0
+        )} USD (zaplacené premium)`,
       };
     }
   } else {
@@ -413,7 +417,9 @@ export function calculateMaxProfitLoss(
       return {
         maxProfit: totalPremium,
         maxLoss: 'unlimited',
-        maxProfitDescription: `${totalPremium.toFixed(0)} USD (obdržené premium)`,
+        maxProfitDescription: `${totalPremium.toFixed(
+          0
+        )} USD (obdržené premium)`,
         maxLossDescription: 'Neomezená (akcie může růst neomezeně)',
       };
     } else {
@@ -422,7 +428,9 @@ export function calculateMaxProfitLoss(
       return {
         maxProfit: totalPremium,
         maxLoss: Math.max(0, maxLoss),
-        maxProfitDescription: `${totalPremium.toFixed(0)} USD (obdržené premium)`,
+        maxProfitDescription: `${totalPremium.toFixed(
+          0
+        )} USD (obdržené premium)`,
         maxLossDescription: `${maxLoss.toFixed(0)} USD (akcie klesne na 0)`,
       };
     }

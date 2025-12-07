@@ -711,7 +711,8 @@ function OptionCard({ holding, onEdit, onRefresh }: OptionCardProps) {
                         </Badge>
                         <Text size="sm">{formatDate(tx.date)}</Text>
                         <Text size="sm">
-                          {tx.contracts}× @ {formatPrice(tx.premium || 0, 'USD')}
+                          {tx.contracts}× @{' '}
+                          {formatPrice(tx.premium || 0, 'USD')}
                         </Text>
                       </div>
                       {tx.notes && (
