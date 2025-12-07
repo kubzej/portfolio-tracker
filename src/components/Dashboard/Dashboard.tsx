@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { holdingsApi } from '@/services/api';
-import type { PortfolioSummary, PortfolioTotals } from '@/types/database';
+import type {
+  PortfolioSummary,
+  PortfolioTotals,
+  OptionTransaction,
+} from '@/types/database';
 import {
   formatCurrency,
   formatPercent,
@@ -15,8 +19,10 @@ import {
   EmptyState,
   MobileSortControl,
   TransactionsList,
+  Tabs,
   type SortField,
 } from '@/components/shared';
+import { OptionsList } from '@/components/Options';
 import {
   SectionTitle,
   Ticker,
@@ -26,6 +32,8 @@ import {
   Text,
 } from '@/components/shared/Typography';
 import './Dashboard.css';
+
+type DashboardTab = 'stocks' | 'options';
 
 type SortKey =
   | 'ticker'
@@ -57,12 +65,23 @@ const SORT_FIELDS: SortField[] = [
 interface DashboardProps {
   portfolioId?: string | null;
   onStockClick?: (stockId: string) => void;
+  onEditOptionTransaction?: (transaction: OptionTransaction) => void;
 }
 
-export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
+const TAB_OPTIONS = [
+  { value: 'stocks', label: 'Akcie' },
+  { value: 'options', label: 'Opce' },
+];
+
+export function Dashboard({
+  portfolioId,
+  onStockClick,
+  onEditOptionTransaction,
+}: DashboardProps) {
   const [holdings, setHoldings] = useState<PortfolioSummary[]>([]);
   const [totals, setTotals] = useState<PortfolioTotals | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<DashboardTab>('stocks');
 
   // Show portfolio column when viewing "All Portfolios"
   const showPortfolioColumn = portfolioId === null;
@@ -230,11 +249,23 @@ export function Dashboard({ portfolioId, onStockClick }: DashboardProps) {
         </div>
       </div>
 
-      {/* Holdings Table */}
+      {/* Holdings Section with Tabs */}
       <div className="holdings-section">
-        <SectionTitle>Pozice</SectionTitle>
+        <div className="holdings-header">
+          <SectionTitle>Pozice</SectionTitle>
+          <Tabs
+            value={activeTab}
+            onChange={(val) => setActiveTab(val as DashboardTab)}
+            options={TAB_OPTIONS}
+          />
+        </div>
 
-        {holdings.length === 0 ? (
+        {activeTab === 'options' ? (
+          <OptionsList
+            portfolioId={portfolioId ?? ''}
+            onEditTransaction={onEditOptionTransaction}
+          />
+        ) : holdings.length === 0 ? (
           <EmptyState
             title="Žádné pozice"
             description="Přidejte akcii a transakci pro začátek!"

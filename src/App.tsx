@@ -5,6 +5,7 @@ import {
   StockModal,
   TransactionModal,
 } from './components/StocksList';
+import { OptionTransactionModal } from './components/Options';
 import { StockDetail } from './components/StockDetail';
 import { StockResearch } from './components/StockResearch';
 import { ResearchView } from './components/Research';
@@ -20,7 +21,7 @@ import { Button } from './components/shared/Button';
 import { Title, MetricLabel } from './components/shared/Typography';
 import { LoadingSpinner } from './components/shared/LoadingSpinner';
 import { useAuth } from './contexts/AuthContext';
-import { refreshAllPrices, portfoliosApi } from './services/api';
+import { refreshAllPrices, portfoliosApi, optionsApi } from './services/api';
 import type { Portfolio } from './types/database';
 import './App.css';
 
@@ -83,6 +84,10 @@ function App() {
   const [refreshingPrices, setRefreshingPrices] = useState(false);
   const [showAddStockModal, setShowAddStockModal] = useState(false);
   const [showAddTransactionModal, setShowAddTransactionModal] = useState(false);
+  const [showAddOptionModal, setShowAddOptionModal] = useState(false);
+  const [editOptionTransaction, setEditOptionTransaction] = useState<
+    import('./types').OptionTransaction | null
+  >(null);
   const [previousView, setPreviousView] = useState<View>('stocks');
 
   // Onboarding state
@@ -189,7 +194,11 @@ function App() {
   const handleRefreshPrices = async () => {
     setRefreshingPrices(true);
     try {
-      await refreshAllPrices();
+      // Refresh stock prices and option prices in parallel
+      await Promise.all([
+        refreshAllPrices(),
+        optionsApi.refreshPrices(selectedPortfolioId ?? undefined),
+      ]);
       setRefreshKey((k) => k + 1);
     } catch (err) {
       console.error('Failed to refresh prices:', err);
@@ -336,6 +345,9 @@ function App() {
           >
             + Přidat transakci
           </Button>
+          <Button variant="outline" onClick={() => setShowAddOptionModal(true)}>
+            + Přidat opci
+          </Button>
           {import.meta.env.DEV && (
             <Button
               variant="ghost"
@@ -355,6 +367,7 @@ function App() {
             key={`${refreshKey}-${selectedPortfolioId}`}
             portfolioId={selectedPortfolioId}
             onStockClick={handleStockClick}
+            onEditOptionTransaction={(tx) => setEditOptionTransaction(tx)}
           />
         )}
         {currentView === 'stocks' && (
@@ -426,6 +439,20 @@ function App() {
         onClose={() => setShowAddTransactionModal(false)}
         onSuccess={() => setRefreshKey((k) => k + 1)}
         portfolioId={selectedPortfolioId}
+      />
+      <OptionTransactionModal
+        isOpen={showAddOptionModal}
+        onClose={() => setShowAddOptionModal(false)}
+        onSuccess={() => setRefreshKey((k) => k + 1)}
+        portfolioId={selectedPortfolioId}
+        mode="open"
+      />
+      <OptionTransactionModal
+        isOpen={!!editOptionTransaction}
+        onClose={() => setEditOptionTransaction(null)}
+        onSuccess={() => setRefreshKey((k) => k + 1)}
+        transaction={editOptionTransaction}
+        mode="edit"
       />
     </div>
   );

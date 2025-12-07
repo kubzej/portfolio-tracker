@@ -1,6 +1,7 @@
 export { ActionSheet, ActionSheetOption } from './ActionSheet';
 export { InfoTooltip, stripTooltipMarkdown } from './InfoTooltip';
 export { Button } from './Button';
+export { ConfirmDialog } from './ConfirmDialog';
 export { Input, TextArea } from './Input';
 export { Modal } from './Modal';
 export { LoadingSpinner } from './LoadingSpinner';

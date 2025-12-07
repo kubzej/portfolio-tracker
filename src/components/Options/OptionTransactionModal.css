@@ -1,0 +1,161 @@
+/* Option Transaction Modal - consistent with TransactionModal */
+.option-transaction-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.option-transaction-form .form-error {
+  padding: var(--spacing-sm);
+  background: var(--bg-error);
+  border-radius: var(--radius-sm);
+}
+
+.modal-content .option-transaction-form .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.modal-content .option-transaction-form .form-row.form-row--first {
+  margin-top: 1.5rem;
+}
+
+.option-transaction-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+/* DTE Preview */
+.option-transaction-form .dte-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.option-transaction-form .dte-badge {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  height: 42px;
+  box-sizing: border-box;
+}
+
+.option-transaction-form .dte-badge--critical {
+  background: var(--bg-error);
+}
+
+.option-transaction-form .dte-badge--warning {
+  background: var(--bg-warning);
+}
+
+.option-transaction-form .dte-badge--safe {
+  background: var(--bg-secondary);
+}
+
+.option-transaction-form .dte-badge--expired {
+  background: var(--bg-error);
+  opacity: 0.7;
+}
+
+/* OCC Symbol Preview */
+.option-transaction-form .occ-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.option-transaction-form .occ-symbol {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.05em;
+}
+
+/* Action description hint - full width */
+.option-transaction-form > .hint {
+  margin-top: calc(-1 * var(--spacing-sm));
+}
+
+/* Transaction Summary */
+.modal-content .option-transaction-form .transaction-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.option-transaction-form .summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Form Actions */
+.modal-content .option-transaction-form .form-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding-top: 1rem;
+  margin-top: var(--spacing-sm);
+  border-top: none;
+}
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+  .option-transaction-form {
+    gap: 0;
+  }
+
+  .modal-content .option-transaction-form .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .option-transaction-form .form-group,
+  .modal-content .option-transaction-form .form-row > .form-group {
+    margin-bottom: 0.75rem;
+  }
+
+  /* BottomSheetSelect inside form-row */
+  .modal-content .option-transaction-form .form-row > .bottom-sheet-select {
+    margin-bottom: 0.75rem;
+  }
+
+  .option-transaction-form .dte-preview {
+    margin-bottom: 0.75rem;
+  }
+
+  .option-transaction-form .occ-preview {
+    margin-bottom: 0.75rem;
+  }
+
+  .option-transaction-form > .hint {
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+  }
+
+  .modal-content .option-transaction-form .transaction-summary {
+    margin-top: 0.25rem;
+    margin-bottom: 0;
+  }
+
+  .modal-content .option-transaction-form .form-actions {
+    flex-direction: column-reverse;
+    margin-top: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .modal-content .option-transaction-form .form-actions .button {
+    width: 100%;
+  }
+}

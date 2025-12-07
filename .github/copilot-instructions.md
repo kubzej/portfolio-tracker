@@ -192,6 +192,97 @@ Access `#debug` route on localhost to see all Typography and Form components.
 - Error handling with try/catch
 - Rate limiting delays between API calls
 
+## Testing (MANDATORY)
+
+### Test Framework
+
+- **Vitest** for unit tests
+- **React Testing Library** for component tests
+- Test files: `*.test.ts` or `*.test.tsx` next to source files
+
+### Testing Rules
+
+1. **When creating new code:**
+
+   - Create tests for all new API services (`services/api/*.ts`)
+   - Create tests for utility functions (`utils/*.ts`)
+   - Create tests for hooks (`hooks/*.ts`)
+   - Create tests for shared components (`components/shared/**/*.tsx`)
+
+2. **When modifying existing code:**
+
+   - Update existing tests to match new behavior
+   - Add tests for new functionality
+   - Run `npm test` before committing
+
+3. **Test file naming:**
+   - Place test file next to source: `myFile.ts` → `myFile.test.ts`
+   - Component tests: `MyComponent.tsx` → `MyComponent.test.tsx`
+
+### Test Structure
+
+```typescript
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+describe('moduleName', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('functionName', () => {
+    it('should do something specific', () => {
+      // Arrange
+      // Act
+      // Assert
+    });
+  });
+});
+```
+
+### Mocking Patterns
+
+**Supabase mock (for API services):**
+
+```typescript
+const mockSelect = vi.fn();
+const mockFrom = vi.fn(() => ({
+  select: mockSelect,
+  insert: mockInsert,
+  // ... chain methods
+}));
+
+vi.mock('@/lib/supabase', () => ({
+  supabase: {
+    from: (...args) => mockFrom(...args),
+  },
+}));
+```
+
+**Component render (with providers):**
+
+```typescript
+import { render } from '@/test/test-utils';
+
+render(<MyComponent prop="value" />);
+```
+
+### What to Test
+
+| Type         | What to test                                      |
+| ------------ | ------------------------------------------------- |
+| API Services | CRUD operations, error handling, query parameters |
+| Utils        | Pure functions, edge cases, null handling         |
+| Hooks        | State changes, side effects, return values        |
+| Components   | Rendering, user interactions, props handling      |
+
+### Running Tests
+
+```bash
+npm test          # Run all tests
+npm test -- --watch  # Watch mode
+npm test -- myFile   # Run specific file
+```
+
 ## API Keys & Limits
 
 ### Finnhub (FREE tier)
