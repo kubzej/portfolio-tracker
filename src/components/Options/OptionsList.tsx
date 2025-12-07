@@ -28,6 +28,7 @@ import {
   calculateMaxProfitLoss,
   estimateProbabilityOfProfit,
 } from '@/utils/options';
+import { generateAllAlerts, countAlertsBySeverity } from '@/utils/optionAlerts';
 import './OptionsList.css';
 
 const ACTION_LABELS: Record<string, string> = {
@@ -87,17 +88,13 @@ export function OptionsList({
     setLoading(true);
     setError(null);
     try {
-      console.log('[OptionsList] Loading holdings for portfolio:', portfolioId);
       const holdingsData = await optionsApi.getHoldings(portfolioId);
-      console.log('[OptionsList] Holdings loaded:', holdingsData);
       setHoldings(holdingsData);
 
       // Load prices for all option symbols
       if (holdingsData.length > 0) {
         const symbols = holdingsData.map((h: OptionHolding) => h.option_symbol);
-        console.log('[OptionsList] Loading prices for symbols:', symbols);
         const pricesData = await optionsApi.getPrices(symbols);
-        console.log('[OptionsList] Prices loaded:', pricesData);
         const pricesMap: Record<string, OptionPrice> = {};
         pricesData.forEach((p: OptionPrice) => {
           pricesMap[p.option_symbol] = p;
@@ -108,7 +105,6 @@ export function OptionsList({
         const uniqueSymbols = [
           ...new Set(holdingsData.map((h: OptionHolding) => h.symbol)),
         ];
-        console.log('[OptionsList] Loading stock prices for:', uniqueSymbols);
         const portfolioSummary = await holdingsApi.getPortfolioSummary(
           portfolioId
         );
@@ -118,7 +114,6 @@ export function OptionsList({
             stockPricesMap[h.ticker] = h.current_price;
           }
         });
-        console.log('[OptionsList] Stock prices loaded:', stockPricesMap);
         setInternalStockPrices(stockPricesMap);
       }
     } catch (err) {
@@ -186,10 +181,26 @@ export function OptionsList({
     });
   }, [holdings, prices, stockPrices]);
 
-  // Debug log enriched holdings
-  useEffect(() => {
-    console.log('[OptionsList] Enriched holdings:', enrichedHoldings);
+  // Generate alerts for all holdings
+  const alerts = useMemo(() => {
+    return generateAllAlerts(
+      enrichedHoldings.map((h) => ({
+        option_symbol: h.option_symbol,
+        symbol: h.symbol,
+        option_type: h.option_type,
+        position: h.position,
+        strike_price: h.strike_price,
+        dte: h.dte,
+        moneyness: h.moneyness,
+        plPercent: h.plPercent,
+        theta: h.theta,
+        contracts: h.contracts,
+        current_price: h.current_price,
+      }))
+    );
   }, [enrichedHoldings]);
+
+  const alertCounts = useMemo(() => countAlertsBySeverity(alerts), [alerts]);
 
   // Group by expiration
   const groupedByExpiration = useMemo(() => {
@@ -260,6 +271,50 @@ export function OptionsList({
 
   return (
     <div className="options-list">
+      {/* Alerts Banner */}
+      {alerts.length > 0 && (
+        <div className="options-alerts">
+          <div className="options-alerts-header">
+            <Text size="sm" weight="medium">
+              Upozornění
+            </Text>
+            {alertCounts.danger > 0 && (
+              <Badge variant="sell">{alertCounts.danger}</Badge>
+            )}
+            {alertCounts.warning > 0 && (
+              <Badge variant="warning">{alertCounts.warning}</Badge>
+            )}
+          </div>
+          <div className="options-alerts-list">
+            {alerts.slice(0, 5).map((alert, idx) => (
+              <div key={`${alert.optionSymbol}-${alert.type}-${idx}`}>
+                <Text
+                  as="span"
+                  size="sm"
+                  weight="medium"
+                  color={alert.severity === 'danger' ? 'danger' : 'secondary'}
+                >
+                  {alert.severity === 'danger'
+                    ? 'KRITICKÉ'
+                    : alert.severity === 'warning'
+                    ? 'VAROVÁNÍ'
+                    : 'INFO'}
+                </Text>
+                <Text as="span" size="sm" color="muted">
+                  {' '}
+                  {alert.message}
+                </Text>
+              </div>
+            ))}
+            {alerts.length > 5 && (
+              <Text size="sm" color="muted">
+                +{alerts.length - 5} dalších
+              </Text>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Summary */}
       {enrichedHoldings.length > 0 && (
         <div className="options-summary">

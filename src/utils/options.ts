@@ -462,6 +462,48 @@ export function estimateProbabilityOfProfit(
   }
 }
 
+/**
+ * Vypočítá Risk/Reward ratio
+ *
+ * @returns Poměr potenciálního zisku k potenciální ztrátě
+ * - > 1 znamená lepší risk/reward (více potenciálního zisku než ztráty)
+ * - < 1 znamená horší risk/reward
+ * - null pokud nelze spočítat (unlimited na obou stranách)
+ */
+export function calculateRiskRewardRatio(
+  maxProfit: number | 'unlimited',
+  maxLoss: number | 'unlimited'
+): { ratio: number | null; description: string } {
+  // Oba unlimited - nelze spočítat
+  if (maxProfit === 'unlimited' && maxLoss === 'unlimited') {
+    return { ratio: null, description: 'N/A' };
+  }
+
+  // Unlimited profit - velmi dobrý risk/reward
+  if (maxProfit === 'unlimited') {
+    return { ratio: Infinity, description: '∞ : 1' };
+  }
+
+  // Unlimited loss - velmi špatný risk/reward
+  if (maxLoss === 'unlimited') {
+    return { ratio: 0, description: '0 : ∞' };
+  }
+
+  // Normální výpočet
+  if (maxLoss === 0) {
+    return { ratio: Infinity, description: '∞ : 1' };
+  }
+
+  const ratio = maxProfit / maxLoss;
+
+  // Formát: "2.5 : 1" nebo "1 : 3"
+  if (ratio >= 1) {
+    return { ratio, description: `${ratio.toFixed(1)} : 1` };
+  } else {
+    return { ratio, description: `1 : ${(1 / ratio).toFixed(1)}` };
+  }
+}
+
 // ==========================================
 // Validation Functions
 // ==========================================
