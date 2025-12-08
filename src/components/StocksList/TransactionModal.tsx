@@ -268,6 +268,7 @@ export function TransactionModal({
           type: formData.type,
           quantity: formData.quantity,
           price_per_share: formData.price_per_share,
+          currency: formData.currency,
           exchange_rate_to_czk: formData.exchange_rate_to_czk,
           fees: formData.fees,
           notes: formData.notes || undefined,

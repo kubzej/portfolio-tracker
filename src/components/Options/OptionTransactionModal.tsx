@@ -420,6 +420,7 @@ export function OptionTransactionModal({
           date: formData.date,
           contracts: formData.contracts,
           premium: formData.premium ?? undefined,
+          currency: formData.currency,
           fees: formData.fees,
           notes: formData.notes || undefined,
         });

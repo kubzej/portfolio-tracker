@@ -445,6 +445,7 @@ export interface UpdateOptionTransactionInput {
   action?: OptionAction;
   contracts?: number;
   premium?: number | null;
+  currency?: string;
   fees?: number;
   date?: string;
   notes?: string | null;
