@@ -41,6 +41,12 @@ const CURRENCY_OPTIONS: SelectOption[] = [
   { value: 'CNY', label: 'CNY' },
   { value: 'CZK', label: 'CZK' },
   { value: 'HKD', label: 'HKD' },
+  // Nordics & Central Europe
+  { value: 'SEK', label: 'SEK' }, // Sweden
+  { value: 'DKK', label: 'DKK' }, // Denmark
+  { value: 'NOK', label: 'NOK' }, // Norway
+  { value: 'PLN', label: 'PLN' }, // Poland
+  { value: 'HUF', label: 'HUF' }, // Hungary
 ];
 
 const EMPTY_FORM: CreateStockInput = {
