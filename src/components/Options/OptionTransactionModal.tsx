@@ -34,7 +34,19 @@ const CURRENCY_OPTIONS: SelectOption[] = [
   { value: 'USD', label: 'USD' },
   { value: 'EUR', label: 'EUR' },
   { value: 'GBP', label: 'GBP' },
+  { value: 'JPY', label: 'JPY' },
+  { value: 'CHF', label: 'CHF' },
+  { value: 'CAD', label: 'CAD' },
+  { value: 'AUD', label: 'AUD' },
+  { value: 'CNY', label: 'CNY' },
   { value: 'CZK', label: 'CZK' },
+  { value: 'HKD', label: 'HKD' },
+  // Nordics & Central Europe
+  { value: 'SEK', label: 'SEK' }, // Sweden
+  { value: 'DKK', label: 'DKK' }, // Denmark
+  { value: 'NOK', label: 'NOK' }, // Norway
+  { value: 'PLN', label: 'PLN' }, // Poland
+  { value: 'HUF', label: 'HUF' }, // Hungary
 ];
 
 // Position opening actions (for new positions)
