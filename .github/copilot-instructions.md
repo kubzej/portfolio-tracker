@@ -40,18 +40,26 @@ supabase/
 
 ### Recommendations System
 
-**Documentation:** See `/docs/RECOMMENDATIONS_ALGORITHM.md` for complete details.
+**Documentation:** See `/docs/SIGNALS_SYSTEM.md` for complete details.
 
-The system generates recommendations by combining 6 score categories:
+The system generates recommendations by combining 6 score categories (v3.2):
 
-| Category    | Weight | Source                     |
+**Holdings view:**
+| Category | Weight | Source |
 | ----------- | ------ | -------------------------- |
-| Fundamental | 20%    | Finnhub metrics            |
-| Technical   | 25%    | Calculated from Yahoo data |
-| Analyst     | 15%    | Finnhub recommendations    |
-| News        | 10%    | News sentiment             |
-| Insider     | 10%    | Finnhub insider data       |
-| Portfolio   | 20%    | User's position context    |
+| Fundamental | 30% | Finnhub metrics |
+| Technical | 26% | Calculated from Yahoo data |
+| Analyst | 10% | Finnhub recommendations (reduced - lagging indicator) |
+| News+Insider| 14% | News sentiment + Finnhub insider data |
+| Portfolio | 20% | User's position context |
+
+**Research view (no portfolio):**
+| Category | Weight |
+| ----------- | ------ |
+| Fundamental | 38% |
+| Technical | 32% |
+| Analyst | 12% |
+| News+Insider| 18% |
 
 **Key files:**
 

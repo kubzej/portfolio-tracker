@@ -44,7 +44,7 @@ export interface ScoreComponent {
   sentiment: 'bullish' | 'bearish' | 'neutral';
   /** Raw score before normalization (v3.1: tracks actual point values) */
   rawScore?: number;
-  /** Raw max score before normalization (v3.1: e.g., 140b, 120b, 80b, 60b) */
+  /** Raw max score before normalization (v3.2: e.g., 150b, 130b, 50b, 70b) */
   rawMaxScore?: number;
 }
 
@@ -321,37 +321,37 @@ export interface RecommendationInput {
 // ============================================================================
 
 /**
- * Weight distribution for composite score (v3.1)
+ * Weight distribution for composite score (v3.2)
  *
  * Holdings view (500 points total):
- * - Fundamental: 140b = 28%
- * - Technical: 120b = 24%
- * - Analyst: 80b = 16%
- * - News+Insider: 60b = 12%
+ * - Fundamental: 150b = 30%
+ * - Technical: 130b = 26%
+ * - Analyst: 50b = 10% (reduced - analysts are lagging indicators)
+ * - News+Insider: 70b = 14%
  * - Portfolio: 100b = 20%
  */
 const SCORE_WEIGHTS = {
-  fundamental: 0.28,
-  technical: 0.24,
-  analyst: 0.16,
-  newsInsider: 0.12,
+  fundamental: 0.3,
+  technical: 0.26,
+  analyst: 0.1,
+  newsInsider: 0.14,
   portfolio: 0.2,
 };
 
 /**
- * Weight distribution for Research view (v3.1)
+ * Weight distribution for Research view (v3.2)
  *
  * Research view (400 points total, no portfolio):
- * - Fundamental: 140b = 35%
- * - Technical: 120b = 30%
- * - Analyst: 80b = 20%
- * - News+Insider: 60b = 15%
+ * - Fundamental: 152b = 38%
+ * - Technical: 128b = 32%
+ * - Analyst: 48b = 12% (reduced - analysts are lagging indicators)
+ * - News+Insider: 72b = 18%
  */
 const SCORE_WEIGHTS_RESEARCH = {
-  fundamental: 0.35,
-  technical: 0.3,
-  analyst: 0.2,
-  newsInsider: 0.15,
+  fundamental: 0.38,
+  technical: 0.32,
+  analyst: 0.12,
+  newsInsider: 0.18,
 };
 
 /** Signal priorities (lower = higher priority) */
