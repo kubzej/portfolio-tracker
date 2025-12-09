@@ -258,21 +258,28 @@ export function Analysis({ portfolioId }: AnalysisProps) {
         errors: [],
       });
 
-      // Fetch ALL data in parallel: analyst, holdings, technical, and news
-      const [analysisResult, holdings, technicalResult, newsResult] =
-        await Promise.all([
-          fetchAnalystData(portfolioId),
-          holdingsApi.getPortfolioSummary(portfolioId),
-          fetchTechnicalData(portfolioId).catch(() => ({
-            data: [],
-            rateLimited: undefined,
-          })),
-          fetchPortfolioNews(portfolioId).catch(() => ({ articles: [] })),
-        ]);
+      // Fetch analyst, holdings, and technical data in parallel
+      // News is fetched AFTER to avoid Finnhub rate limiting (60 calls/min)
+      const [analysisResult, holdings, technicalResult] = await Promise.all([
+        fetchAnalystData(portfolioId),
+        holdingsApi.getPortfolioSummary(portfolioId),
+        fetchTechnicalData(portfolioId).catch(() => ({
+          data: [],
+          rateLimited: undefined,
+        })),
+      ]);
+
+      // Fetch news AFTER analyst data to avoid rate limiting
+      // With caching, subsequent loads will be fast
+      const newsResult = await fetchPortfolioNews(portfolioId).catch(() => ({
+        articles: [],
+        fetchedTickers: [] as string[],
+      }));
 
       // Store technical and news data
       const techData = technicalResult.data || [];
       const news = newsResult.articles || [];
+      const newsFetchedTickers = new Set(newsResult.fetchedTickers || []);
       setTechnicalData(techData);
       setNewsArticles(news);
 
@@ -340,6 +347,8 @@ export function Analysis({ portfolioId }: AnalysisProps) {
         );
 
         const hasStockNews = news.some((n) => n.ticker === stock.ticker);
+        // Check if news fetch was attempted for this ticker (not rate limited)
+        const newsWasFetched = newsFetchedTickers.has(stock.ticker);
 
         // Fundamentals: need at least 2 actual metric values
         const f = stock.fundamentals;
@@ -371,7 +380,13 @@ export function Analysis({ portfolioId }: AnalysisProps) {
         // - Analyst data (recommendations/consensus)
         // - Fundamentals (at least 2 metrics)
         // - Technical data (RSI or MACD)
-        const isValid = hasPrice && hasAnalyst && hasFundamentals && hasTech;
+        // - News was fetched (not rate limited, but can be empty)
+        const isValid =
+          hasPrice &&
+          hasAnalyst &&
+          hasFundamentals &&
+          hasTech &&
+          newsWasFetched;
 
         return {
           ticker: stock.ticker,

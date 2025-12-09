@@ -34,7 +34,8 @@ type CacheDataType =
   | 'earnings'
   | 'peers'
   | 'profile'
-  | 'insider';
+  | 'insider'
+  | 'description';
 
 // Cache TTL in hours
 const CACHE_TTL_HOURS: Record<CacheDataType, number> = {
@@ -44,6 +45,7 @@ const CACHE_TTL_HOURS: Record<CacheDataType, number> = {
   insider: 24,
   peers: 30 * 24, // 30 days
   profile: 30 * 24, // 30 days
+  description: 90 * 24, // 90 days - company descriptions rarely change
 };
 
 // Delay between API calls in ms (to avoid rate limiting)
@@ -767,33 +769,46 @@ async function fetchAnalystData(
     }
 
     // Fetch company description from Alpha Vantage (US stocks only)
+    // Alpha Vantage has very low limits (25/day FREE), so we cache for 90 days
     let description: string | null = null;
     let descriptionSource: 'alpha' | null = null;
-    console.log(
-      `Alpha Vantage: key=${
-        ALPHA_VANTAGE_API_KEY ? 'present' : 'missing'
-      }, ticker=${ticker}`
-    );
-    if (ALPHA_VANTAGE_API_KEY) {
+
+    // Check cache first for description
+    if (!forceRefresh) {
+      const cachedDescription = await getCachedData<string>(
+        supabase,
+        ticker,
+        'description'
+      );
+      if (cachedDescription) {
+        description = cachedDescription;
+        descriptionSource = 'alpha';
+        console.log(`[CACHE HIT] ${ticker} description`);
+      }
+    }
+
+    // Only fetch from Alpha Vantage if not cached and API key is present
+    if (!description && ALPHA_VANTAGE_API_KEY) {
       try {
         const alphaSymbol = yahooToAlphaVantageTicker(ticker);
         const alphaUrl = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${encodeURIComponent(
           alphaSymbol
         )}&apikey=${ALPHA_VANTAGE_API_KEY}`;
-        console.log(`Fetching Alpha Vantage: ${alphaSymbol}`);
+        console.log(`[API] ${ticker} fetching Alpha Vantage description...`);
         const alphaRes = await fetch(alphaUrl);
 
         if (alphaRes.ok) {
           const alphaData = await alphaRes.json();
-          console.log(
-            `Alpha Vantage response: keys=${
-              Object.keys(alphaData).length
-            }, data=${JSON.stringify(alphaData).substring(0, 200)}`
-          );
-          if (alphaData?.Description && !alphaData?.Note) {
+          if (
+            alphaData?.Description &&
+            !alphaData?.Note &&
+            !alphaData?.Information
+          ) {
             description = alphaData.Description;
             descriptionSource = 'alpha';
-            console.log(`Got description: ${description?.substring(0, 50)}...`);
+            // Cache the description for 90 days
+            await setCachedData(supabase, ticker, 'description', description);
+            console.log(`[CACHE SET] ${ticker} description`);
           } else if (alphaData?.Information) {
             console.log(`Alpha Vantage rate limited: ${alphaData.Information}`);
             rateLimitInfo.alpha = true;
