@@ -1,8 +1,16 @@
 // Supabase Edge Function for fetching analyst data from Finnhub + Yahoo Finance
 // Deploy with: supabase functions deploy fetch-analyst-data
+//
+// Features:
+// - Finnhub API cache to reduce rate limit issues (60 calls/min FREE tier)
+// - Sequential API calls with delays between tickers
+// - Retry logic with exponential backoff on 429 errors
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import {
+  createClient,
+  SupabaseClient,
+} from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,25 +24,173 @@ const ALPHA_VANTAGE_API_KEY = Deno.env.get('ALPHA_VANTAGE_API_KEY') ?? '';
 // Rate limit tracking
 let rateLimitInfo = { finnhub: false, yahoo: false, alpha: false };
 
-// Safe fetch with rate limit detection and proper headers
-async function safeFetch(
+// ============================================================================
+// CACHE CONFIGURATION
+// ============================================================================
+
+type CacheDataType =
+  | 'recommendation'
+  | 'metrics'
+  | 'earnings'
+  | 'peers'
+  | 'profile'
+  | 'insider';
+
+// Cache TTL in hours
+const CACHE_TTL_HOURS: Record<CacheDataType, number> = {
+  recommendation: 24,
+  metrics: 24,
+  earnings: 24,
+  insider: 24,
+  peers: 30 * 24, // 30 days
+  profile: 30 * 24, // 30 days
+};
+
+// Delay between API calls in ms (to avoid rate limiting)
+const API_CALL_DELAY_MS = 150;
+const TICKER_DELAY_MS = 300;
+
+// Helper to delay execution
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// ============================================================================
+// CACHE FUNCTIONS
+// ============================================================================
+
+interface CacheEntry {
+  ticker: string;
+  data_type: string;
+  data: unknown;
+  fetched_at: string;
+  expires_at: string;
+}
+
+async function getCachedData<T>(
+  supabase: SupabaseClient,
+  ticker: string,
+  dataType: CacheDataType
+): Promise<T | null> {
+  try {
+    const { data, error } = await supabase
+      .from('finnhub_cache')
+      .select('data, expires_at')
+      .eq('ticker', ticker)
+      .eq('data_type', dataType)
+      .single();
+
+    if (error || !data) return null;
+
+    // Check if expired
+    if (new Date(data.expires_at) < new Date()) {
+      console.log(`Cache expired for ${ticker}/${dataType}`);
+      return null;
+    }
+
+    return data.data as T;
+  } catch {
+    return null;
+  }
+}
+
+async function setCachedData(
+  supabase: SupabaseClient,
+  ticker: string,
+  dataType: CacheDataType,
+  data: unknown
+): Promise<void> {
+  // Don't cache null/empty data
+  if (data === null || data === undefined) return;
+  if (Array.isArray(data) && data.length === 0) return;
+  if (typeof data === 'object' && Object.keys(data as object).length === 0)
+    return;
+
+  const ttlHours = CACHE_TTL_HOURS[dataType];
+  const expiresAt = new Date(
+    Date.now() + ttlHours * 60 * 60 * 1000
+  ).toISOString();
+
+  try {
+    await supabase.from('finnhub_cache').upsert(
+      {
+        ticker,
+        data_type: dataType,
+        data,
+        fetched_at: new Date().toISOString(),
+        expires_at: expiresAt,
+      },
+      {
+        onConflict: 'ticker,data_type',
+      }
+    );
+    console.log(`Cache SET for ${ticker}/${dataType}, expires: ${expiresAt}`);
+  } catch (err) {
+    console.error(`Failed to cache ${ticker}/${dataType}:`, err);
+  }
+}
+
+async function clearCacheForTicker(
+  supabase: SupabaseClient,
+  ticker: string
+): Promise<void> {
+  await supabase.from('finnhub_cache').delete().eq('ticker', ticker);
+  console.log(`Cache cleared for ${ticker}`);
+}
+
+// ============================================================================
+// FETCH WITH RETRY
+// ============================================================================
+
+async function fetchWithRetry(
   url: string,
-  source: 'finnhub' | 'yahoo'
-): Promise<Response> {
+  source: 'finnhub' | 'yahoo',
+  maxRetries = 3
+): Promise<Response | null> {
   const headers: Record<string, string> = {};
 
-  // Yahoo requires User-Agent header
   if (source === 'yahoo') {
     headers['User-Agent'] =
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36';
   }
 
-  const response = await fetch(url, { headers });
-  if (response.status === 429) {
-    rateLimitInfo[source] = true;
-    console.warn(`Rate limited by ${source}: ${url}`);
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, { headers });
+
+      if (response.status === 429) {
+        rateLimitInfo[source] = true;
+        const waitTime = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+        console.warn(
+          `Rate limited by ${source}, attempt ${
+            attempt + 1
+          }/${maxRetries}, waiting ${waitTime}ms`
+        );
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+        continue;
+      }
+
+      return response;
+    } catch (err) {
+      console.error(`Fetch error for ${url}:`, err);
+      if (attempt < maxRetries - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
   }
-  return response;
+
+  return null;
+}
+
+// Safe fetch with rate limit detection (backwards compatible)
+async function safeFetch(
+  url: string,
+  source: 'finnhub' | 'yahoo'
+): Promise<Response> {
+  const result = await fetchWithRetry(url, source);
+  if (!result) {
+    // Return a fake 429 response if all retries failed
+    return new Response(null, { status: 429 });
+  }
+  return result;
 }
 
 // Earnings surprise data
@@ -138,10 +294,63 @@ interface AnalystData {
   error?: string;
 }
 
+// Types for Finnhub API responses (used for caching)
+interface FinnhubRecommendation {
+  buy: number;
+  hold: number;
+  period: string;
+  sell: number;
+  strongBuy: number;
+  strongSell: number;
+  symbol: string;
+}
+
+interface FinnhubQuote {
+  c: number; // current price
+  d: number; // change
+  dp: number; // percent change
+  h: number; // high
+  l: number; // low
+  o: number; // open
+  pc: number; // previous close
+}
+
+interface FinnhubEarnings {
+  actual: number | null;
+  estimate: number | null;
+  period: string;
+  surprise: number | null;
+  surprisePercent: number | null;
+  symbol: string;
+}
+
+interface FinnhubInsiderData {
+  year: number;
+  month: number;
+  mspr?: number;
+  change?: number;
+}
+
+interface FinnhubMetrics {
+  metric?: Record<string, number | null>;
+}
+
+interface FinnhubProfile {
+  finnhubIndustry?: string;
+}
+
+interface FinnhubInsider {
+  data?: FinnhubInsiderData[];
+}
+
+// Main function to fetch analyst data for a single ticker
+// Now with caching support to avoid rate limiting
 async function fetchAnalystData(
   ticker: string,
   stockName: string,
-  finnhubTicker?: string
+  finnhubTicker: string | undefined,
+  supabase: SupabaseClient,
+  forceRefresh: boolean = false
 ): Promise<AnalystData> {
   // Use provided finnhubTicker or default to ticker (for US stocks)
   const finnhubSymbol = finnhubTicker || ticker;
@@ -213,80 +422,240 @@ async function fetchAnalystData(
   };
 
   try {
-    // Fetch data from multiple Finnhub endpoints in parallel
-    // Note: price-target is PREMIUM so we skip it, recommendation and quote are FREE
-    const [
-      recommendationRes,
-      quoteRes,
-      earningsRes,
-      metricsRes,
-      peersRes,
-      profileRes,
-      insiderRes,
-    ] = await Promise.all([
-      // Recommendation trends endpoint (FREE)
-      safeFetch(
+    // Initialize data holders
+    let recommendations: FinnhubRecommendation[] | null = null;
+    let quote: FinnhubQuote | null = null;
+    let earningsData: FinnhubEarnings[] | null = null;
+    let metricsData: FinnhubMetrics | null = null;
+    let peersData: string[] | null = null;
+    let profileData: FinnhubProfile | null = null;
+    let insiderData: FinnhubInsider | null = null;
+
+    // Track which endpoints we need to fetch from API
+    // Default: need to fetch everything (will be set to false if cache hit)
+    const needsFetch = {
+      recommendation: true,
+      quote: true, // Always fetch quote - it's real-time data
+      earnings: true,
+      metrics: true,
+      peers: true,
+      profile: true,
+      insider: true,
+    };
+
+    // STEP 1: Check cache for non-real-time data (only if not forcing refresh)
+    if (!forceRefresh) {
+      const cachedRecommendation = await getCachedData<FinnhubRecommendation[]>(
+        supabase,
+        finnhubSymbol,
+        'recommendation'
+      );
+      if (cachedRecommendation) {
+        recommendations = cachedRecommendation;
+        needsFetch.recommendation = false;
+        console.log(`[CACHE HIT] ${ticker} recommendation`);
+      }
+
+      const cachedEarnings = await getCachedData<FinnhubEarnings[]>(
+        supabase,
+        finnhubSymbol,
+        'earnings'
+      );
+      if (cachedEarnings) {
+        earningsData = cachedEarnings;
+        needsFetch.earnings = false;
+        console.log(`[CACHE HIT] ${ticker} earnings`);
+      }
+
+      const cachedMetrics = await getCachedData<FinnhubMetrics>(
+        supabase,
+        finnhubSymbol,
+        'metrics'
+      );
+      if (cachedMetrics) {
+        metricsData = cachedMetrics;
+        needsFetch.metrics = false;
+        console.log(`[CACHE HIT] ${ticker} metrics`);
+      }
+
+      const cachedPeers = await getCachedData<string[]>(
+        supabase,
+        finnhubSymbol,
+        'peers'
+      );
+      if (cachedPeers) {
+        peersData = cachedPeers;
+        needsFetch.peers = false;
+        console.log(`[CACHE HIT] ${ticker} peers`);
+      }
+
+      const cachedProfile = await getCachedData<FinnhubProfile>(
+        supabase,
+        finnhubSymbol,
+        'profile'
+      );
+      if (cachedProfile) {
+        profileData = cachedProfile;
+        needsFetch.profile = false;
+        console.log(`[CACHE HIT] ${ticker} profile`);
+      }
+
+      const cachedInsider = await getCachedData<FinnhubInsider>(
+        supabase,
+        finnhubSymbol,
+        'insider'
+      );
+      if (cachedInsider) {
+        insiderData = cachedInsider;
+        needsFetch.insider = false;
+        console.log(`[CACHE HIT] ${ticker} insider`);
+      }
+    }
+
+    // STEP 2: Fetch missing data from Finnhub SEQUENTIALLY with delays
+    // This is critical for rate limiting - we can't use Promise.all anymore
+
+    if (needsFetch.recommendation) {
+      console.log(`[API] ${ticker} fetching recommendation...`);
+      const res = await fetchWithRetry(
         `https://finnhub.io/api/v1/stock/recommendation?symbol=${encodeURIComponent(
           finnhubSymbol
         )}&token=${FINNHUB_API_KEY}`,
         'finnhub'
-      ),
-      // Quote endpoint for current price (FREE)
-      safeFetch(
+      );
+      if (res?.ok) {
+        recommendations = await res.json();
+        if (
+          recommendations &&
+          Array.isArray(recommendations) &&
+          recommendations.length > 0
+        ) {
+          await setCachedData(
+            supabase,
+            finnhubSymbol,
+            'recommendation',
+            recommendations
+          );
+        }
+      }
+      await delay(API_CALL_DELAY_MS);
+    }
+
+    if (needsFetch.quote) {
+      // Quote is always fresh - don't cache
+      const res = await fetchWithRetry(
         `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(
           finnhubSymbol
         )}&token=${FINNHUB_API_KEY}`,
         'finnhub'
-      ),
-      // Earnings surprises - last 4 quarters (FREE)
-      safeFetch(
+      );
+      if (res?.ok) {
+        quote = await res.json();
+      }
+      await delay(API_CALL_DELAY_MS);
+    }
+
+    if (needsFetch.earnings) {
+      console.log(`[API] ${ticker} fetching earnings...`);
+      const res = await fetchWithRetry(
         `https://finnhub.io/api/v1/stock/earnings?symbol=${encodeURIComponent(
           finnhubSymbol
         )}&token=${FINNHUB_API_KEY}`,
         'finnhub'
-      ),
-      // Basic financials/metrics (FREE)
-      safeFetch(
+      );
+      if (res?.ok) {
+        earningsData = await res.json();
+        if (
+          earningsData &&
+          Array.isArray(earningsData) &&
+          earningsData.length > 0
+        ) {
+          await setCachedData(
+            supabase,
+            finnhubSymbol,
+            'earnings',
+            earningsData
+          );
+        }
+      }
+      await delay(API_CALL_DELAY_MS);
+    }
+
+    if (needsFetch.metrics) {
+      console.log(`[API] ${ticker} fetching metrics...`);
+      const res = await fetchWithRetry(
         `https://finnhub.io/api/v1/stock/metric?symbol=${encodeURIComponent(
           finnhubSymbol
         )}&metric=all&token=${FINNHUB_API_KEY}`,
         'finnhub'
-      ),
-      // Company peers (FREE)
-      safeFetch(
+      );
+      if (res?.ok) {
+        metricsData = await res.json();
+        if (metricsData?.metric && Object.keys(metricsData.metric).length > 0) {
+          await setCachedData(supabase, finnhubSymbol, 'metrics', metricsData);
+        }
+      }
+      await delay(API_CALL_DELAY_MS);
+    }
+
+    if (needsFetch.peers) {
+      console.log(`[API] ${ticker} fetching peers...`);
+      const res = await fetchWithRetry(
         `https://finnhub.io/api/v1/stock/peers?symbol=${encodeURIComponent(
           finnhubSymbol
         )}&token=${FINNHUB_API_KEY}`,
         'finnhub'
-      ),
-      // Company profile (FREE version)
-      safeFetch(
+      );
+      if (res?.ok) {
+        peersData = await res.json();
+        if (peersData && Array.isArray(peersData) && peersData.length > 0) {
+          await setCachedData(supabase, finnhubSymbol, 'peers', peersData);
+        }
+      }
+      await delay(API_CALL_DELAY_MS);
+    }
+
+    if (needsFetch.profile) {
+      console.log(`[API] ${ticker} fetching profile...`);
+      const res = await fetchWithRetry(
         `https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(
           finnhubSymbol
         )}&token=${FINNHUB_API_KEY}`,
         'finnhub'
-      ),
-      // Insider sentiment (FREE) - get last 12 months for better coverage
-      safeFetch(
+      );
+      if (res?.ok) {
+        profileData = await res.json();
+        if (profileData && profileData.finnhubIndustry) {
+          await setCachedData(supabase, finnhubSymbol, 'profile', profileData);
+        }
+      }
+      await delay(API_CALL_DELAY_MS);
+    }
+
+    if (needsFetch.insider) {
+      console.log(`[API] ${ticker} fetching insider...`);
+      const res = await fetchWithRetry(
         `https://finnhub.io/api/v1/stock/insider-sentiment?symbol=${encodeURIComponent(
           finnhubSymbol
         )}&from=${getDateMonthsAgo(
           12
         )}&to=${getTodayDate()}&token=${FINNHUB_API_KEY}`,
         'finnhub'
-      ),
-    ]);
+      );
+      if (res?.ok) {
+        insiderData = await res.json();
+        if (
+          insiderData?.data &&
+          Array.isArray(insiderData.data) &&
+          insiderData.data.length > 0
+        ) {
+          await setCachedData(supabase, finnhubSymbol, 'insider', insiderData);
+        }
+      }
+      // No delay after last Finnhub call
+    }
 
-    // Parse responses
-    const recommendations = recommendationRes.ok
-      ? await recommendationRes.json()
-      : null;
-    const quote = quoteRes.ok ? await quoteRes.json() : null;
-    const earningsData = earningsRes.ok ? await earningsRes.json() : null;
-    const metricsData = metricsRes.ok ? await metricsRes.json() : null;
-    const peersData = peersRes.ok ? await peersRes.json() : null;
-    const profileData = profileRes.ok ? await profileRes.json() : null;
-    const insiderData = insiderRes.ok ? await insiderRes.json() : null;
+    // Rest of the function continues with data processing...
 
     // Check if this is a non-US stock (has exchange suffix like .DE, .L, etc.)
     // For non-US stocks, we ALWAYS use Yahoo for price (Finnhub might return ADR price in USD)
@@ -857,19 +1226,45 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get parameters from request body
-    const { portfolioId, ticker, stockName, finnhubTicker } = await req
-      .json()
-      .catch(() => ({}));
+    // forceRefresh: boolean - skip cache and fetch fresh data
+    // refreshTickers: string[] - only clear cache for specific tickers (used with forceRefresh)
+    const {
+      portfolioId,
+      ticker,
+      stockName,
+      finnhubTicker,
+      forceRefresh,
+      refreshTickers,
+    } = await req.json().catch(() => ({}));
+
+    // If forceRefresh with specific tickers, clear their cache first
+    if (forceRefresh && refreshTickers && Array.isArray(refreshTickers)) {
+      console.log(
+        `[CACHE] Clearing cache for tickers: ${refreshTickers.join(', ')}`
+      );
+      for (const tickerToClear of refreshTickers) {
+        await clearCacheForTicker(supabase, tickerToClear);
+      }
+    }
 
     // If single ticker is provided, fetch just that one
     if (ticker) {
+      // Clear cache for this ticker if forceRefresh
+      if (forceRefresh) {
+        const finnhubTickerToClear =
+          finnhubTicker || (await yahooToFinnhubTicker(ticker));
+        await clearCacheForTicker(supabase, finnhubTickerToClear);
+      }
+
       // Use provided finnhubTicker, or auto-detect US ADR for non-US stocks
       const resolvedFinnhubTicker =
         finnhubTicker || (await yahooToFinnhubTicker(ticker));
       const data = await fetchAnalystData(
         ticker,
         stockName || ticker,
-        resolvedFinnhubTicker
+        resolvedFinnhubTicker,
+        supabase,
+        forceRefresh || false
       );
 
       return new Response(
@@ -932,17 +1327,33 @@ serve(async (req) => {
     const results: AnalystData[] = [];
     const errors: string[] = [];
 
-    // Fetch in batches to avoid rate limiting
-    for (const holding of uniqueHoldings) {
+    // Fetch sequentially with delays to avoid rate limiting
+    // With caching, most calls should hit cache after first run
+    console.log(
+      `[START] Fetching analyst data for ${
+        uniqueHoldings.length
+      } tickers (forceRefresh=${!!forceRefresh})`
+    );
+
+    for (let i = 0; i < uniqueHoldings.length; i++) {
+      const holding = uniqueHoldings[i];
       // Use finnhub_ticker from DB if available, otherwise auto-detect US ADR
       const resolvedFinnhubTicker =
         finnhubTickerMap[holding.ticker] ||
         (await yahooToFinnhubTicker(holding.ticker));
 
+      console.log(
+        `[${i + 1}/${uniqueHoldings.length}] Processing ${
+          holding.ticker
+        } (finnhub: ${resolvedFinnhubTicker})`
+      );
+
       const data = await fetchAnalystData(
         holding.ticker,
         holding.stock_name,
-        resolvedFinnhubTicker
+        resolvedFinnhubTicker,
+        supabase,
+        forceRefresh || false
       );
 
       if (data.error) {
@@ -951,9 +1362,15 @@ serve(async (req) => {
 
       results.push(data);
 
-      // Small delay between requests to avoid rate limiting
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Longer delay between tickers to spread out API calls
+      if (i < uniqueHoldings.length - 1) {
+        await delay(TICKER_DELAY_MS);
+      }
     }
+
+    console.log(
+      `[DONE] Processed ${results.length} tickers, ${errors.length} errors`
+    );
 
     return new Response(
       JSON.stringify({
