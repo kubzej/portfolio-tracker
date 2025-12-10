@@ -498,6 +498,18 @@
   border: 1px solid var(--border-light);
 }
 
+.change-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.change-arrow {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin: 0 0.125rem;
+}
+
 /* ============================================================================
    RESPONSIVE ADJUSTMENTS
    ============================================================================ */

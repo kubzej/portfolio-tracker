@@ -874,47 +874,97 @@ export function Tracker({ onOpenResearch }: TrackerProps) {
                           {h.signal_changed && (
                             <div className="change-tag signal">
                               <Caption>Signál změněn</Caption>
-                              {h.primary_signal && (
-                                <SignalBadge
-                                  type={h.primary_signal as SignalType}
-                                  size="sm"
-                                />
-                              )}
+                              <div className="change-value">
+                                {h.prev_signal && (
+                                  <>
+                                    <SignalBadge
+                                      type={h.prev_signal as SignalType}
+                                      size="sm"
+                                    />
+                                    <span className="change-arrow">→</span>
+                                  </>
+                                )}
+                                {h.primary_signal && (
+                                  <SignalBadge
+                                    type={h.primary_signal as SignalType}
+                                    size="sm"
+                                  />
+                                )}
+                              </div>
                             </div>
                           )}
                           {h.conviction_changed && (
                             <div className="change-tag conviction">
                               <Caption>Conviction</Caption>
-                              {h.conviction_level && (
-                                <Badge
-                                  variant={
-                                    h.conviction_level === 'HIGH'
-                                      ? 'buy'
-                                      : h.conviction_level === 'MEDIUM'
-                                      ? 'hold'
-                                      : 'info'
-                                  }
-                                  size="sm"
-                                >
-                                  {h.conviction_level}
-                                </Badge>
-                              )}
+                              <div className="change-value">
+                                {h.prev_conviction_level && (
+                                  <>
+                                    <Badge
+                                      variant={
+                                        h.prev_conviction_level === 'HIGH'
+                                          ? 'buy'
+                                          : h.prev_conviction_level === 'MEDIUM'
+                                          ? 'hold'
+                                          : 'info'
+                                      }
+                                      size="sm"
+                                    >
+                                      {h.prev_conviction_level}
+                                    </Badge>
+                                    <span className="change-arrow">→</span>
+                                  </>
+                                )}
+                                {h.conviction_level && (
+                                  <Badge
+                                    variant={
+                                      h.conviction_level === 'HIGH'
+                                        ? 'buy'
+                                        : h.conviction_level === 'MEDIUM'
+                                        ? 'hold'
+                                        : 'info'
+                                    }
+                                    size="sm"
+                                  >
+                                    {h.conviction_level}
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           )}
                           {h.score_changed && (
                             <div className="change-tag score">
                               <Caption>Skóre ±5</Caption>
-                              <Text weight="semibold">{h.composite_score}</Text>
+                              <div className="change-value">
+                                {h.prev_composite_score != null && (
+                                  <>
+                                    <Text weight="medium" color="muted">
+                                      {h.prev_composite_score}
+                                    </Text>
+                                    <span className="change-arrow">→</span>
+                                  </>
+                                )}
+                                <Text weight="semibold">{h.composite_score}</Text>
+                              </div>
                             </div>
                           )}
                           {h.price_changed && (
                             <div className="change-tag price">
                               <Caption>Cena ±3%</Caption>
-                              <Text weight="medium">
-                                {h.current_price
-                                  ? `$${h.current_price.toFixed(2)}`
-                                  : '—'}
-                              </Text>
+                              <div className="change-value">
+                                {h.prev_price != null && (
+                                  <>
+                                    <Text weight="medium" color="muted">
+                                      ${h.prev_price.toFixed(2)}
+                                    </Text>
+                                    <span className="change-arrow">→</span>
+                                  </>
+                                )}
+                                <Text weight="medium">
+                                  {h.current_price
+                                    ? `$${h.current_price.toFixed(2)}`
+                                    : '—'}
+                                </Text>
+                              </div>
                             </div>
                           )}
                         </div>
