@@ -943,7 +943,9 @@ export function Tracker({ onOpenResearch }: TrackerProps) {
                                     <span className="change-arrow">→</span>
                                   </>
                                 )}
-                                <Text weight="semibold">{h.composite_score}</Text>
+                                <Text weight="semibold">
+                                  {h.composite_score}
+                                </Text>
                               </div>
                             </div>
                           )}
