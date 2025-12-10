@@ -59,14 +59,6 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 // CACHE FUNCTIONS
 // ============================================================================
 
-interface CacheEntry {
-  ticker: string;
-  data_type: string;
-  data: unknown;
-  fetched_at: string;
-  expires_at: string;
-}
-
 async function getCachedData<T>(
   supabase: SupabaseClient,
   ticker: string,
