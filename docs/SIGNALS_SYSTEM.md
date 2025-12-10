@@ -39,10 +39,10 @@
 │          ↓                                                       │
 │                                                                  │
 │  SCORING (6 kategorií)                                          │
-│  ├── Fundamental Score    0-140b  (28% Holdings / 35% Research) │
-│  ├── Technical Score      0-120b  (24% / 30%)                   │
-│  ├── Analyst Score        0-80b   (16% / 20%)                   │
-│  ├── News+Insider Score   0-60b   (12% / 15%)                   │
+│  ├── Fundamental Score    0-150b  (30% Holdings / 38% Research) │
+│  ├── Technical Score      0-130b  (26% / 32%)                   │
+│  ├── Analyst Score        0-50b   (10% / 12%) ← reduced v3.2    │
+│  ├── News+Insider Score   0-70b   (14% / 18%)                   │
 │  └── Portfolio Score      0-100b  (20% / 0%) ← Holdings only    │
 │                                                                  │
 │          ↓                                                       │
@@ -554,20 +554,20 @@ START
 
 ```typescript
 const SIGNAL_THRESHOLDS = {
-  // === Technical (max 120b) ===
-  TECH_STRONG: 60, // 72b - pro MOMENTUM
-  TECH_MODERATE: 35, // 42b - pro STEADY, HOLD
-  TECH_WEAK: 30, // 36b - pro WEAK quality
+  // === Technical (0-100%) ===
+  TECH_STRONG: 60, // 60% - pro MOMENTUM
+  TECH_MODERATE: 35, // 35% - pro STEADY, HOLD
+  TECH_WEAK: 30, // 30% - pro WEAK quality
 
-  // === Fundamental (max 140b) ===
-  FUND_QUALITY: 60, // 84b - pro QUALITY_CORE
-  FUND_STRONG: 50, // 70b
-  FUND_MODERATE: 40, // 56b - pro HOLD, ACCUMULATE
-  FUND_WATCH: 35, // 49b - pro WATCH quality
-  FUND_WEAK: 25, // 35b - pro WEAK quality
+  // === Fundamental (0-100%) ===
+  FUND_QUALITY: 60, // 60% - pro QUALITY_CORE
+  FUND_STRONG: 50, // 50%
+  FUND_MODERATE: 40, // 40% - pro HOLD, ACCUMULATE
+  FUND_WATCH: 35, // 35% - pro WATCH quality
+  FUND_WEAK: 25, // 25% - pro WEAK quality
 
-  // === Analyst (max 80b) ===
-  ANALYST_QUALITY: 55, // 44b - pro QUALITY_CORE
+  // === Analyst (0-100%) ===
+  ANALYST_QUALITY: 55, // 55% - pro QUALITY_CORE
 
   // === Insider (max 25b) ===
   INSIDER_WEAK: 35, // 9b - pro WATCH
@@ -671,14 +671,18 @@ Debug panel v Analysis zobrazuje status dat pro každou akcii:
 | `TAKE_PROFIT`  | ✅       | ❌       | Holdings: má unrealized gain        |
 | `TRIM`         | ✅       | ❌       | Holdings: má weight                 |
 
-### Scoring rozdíly
+### Scoring rozdíly (v3.2)
 
-| Aspekt          | Holdings (500b) | Research (400b)          |
-| --------------- | --------------- | ------------------------ |
-| Portfolio Score | 100b (20%)      | Vynecháno (0%)           |
-| Target Price    | Z DB (osobní)   | Z Yahoo (analyst target) |
-| Weight data     | ✅ Dostupná     | ❌ Není                  |
-| Gain data       | ✅ Dostupná     | ❌ Není                  |
+| Aspekt          | Holdings      | Research                 |
+| --------------- | ------------- | ------------------------ |
+| Fundamental     | 30%           | 38%                      |
+| Technical       | 26%           | 32%                      |
+| Analyst         | 10%           | 12%                      |
+| News+Insider    | 14%           | 18%                      |
+| Portfolio Score | 20%           | 0% (vynecháno)           |
+| Target Price    | Z DB (osobní) | Z Yahoo (analyst target) |
+| Weight data     | ✅ Dostupná   | ❌ Není                  |
+| Gain data       | ✅ Dostupná   | ❌ Není                  |
 
 ---
 

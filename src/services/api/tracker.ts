@@ -63,6 +63,12 @@ export interface SnapshotHolding {
   score_changed: boolean;
   price_changed: boolean;
 
+  // Previous values (when changed)
+  prev_signal: string | null;
+  prev_conviction_level: string | null;
+  prev_composite_score: number | null;
+  prev_price: number | null;
+
   // Research tracking
   tracked_since: string | null;
   price_at_tracking: number | null;

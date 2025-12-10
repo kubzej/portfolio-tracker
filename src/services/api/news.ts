@@ -50,6 +50,7 @@ export interface NewsResponse {
   byTicker: TickerNews[];
   stats: NewsStats;
   errors: string[];
+  fetchedTickers?: string[]; // Tickers where news fetch was attempted (even if 0 articles)
 }
 
 /**

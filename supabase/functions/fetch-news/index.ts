@@ -1,9 +1,16 @@
 // Supabase Edge Function for fetching news articles
 // Fetches news from Finnhub API and Polygon.io
 // Deploy with: supabase functions deploy fetch-news
+//
+// Features:
+// - News caching to reduce rate limit issues (2 hour TTL)
+// - Sequential fetching with delays between tickers
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import {
+  createClient,
+  SupabaseClient,
+} from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,6 +21,115 @@ const corsHeaders = {
 // API keys from environment
 const FINNHUB_API_KEY = Deno.env.get('FINNHUB_API_KEY') || '';
 const POLYGON_API_KEY = Deno.env.get('POLYGON_API_KEY') || '';
+
+// Cache configuration
+const NEWS_CACHE_TTL_HOURS = 2; // News changes more frequently, shorter TTL
+const TICKER_DELAY_MS = 500; // Longer delay between tickers to avoid rate limit
+const MAX_RETRIES = 3;
+
+// Helper to delay execution
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Fetch with retry logic for rate limiting
+async function fetchWithRetry(
+  url: string,
+  maxRetries = MAX_RETRIES
+): Promise<Response | null> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await fetch(url);
+
+      if (response.status === 429) {
+        const waitTime = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+        console.warn(
+          `[NEWS] Rate limited, attempt ${
+            attempt + 1
+          }/${maxRetries}, waiting ${waitTime}ms`
+        );
+        await delay(waitTime);
+        continue;
+      }
+
+      return response;
+    } catch (err) {
+      console.error(`[NEWS] Fetch error:`, err);
+      if (attempt < maxRetries - 1) {
+        await delay(1000);
+      }
+    }
+  }
+
+  return null;
+}
+
+// ============================================================================
+// CACHE FUNCTIONS (uses finnhub_cache table with data_type='news')
+// ============================================================================
+
+interface CachedNews {
+  articles: NewsArticle[];
+  fetchedAt: string;
+}
+
+async function getCachedNews(
+  supabase: SupabaseClient,
+  ticker: string
+): Promise<NewsArticle[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from('finnhub_cache')
+      .select('data, expires_at')
+      .eq('ticker', ticker)
+      .eq('data_type', 'news')
+      .single();
+
+    if (error || !data) return null;
+
+    // Check if expired
+    if (new Date(data.expires_at) < new Date()) {
+      console.log(`[NEWS CACHE] Expired for ${ticker}`);
+      return null;
+    }
+
+    console.log(`[NEWS CACHE HIT] ${ticker}`);
+    return (data.data as CachedNews)?.articles || null;
+  } catch {
+    return null;
+  }
+}
+
+async function setCachedNews(
+  supabase: SupabaseClient,
+  ticker: string,
+  articles: NewsArticle[]
+): Promise<void> {
+  // Cache even empty results - if fetch was successful but no news, cache that fact
+  // This prevents re-fetching for tickers that legitimately have no news
+
+  const expiresAt = new Date(
+    Date.now() + NEWS_CACHE_TTL_HOURS * 60 * 60 * 1000
+  ).toISOString();
+
+  try {
+    await supabase.from('finnhub_cache').upsert(
+      {
+        ticker,
+        data_type: 'news',
+        data: { articles, fetchedAt: new Date().toISOString() },
+        fetched_at: new Date().toISOString(),
+        expires_at: expiresAt,
+      },
+      {
+        onConflict: 'ticker,data_type',
+      }
+    );
+    console.log(
+      `[NEWS CACHE SET] ${ticker} (${articles.length} articles), expires: ${expiresAt}`
+    );
+  } catch (err) {
+    console.error(`[NEWS CACHE] Failed to cache ${ticker}:`, err);
+  }
+}
 
 // News article interface
 interface NewsArticle {
@@ -91,27 +207,43 @@ export function getDateString(daysAgo: number = 0): string {
   return date.toISOString().split('T')[0];
 }
 
-// Fetch news for a single ticker from Finnhub
+// Fetch news for a single ticker from Finnhub (with caching)
 async function fetchTickerNews(
   ticker: string,
   stockName: string,
-  finnhubTicker?: string
+  finnhubTicker: string | undefined,
+  supabase: SupabaseClient,
+  forceRefresh: boolean = false
 ): Promise<TickerNews> {
+  // Use finnhub_ticker if available, otherwise use original ticker
+  const searchTicker = finnhubTicker || ticker;
+
+  // Check cache first (unless forcing refresh)
+  if (!forceRefresh) {
+    const cachedArticles = await getCachedNews(supabase, searchTicker);
+    if (cachedArticles) {
+      return {
+        ticker,
+        stockName,
+        articles: cachedArticles,
+      };
+    }
+  }
+
   try {
     const fromDate = getDateString(7); // 7 days ago
     const toDate = getDateString(0); // Today
-
-    // Use finnhub_ticker if available, otherwise use original ticker
-    const searchTicker = finnhubTicker || ticker;
 
     const url = `https://finnhub.io/api/v1/company-news?symbol=${encodeURIComponent(
       searchTicker
     )}&from=${fromDate}&to=${toDate}&token=${FINNHUB_API_KEY}`;
 
-    const response = await fetch(url);
+    console.log(`[NEWS API] Fetching ${ticker} (${searchTicker})...`);
+    const response = await fetchWithRetry(url);
 
-    if (!response.ok) {
-      throw new Error(`Finnhub API error: ${response.status}`);
+    if (!response || !response.ok) {
+      const status = response?.status || 'no response';
+      throw new Error(`Finnhub API error: ${status}`);
     }
 
     const data: FinnhubArticle[] = await response.json();
@@ -135,6 +267,9 @@ async function fetchTickerNews(
         keywords: [],
       },
     }));
+
+    // Cache the results (even empty - means we successfully checked but no news)
+    await setCachedNews(supabase, searchTicker, articles);
 
     return {
       ticker,
@@ -623,6 +758,7 @@ serve(async (req) => {
       ticker: singleTicker,
       marketNews = false,
       includeBasicSentiment = true,
+      forceRefresh = false,
     } = await req.json().catch(() => ({}));
 
     // If market news requested, fetch general market news
@@ -670,7 +806,13 @@ serve(async (req) => {
 
     // If single ticker requested, fetch just that
     if (singleTicker) {
-      const result = await fetchTickerNews(singleTicker, singleTicker);
+      const result = await fetchTickerNews(
+        singleTicker,
+        singleTicker,
+        undefined,
+        supabase,
+        forceRefresh
+      );
 
       // Also fetch from Polygon (for US tickers)
       const polygonArticles = await fetchPolygonNews(
@@ -758,69 +900,73 @@ serve(async (req) => {
       finnhub_ticker: string | null;
     }[];
 
-    // Fetch news for all tickers in parallel
+    // Fetch news for all tickers - SEQUENTIALLY with cache to avoid rate limiting
     const results: TickerNews[] = [];
     const errors: string[] = [];
 
-    // Process in batches of 5 to avoid rate limiting
-    const batchSize = 5;
-    for (let i = 0; i < uniqueHoldings.length; i += batchSize) {
-      const batch = uniqueHoldings.slice(i, i + batchSize);
+    console.log(
+      `[NEWS] Fetching for ${uniqueHoldings.length} tickers (forceRefresh=${forceRefresh})`
+    );
 
-      // Fetch from both Finnhub and Polygon in parallel
-      const batchResults = await Promise.all(
-        batch.map(async (holding) => {
-          const finnhubResult = await fetchTickerNews(
-            holding.ticker,
-            holding.stock_name,
-            holding.finnhub_ticker || undefined
-          );
+    // Process each ticker sequentially with delays
+    for (let i = 0; i < uniqueHoldings.length; i++) {
+      const holding = uniqueHoldings[i];
 
-          // Also fetch from Polygon (for US tickers)
-          const polygonArticles = await fetchPolygonNews(
-            holding.ticker,
-            holding.stock_name,
-            holding.finnhub_ticker || undefined
-          );
-
-          // Merge articles, avoiding duplicates by title
-          const existingTitles = new Set(
-            finnhubResult.articles.map((a) => a.title.toLowerCase())
-          );
-          const newPolygonArticles = polygonArticles.filter(
-            (a) => !existingTitles.has(a.title.toLowerCase())
-          );
-          finnhubResult.articles = [
-            ...finnhubResult.articles,
-            ...newPolygonArticles,
-          ];
-
-          return finnhubResult;
-        })
+      console.log(
+        `[NEWS ${i + 1}/${uniqueHoldings.length}] Processing ${holding.ticker}`
       );
 
-      for (const result of batchResults) {
-        // Apply basic sentiment if requested (only for articles without Polygon sentiment)
-        if (includeBasicSentiment) {
-          result.articles = result.articles.map((article) => ({
-            ...article,
-            sentiment: article.sentiment?.label
-              ? article.sentiment // Keep Polygon sentiment if available
-              : analyzeBasicSentiment(article.title, article.summary),
-          }));
-        }
+      const finnhubResult = await fetchTickerNews(
+        holding.ticker,
+        holding.stock_name,
+        holding.finnhub_ticker || undefined,
+        supabase,
+        forceRefresh
+      );
 
-        results.push(result);
-        if (result.error) {
-          errors.push(`${result.ticker}: ${result.error}`);
-        }
+      // Also fetch from Polygon (for US tickers) - no caching for Polygon as it has built-in sentiment
+      const polygonArticles = await fetchPolygonNews(
+        holding.ticker,
+        holding.stock_name,
+        holding.finnhub_ticker || undefined
+      );
+
+      // Merge articles, avoiding duplicates by title
+      const existingTitles = new Set(
+        finnhubResult.articles.map((a) => a.title.toLowerCase())
+      );
+      const newPolygonArticles = polygonArticles.filter(
+        (a) => !existingTitles.has(a.title.toLowerCase())
+      );
+      finnhubResult.articles = [
+        ...finnhubResult.articles,
+        ...newPolygonArticles,
+      ];
+
+      // Apply basic sentiment if requested (only for articles without Polygon sentiment)
+      if (includeBasicSentiment) {
+        finnhubResult.articles = finnhubResult.articles.map((article) => ({
+          ...article,
+          sentiment: article.sentiment?.label
+            ? article.sentiment // Keep Polygon sentiment if available
+            : analyzeBasicSentiment(article.title, article.summary),
+        }));
       }
 
-      // Small delay between batches
-      if (i + batchSize < uniqueHoldings.length) {
-        await new Promise((resolve) => setTimeout(resolve, 200));
+      results.push(finnhubResult);
+      if (finnhubResult.error) {
+        errors.push(`${finnhubResult.ticker}: ${finnhubResult.error}`);
+      }
+
+      // Small delay between tickers to avoid rate limiting
+      if (i < uniqueHoldings.length - 1) {
+        await delay(TICKER_DELAY_MS);
       }
     }
+
+    console.log(
+      `[NEWS] Done - processed ${results.length} tickers, ${errors.length} errors`
+    );
 
     // Aggregate all articles and sort by date
     const allArticles: (NewsArticle & { ticker: string; stockName: string })[] =
@@ -863,12 +1009,19 @@ serve(async (req) => {
           : null,
     };
 
+    // Track which tickers were actually fetched (for validity checking)
+    // A ticker is "fetched" if we attempted to get news (even if 0 articles returned)
+    const fetchedTickers = results
+      .filter((r) => !r.error) // Only tickers without errors
+      .map((r) => r.ticker);
+
     return new Response(
       JSON.stringify({
         articles: allArticles,
         byTicker: results,
         stats,
         errors,
+        fetchedTickers, // Tickers where news fetch was successful (may have 0 articles)
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
