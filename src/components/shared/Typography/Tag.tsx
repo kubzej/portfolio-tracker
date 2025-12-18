@@ -1,6 +1,6 @@
 import './Typography.css';
 
-type TagVariant = 'default' | 'success' | 'muted';
+type TagVariant = 'default' | 'success' | 'muted' | 'owned' | 'tracked';
 type TagSize = 'xs' | 'sm';
 
 interface TagProps {

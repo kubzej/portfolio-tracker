@@ -464,12 +464,13 @@
 
 .change-tags {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 0.5rem;
 }
 
 .change-tag {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.375rem;
   padding: 0.375rem 0.625rem;
@@ -500,6 +501,7 @@
 
 .change-value {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.25rem;
 }

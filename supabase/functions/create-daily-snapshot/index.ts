@@ -32,6 +32,23 @@ interface Holding {
   currency: string;
 }
 
+interface PortfolioSummaryRow {
+  stock_id: string;
+  portfolio_id: string;
+  portfolio_name: string;
+  ticker: string;
+  stock_name: string | null;
+  total_shares: number;
+  avg_buy_price: number;
+  target_price: number | null;
+  currency: string;
+  current_price: number | null;
+  total_invested_czk: number;
+  current_value_czk: number | null;
+  gain_czk: number | null;
+  gain_percentage: number | null;
+}
+
 interface ResearchTracked {
   id: string;
   user_id: string;
@@ -207,7 +224,7 @@ async function createSnapshotForUser(
       };
     }
 
-    // 2. Fetch user's portfolios and holdings
+    // 2. Fetch user's portfolios
     const { data: portfolios } = await supabase
       .from('portfolios')
       .select('id, user_id, name')
@@ -215,6 +232,42 @@ async function createSnapshotForUser(
 
     const portfolioIds = (portfolios || []).map((p: Portfolio) => p.id);
 
+    // 2b. Fetch portfolio_summary view for CZK values (uses current_prices with exchange rates)
+    let portfolioSummary: PortfolioSummaryRow[] = [];
+    if (portfolioIds.length > 0) {
+      const { data: summaryData, error: summaryError } = await supabase
+        .from('portfolio_summary')
+        .select('*')
+        .in('portfolio_id', portfolioIds);
+
+      if (summaryError) {
+        console.error(
+          `Failed to fetch portfolio_summary: ${summaryError.message}`
+        );
+      }
+      portfolioSummary = summaryData || [];
+      console.log(
+        `Fetched ${portfolioSummary.length} holdings from portfolio_summary`
+      );
+    }
+
+    // Calculate total CZK value from portfolio_summary
+    const totalValueCzk = portfolioSummary.reduce(
+      (sum, row) => sum + (row.current_value_czk || 0),
+      0
+    );
+    const totalGainCzk = portfolioSummary.reduce(
+      (sum, row) => sum + (row.gain_czk || 0),
+      0
+    );
+    const totalInvestedCzk = portfolioSummary.reduce(
+      (sum, row) => sum + (row.total_invested_czk || 0),
+      0
+    );
+    const totalGainPct =
+      totalInvestedCzk > 0 ? (totalGainCzk / totalInvestedCzk) * 100 : 0;
+
+    // Also fetch raw holdings for USD values and ticker info
     let holdings: Holding[] = [];
     if (portfolioIds.length > 0) {
       const { data: holdingsData, error: holdingsError } = await supabase
@@ -242,7 +295,7 @@ async function createSnapshotForUser(
       .eq('user_id', userId)
       .eq('status', 'active');
 
-    // 4. Calculate portfolio totals
+    // 4. Calculate portfolio totals (USD values for snapshot_holdings)
     let totalValue = 0;
     const holdingsWithValues: Array<{
       holding: Holding;
@@ -289,13 +342,16 @@ async function createSnapshotForUser(
       h.weight = totalValue > 0 ? (h.currentValue / totalValue) * 100 : 0;
     }
 
-    // 5. Create snapshot record
+    // 5. Create snapshot record with both USD and CZK values
     const { data: snapshot, error: snapshotError } = await supabase
       .from('daily_snapshots')
       .insert({
         user_id: userId,
         snapshot_date: snapshotDate,
         portfolio_total_value: totalValue,
+        portfolio_total_value_czk: Math.round(totalValueCzk * 100) / 100,
+        portfolio_total_gain: Math.round(totalGainCzk * 100) / 100,
+        portfolio_total_gain_pct: Math.round(totalGainPct * 100) / 100,
         portfolio_positions_count: holdings.length,
         research_tracked_count: (researchTracked || []).length,
       })

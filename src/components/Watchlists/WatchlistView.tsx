@@ -3,7 +3,12 @@ import type {
   Watchlist,
   WatchlistItemWithCalculations,
 } from '@/types/database';
-import { watchlistsApi, watchlistItemsApi } from '@/services/api';
+import {
+  watchlistsApi,
+  watchlistItemsApi,
+  holdingsApi,
+  getResearchTracked,
+} from '@/services/api';
 import {
   Button,
   LoadingSpinner,
@@ -21,6 +26,7 @@ import {
   Caption,
   Description,
   Badge,
+  Tag,
   Text,
   Muted,
   MetricLabel,
@@ -81,6 +87,10 @@ export function WatchlistView({
     useState<WatchlistItemWithCalculations | null>(null);
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
 
+  // Ownership/tracking status
+  const [ownedTickers, setOwnedTickers] = useState<Set<string>>(new Set());
+  const [trackedTickers, setTrackedTickers] = useState<Set<string>>(new Set());
+
   // Value extractor for sorting
   const getItemValue = useCallback(
     (item: WatchlistItemWithCalculations, field: SortFieldKey) => {
@@ -123,6 +133,7 @@ export function WatchlistView({
 
   useEffect(() => {
     loadData();
+    loadOwnershipStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchlistId]);
 
@@ -142,6 +153,26 @@ export function WatchlistView({
       setError(err instanceof Error ? err.message : 'Failed to load watchlist');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadOwnershipStatus = async () => {
+    try {
+      const [holdings, trackedStocks] = await Promise.all([
+        holdingsApi.getAll(),
+        getResearchTracked('active'),
+      ]);
+
+      // Extract unique tickers from holdings
+      const owned = new Set(holdings.map((h) => h.ticker.toUpperCase()));
+      setOwnedTickers(owned);
+
+      // Extract unique tickers from research tracked
+      const tracked = new Set(trackedStocks.map((t) => t.ticker.toUpperCase()));
+      setTrackedTickers(tracked);
+    } catch (err) {
+      // Silent fail - ownership status is not critical
+      console.error('Failed to load ownership status:', err);
     }
   };
 
@@ -206,6 +237,42 @@ export function WatchlistView({
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove item');
     }
+  };
+
+  const getOwnershipTags = (ticker: string) => {
+    const normalizedTicker = ticker.toUpperCase();
+    const isOwned = ownedTickers.has(normalizedTicker);
+    const isTracked = trackedTickers.has(normalizedTicker);
+
+    const tags: React.ReactNode[] = [];
+
+    if (isOwned) {
+      tags.push(
+        <Tag
+          key="owned"
+          variant="owned"
+          size="xs"
+          title="Vlastníte v portfoliu"
+        >
+          Portfolio
+        </Tag>
+      );
+    }
+
+    if (isTracked) {
+      tags.push(
+        <Tag
+          key="tracked"
+          variant="tracked"
+          size="xs"
+          title="Sledujete v trackeru"
+        >
+          Tracker
+        </Tag>
+      );
+    }
+
+    return tags;
   };
 
   const getTargetStatus = (item: WatchlistItemWithCalculations) => {
@@ -366,19 +433,26 @@ export function WatchlistView({
               {sortedItems.map((item) => (
                 <tr key={item.id}>
                   <td className="ticker-cell">
-                    <button
-                      className="ticker-link"
-                      onClick={() =>
-                        onOpenResearch?.(
-                          item.ticker,
-                          item.name ?? undefined,
-                          item.finnhub_ticker ?? undefined
-                        )
-                      }
-                      title="Otevřít research"
-                    >
-                      <Ticker>{item.ticker}</Ticker>
-                    </button>
+                    <div className="ticker-cell-content">
+                      <button
+                        className="ticker-link"
+                        onClick={() =>
+                          onOpenResearch?.(
+                            item.ticker,
+                            item.name ?? undefined,
+                            item.finnhub_ticker ?? undefined
+                          )
+                        }
+                        title="Otevřít research"
+                      >
+                        <Ticker>{item.ticker}</Ticker>
+                      </button>
+                      {getOwnershipTags(item.ticker).length > 0 && (
+                        <div className="ownership-tags">
+                          {getOwnershipTags(item.ticker)}
+                        </div>
+                      )}
+                    </div>
                     {item.name && <StockName truncate>{item.name}</StockName>}
                   </td>
                   <td className="sector-cell">
@@ -506,18 +580,25 @@ export function WatchlistView({
               <div key={item.id} className="watchlist-item-card">
                 <div className="item-card-header">
                   <div className="item-card-ticker-group">
-                    <button
-                      className="ticker-link large"
-                      onClick={() =>
-                        onOpenResearch?.(
-                          item.ticker,
-                          item.name ?? undefined,
-                          item.finnhub_ticker ?? undefined
-                        )
-                      }
-                    >
-                      <Ticker size="lg">{item.ticker}</Ticker>
-                    </button>
+                    <div className="ticker-with-tags">
+                      <button
+                        className="ticker-link large"
+                        onClick={() =>
+                          onOpenResearch?.(
+                            item.ticker,
+                            item.name ?? undefined,
+                            item.finnhub_ticker ?? undefined
+                          )
+                        }
+                      >
+                        <Ticker size="lg">{item.ticker}</Ticker>
+                      </button>
+                      {getOwnershipTags(item.ticker).length > 0 && (
+                        <div className="ownership-tags">
+                          {getOwnershipTags(item.ticker)}
+                        </div>
+                      )}
+                    </div>
                     {item.name && <StockName truncate>{item.name}</StockName>}
                   </div>
                   <div className="item-card-actions">

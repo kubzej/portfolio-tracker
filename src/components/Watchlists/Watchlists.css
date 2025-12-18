@@ -391,6 +391,25 @@
   max-width: 200px;
 }
 
+.ticker-cell-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ownership-tags {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.ticker-with-tags {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .sector-cell {
   max-width: 150px;
   white-space: nowrap;

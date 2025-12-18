@@ -88,7 +88,7 @@ const TIME_RANGE_OPTIONS: ToggleOption[] = [
   { value: 'all', label: 'Vše' },
 ];
 
-// Approximate USD to CZK rate (in production, this would come from an API)
+// Approximate USD to CZK rate for snapshot data (historical values without exact rate)
 const USD_TO_CZK = 24;
 
 // ============================================================================
@@ -398,7 +398,12 @@ export function Tracker({ onOpenResearch }: TrackerProps) {
             <MetricCard
               label="Celková hodnota"
               value={
-                latestSnapshot.portfolio_total_value
+                latestSnapshot.portfolio_total_value_czk
+                  ? formatCurrency(
+                      latestSnapshot.portfolio_total_value_czk,
+                      'CZK'
+                    )
+                  : latestSnapshot.portfolio_total_value
                   ? formatCurrency(
                       latestSnapshot.portfolio_total_value * USD_TO_CZK,
                       'CZK'
