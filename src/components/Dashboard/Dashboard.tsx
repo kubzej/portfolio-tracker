@@ -18,11 +18,11 @@ import {
   ErrorState,
   EmptyState,
   MobileSortControl,
-  TransactionsList,
   Tabs,
   type SortField,
 } from '@/components/shared';
 import { OptionsList } from '@/components/Options';
+import { TransactionReport } from './TransactionReport';
 import {
   SectionTitle,
   Ticker,
@@ -672,16 +672,9 @@ export function Dashboard({
 
       {/* Transactions History */}
       <div className="transactions-history-section">
-        <TransactionsList
+        <TransactionReport
           portfolioId={portfolioId}
-          showStockColumn={true}
-          showFilters={true}
-          showHeader={true}
-          headerTitle="Historie transakcí"
-          showAddButton={false}
-          editable={false}
           onStockClick={onStockClick}
-          defaultToCurrentMonth={true}
         />
       </div>
     </div>

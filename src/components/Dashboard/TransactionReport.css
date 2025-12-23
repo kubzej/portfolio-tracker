@@ -1,0 +1,336 @@
+.transaction-report {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+/* Header */
+.transaction-report .report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+/* Filters */
+.transaction-report .report-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.transaction-report .filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--spacing-md);
+}
+
+.transaction-report .filters-row--primary {
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.transaction-report .filters-row--toggles {
+  gap: var(--spacing-xl);
+}
+
+.transaction-report .date-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--spacing-sm);
+}
+
+.transaction-report .date-filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.transaction-report .date-filter-item input {
+  width: 140px;
+}
+
+.transaction-report .search-filter {
+  flex: 1;
+  min-width: 150px;
+  max-width: 250px;
+}
+
+.transaction-report .filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+/* Stats */
+.transaction-report .report-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+.transaction-report .stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+/* Transactions Section */
+.transaction-report .transactions-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.transaction-report .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xs) 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Table */
+.transaction-report .table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.transaction-report .transactions-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.transaction-report .transactions-table th,
+.transaction-report .transactions-table td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.transaction-report .transactions-table th {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  position: sticky;
+  top: 0;
+}
+
+.transaction-report .transactions-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--transition-fast);
+}
+
+.transaction-report .transactions-table th.sortable:hover {
+  background: var(--bg-tertiary);
+}
+
+.transaction-report .transactions-table th.sorted {
+  color: var(--primary);
+}
+
+.transaction-report .transactions-table .align-right {
+  text-align: right;
+}
+
+.transaction-report .transactions-table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .transaction-report .report-header {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .transaction-report .report-header button {
+    flex-shrink: 0;
+  }
+
+  /* Filters mobile layout */
+  .transaction-report .report-filters {
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+  }
+
+  .transaction-report .filters-row--primary {
+    padding-bottom: var(--spacing-sm);
+  }
+
+  .transaction-report .filters-row {
+    gap: var(--spacing-sm);
+  }
+
+  .transaction-report .filters-row--toggles {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .transaction-report .date-filters {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: var(--spacing-sm);
+    align-items: end;
+  }
+
+  .transaction-report .date-filter-item {
+    min-width: 0;
+  }
+
+  .transaction-report .date-filter-item input {
+    width: 100%;
+  }
+
+  .transaction-report .search-filter {
+    width: 100%;
+    max-width: none;
+  }
+
+  .transaction-report .filter-group {
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .transaction-report .filter-group .toggle-group {
+    width: 100%;
+  }
+
+  .transaction-report .filter-group .toggle-option {
+    flex: 1;
+    justify-content: center;
+    padding: 0.5rem 0.25rem;
+    font-size: 0.75rem;
+  }
+
+  /* Stats mobile */
+  .transaction-report .report-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+  }
+
+  .transaction-report .stat-item {
+    padding: var(--spacing-xs);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-sm);
+    min-width: 0;
+  }
+
+  /* Section header mobile */
+  .transaction-report .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  /* Mobile card layout for transactions */
+  .transaction-report .transactions-table {
+    display: block;
+  }
+
+  .transaction-report .transactions-table thead {
+    display: none;
+  }
+
+  .transaction-report .transactions-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .transaction-report .transactions-table tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-xs) var(--spacing-sm);
+    padding: 1rem;
+    background: transparent !important;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .transaction-report .transactions-table tr:hover,
+  .transaction-report .transactions-table tr:active,
+  .transaction-report .transactions-table tr:focus {
+    background: transparent !important;
+    border-color: var(--border-light);
+  }
+
+  .transaction-report .transactions-table td span[style*="cursor"] {
+    cursor: default !important;
+    pointer-events: none;
+  }
+
+  .transaction-report .transactions-table td {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0;
+    border: none;
+    white-space: normal;
+  }
+
+  .transaction-report .transactions-table td::before {
+    content: attr(data-label);
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .transaction-report .transactions-table td.align-right {
+    text-align: left;
+  }
+
+  /* Stock transaction card layout */
+  .transaction-report .transactions-table:not(.options-table) td:nth-child(1) { grid-column: 1; } /* Datum */
+  .transaction-report .transactions-table:not(.options-table) td:nth-child(2) { grid-column: 2; } /* Ticker */
+  .transaction-report .transactions-table:not(.options-table) td:nth-child(3) { grid-column: 1 / -1; } /* Název - full width */
+  .transaction-report .transactions-table:not(.options-table) td:nth-child(4) { grid-column: 1; } /* Typ */
+  .transaction-report .transactions-table:not(.options-table) td:nth-child(5) { grid-column: 2; } /* Množství */
+  .transaction-report .transactions-table:not(.options-table) td:nth-child(6) { grid-column: 1; } /* Cena */
+  .transaction-report .transactions-table:not(.options-table) td:nth-child(7) { grid-column: 2; } /* Poplatky */
+  .transaction-report .transactions-table:not(.options-table) td:nth-child(8) { 
+    grid-column: 1 / -1; 
+    padding-top: var(--spacing-xs);
+    border-top: 1px solid var(--border-color);
+    margin-top: var(--spacing-xs);
+  } /* Celkem CZK */
+
+  /* Options transaction card layout */
+  .transaction-report .options-table td:nth-child(1) { grid-column: 1; } /* Datum */
+  .transaction-report .options-table td:nth-child(2) { grid-column: 2; } /* Symbol */
+  .transaction-report .options-table td:nth-child(3) { grid-column: 1; } /* Typ */
+  .transaction-report .options-table td:nth-child(4) { grid-column: 2; } /* Strike */
+  .transaction-report .options-table td:nth-child(5) { grid-column: 1; } /* Expirace */
+  .transaction-report .options-table td:nth-child(6) { grid-column: 2; } /* Akce */
+  .transaction-report .options-table td:nth-child(7) { grid-column: 1; } /* Kontrakty */
+  .transaction-report .options-table td:nth-child(8) { grid-column: 2; } /* Prémium */
+  .transaction-report .options-table td:nth-child(9) { 
+    grid-column: 1 / -1;
+    padding-top: var(--spacing-xs);
+    border-top: 1px solid var(--border-color);
+    margin-top: var(--spacing-xs);
+  } /* Celkem */
+  .transaction-report .options-table td:nth-child(10) { grid-column: 1 / -1; } /* Poplatky */
+
+  /* Hide empty/less important cells on mobile */
+  .transaction-report .transactions-table td[data-label="Poplatky"]:has(span:empty),
+  .transaction-report .transactions-table td[data-label="Poplatky"] span:contains("—") {
+    display: none;
