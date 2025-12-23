@@ -17,7 +17,8 @@ export const transactionsApi = {
       .select(
         `
         *,
-        stock:stocks (*)
+        stock:stocks (*),
+        portfolio:portfolios (*)
       `
       )
       .order('date', { ascending: false });
@@ -38,10 +39,16 @@ export const transactionsApi = {
   async getByStockId(
     stockId: string,
     portfolioId?: string
-  ): Promise<Transaction[]> {
+  ): Promise<TransactionWithStock[]> {
     let query = supabase
       .from('transactions')
-      .select('*')
+      .select(
+        `
+        *,
+        stock:stocks (*),
+        portfolio:portfolios (*)
+      `
+      )
       .eq('stock_id', stockId)
       .order('date', { ascending: false });
 

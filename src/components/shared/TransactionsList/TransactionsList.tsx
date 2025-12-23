@@ -185,15 +185,15 @@ export function TransactionsList({
       let data: TransactionWithStock[];
 
       if (stockId) {
-        // Get transactions for specific stock
+        // Get transactions for specific stock (includes portfolio data from API)
         const stockTransactions = await transactionsApi.getByStockId(
           stockId,
           portfolioId ?? undefined
         );
-        // Enrich with stock data
+        // Enrich with stock data if provided
         data = stockTransactions.map((tx) => ({
           ...tx,
-          stock: stock,
+          stock: stock ?? tx.stock,
         }));
       } else {
         // Get all transactions (optionally filtered by portfolio)
@@ -499,6 +499,14 @@ export function TransactionsList({
                       </div>
                     )}
 
+                    {!portfolioId && tx.portfolio && (
+                      <div className="transaction-card-portfolio">
+                        <Text size="xs" color="muted">
+                          {tx.portfolio.name}
+                        </Text>
+                      </div>
+                    )}
+
                     <div className="transaction-card-body">
                       <div className="transaction-card-stat">
                         <MetricLabel>Množství</MetricLabel>
@@ -536,6 +544,7 @@ export function TransactionsList({
                       {showStockColumn && (
                         <SortHeader label="Akcie" sortKeyName="ticker" />
                       )}
+                      {!portfolioId && <th>Portfolio</th>}
                       <SortHeader label="Typ" sortKeyName="type" />
                       <SortHeader
                         label="Množství"
@@ -584,6 +593,11 @@ export function TransactionsList({
                                 {tx.stock?.name || ''}
                               </StockName>
                             </div>
+                          </td>
+                        )}
+                        {!portfolioId && (
+                          <td>
+                            <Text size="sm">{tx.portfolio?.name || '—'}</Text>
                           </td>
                         )}
                         <td>
