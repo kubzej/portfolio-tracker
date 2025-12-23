@@ -330,7 +330,8 @@
   } /* Celkem */
   .transaction-report .options-table td:nth-child(10) { grid-column: 1 / -1; } /* Poplatky */
 
-  /* Hide empty/less important cells on mobile */
-  .transaction-report .transactions-table td[data-label="Poplatky"]:has(span:empty),
-  .transaction-report .transactions-table td[data-label="Poplatky"] span:contains("—") {
+  /* Hide empty fees cells on mobile */
+  .transaction-report .transactions-table td[data-label="Poplatky"][data-empty="true"] {
     display: none;
+  }
+}
