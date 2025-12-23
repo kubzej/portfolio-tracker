@@ -29,6 +29,7 @@ import {
   estimateProbabilityOfProfit,
 } from '@/utils/options';
 import { generateAllAlerts, countAlertsBySeverity } from '@/utils/optionAlerts';
+import { OptionTransactionModal } from './OptionTransactionModal';
 import './OptionsList.css';
 
 const ACTION_LABELS: Record<string, string> = {
@@ -69,6 +70,19 @@ export function OptionsList({
   >({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [closingHolding, setClosingHolding] = useState<OptionHolding | null>(
+    null
+  );
+
+  // Handler for closing an option position
+  const handleCloseOption = (holding: OptionHolding) => {
+    setClosingHolding(holding);
+  };
+
+  const handleCloseModalSuccess = () => {
+    setClosingHolding(null);
+    loadData();
+  };
 
   // Merge external and internal stock prices (external takes precedence)
   const stockPrices = useMemo(
@@ -415,6 +429,7 @@ export function OptionsList({
                       holding={holding}
                       stockPrice={stockPrices[holding.symbol]}
                       onEdit={onEditTransaction}
+                      onClose={handleCloseOption}
                       onRefresh={loadData}
                     />
                   ))}
@@ -424,6 +439,16 @@ export function OptionsList({
           })}
         </div>
       )}
+
+      {/* Close Option Modal */}
+      <OptionTransactionModal
+        isOpen={closingHolding !== null}
+        onClose={() => setClosingHolding(null)}
+        onSuccess={handleCloseModalSuccess}
+        mode="close"
+        portfolioId={portfolioId}
+        holding={closingHolding}
+      />
     </div>
   );
 }
@@ -433,6 +458,7 @@ interface OptionCardProps {
   holding: EnrichedHolding;
   stockPrice?: number;
   onEdit?: (transaction: OptionTransaction) => void;
+  onClose?: (holding: OptionHolding) => void;
   onRefresh?: () => void;
 }
 
@@ -440,6 +466,7 @@ function OptionCard({
   holding,
   stockPrice,
   onEdit,
+  onClose,
   onRefresh,
 }: OptionCardProps) {
   const [expanded, setExpanded] = useState(false);
@@ -780,9 +807,23 @@ function OptionCard({
 
           {/* Transactions Section */}
           <div className="option-transactions-section">
-            <Text size="sm" weight="medium">
-              Transakce
-            </Text>
+            <div className="option-transactions-header">
+              <Text size="sm" weight="medium">
+                Transakce
+              </Text>
+              {onClose && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onClose(holding);
+                  }}
+                >
+                  Uzavřít pozici
+                </Button>
+              )}
+            </div>
             {loadingTx ? (
               <div className="option-transactions-loading">
                 <LoadingSpinner size="sm" />

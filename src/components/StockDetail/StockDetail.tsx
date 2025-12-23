@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react';
 import { stocksApi, transactionsApi } from '@/services/api';
-import type {
-  StockWithSector,
-  Transaction,
-  TransactionWithStock,
-} from '@/types/database';
+import type { StockWithSector, TransactionWithStock } from '@/types/database';
 import { formatCurrency, formatPrice, formatShares } from '@/utils/format';
 import { Button } from '@/components/shared/Button';
 import {
@@ -36,7 +32,7 @@ export function StockDetail({
   onDeleted,
 }: StockDetailProps) {
   const [stock, setStock] = useState<StockWithSector | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<TransactionWithStock[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);

@@ -68,6 +68,7 @@ export interface Transaction {
 // Transaction with stock info (joined)
 export interface TransactionWithStock extends Transaction {
   stock?: Stock;
+  portfolio?: Portfolio;
 }
 
 // Available lot for selling (BUY transaction with remaining shares)

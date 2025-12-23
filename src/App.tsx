@@ -272,7 +272,9 @@ function App() {
                 setRefreshKey((k) => k + 1);
               }}
               showAllOption={
-                currentView === 'dashboard' || currentView === 'stocks'
+                currentView === 'dashboard' ||
+                currentView === 'stocks' ||
+                currentView === 'stock-detail'
               }
             />
             <Button variant="secondary" onClick={signOut} title="Odhlásit se">
