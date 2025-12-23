@@ -660,7 +660,11 @@ export function TransactionReport({
                         {formatPrice(tx.price_per_share, tx.currency)}
                       </Text>
                     </td>
-                    <td data-label="Poplatky" data-empty={!tx.fees} className="align-right">
+                    <td
+                      data-label="Poplatky"
+                      data-empty={!tx.fees}
+                      className="align-right"
+                    >
                       <Text size="sm" color="muted">
                         {tx.fees ? formatPrice(tx.fees, tx.currency) : '—'}
                       </Text>
@@ -784,7 +788,11 @@ export function TransactionReport({
                           : '—'}
                       </MetricValue>
                     </td>
-                    <td data-label="Poplatky" data-empty={!tx.fees} className="align-right">
+                    <td
+                      data-label="Poplatky"
+                      data-empty={!tx.fees}
+                      className="align-right"
+                    >
                       <Text size="sm" color="muted">
                         {tx.fees ? formatPrice(tx.fees, 'USD') : '—'}
                       </Text>
