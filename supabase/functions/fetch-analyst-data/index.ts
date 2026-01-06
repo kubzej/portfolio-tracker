@@ -282,6 +282,7 @@ interface AnalystData {
   peers: string[];
   // Company profile
   industry: string | null;
+  country: string | null; // ISO 2-letter country code from Finnhub
   description: string | null;
   descriptionSource: 'alpha' | null; // Where description came from
   // Error tracking
@@ -331,6 +332,7 @@ interface FinnhubMetrics {
 
 interface FinnhubProfile {
   finnhubIndustry?: string;
+  country?: string;
 }
 
 interface FinnhubInsider {
@@ -411,6 +413,7 @@ async function fetchAnalystData(
     insiderSentiment: null,
     peers: [],
     industry: null,
+    country: null,
     description: null,
     descriptionSource: null,
   };
@@ -996,8 +999,9 @@ async function fetchAnalystData(
           .slice(0, 5)
       : [];
 
-    // Parse industry from Finnhub profile (description comes from Yahoo above)
+    // Parse industry and country from Finnhub profile (description comes from Yahoo above)
     const industry = profileData?.finnhubIndustry ?? null;
+    const country = profileData?.country ?? null;
 
     return {
       ticker,
@@ -1022,6 +1026,7 @@ async function fetchAnalystData(
       insiderSentiment,
       peers,
       industry,
+      country,
       description,
       descriptionSource,
     };
@@ -1365,6 +1370,14 @@ serve(async (req) => {
 
       if (data.error) {
         errors.push(`${holding.ticker}: ${data.error}`);
+      }
+
+      // Update country in stocks table if we got it from Finnhub
+      if (data.country && holding.stock_id) {
+        await supabase
+          .from('stocks')
+          .update({ country: data.country })
+          .eq('id', holding.stock_id);
       }
 
       results.push(data);

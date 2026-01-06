@@ -173,12 +173,46 @@ const TAB_OPTIONS = [
   { value: 'options', label: 'Opce' },
 ];
 
-type DistributionView = 'sector' | 'exchange';
+type DistributionView = 'sector' | 'exchange' | 'country';
 
 const DISTRIBUTION_OPTIONS = [
   { value: 'sector', label: 'Sektor' },
   { value: 'exchange', label: 'Burza' },
+  { value: 'country', label: 'Země' },
 ];
+
+// ISO country code to name mapping
+const COUNTRY_NAMES: Record<string, string> = {
+  US: 'USA',
+  CN: 'Čína',
+  HK: 'Hong Kong',
+  DE: 'Německo',
+  NL: 'Nizozemsko',
+  DK: 'Dánsko',
+  SE: 'Švédsko',
+  GB: 'Velká Británie',
+  FR: 'Francie',
+  JP: 'Japonsko',
+  KR: 'Jižní Korea',
+  TW: 'Tchaj-wan',
+  IN: 'Indie',
+  BR: 'Brazílie',
+  IL: 'Izrael',
+  CA: 'Kanada',
+  AU: 'Austrálie',
+  CH: 'Švýcarsko',
+  IE: 'Irsko',
+  KZ: 'Kazachstán',
+  SG: 'Singapur',
+  ES: 'Španělsko',
+  IT: 'Itálie',
+  NO: 'Norsko',
+  FI: 'Finsko',
+  BE: 'Belgie',
+  AT: 'Rakousko',
+  PL: 'Polsko',
+  CZ: 'Česko',
+};
 
 export function Dashboard({
   portfolioId,
@@ -218,6 +252,33 @@ export function Dashboard({
     return Array.from(byExchange.entries())
       .map(([exchange, value]) => ({
         exchange,
+        value,
+        percentage: (value / totalValue) * 100,
+      }))
+      .sort((a, b) => b.percentage - a.percentage);
+  }, [holdings, totals]);
+
+  // Calculate country distribution
+  const countryDistribution = useMemo(() => {
+    if (!totals || holdings.length === 0) return [];
+
+    const byCountry = new Map<string, number>();
+    for (const holding of holdings) {
+      const countryCode = holding.country;
+      const countryName = countryCode
+        ? COUNTRY_NAMES[countryCode] || countryCode
+        : 'Neznámá';
+      const currentValue = holding.current_value_czk || 0;
+      byCountry.set(
+        countryName,
+        (byCountry.get(countryName) || 0) + currentValue
+      );
+    }
+
+    const totalValue = totals.totalCurrentValueCzk || 1;
+    return Array.from(byCountry.entries())
+      .map(([country, value]) => ({
+        country,
         value,
         percentage: (value / totalValue) * 100,
       }))
@@ -1382,10 +1443,11 @@ export function Dashboard({
         )}
       </div>
 
-      {/* Distribution Section (Sector / Exchange) */}
+      {/* Distribution Section (Sector / Exchange / Country) */}
       {totals &&
         (totals.sectorDistribution.length > 0 ||
-          exchangeDistribution.length > 0) && (
+          exchangeDistribution.length > 0 ||
+          countryDistribution.length > 0) && (
           <div className="distribution-section">
             <div className="distribution-header">
               <SectionTitle>Rozložení portfolia</SectionTitle>
@@ -1419,6 +1481,23 @@ export function Dashboard({
                   <div key={item.exchange} className="distribution-row">
                     <Text size="sm" color="secondary">
                       {item.exchange}
+                    </Text>
+                    <div className="distribution-bar-wrapper">
+                      <div
+                        className="distribution-bar"
+                        style={{ width: `${item.percentage}%` }}
+                      />
+                    </div>
+                    <MetricValue>
+                      {formatPercent(item.percentage, 1)}
+                    </MetricValue>
+                  </div>
+                ))}
+              {distributionView === 'country' &&
+                countryDistribution.map((item) => (
+                  <div key={item.country} className="distribution-row">
+                    <Text size="sm" color="secondary">
+                      {item.country}
                     </Text>
                     <div className="distribution-bar-wrapper">
                       <div

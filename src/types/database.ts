@@ -125,6 +125,7 @@ export interface PortfolioSummary {
   stock_name: string;
   sector_name: string | null;
   exchange: string | null;
+  country: string | null;
   total_shares: number;
   avg_buy_price: number;
   total_invested_czk: number;
