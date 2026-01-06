@@ -1,6 +1,12 @@
 import './Typography.css';
 
-type TagVariant = 'default' | 'success' | 'muted' | 'owned' | 'tracked';
+type TagVariant =
+  | 'default'
+  | 'success'
+  | 'muted'
+  | 'owned'
+  | 'tracked'
+  | 'custom';
 type TagSize = 'xs' | 'sm';
 
 interface TagProps {
@@ -8,6 +14,8 @@ interface TagProps {
   variant?: TagVariant;
   size?: TagSize;
   title?: string;
+  /** Custom background color (only used with variant='custom') */
+  color?: string;
 }
 
 export function Tag({
@@ -15,9 +23,17 @@ export function Tag({
   variant = 'default',
   size = 'sm',
   title,
+  color,
 }: TagProps) {
+  const style =
+    variant === 'custom' && color ? { backgroundColor: color } : undefined;
+
   return (
-    <span className={`tag tag--${variant} tag--${size}`} title={title}>
+    <span
+      className={`tag tag--${variant} tag--${size}`}
+      title={title}
+      style={style}
+    >
       {children}
     </span>
   );

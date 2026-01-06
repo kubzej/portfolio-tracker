@@ -335,6 +335,35 @@ export interface UpdateWatchlistItemInput {
 }
 
 // ==========================================
+// Watchlist Tags
+// ==========================================
+
+export interface WatchlistTag {
+  id: string;
+  user_id: string;
+  name: string;
+  color: string;
+  created_at: string;
+}
+
+export interface WatchlistItemTag {
+  id: string;
+  watchlist_item_id: string;
+  tag_id: string;
+  created_at: string;
+}
+
+export interface CreateWatchlistTagInput {
+  name: string;
+  color?: string;
+}
+
+export interface UpdateWatchlistTagInput {
+  name?: string;
+  color?: string;
+}
+
+// ==========================================
 // Options Trading
 // ==========================================
 

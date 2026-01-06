@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import type {
   Watchlist,
   WatchlistItemWithCalculations,
+  WatchlistTag,
 } from '@/types/database';
 import {
   watchlistsApi,
   watchlistItemsApi,
   holdingsApi,
   getResearchTracked,
+  watchlistTagsApi,
 } from '@/services/api';
 import {
   Button,
@@ -87,6 +89,11 @@ export function WatchlistView({
     useState<WatchlistItemWithCalculations | null>(null);
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
 
+  // Tags
+  const [itemTags, setItemTags] = useState<Map<string, WatchlistTag[]>>(
+    new Map()
+  );
+
   // Ownership/tracking status
   const [ownedTickers, setOwnedTickers] = useState<Set<string>>(new Set());
   const [trackedTickers, setTrackedTickers] = useState<Set<string>>(new Set());
@@ -149,6 +156,14 @@ export function WatchlistView({
 
       setWatchlist(watchlistData);
       setItems(itemsData);
+
+      // Load tags for all items
+      if (itemsData.length > 0) {
+        const tagMap = await watchlistTagsApi.getTagsForItems(
+          itemsData.map((i) => i.id)
+        );
+        setItemTags(tagMap);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load watchlist');
     } finally {
@@ -273,6 +288,21 @@ export function WatchlistView({
     }
 
     return tags;
+  };
+
+  const getCustomTags = (itemId: string) => {
+    const tags = itemTags.get(itemId) || [];
+    return tags.map((tag) => (
+      <Tag
+        key={tag.id}
+        variant="custom"
+        size="xs"
+        color={tag.color}
+        title={tag.name}
+      >
+        {tag.name}
+      </Tag>
+    ));
   };
 
   const getTargetStatus = (item: WatchlistItemWithCalculations) => {
@@ -452,6 +482,11 @@ export function WatchlistView({
                           {getOwnershipTags(item.ticker)}
                         </div>
                       )}
+                      {itemTags.get(item.id)?.length ? (
+                        <div className="item-custom-tags">
+                          {getCustomTags(item.id)}
+                        </div>
+                      ) : null}
                     </div>
                     {item.name && <StockName truncate>{item.name}</StockName>}
                   </td>
@@ -598,6 +633,11 @@ export function WatchlistView({
                           {getOwnershipTags(item.ticker)}
                         </div>
                       )}
+                      {itemTags.get(item.id)?.length ? (
+                        <div className="item-custom-tags">
+                          {getCustomTags(item.id)}
+                        </div>
+                      ) : null}
                     </div>
                     {item.name && <StockName truncate>{item.name}</StockName>}
                   </div>
