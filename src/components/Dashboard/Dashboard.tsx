@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { holdingsApi } from '@/services/api';
 import type {
   PortfolioSummary,
@@ -35,6 +35,30 @@ import './Dashboard.css';
 
 type DashboardTab = 'stocks' | 'options';
 
+// Aggregated holding type - combines multiple portfolio positions
+interface AggregatedHolding {
+  stock_id: string;
+  ticker: string;
+  stock_name: string;
+  sector_name: string | null;
+  // Aggregated values
+  total_shares: number;
+  total_invested_czk: number;
+  current_value_czk: number | null;
+  // Weighted average price
+  avg_buy_price: number;
+  // From the stock (same across portfolios)
+  current_price: number | null;
+  price_change_percent: number | null;
+  // Calculated
+  gain_percentage: number | null;
+  // Array of individual holdings from different portfolios
+  holdings: PortfolioSummary[];
+  // Aggregated target (weighted average or null if any is null)
+  target_price: number | null;
+  distance_to_target_pct: number | null;
+}
+
 type SortKey =
   | 'ticker'
   | 'sector'
@@ -50,6 +74,81 @@ type SortKey =
   | 'portfolioName'
   | 'targetPrice'
   | 'distanceToTarget';
+
+// Helper function to aggregate holdings by stock
+function aggregateHoldings(holdings: PortfolioSummary[]): AggregatedHolding[] {
+  const byStock = new Map<string, PortfolioSummary[]>();
+
+  for (const holding of holdings) {
+    const existing = byStock.get(holding.stock_id) || [];
+    existing.push(holding);
+    byStock.set(holding.stock_id, existing);
+  }
+
+  return Array.from(byStock.entries()).map(([stockId, stockHoldings]) => {
+    const first = stockHoldings[0];
+    const totalShares = stockHoldings.reduce(
+      (sum, h) => sum + h.total_shares,
+      0
+    );
+    const totalInvestedCzk = stockHoldings.reduce(
+      (sum, h) => sum + h.total_invested_czk,
+      0
+    );
+    const currentValueCzk = stockHoldings.every(
+      (h) => h.current_value_czk !== null
+    )
+      ? stockHoldings.reduce((sum, h) => sum + (h.current_value_czk || 0), 0)
+      : null;
+
+    // Weighted average buy price (in original currency)
+    const avgBuyPrice =
+      totalShares > 0
+        ? stockHoldings.reduce(
+            (sum, h) => sum + h.avg_buy_price * h.total_shares,
+            0
+          ) / totalShares
+        : 0;
+
+    // Calculate gain percentage
+    const gainPercentage =
+      currentValueCzk !== null && totalInvestedCzk > 0
+        ? ((currentValueCzk - totalInvestedCzk) / totalInvestedCzk) * 100
+        : null;
+
+    // Weighted average target price (only if all have targets)
+    const allHaveTarget = stockHoldings.every((h) => h.target_price !== null);
+    const targetPrice = allHaveTarget
+      ? stockHoldings.reduce(
+          (sum, h) => sum + (h.target_price || 0) * h.total_shares,
+          0
+        ) / totalShares
+      : null;
+
+    // Distance to target
+    const distanceToTargetPct =
+      targetPrice !== null && first.current_price !== null
+        ? ((targetPrice - first.current_price) / first.current_price) * 100
+        : null;
+
+    return {
+      stock_id: stockId,
+      ticker: first.ticker,
+      stock_name: first.stock_name,
+      sector_name: first.sector_name,
+      total_shares: totalShares,
+      total_invested_czk: totalInvestedCzk,
+      current_value_czk: currentValueCzk,
+      avg_buy_price: avgBuyPrice,
+      current_price: first.current_price,
+      price_change_percent: first.price_change_percent,
+      gain_percentage: gainPercentage,
+      holdings: stockHoldings,
+      target_price: targetPrice,
+      distance_to_target_pct: distanceToTargetPct,
+    };
+  });
+}
 
 const SORT_FIELDS: SortField[] = [
   { value: 'ticker', label: 'Ticker', defaultDirection: 'asc' },
@@ -82,10 +181,76 @@ export function Dashboard({
   const [totals, setTotals] = useState<PortfolioTotals | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<DashboardTab>('stocks');
+  const [expandedStocks, setExpandedStocks] = useState<Set<string>>(new Set());
 
   // Show portfolio column when viewing "All Portfolios"
   const showPortfolioColumn = portfolioId === null;
   const [error, setError] = useState<string | null>(null);
+
+  // Aggregate holdings when viewing all portfolios
+  const aggregatedHoldings = useMemo(() => {
+    if (!showPortfolioColumn) return null;
+    return aggregateHoldings(holdings);
+  }, [holdings, showPortfolioColumn]);
+
+  // Toggle expand/collapse for a stock
+  const toggleExpanded = useCallback((stockId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedStocks((prev) => {
+      const next = new Set(prev);
+      if (next.has(stockId)) {
+        next.delete(stockId);
+      } else {
+        next.add(stockId);
+      }
+      return next;
+    });
+  }, []);
+
+  // Value extractor for sorting aggregated holdings
+  const getAggregatedValue = useCallback(
+    (item: AggregatedHolding, field: SortKey): string | number | null => {
+      const totalValue = totals?.totalCurrentValueCzk || 0;
+
+      switch (field) {
+        case 'ticker':
+          return item.ticker.toLowerCase();
+        case 'sector':
+          return (item.sector_name || '').toLowerCase();
+        case 'shares':
+          return item.total_shares;
+        case 'avgPrice':
+          return item.avg_buy_price;
+        case 'currentPrice':
+          return item.current_price ?? -Infinity;
+        case 'dailyChange':
+          return item.price_change_percent ?? -Infinity;
+        case 'invested':
+          return item.total_invested_czk;
+        case 'current':
+          return item.current_value_czk ?? -Infinity;
+        case 'plCzk':
+          return item.current_value_czk !== null
+            ? item.current_value_czk - item.total_invested_czk
+            : -Infinity;
+        case 'plPercent':
+          return item.gain_percentage ?? -Infinity;
+        case 'portfolio':
+          return totalValue && item.current_value_czk
+            ? item.current_value_czk / totalValue
+            : -Infinity;
+        case 'portfolioName':
+          return ''; // N/A for aggregated
+        case 'targetPrice':
+          return item.target_price ?? -Infinity;
+        case 'distanceToTarget':
+          return item.distance_to_target_pct ?? -Infinity;
+        default:
+          return null;
+      }
+    },
+    [totals]
+  );
 
   // Value extractor for sorting - needs totals for portfolio percentage calculation
   const getHoldingValue = useCallback(
@@ -132,6 +297,7 @@ export function Dashboard({
     [totals]
   );
 
+  // Sortable hook for regular (non-aggregated) view
   const {
     sortedData: sortedHoldings,
     sortField,
@@ -144,6 +310,24 @@ export function Dashboard({
     defaultField: 'ticker',
     ascendingFields: ['ticker', 'sector'],
   });
+
+  // Sortable hook for aggregated view
+  const {
+    sortedData: sortedAggregated,
+    sortField: aggSortField,
+    sortDirection: aggSortDirection,
+    handleSort: aggHandleSort,
+    setSort: aggSetSort,
+    getSortIndicator: aggGetSortIndicator,
+    isSorted: aggIsSorted,
+  } = useSortable<AggregatedHolding, SortKey>(
+    aggregatedHoldings || [],
+    getAggregatedValue,
+    {
+      defaultField: 'ticker',
+      ascendingFields: ['ticker', 'sector'],
+    }
+  );
 
   useEffect(() => {
     loadData();
@@ -176,15 +360,28 @@ export function Dashboard({
     label: string;
     sortKeyName: SortKey;
     className?: string;
-  }) => (
-    <th
-      className={cn('sortable', className, isSorted(sortKeyName) && 'sorted')}
-      onClick={() => handleSort(sortKeyName)}
-    >
-      {label}
-      {getSortIndicator(sortKeyName)}
-    </th>
-  );
+  }) => {
+    // Use aggregated sort when in "All Portfolios" view
+    const sortFn = showPortfolioColumn ? aggHandleSort : handleSort;
+    const isSortedFn = showPortfolioColumn ? aggIsSorted : isSorted;
+    const getIndicator = showPortfolioColumn
+      ? aggGetSortIndicator
+      : getSortIndicator;
+
+    return (
+      <th
+        className={cn(
+          'sortable',
+          className,
+          isSortedFn(sortKeyName) && 'sorted'
+        )}
+        onClick={() => sortFn(sortKeyName)}
+      >
+        {label}
+        {getIndicator(sortKeyName)}
+      </th>
+    );
+  };
 
   if (loading) {
     return <LoadingSpinner text="Načítám portfolio..." />;
@@ -276,173 +473,336 @@ export function Dashboard({
             <div className="mobile-sort-controls">
               <MobileSortControl
                 fields={SORT_FIELDS}
-                selectedField={sortField}
-                direction={sortDirection}
+                selectedField={showPortfolioColumn ? aggSortField : sortField}
+                direction={
+                  showPortfolioColumn ? aggSortDirection : sortDirection
+                }
                 onFieldChange={(field) => {
                   const fieldConfig = SORT_FIELDS.find(
                     (f) => f.value === field
                   );
-                  setSort(
+                  const setSortFn = showPortfolioColumn ? aggSetSort : setSort;
+                  setSortFn(
                     field as SortKey,
                     fieldConfig?.defaultDirection || 'desc'
                   );
                 }}
-                onDirectionChange={(dir) => setSort(sortField, dir)}
+                onDirectionChange={(dir) => {
+                  const setSortFn = showPortfolioColumn ? aggSetSort : setSort;
+                  const currentField = showPortfolioColumn
+                    ? aggSortField
+                    : sortField;
+                  setSortFn(currentField, dir);
+                }}
               />
             </div>
 
-            {/* Mobile Cards View */}
+            {/* Mobile Cards View - Aggregated when viewing all portfolios */}
             <div className="holdings-cards">
-              {sortedHoldings.map((holding) => {
-                const plCzk =
-                  holding.current_value_czk !== null
-                    ? holding.current_value_czk - holding.total_invested_czk
-                    : null;
-                const portfolioPercentage =
-                  totals?.totalCurrentValueCzk && holding.current_value_czk
-                    ? (holding.current_value_czk /
-                        totals.totalCurrentValueCzk) *
-                      100
-                    : null;
+              {showPortfolioColumn
+                ? // Aggregated view - simple cards without expand on mobile
+                  sortedAggregated.map((agg) => {
+                    const plCzk =
+                      agg.current_value_czk !== null
+                        ? agg.current_value_czk - agg.total_invested_czk
+                        : null;
+                    const portfolioPercentage =
+                      totals?.totalCurrentValueCzk && agg.current_value_czk
+                        ? (agg.current_value_czk /
+                            totals.totalCurrentValueCzk) *
+                          100
+                        : null;
+                    const hasMultiple = agg.holdings.length > 1;
 
-                return (
-                  <div
-                    key={`${holding.portfolio_id}-${holding.stock_id}`}
-                    className="holding-card"
-                    onClick={() => onStockClick?.(holding.stock_id)}
-                  >
-                    <div className="holding-card-header">
-                      <div className="holding-card-title">
-                        <Ticker>{holding.ticker}</Ticker>
-                        <StockName truncate>{holding.stock_name}</StockName>
-                        {showPortfolioColumn && (
-                          <Text size="xs" color="muted">
-                            {holding.portfolio_name}
-                          </Text>
+                    return (
+                      <div
+                        key={agg.stock_id}
+                        className="holding-card"
+                        onClick={() => onStockClick?.(agg.stock_id)}
+                      >
+                        <div className="holding-card-header">
+                          <div className="holding-card-title">
+                            <Ticker>{agg.ticker}</Ticker>
+                            <StockName truncate>{agg.stock_name}</StockName>
+                            {hasMultiple && (
+                              <Text size="xs" color="muted">
+                                {agg.holdings.length} portfolia
+                              </Text>
+                            )}
+                          </div>
+                          <div className="holding-card-pl">
+                            <MetricValue
+                              sentiment={
+                                (plCzk || 0) >= 0 ? 'positive' : 'negative'
+                              }
+                            >
+                              {plCzk !== null ? formatCurrency(plCzk) : '—'}
+                            </MetricValue>
+                            <Text
+                              size="sm"
+                              color={
+                                (agg.gain_percentage || 0) >= 0
+                                  ? 'success'
+                                  : 'danger'
+                              }
+                            >
+                              {formatPercent(agg.gain_percentage)}
+                            </Text>
+                          </div>
+                        </div>
+                        {agg.sector_name && (
+                          <div className="holding-card-sector">
+                            <Text size="xs" color="muted">
+                              {agg.sector_name}
+                            </Text>
+                          </div>
                         )}
+                        <div className="holding-card-stats">
+                          <div className="holding-card-stat">
+                            <MetricLabel>Počet</MetricLabel>
+                            <MetricValue>
+                              {formatNumber(agg.total_shares, 4)}
+                            </MetricValue>
+                          </div>
+                          <div className="holding-card-stat">
+                            <MetricLabel>Aktuální cena</MetricLabel>
+                            <MetricValue>
+                              {formatPrice(agg.current_price)}
+                            </MetricValue>
+                          </div>
+                          <div className="holding-card-stat">
+                            <MetricLabel>Denní změna</MetricLabel>
+                            <MetricValue
+                              sentiment={
+                                agg.price_change_percent !== null
+                                  ? agg.price_change_percent >= 0
+                                    ? 'positive'
+                                    : 'negative'
+                                  : undefined
+                              }
+                            >
+                              {agg.price_change_percent !== null
+                                ? formatPercent(
+                                    agg.price_change_percent,
+                                    2,
+                                    true
+                                  )
+                                : '—'}
+                            </MetricValue>
+                          </div>
+                          <div className="holding-card-stat">
+                            <MetricLabel>Investováno</MetricLabel>
+                            <MetricValue>
+                              {formatCurrency(agg.total_invested_czk)}
+                            </MetricValue>
+                          </div>
+                          <div className="holding-card-stat">
+                            <MetricLabel>Prům. cena</MetricLabel>
+                            <MetricValue>
+                              {formatPrice(agg.avg_buy_price)}
+                            </MetricValue>
+                          </div>
+                          <div className="holding-card-stat">
+                            <MetricLabel>Hodnota</MetricLabel>
+                            <MetricValue>
+                              {formatCurrency(agg.current_value_czk)}
+                            </MetricValue>
+                          </div>
+                          <div className="holding-card-stat">
+                            <MetricLabel>Váha</MetricLabel>
+                            <MetricValue>
+                              {portfolioPercentage !== null
+                                ? formatPercent(portfolioPercentage, 1)
+                                : '—'}
+                            </MetricValue>
+                          </div>
+                          <div className="holding-card-stat">
+                            <MetricLabel>Cílová cena</MetricLabel>
+                            <MetricValue>
+                              {agg.target_price !== null
+                                ? `$${formatPrice(
+                                    agg.target_price,
+                                    undefined,
+                                    false
+                                  )}`
+                                : '—'}
+                            </MetricValue>
+                          </div>
+                          <div className="holding-card-stat">
+                            <MetricLabel>K cíli</MetricLabel>
+                            <MetricValue
+                              sentiment={
+                                agg.distance_to_target_pct !== null
+                                  ? agg.distance_to_target_pct <= 0
+                                    ? 'positive'
+                                    : 'negative'
+                                  : undefined
+                              }
+                            >
+                              {agg.distance_to_target_pct !== null
+                                ? formatPercent(
+                                    agg.distance_to_target_pct,
+                                    1,
+                                    true
+                                  )
+                                : '—'}
+                            </MetricValue>
+                          </div>
+                        </div>
                       </div>
-                      <div className="holding-card-pl">
-                        <MetricValue
-                          sentiment={
-                            (plCzk || 0) >= 0 ? 'positive' : 'negative'
-                          }
-                        >
-                          {plCzk !== null ? formatCurrency(plCzk) : '—'}
-                        </MetricValue>
-                        <Text
-                          size="sm"
-                          color={
-                            (holding.gain_percentage || 0) >= 0
-                              ? 'success'
-                              : 'danger'
-                          }
-                        >
-                          {formatPercent(holding.gain_percentage)}
-                        </Text>
+                    );
+                  })
+                : // Regular non-aggregated view
+                  sortedHoldings.map((holding) => {
+                    const plCzk =
+                      holding.current_value_czk !== null
+                        ? holding.current_value_czk - holding.total_invested_czk
+                        : null;
+                    const portfolioPercentage =
+                      totals?.totalCurrentValueCzk && holding.current_value_czk
+                        ? (holding.current_value_czk /
+                            totals.totalCurrentValueCzk) *
+                          100
+                        : null;
+
+                    return (
+                      <div
+                        key={`${holding.portfolio_id}-${holding.stock_id}`}
+                        className="holding-card"
+                        onClick={() => onStockClick?.(holding.stock_id)}
+                      >
+                        <div className="holding-card-header">
+                          <div className="holding-card-title">
+                            <Ticker>{holding.ticker}</Ticker>
+                            <StockName truncate>{holding.stock_name}</StockName>
+                            {showPortfolioColumn && (
+                              <Text size="xs" color="muted">
+                                {holding.portfolio_name}
+                              </Text>
+                            )}
+                          </div>
+                          <div className="holding-card-pl">
+                            <MetricValue
+                              sentiment={
+                                (plCzk || 0) >= 0 ? 'positive' : 'negative'
+                              }
+                            >
+                              {plCzk !== null ? formatCurrency(plCzk) : '—'}
+                            </MetricValue>
+                            <Text
+                              size="sm"
+                              color={
+                                (holding.gain_percentage || 0) >= 0
+                                  ? 'success'
+                                  : 'danger'
+                              }
+                            >
+                              {formatPercent(holding.gain_percentage)}
+                            </Text>
+                          </div>
+                        </div>
+                        {holding.sector_name && (
+                          <div className="holding-card-sector">
+                            <Text size="xs" color="muted">
+                              {holding.sector_name}
+                            </Text>
+                          </div>
+                        )}
+                        <div className="holding-card-stats">
+                          <div className="holding-card-stat">
+                            <MetricLabel>Počet</MetricLabel>
+                            <MetricValue>
+                              {formatNumber(holding.total_shares, 4)}
+                            </MetricValue>
+                          </div>
+                          <div className="holding-card-stat">
+                            <MetricLabel>Aktuální cena</MetricLabel>
+                            <MetricValue>
+                              {formatPrice(holding.current_price)}
+                            </MetricValue>
+                          </div>
+                          <div className="holding-card-stat">
+                            <MetricLabel>Denní změna</MetricLabel>
+                            <MetricValue
+                              sentiment={
+                                holding.price_change_percent !== null
+                                  ? holding.price_change_percent >= 0
+                                    ? 'positive'
+                                    : 'negative'
+                                  : undefined
+                              }
+                            >
+                              {holding.price_change_percent !== null
+                                ? formatPercent(
+                                    holding.price_change_percent,
+                                    2,
+                                    true
+                                  )
+                                : '—'}
+                            </MetricValue>
+                          </div>
+                          <div className="holding-card-stat">
+                            <MetricLabel>Investováno</MetricLabel>
+                            <MetricValue>
+                              {formatCurrency(holding.total_invested_czk)}
+                            </MetricValue>
+                          </div>
+                          <div className="holding-card-stat">
+                            <MetricLabel>Prům. cena</MetricLabel>
+                            <MetricValue>
+                              {formatPrice(holding.avg_buy_price)}
+                            </MetricValue>
+                          </div>
+                          <div className="holding-card-stat">
+                            <MetricLabel>Hodnota</MetricLabel>
+                            <MetricValue>
+                              {formatCurrency(holding.current_value_czk)}
+                            </MetricValue>
+                          </div>
+                          <div className="holding-card-stat">
+                            <MetricLabel>Váha</MetricLabel>
+                            <MetricValue>
+                              {portfolioPercentage !== null
+                                ? formatPercent(portfolioPercentage, 1)
+                                : '—'}
+                            </MetricValue>
+                          </div>
+                          <div className="holding-card-stat">
+                            <MetricLabel>Cílová cena</MetricLabel>
+                            <MetricValue>
+                              {holding.target_price !== null
+                                ? `$${formatPrice(
+                                    holding.target_price,
+                                    undefined,
+                                    false
+                                  )}`
+                                : '—'}
+                            </MetricValue>
+                          </div>
+                          <div className="holding-card-stat">
+                            <MetricLabel>K cíli</MetricLabel>
+                            <MetricValue
+                              sentiment={
+                                holding.distance_to_target_pct !== null
+                                  ? holding.distance_to_target_pct <= 0
+                                    ? 'positive'
+                                    : 'negative'
+                                  : undefined
+                              }
+                            >
+                              {holding.distance_to_target_pct !== null
+                                ? formatPercent(
+                                    holding.distance_to_target_pct,
+                                    1,
+                                    true
+                                  )
+                                : '—'}
+                            </MetricValue>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    {holding.sector_name && (
-                      <div className="holding-card-sector">
-                        <Text size="xs" color="muted">
-                          {holding.sector_name}
-                        </Text>
-                      </div>
-                    )}
-                    <div className="holding-card-stats">
-                      <div className="holding-card-stat">
-                        <MetricLabel>Počet</MetricLabel>
-                        <MetricValue>
-                          {formatNumber(holding.total_shares, 4)}
-                        </MetricValue>
-                      </div>
-                      <div className="holding-card-stat">
-                        <MetricLabel>Aktuální cena</MetricLabel>
-                        <MetricValue>
-                          {formatPrice(holding.current_price)}
-                        </MetricValue>
-                      </div>
-                      <div className="holding-card-stat">
-                        <MetricLabel>Denní změna</MetricLabel>
-                        <MetricValue
-                          sentiment={
-                            holding.price_change_percent !== null
-                              ? holding.price_change_percent >= 0
-                                ? 'positive'
-                                : 'negative'
-                              : undefined
-                          }
-                        >
-                          {holding.price_change_percent !== null
-                            ? formatPercent(
-                                holding.price_change_percent,
-                                2,
-                                true
-                              )
-                            : '—'}
-                        </MetricValue>
-                      </div>
-                      <div className="holding-card-stat">
-                        <MetricLabel>Investováno</MetricLabel>
-                        <MetricValue>
-                          {formatCurrency(holding.total_invested_czk)}
-                        </MetricValue>
-                      </div>
-                      <div className="holding-card-stat">
-                        <MetricLabel>Prům. cena</MetricLabel>
-                        <MetricValue>
-                          {formatPrice(holding.avg_buy_price)}
-                        </MetricValue>
-                      </div>
-                      <div className="holding-card-stat">
-                        <MetricLabel>Hodnota</MetricLabel>
-                        <MetricValue>
-                          {formatCurrency(holding.current_value_czk)}
-                        </MetricValue>
-                      </div>
-                      <div className="holding-card-stat">
-                        <MetricLabel>Váha</MetricLabel>
-                        <MetricValue>
-                          {portfolioPercentage !== null
-                            ? formatPercent(portfolioPercentage, 1)
-                            : '—'}
-                        </MetricValue>
-                      </div>
-                      <div className="holding-card-stat">
-                        <MetricLabel>Cílová cena</MetricLabel>
-                        <MetricValue>
-                          {holding.target_price !== null
-                            ? `$${formatPrice(
-                                holding.target_price,
-                                undefined,
-                                false
-                              )}`
-                            : '—'}
-                        </MetricValue>
-                      </div>
-                      <div className="holding-card-stat">
-                        <MetricLabel>K cíli</MetricLabel>
-                        <MetricValue
-                          sentiment={
-                            holding.distance_to_target_pct !== null
-                              ? holding.distance_to_target_pct <= 0
-                                ? 'positive'
-                                : 'negative'
-                              : undefined
-                          }
-                        >
-                          {holding.distance_to_target_pct !== null
-                            ? formatPercent(
-                                holding.distance_to_target_pct,
-                                1,
-                                true
-                              )
-                            : '—'}
-                        </MetricValue>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                    );
+                  })}
             </div>
 
             {/* Desktop Table View */}
@@ -451,12 +811,6 @@ export function Dashboard({
                 <thead>
                   <tr>
                     <SortHeader label="Akcie" sortKeyName="ticker" />
-                    {showPortfolioColumn && (
-                      <SortHeader
-                        label="Portfolio"
-                        sortKeyName="portfolioName"
-                      />
-                    )}
                     <SortHeader
                       label="Počet"
                       sortKeyName="shares"
@@ -506,140 +860,490 @@ export function Dashboard({
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedHoldings.map((holding) => {
-                    const plCzk =
-                      holding.current_value_czk !== null
-                        ? holding.current_value_czk - holding.total_invested_czk
-                        : null;
-                    const portfolioPercentage =
-                      totals?.totalCurrentValueCzk && holding.current_value_czk
-                        ? (holding.current_value_czk /
-                            totals.totalCurrentValueCzk) *
-                          100
-                        : null;
-                    const isPositive = (holding.gain_percentage || 0) >= 0;
-                    const isTargetReached =
-                      holding.distance_to_target_pct !== null &&
-                      holding.distance_to_target_pct <= 0;
+                  {showPortfolioColumn
+                    ? // Aggregated table view with expandable rows
+                      sortedAggregated.map((agg) => {
+                        const plCzk =
+                          agg.current_value_czk !== null
+                            ? agg.current_value_czk - agg.total_invested_czk
+                            : null;
+                        const portfolioPercentage =
+                          totals?.totalCurrentValueCzk && agg.current_value_czk
+                            ? (agg.current_value_czk /
+                                totals.totalCurrentValueCzk) *
+                              100
+                            : null;
+                        const isPositive = (agg.gain_percentage || 0) >= 0;
+                        const isTargetReached =
+                          agg.distance_to_target_pct !== null &&
+                          agg.distance_to_target_pct <= 0;
+                        const isExpanded = expandedStocks.has(agg.stock_id);
+                        const hasMultiple = agg.holdings.length > 1;
 
-                    return (
-                      <tr
-                        key={`${holding.portfolio_id}-${holding.stock_id}`}
-                        className={onStockClick ? 'clickable' : ''}
-                        onClick={() => onStockClick?.(holding.stock_id)}
-                      >
-                        <td>
-                          <div className="stock-cell">
-                            <Ticker>{holding.ticker}</Ticker>
-                            <StockName truncate>{holding.stock_name}</StockName>
-                          </div>
-                        </td>
-                        {showPortfolioColumn && (
-                          <td>
-                            <Text color="secondary">
-                              {holding.portfolio_name}
-                            </Text>
-                          </td>
-                        )}
-                        <td className="right">
-                          <MetricValue>
-                            {formatNumber(holding.total_shares, 4)}
-                          </MetricValue>
-                        </td>
-                        <td className="right">
-                          <MetricValue>
-                            {formatPrice(holding.current_price)}
-                          </MetricValue>
-                        </td>
-                        <td className="right">
-                          <MetricValue
-                            sentiment={
-                              holding.price_change_percent !== null
-                                ? holding.price_change_percent >= 0
-                                  ? 'positive'
-                                  : 'negative'
-                                : undefined
-                            }
+                        return (
+                          <React.Fragment key={agg.stock_id}>
+                            <tr
+                              className={cn(
+                                onStockClick && 'clickable',
+                                hasMultiple && 'expandable-row',
+                                isExpanded && 'expanded'
+                              )}
+                              onClick={() => onStockClick?.(agg.stock_id)}
+                            >
+                              <td>
+                                <div className="stock-cell with-expand">
+                                  {hasMultiple && (
+                                    <button
+                                      className="expand-toggle-table"
+                                      onClick={(e) =>
+                                        toggleExpanded(agg.stock_id, e)
+                                      }
+                                      aria-label={
+                                        isExpanded ? 'Sbalit' : 'Rozbalit'
+                                      }
+                                    >
+                                      <svg
+                                        className={cn(
+                                          'expand-chevron',
+                                          isExpanded && 'expanded'
+                                        )}
+                                        width="12"
+                                        height="12"
+                                        viewBox="0 0 12 12"
+                                        fill="none"
+                                      >
+                                        <path
+                                          d="M4.5 2.5L8 6L4.5 9.5"
+                                          stroke="currentColor"
+                                          strokeWidth="1.5"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        />
+                                      </svg>
+                                    </button>
+                                  )}
+                                  <div className="stock-info">
+                                    <Ticker>{agg.ticker}</Ticker>
+                                    <StockName truncate>
+                                      {agg.stock_name}
+                                    </StockName>
+                                    {hasMultiple && (
+                                      <Text size="xs" color="muted">
+                                        {agg.holdings.length} portfolia
+                                      </Text>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="right">
+                                <MetricValue>
+                                  {formatNumber(agg.total_shares, 4)}
+                                </MetricValue>
+                              </td>
+                              <td className="right">
+                                <MetricValue>
+                                  {formatPrice(agg.current_price)}
+                                </MetricValue>
+                              </td>
+                              <td className="right">
+                                <MetricValue
+                                  sentiment={
+                                    agg.price_change_percent !== null
+                                      ? agg.price_change_percent >= 0
+                                        ? 'positive'
+                                        : 'negative'
+                                      : undefined
+                                  }
+                                >
+                                  {agg.price_change_percent !== null
+                                    ? formatPercent(
+                                        agg.price_change_percent,
+                                        2,
+                                        true
+                                      )
+                                    : '—'}
+                                </MetricValue>
+                              </td>
+                              <td className="right">
+                                <MetricValue>
+                                  {formatCurrency(agg.total_invested_czk)}
+                                </MetricValue>
+                              </td>
+                              <td className="right">
+                                <MetricValue>
+                                  {formatPrice(agg.avg_buy_price)}
+                                </MetricValue>
+                              </td>
+                              <td className="right">
+                                <MetricValue>
+                                  {formatCurrency(agg.current_value_czk)}
+                                </MetricValue>
+                              </td>
+                              <td className="right">
+                                <div className="dual-value">
+                                  <MetricValue
+                                    sentiment={
+                                      isPositive ? 'positive' : 'negative'
+                                    }
+                                  >
+                                    {formatPercent(agg.gain_percentage)}
+                                  </MetricValue>
+                                  <Text
+                                    size="xs"
+                                    color={isPositive ? 'success' : 'danger'}
+                                  >
+                                    {plCzk !== null
+                                      ? formatCurrency(plCzk)
+                                      : '—'}
+                                  </Text>
+                                </div>
+                              </td>
+                              <td className="right">
+                                <MetricValue>
+                                  {portfolioPercentage !== null
+                                    ? formatPercent(portfolioPercentage, 1)
+                                    : '—'}
+                                </MetricValue>
+                              </td>
+                              <td className="right">
+                                <div className="dual-value">
+                                  <MetricValue>
+                                    {agg.target_price !== null
+                                      ? `$${formatPrice(
+                                          agg.target_price,
+                                          undefined,
+                                          false
+                                        )}`
+                                      : '—'}
+                                  </MetricValue>
+                                  {agg.distance_to_target_pct !== null && (
+                                    <Text
+                                      size="xs"
+                                      color={
+                                        isTargetReached ? 'success' : 'danger'
+                                      }
+                                    >
+                                      {formatPercent(
+                                        agg.distance_to_target_pct,
+                                        1,
+                                        true
+                                      )}
+                                    </Text>
+                                  )}
+                                </div>
+                              </td>
+                              <td>
+                                <Text color="secondary">
+                                  {agg.sector_name || '—'}
+                                </Text>
+                              </td>
+                            </tr>
+
+                            {/* Sub-rows for individual portfolio positions */}
+                            {isExpanded &&
+                              agg.holdings.map((holding) => {
+                                const subPlCzk =
+                                  holding.current_value_czk !== null
+                                    ? holding.current_value_czk -
+                                      holding.total_invested_czk
+                                    : null;
+                                const subPortfolioPercentage =
+                                  totals?.totalCurrentValueCzk &&
+                                  holding.current_value_czk
+                                    ? (holding.current_value_czk /
+                                        totals.totalCurrentValueCzk) *
+                                      100
+                                    : null;
+                                const subIsPositive =
+                                  (holding.gain_percentage || 0) >= 0;
+                                const subIsTargetReached =
+                                  holding.distance_to_target_pct !== null &&
+                                  holding.distance_to_target_pct <= 0;
+
+                                return (
+                                  <tr
+                                    key={`${holding.portfolio_id}-${holding.stock_id}`}
+                                    className={cn(
+                                      'sub-row',
+                                      onStockClick && 'clickable'
+                                    )}
+                                    onClick={() =>
+                                      onStockClick?.(holding.stock_id)
+                                    }
+                                  >
+                                    <td>
+                                      <div className="stock-cell sub-cell">
+                                        <Text size="sm" color="secondary">
+                                          {holding.portfolio_name}
+                                        </Text>
+                                      </div>
+                                    </td>
+                                    <td className="right">
+                                      <MetricValue>
+                                        {formatNumber(holding.total_shares, 4)}
+                                      </MetricValue>
+                                    </td>
+                                    <td className="right sub-dimmed">
+                                      <Text size="sm" color="muted">
+                                        {formatPrice(holding.current_price)}
+                                      </Text>
+                                    </td>
+                                    <td className="right sub-dimmed">
+                                      <Text
+                                        size="sm"
+                                        color={
+                                          holding.price_change_percent !== null
+                                            ? holding.price_change_percent >= 0
+                                              ? 'success'
+                                              : 'danger'
+                                            : 'muted'
+                                        }
+                                      >
+                                        {holding.price_change_percent !== null
+                                          ? formatPercent(
+                                              holding.price_change_percent,
+                                              2,
+                                              true
+                                            )
+                                          : '—'}
+                                      </Text>
+                                    </td>
+                                    <td className="right">
+                                      <MetricValue>
+                                        {formatCurrency(
+                                          holding.total_invested_czk
+                                        )}
+                                      </MetricValue>
+                                    </td>
+                                    <td className="right">
+                                      <MetricValue>
+                                        {formatPrice(holding.avg_buy_price)}
+                                      </MetricValue>
+                                    </td>
+                                    <td className="right">
+                                      <MetricValue>
+                                        {formatCurrency(
+                                          holding.current_value_czk
+                                        )}
+                                      </MetricValue>
+                                    </td>
+                                    <td className="right">
+                                      <div className="dual-value">
+                                        <MetricValue
+                                          sentiment={
+                                            subIsPositive
+                                              ? 'positive'
+                                              : 'negative'
+                                          }
+                                        >
+                                          {formatPercent(
+                                            holding.gain_percentage
+                                          )}
+                                        </MetricValue>
+                                        <Text
+                                          size="xs"
+                                          color={
+                                            subIsPositive ? 'success' : 'danger'
+                                          }
+                                        >
+                                          {subPlCzk !== null
+                                            ? formatCurrency(subPlCzk)
+                                            : '—'}
+                                        </Text>
+                                      </div>
+                                    </td>
+                                    <td className="right">
+                                      <MetricValue>
+                                        {subPortfolioPercentage !== null
+                                          ? formatPercent(
+                                              subPortfolioPercentage,
+                                              1
+                                            )
+                                          : '—'}
+                                      </MetricValue>
+                                    </td>
+                                    <td className="right">
+                                      <div className="dual-value">
+                                        <MetricValue>
+                                          {holding.target_price !== null
+                                            ? `$${formatPrice(
+                                                holding.target_price,
+                                                undefined,
+                                                false
+                                              )}`
+                                            : '—'}
+                                        </MetricValue>
+                                        {holding.distance_to_target_pct !==
+                                          null && (
+                                          <Text
+                                            size="xs"
+                                            color={
+                                              subIsTargetReached
+                                                ? 'success'
+                                                : 'danger'
+                                            }
+                                          >
+                                            {formatPercent(
+                                              holding.distance_to_target_pct,
+                                              1,
+                                              true
+                                            )}
+                                          </Text>
+                                        )}
+                                      </div>
+                                    </td>
+                                    <td>
+                                      <Text color="muted">—</Text>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                          </React.Fragment>
+                        );
+                      })
+                    : // Regular non-aggregated table view
+                      sortedHoldings.map((holding) => {
+                        const plCzk =
+                          holding.current_value_czk !== null
+                            ? holding.current_value_czk -
+                              holding.total_invested_czk
+                            : null;
+                        const portfolioPercentage =
+                          totals?.totalCurrentValueCzk &&
+                          holding.current_value_czk
+                            ? (holding.current_value_czk /
+                                totals.totalCurrentValueCzk) *
+                              100
+                            : null;
+                        const isPositive = (holding.gain_percentage || 0) >= 0;
+                        const isTargetReached =
+                          holding.distance_to_target_pct !== null &&
+                          holding.distance_to_target_pct <= 0;
+
+                        return (
+                          <tr
+                            key={`${holding.portfolio_id}-${holding.stock_id}`}
+                            className={onStockClick ? 'clickable' : ''}
+                            onClick={() => onStockClick?.(holding.stock_id)}
                           >
-                            {holding.price_change_percent !== null
-                              ? formatPercent(
-                                  holding.price_change_percent,
-                                  2,
-                                  true
-                                )
-                              : '—'}
-                          </MetricValue>
-                        </td>
-                        <td className="right">
-                          <MetricValue>
-                            {formatCurrency(holding.total_invested_czk)}
-                          </MetricValue>
-                        </td>
-                        <td className="right">
-                          <MetricValue>
-                            {formatPrice(holding.avg_buy_price)}
-                          </MetricValue>
-                        </td>
-                        <td className="right">
-                          <MetricValue>
-                            {formatCurrency(holding.current_value_czk)}
-                          </MetricValue>
-                        </td>
-                        <td className="right">
-                          <div className="dual-value">
-                            <MetricValue
-                              sentiment={isPositive ? 'positive' : 'negative'}
-                            >
-                              {formatPercent(holding.gain_percentage)}
-                            </MetricValue>
-                            <Text
-                              size="xs"
-                              color={isPositive ? 'success' : 'danger'}
-                            >
-                              {plCzk !== null ? formatCurrency(plCzk) : '—'}
-                            </Text>
-                          </div>
-                        </td>
-                        <td className="right">
-                          <MetricValue>
-                            {portfolioPercentage !== null
-                              ? formatPercent(portfolioPercentage, 1)
-                              : '—'}
-                          </MetricValue>
-                        </td>
-                        <td className="right">
-                          <div className="dual-value">
-                            <MetricValue>
-                              {holding.target_price !== null
-                                ? `$${formatPrice(
-                                    holding.target_price,
-                                    undefined,
-                                    false
-                                  )}`
-                                : '—'}
-                            </MetricValue>
-                            {holding.distance_to_target_pct !== null && (
-                              <Text
-                                size="xs"
-                                color={isTargetReached ? 'success' : 'danger'}
-                              >
-                                {formatPercent(
-                                  holding.distance_to_target_pct,
-                                  1,
-                                  true
-                                )}
-                              </Text>
+                            <td>
+                              <div className="stock-cell">
+                                <Ticker>{holding.ticker}</Ticker>
+                                <StockName truncate>
+                                  {holding.stock_name}
+                                </StockName>
+                              </div>
+                            </td>
+                            {showPortfolioColumn && (
+                              <td>
+                                <Text color="secondary">
+                                  {holding.portfolio_name}
+                                </Text>
+                              </td>
                             )}
-                          </div>
-                        </td>
-                        <td>
-                          <Text color="secondary">
-                            {holding.sector_name || '—'}
-                          </Text>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                            <td className="right">
+                              <MetricValue>
+                                {formatNumber(holding.total_shares, 4)}
+                              </MetricValue>
+                            </td>
+                            <td className="right">
+                              <MetricValue>
+                                {formatPrice(holding.current_price)}
+                              </MetricValue>
+                            </td>
+                            <td className="right">
+                              <MetricValue
+                                sentiment={
+                                  holding.price_change_percent !== null
+                                    ? holding.price_change_percent >= 0
+                                      ? 'positive'
+                                      : 'negative'
+                                    : undefined
+                                }
+                              >
+                                {holding.price_change_percent !== null
+                                  ? formatPercent(
+                                      holding.price_change_percent,
+                                      2,
+                                      true
+                                    )
+                                  : '—'}
+                              </MetricValue>
+                            </td>
+                            <td className="right">
+                              <MetricValue>
+                                {formatCurrency(holding.total_invested_czk)}
+                              </MetricValue>
+                            </td>
+                            <td className="right">
+                              <MetricValue>
+                                {formatPrice(holding.avg_buy_price)}
+                              </MetricValue>
+                            </td>
+                            <td className="right">
+                              <MetricValue>
+                                {formatCurrency(holding.current_value_czk)}
+                              </MetricValue>
+                            </td>
+                            <td className="right">
+                              <div className="dual-value">
+                                <MetricValue
+                                  sentiment={
+                                    isPositive ? 'positive' : 'negative'
+                                  }
+                                >
+                                  {formatPercent(holding.gain_percentage)}
+                                </MetricValue>
+                                <Text
+                                  size="xs"
+                                  color={isPositive ? 'success' : 'danger'}
+                                >
+                                  {plCzk !== null ? formatCurrency(plCzk) : '—'}
+                                </Text>
+                              </div>
+                            </td>
+                            <td className="right">
+                              <MetricValue>
+                                {portfolioPercentage !== null
+                                  ? formatPercent(portfolioPercentage, 1)
+                                  : '—'}
+                              </MetricValue>
+                            </td>
+                            <td className="right">
+                              <div className="dual-value">
+                                <MetricValue>
+                                  {holding.target_price !== null
+                                    ? `$${formatPrice(
+                                        holding.target_price,
+                                        undefined,
+                                        false
+                                      )}`
+                                    : '—'}
+                                </MetricValue>
+                                {holding.distance_to_target_pct !== null && (
+                                  <Text
+                                    size="xs"
+                                    color={
+                                      isTargetReached ? 'success' : 'danger'
+                                    }
+                                  >
+                                    {formatPercent(
+                                      holding.distance_to_target_pct,
+                                      1,
+                                      true
+                                    )}
+                                  </Text>
+                                )}
+                              </div>
+                            </td>
+                            <td>
+                              <Text color="secondary">
+                                {holding.sector_name || '—'}
+                              </Text>
+                            </td>
+                          </tr>
+                        );
+                      })}
                 </tbody>
               </table>
             </div>

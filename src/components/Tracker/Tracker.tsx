@@ -955,7 +955,16 @@ export function Tracker({ onOpenResearch }: TrackerProps) {
                             </div>
                           )}
                           {h.price_changed && (
-                            <div className="change-tag price">
+                            <div
+                              className={cn(
+                                'change-tag price',
+                                h.prev_price != null &&
+                                  h.current_price != null &&
+                                  (h.current_price > h.prev_price
+                                    ? 'price-up'
+                                    : 'price-down')
+                              )}
+                            >
                               <Caption>Cena ±3%</Caption>
                               <div className="change-value">
                                 {h.prev_price != null && (
@@ -966,7 +975,17 @@ export function Tracker({ onOpenResearch }: TrackerProps) {
                                     <span className="change-arrow">→</span>
                                   </>
                                 )}
-                                <Text weight="medium">
+                                <Text
+                                  weight="medium"
+                                  color={
+                                    h.prev_price != null &&
+                                    h.current_price != null
+                                      ? h.current_price > h.prev_price
+                                        ? 'success'
+                                        : 'danger'
+                                      : undefined
+                                  }
+                                >
                                   {h.current_price
                                     ? `$${h.current_price.toFixed(2)}`
                                     : '—'}

@@ -499,6 +499,16 @@
   border: 1px solid var(--border-light);
 }
 
+.change-tag.price.price-up {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+.change-tag.price.price-down {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
 .change-value {
   display: inline-flex;
   flex-wrap: wrap;

@@ -287,6 +287,13 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  max-width: 140px;
+}
+
+.stock-cell .stock-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Sector Distribution */
@@ -392,4 +399,81 @@
   .transactions-history-section {
     padding: 1.5rem;
   }
+}
+
+/* ============================================
+   EXPANDABLE TABLE ROW STYLES (Desktop only)
+   ============================================ */
+
+/* Stock cell with expand button */
+.stock-cell.with-expand {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.375rem;
+}
+
+.stock-cell .stock-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Table expand toggle */
+.expand-toggle-table {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+  margin-top: 0.125rem;
+  flex-shrink: 0;
+}
+
+.expand-toggle-table:hover {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  background: var(--accent-primary-light);
+}
+
+/* Expandable row styling */
+.holdings-table tr.expandable-row.expanded {
+  background: var(--bg-tertiary);
+}
+
+/* Sub-row styling */
+.holdings-table tr.sub-row {
+  background: var(--bg-tertiary);
+}
+
+.holdings-table tr.sub-row > td {
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+  border-bottom-color: var(--border-lighter, rgba(255, 255, 255, 0.04));
+  font-size: 0.75rem;
+}
+
+.holdings-table tr.sub-row > td:first-child {
+  padding-left: 2.5rem;
+}
+
+/* Dimmed cells in sub-rows (same value as parent) */
+.holdings-table tr.sub-row > td.sub-dimmed {
+  opacity: 0.5;
+}
+
+.stock-cell.sub-cell {
+  padding-left: 0;
+}
+
+/* Last sub-row styling */
+.holdings-table tr.sub-row:has(+ tr:not(.sub-row)) > td,
+.holdings-table tbody tr.sub-row:last-of-type > td {
+  border-bottom-color: var(--border-light);
 }
