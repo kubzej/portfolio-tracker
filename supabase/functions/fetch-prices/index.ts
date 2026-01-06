@@ -16,6 +16,8 @@ interface StockQuote {
   currency: string;
   change: number;
   changePercent: number;
+  volume: number | null;
+  avgVolume20: number | null;
 }
 
 // Exported helper: Parse Yahoo Finance chart response into StockQuote
@@ -29,6 +31,12 @@ export function parseYahooChartResponse(
           currency?: string;
           previousClose?: number;
           chartPreviousClose?: number;
+          regularMarketVolume?: number;
+        };
+        indicators?: {
+          quote?: Array<{
+            volume?: Array<number | null>;
+          }>;
         };
       }>;
     };
@@ -43,6 +51,21 @@ export function parseYahooChartResponse(
 
   const price = meta.regularMarketPrice;
   const previousClose = meta.previousClose || meta.chartPreviousClose;
+  const volumeSeries = result.indicators?.quote?.[0]?.volume;
+  const lastVolumeFromSeries = Array.isArray(volumeSeries)
+    ? volumeSeries.findLast((v) => typeof v === 'number' && v > 0) ?? null
+    : null;
+
+  const volume = meta.regularMarketVolume ?? lastVolumeFromSeries;
+
+  const validVolumes = Array.isArray(volumeSeries)
+    ? volumeSeries.filter((v): v is number => typeof v === 'number' && v > 0)
+    : [];
+  const last20Volumes = validVolumes.slice(-20);
+  const avgVolume20 =
+    last20Volumes.length > 0
+      ? last20Volumes.reduce((sum, v) => sum + v, 0) / last20Volumes.length
+      : null;
 
   if (price === undefined || previousClose === undefined) return null;
 
@@ -52,6 +75,8 @@ export function parseYahooChartResponse(
     currency: meta.currency || 'USD',
     change: price - previousClose,
     changePercent: ((price - previousClose) / previousClose) * 100,
+    volume,
+    avgVolume20,
   };
 }
 
@@ -67,7 +92,7 @@ async function fetchYahooQuote(ticker: string): Promise<StockQuote | null> {
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
       ticker
-    )}?interval=1d&range=1d`;
+    )}?interval=1d&range=1mo`;
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -174,6 +199,8 @@ serve(async (req) => {
             exchange_rate_to_czk: exchangeRate,
             price_change: quote.change,
             price_change_percent: quote.changePercent,
+            volume: quote.volume,
+            avg_volume_20: quote.avgVolume20,
             updated_at: new Date().toISOString(),
           },
           {
