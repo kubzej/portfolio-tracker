@@ -31,11 +31,13 @@ export function parseYahooChartResponse(
           currency?: string;
           previousClose?: number;
           chartPreviousClose?: number;
+          regularMarketPreviousClose?: number;
           regularMarketVolume?: number;
         };
         indicators?: {
           quote?: Array<{
             volume?: Array<number | null>;
+            close?: Array<number | null>;
           }>;
         };
       }>;
@@ -50,7 +52,24 @@ export function parseYahooChartResponse(
   if (!meta) return null;
 
   const price = meta.regularMarketPrice;
-  const previousClose = meta.previousClose || meta.chartPreviousClose;
+
+  // For previousClose, prefer regularMarketPreviousClose (yesterday's close),
+  // or get it from the second-to-last close in historical data (for range=1mo)
+  const closeSeries = result.indicators?.quote?.[0]?.close;
+  const validCloses = Array.isArray(closeSeries)
+    ? closeSeries.filter((v): v is number => typeof v === 'number' && v > 0)
+    : [];
+  // Second-to-last close is yesterday's close when using range=1mo
+  const historicalPreviousClose =
+    validCloses.length >= 2 ? validCloses[validCloses.length - 2] : null;
+
+  const previousClose =
+    meta.regularMarketPreviousClose ||
+    historicalPreviousClose ||
+    meta.previousClose ||
+    meta.chartPreviousClose;
+
+  // Volume data
   const volumeSeries = result.indicators?.quote?.[0]?.volume;
   const lastVolumeFromSeries = Array.isArray(volumeSeries)
     ? volumeSeries.findLast((v) => typeof v === 'number' && v > 0) ?? null
