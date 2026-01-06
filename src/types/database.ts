@@ -125,6 +125,7 @@ export interface PortfolioSummary {
   stock_name: string;
   sector_name: string | null;
   exchange: string | null;
+  country: string | null;
   total_shares: number;
   avg_buy_price: number;
   total_invested_czk: number;
@@ -331,6 +332,35 @@ export interface UpdateWatchlistItemInput {
   last_price_change?: number;
   last_price_change_percent?: number;
   last_price_updated_at?: string;
+}
+
+// ==========================================
+// Watchlist Tags
+// ==========================================
+
+export interface WatchlistTag {
+  id: string;
+  user_id: string;
+  name: string;
+  color: string;
+  created_at: string;
+}
+
+export interface WatchlistItemTag {
+  id: string;
+  watchlist_item_id: string;
+  tag_id: string;
+  created_at: string;
+}
+
+export interface CreateWatchlistTagInput {
+  name: string;
+  color?: string;
+}
+
+export interface UpdateWatchlistTagInput {
+  name?: string;
+  color?: string;
 }
 
 // ==========================================

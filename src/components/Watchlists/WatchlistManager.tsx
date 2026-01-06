@@ -16,6 +16,7 @@ import {
   MetricLabel,
 } from '@/components/shared/Typography';
 import { WatchlistForm } from './WatchlistForm';
+import { TagManager } from './TagManager';
 import './Watchlists.css';
 
 interface WatchlistManagerProps {
@@ -29,6 +30,7 @@ export function WatchlistManager({ onSelectWatchlist }: WatchlistManagerProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingWatchlist, setEditingWatchlist] =
     useState<WatchlistSummary | null>(null);
+  const [showTagManager, setShowTagManager] = useState(false);
 
   useEffect(() => {
     loadWatchlists();
@@ -99,10 +101,21 @@ export function WatchlistManager({ onSelectWatchlist }: WatchlistManagerProps) {
     <div className="watchlists">
       <div className="watchlists-header">
         <SectionTitle>Watchlisty</SectionTitle>
-        <Button variant="primary" onClick={handleCreate}>
-          + Nový watchlist
-        </Button>
+        <div className="header-actions">
+          <Button
+            variant="ghost"
+            onClick={() => setShowTagManager(!showTagManager)}
+          >
+            {showTagManager ? 'Skrýt tagy' : 'Spravovat tagy'}
+          </Button>
+          <Button variant="primary" onClick={handleCreate}>
+            + Nový watchlist
+          </Button>
+        </div>
       </div>
+
+      {/* Tag Manager - globální pro všechny watchlisty */}
+      {showTagManager && <TagManager />}
 
       {error && <div className="watchlists-error">{error}</div>}
 

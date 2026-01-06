@@ -6,8 +6,13 @@ import type {
   AddWatchlistItemInput,
   UpdateWatchlistItemInput,
   Sector,
+  WatchlistTag,
 } from '@/types/database';
-import { watchlistItemsApi, sectorsApi } from '@/services/api';
+import {
+  watchlistItemsApi,
+  sectorsApi,
+  watchlistTagsApi,
+} from '@/services/api';
 import { Button } from '@/components/shared/Button';
 import { Modal } from '@/components/shared/Modal';
 import { Input, TextArea } from '@/components/shared/Input';
@@ -79,6 +84,11 @@ export function AddStockForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  // Tags
+  const [availableTags, setAvailableTags] = useState<WatchlistTag[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set());
+  const [loadingTags, setLoadingTags] = useState(false);
+
   const isEditing = !!item;
   const needsWatchlistSelection = !initialWatchlistId && !isEditing;
   const showWatchlistSelector = !initialWatchlistId || isEditing; // Show when adding without ID or when editing
@@ -96,6 +106,42 @@ export function AddStockForm({
   useEffect(() => {
     loadSectors();
   }, []);
+
+  // Load available tags and item's existing tags
+  useEffect(() => {
+    loadTags();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item?.id]);
+
+  const loadTags = async () => {
+    setLoadingTags(true);
+    try {
+      const tags = await watchlistTagsApi.getAll();
+      setAvailableTags(tags);
+
+      // Load existing tags for item if editing
+      if (item?.id) {
+        const itemTags = await watchlistTagsApi.getTagsForItem(item.id);
+        setSelectedTagIds(new Set(itemTags.map((t) => t.id)));
+      }
+    } catch (err) {
+      console.error('Error loading tags:', err);
+    } finally {
+      setLoadingTags(false);
+    }
+  };
+
+  const toggleTag = (tagId: string) => {
+    setSelectedTagIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(tagId)) {
+        next.delete(tagId);
+      } else {
+        next.add(tagId);
+      }
+      return next;
+    });
+  };
 
   const loadSectors = async () => {
     setLoadingSectors(true);
@@ -248,6 +294,12 @@ export function AddStockForm({
           await watchlistItemsApi.update(item.id, input);
         }
 
+        // Update tags for existing item
+        await watchlistTagsApi.setTagsForItem(
+          item.id,
+          Array.from(selectedTagIds)
+        );
+
         onSuccess();
       } else {
         const input: AddWatchlistItemInput = {
@@ -259,7 +311,15 @@ export function AddStockForm({
           target_sell_price: parsedSellPrice,
           notes: notes.trim() || undefined,
         };
-        await watchlistItemsApi.add(input);
+        const newItem = await watchlistItemsApi.add(input);
+
+        // Add tags to new item
+        if (selectedTagIds.size > 0 && newItem?.id) {
+          await watchlistTagsApi.setTagsForItem(
+            newItem.id,
+            Array.from(selectedTagIds)
+          );
+        }
 
         // Show success state briefly before closing
         setSuccess(true);
@@ -427,6 +487,29 @@ export function AddStockForm({
               <Hint>Upozornit, když cena stoupne na tuto úroveň</Hint>
             </div>
           </div>
+
+          {/* Tags */}
+          {!loadingTags && availableTags.length > 0 && (
+            <div className="form-group">
+              <Label>Tagy</Label>
+              <div className="tag-picker">
+                {availableTags.map((tag) => (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    className={`tag-picker-tag ${
+                      selectedTagIds.has(tag.id) ? 'selected' : ''
+                    }`}
+                    style={{ backgroundColor: tag.color }}
+                    onClick={() => toggleTag(tag.id)}
+                  >
+                    {tag.name}
+                  </button>
+                ))}
+              </div>
+              <Hint>Kliknutím přidáte/odeberete tag</Hint>
+            </div>
+          )}
 
           <div className="form-group">
             <Label htmlFor="stock-notes">Poznámky</Label>

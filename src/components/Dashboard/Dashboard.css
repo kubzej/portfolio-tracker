@@ -296,8 +296,8 @@
   text-overflow: ellipsis;
 }
 
-/* Sector Distribution */
-.sector-section {
+/* Distribution Section (Sector / Exchange) */
+.distribution-section {
   background: var(--bg-secondary);
   border-radius: var(--radius-lg);
   padding: 1rem 1.25rem;
@@ -306,33 +306,52 @@
 }
 
 @media (min-width: 768px) {
-  .sector-section {
+  .distribution-section {
     padding: 1.25rem 1.5rem;
   }
 }
 
-.sector-bars {
+.distribution-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.distribution-header h2 {
+  margin: 0;
+}
+
+.distribution-bars {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   margin-top: 1rem;
 }
 
-.sector-row {
+.distribution-row {
   display: grid;
-  grid-template-columns: minmax(120px, 200px) 1fr 60px;
+  grid-template-columns: minmax(100px, 180px) 1fr 55px;
   gap: 0.75rem;
   align-items: center;
 }
 
-.sector-bar-wrapper {
+@media (max-width: 480px) {
+  .distribution-row {
+    grid-template-columns: minmax(80px, 120px) 1fr 50px;
+    gap: 0.5rem;
+  }
+}
+
+.distribution-bar-wrapper {
   height: 0.5rem;
   background: var(--bg-tertiary);
   border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
-.sector-bar {
+.distribution-bar {
   height: 100%;
   background: var(--text-muted);
   border-radius: var(--radius-sm);

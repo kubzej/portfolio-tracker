@@ -19,6 +19,7 @@ import {
   EmptyState,
   MobileSortControl,
   Tabs,
+  ToggleGroup,
   type SortField,
 } from '@/components/shared';
 import { OptionsList } from '@/components/Options';
@@ -172,6 +173,47 @@ const TAB_OPTIONS = [
   { value: 'options', label: 'Opce' },
 ];
 
+type DistributionView = 'sector' | 'exchange' | 'country';
+
+const DISTRIBUTION_OPTIONS = [
+  { value: 'sector', label: 'Sektor' },
+  { value: 'exchange', label: 'Burza' },
+  { value: 'country', label: 'Země' },
+];
+
+// ISO country code to name mapping
+const COUNTRY_NAMES: Record<string, string> = {
+  US: 'USA',
+  CN: 'Čína',
+  HK: 'Hong Kong',
+  DE: 'Německo',
+  NL: 'Nizozemsko',
+  DK: 'Dánsko',
+  SE: 'Švédsko',
+  GB: 'Velká Británie',
+  FR: 'Francie',
+  JP: 'Japonsko',
+  KR: 'Jižní Korea',
+  TW: 'Tchaj-wan',
+  IN: 'Indie',
+  BR: 'Brazílie',
+  IL: 'Izrael',
+  CA: 'Kanada',
+  AU: 'Austrálie',
+  CH: 'Švýcarsko',
+  IE: 'Irsko',
+  KZ: 'Kazachstán',
+  SG: 'Singapur',
+  ES: 'Španělsko',
+  IT: 'Itálie',
+  NO: 'Norsko',
+  FI: 'Finsko',
+  BE: 'Belgie',
+  AT: 'Rakousko',
+  PL: 'Polsko',
+  CZ: 'Česko',
+};
+
 export function Dashboard({
   portfolioId,
   onStockClick,
@@ -182,6 +224,8 @@ export function Dashboard({
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<DashboardTab>('stocks');
   const [expandedStocks, setExpandedStocks] = useState<Set<string>>(new Set());
+  const [distributionView, setDistributionView] =
+    useState<DistributionView>('sector');
 
   // Show portfolio column when viewing "All Portfolios"
   const showPortfolioColumn = portfolioId === null;
@@ -192,6 +236,54 @@ export function Dashboard({
     if (!showPortfolioColumn) return null;
     return aggregateHoldings(holdings);
   }, [holdings, showPortfolioColumn]);
+
+  // Calculate exchange distribution
+  const exchangeDistribution = useMemo(() => {
+    if (!totals || holdings.length === 0) return [];
+
+    const byExchange = new Map<string, number>();
+    for (const holding of holdings) {
+      const exchange = holding.exchange || 'Neznámá';
+      const currentValue = holding.current_value_czk || 0;
+      byExchange.set(exchange, (byExchange.get(exchange) || 0) + currentValue);
+    }
+
+    const totalValue = totals.totalCurrentValueCzk || 1;
+    return Array.from(byExchange.entries())
+      .map(([exchange, value]) => ({
+        exchange,
+        value,
+        percentage: (value / totalValue) * 100,
+      }))
+      .sort((a, b) => b.percentage - a.percentage);
+  }, [holdings, totals]);
+
+  // Calculate country distribution
+  const countryDistribution = useMemo(() => {
+    if (!totals || holdings.length === 0) return [];
+
+    const byCountry = new Map<string, number>();
+    for (const holding of holdings) {
+      const countryCode = holding.country;
+      const countryName = countryCode
+        ? COUNTRY_NAMES[countryCode] || countryCode
+        : 'Neznámá';
+      const currentValue = holding.current_value_czk || 0;
+      byCountry.set(
+        countryName,
+        (byCountry.get(countryName) || 0) + currentValue
+      );
+    }
+
+    const totalValue = totals.totalCurrentValueCzk || 1;
+    return Array.from(byCountry.entries())
+      .map(([country, value]) => ({
+        country,
+        value,
+        percentage: (value / totalValue) * 100,
+      }))
+      .sort((a, b) => b.percentage - a.percentage);
+  }, [holdings, totals]);
 
   // Toggle expand/collapse for a stock
   const toggleExpanded = useCallback((stockId: string, e: React.MouseEvent) => {
@@ -1351,28 +1443,76 @@ export function Dashboard({
         )}
       </div>
 
-      {/* Sector Distribution */}
-      {totals && totals.sectorDistribution.length > 0 && (
-        <div className="sector-section">
-          <SectionTitle>Rozložení podle sektorů</SectionTitle>
-          <div className="sector-bars">
-            {totals.sectorDistribution.map((sector) => (
-              <div key={sector.sector} className="sector-row">
-                <Text size="sm" color="secondary">
-                  {sector.sector}
-                </Text>
-                <div className="sector-bar-wrapper">
-                  <div
-                    className="sector-bar"
-                    style={{ width: `${sector.percentage}%` }}
-                  />
-                </div>
-                <MetricValue>{formatPercent(sector.percentage, 1)}</MetricValue>
-              </div>
-            ))}
+      {/* Distribution Section (Sector / Exchange / Country) */}
+      {totals &&
+        (totals.sectorDistribution.length > 0 ||
+          exchangeDistribution.length > 0 ||
+          countryDistribution.length > 0) && (
+          <div className="distribution-section">
+            <div className="distribution-header">
+              <SectionTitle>Rozložení portfolia</SectionTitle>
+              <ToggleGroup
+                value={distributionView}
+                onChange={(v) => setDistributionView(v as DistributionView)}
+                options={DISTRIBUTION_OPTIONS}
+                size="sm"
+              />
+            </div>
+            <div className="distribution-bars">
+              {distributionView === 'sector' &&
+                totals.sectorDistribution.map((sector) => (
+                  <div key={sector.sector} className="distribution-row">
+                    <Text size="sm" color="secondary">
+                      {sector.sector}
+                    </Text>
+                    <div className="distribution-bar-wrapper">
+                      <div
+                        className="distribution-bar"
+                        style={{ width: `${sector.percentage}%` }}
+                      />
+                    </div>
+                    <MetricValue>
+                      {formatPercent(sector.percentage, 1)}
+                    </MetricValue>
+                  </div>
+                ))}
+              {distributionView === 'exchange' &&
+                exchangeDistribution.map((item) => (
+                  <div key={item.exchange} className="distribution-row">
+                    <Text size="sm" color="secondary">
+                      {item.exchange}
+                    </Text>
+                    <div className="distribution-bar-wrapper">
+                      <div
+                        className="distribution-bar"
+                        style={{ width: `${item.percentage}%` }}
+                      />
+                    </div>
+                    <MetricValue>
+                      {formatPercent(item.percentage, 1)}
+                    </MetricValue>
+                  </div>
+                ))}
+              {distributionView === 'country' &&
+                countryDistribution.map((item) => (
+                  <div key={item.country} className="distribution-row">
+                    <Text size="sm" color="secondary">
+                      {item.country}
+                    </Text>
+                    <div className="distribution-bar-wrapper">
+                      <div
+                        className="distribution-bar"
+                        style={{ width: `${item.percentage}%` }}
+                      />
+                    </div>
+                    <MetricValue>
+                      {formatPercent(item.percentage, 1)}
+                    </MetricValue>
+                  </div>
+                ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Transactions History */}
       <div className="transactions-history-section">
