@@ -182,7 +182,15 @@ export function StockModal({
     : 'Přidat akcii';
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} size="md">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      size="md"
+      closeOnOverlay={false}
+      closeOnEscape={false}
+      hideCloseButton
+    >
       <form onSubmit={handleSubmit} className="stock-modal-form">
         {error && (
           <div className="form-error">
