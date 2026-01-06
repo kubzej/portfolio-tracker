@@ -89,6 +89,8 @@ export interface CurrentPrice {
   price: number;
   currency: string;
   exchange_rate_to_czk: number | null;
+  volume?: number | null;
+  avg_volume_20?: number | null;
   updated_at: string;
 }
 
@@ -137,6 +139,8 @@ export interface PortfolioSummary {
   current_exchange_rate: number | null;
   price_change: number | null;
   price_change_percent: number | null;
+  daily_volume: number | null;
+  avg_volume_20: number | null;
   current_value: number | null;
   current_value_czk: number | null;
   unrealized_gain: number | null;

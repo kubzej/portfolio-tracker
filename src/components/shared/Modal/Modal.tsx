@@ -10,6 +10,12 @@ interface ModalProps {
   title: string;
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg';
+  /** Allow closing by clicking overlay/backdrop (default: true) */
+  closeOnOverlay?: boolean;
+  /** Allow closing by pressing Escape key (default: true) */
+  closeOnEscape?: boolean;
+  /** Hide the X close button in header (default: false) */
+  hideCloseButton?: boolean;
 }
 
 export function Modal({
@@ -18,6 +24,9 @@ export function Modal({
   title,
   children,
   size = 'md',
+  closeOnOverlay = true,
+  closeOnEscape = true,
+  hideCloseButton = false,
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -34,6 +43,8 @@ export function Modal({
 
   // Close on Escape key
   useEffect(() => {
+    if (!closeOnEscape) return;
+
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
         onClose();
@@ -41,12 +52,12 @@ export function Modal({
     };
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, closeOnEscape]);
 
   if (!isOpen) return null;
 
   const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
+    if (closeOnOverlay && e.target === e.currentTarget) {
       onClose();
     }
   };
@@ -60,15 +71,17 @@ export function Modal({
       >
         <div className="modal-header">
           <CardTitle>{title}</CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            aria-label="Close"
-            className="modal-close"
-          >
-            ×
-          </Button>
+          {!hideCloseButton && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              aria-label="Close"
+              className="modal-close"
+            >
+              ×
+            </Button>
+          )}
         </div>
         <div className="modal-content">{children}</div>
       </div>

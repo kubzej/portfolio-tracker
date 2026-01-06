@@ -51,6 +51,8 @@ interface AggregatedHolding {
   // From the stock (same across portfolios)
   current_price: number | null;
   price_change_percent: number | null;
+  daily_volume: number | null;
+  avg_volume_20: number | null;
   // Calculated
   gain_percentage: number | null;
   // Array of individual holdings from different portfolios
@@ -67,6 +69,7 @@ type SortKey =
   | 'avgPrice'
   | 'currentPrice'
   | 'dailyChange'
+  | 'volumeRatio'
   | 'invested'
   | 'current'
   | 'plCzk'
@@ -132,6 +135,13 @@ function aggregateHoldings(holdings: PortfolioSummary[]): AggregatedHolding[] {
         ? ((targetPrice - first.current_price) / first.current_price) * 100
         : null;
 
+    const dailyVolume =
+      stockHoldings.find((h) => (h.daily_volume ?? null) !== null)
+        ?.daily_volume ?? null;
+    const avgVolume20 =
+      stockHoldings.find((h) => (h.avg_volume_20 ?? null) !== null)
+        ?.avg_volume_20 ?? null;
+
     return {
       stock_id: stockId,
       ticker: first.ticker,
@@ -143,6 +153,8 @@ function aggregateHoldings(holdings: PortfolioSummary[]): AggregatedHolding[] {
       avg_buy_price: avgBuyPrice,
       current_price: first.current_price,
       price_change_percent: first.price_change_percent,
+      daily_volume: dailyVolume,
+      avg_volume_20: avgVolume20,
       gain_percentage: gainPercentage,
       holdings: stockHoldings,
       target_price: targetPrice,
@@ -317,6 +329,12 @@ export function Dashboard({
           return item.current_price ?? -Infinity;
         case 'dailyChange':
           return item.price_change_percent ?? -Infinity;
+        case 'volumeRatio':
+          return item.daily_volume !== null &&
+            item.avg_volume_20 !== null &&
+            item.avg_volume_20 > 0
+            ? item.daily_volume / item.avg_volume_20
+            : -Infinity;
         case 'invested':
           return item.total_invested_czk;
         case 'current':
@@ -362,6 +380,12 @@ export function Dashboard({
           return item.current_price ?? -Infinity;
         case 'dailyChange':
           return item.price_change_percent ?? -Infinity;
+        case 'volumeRatio':
+          return item.daily_volume !== null &&
+            item.avg_volume_20 !== null &&
+            item.avg_volume_20 > 0
+            ? item.daily_volume / item.avg_volume_20
+            : -Infinity;
         case 'invested':
           return item.total_invested_czk;
         case 'current':
@@ -683,6 +707,20 @@ export function Dashboard({
                             </MetricValue>
                           </div>
                           <div className="holding-card-stat">
+                            <MetricLabel>Objem</MetricLabel>
+                            <MetricValue>
+                              {agg.daily_volume !== null &&
+                              agg.avg_volume_20 !== null &&
+                              agg.avg_volume_20 > 0
+                                ? formatNumber(
+                                    agg.daily_volume / agg.avg_volume_20,
+                                    2,
+                                    true
+                                  )
+                                : '—'}
+                            </MetricValue>
+                          </div>
+                          <div className="holding-card-stat">
                             <MetricLabel>Investováno</MetricLabel>
                             <MetricValue>
                               {formatCurrency(agg.total_invested_czk)}
@@ -834,6 +872,21 @@ export function Dashboard({
                             </MetricValue>
                           </div>
                           <div className="holding-card-stat">
+                            <MetricLabel>Objem</MetricLabel>
+                            <MetricValue>
+                              {holding.daily_volume !== null &&
+                              holding.avg_volume_20 !== null &&
+                              holding.avg_volume_20 > 0
+                                ? formatNumber(
+                                    holding.daily_volume /
+                                      holding.avg_volume_20,
+                                    2,
+                                    true
+                                  )
+                                : '—'}
+                            </MetricValue>
+                          </div>
+                          <div className="holding-card-stat">
                             <MetricLabel>Investováno</MetricLabel>
                             <MetricValue>
                               {formatCurrency(holding.total_invested_czk)}
@@ -914,8 +967,13 @@ export function Dashboard({
                       className="right"
                     />
                     <SortHeader
-                      label="Denní"
+                      label="Denní %"
                       sortKeyName="dailyChange"
+                      className="right"
+                    />
+                    <SortHeader
+                      label="Objem"
+                      sortKeyName="volumeRatio"
                       className="right"
                     />
                     <SortHeader
@@ -1050,6 +1108,19 @@ export function Dashboard({
                                   {agg.price_change_percent !== null
                                     ? formatPercent(
                                         agg.price_change_percent,
+                                        2,
+                                        true
+                                      )
+                                    : '—'}
+                                </MetricValue>
+                              </td>
+                              <td className="right">
+                                <MetricValue>
+                                  {agg.daily_volume !== null &&
+                                  agg.avg_volume_20 !== null &&
+                                  agg.avg_volume_20 > 0
+                                    ? formatNumber(
+                                        agg.daily_volume / agg.avg_volume_20,
                                         2,
                                         true
                                       )
@@ -1194,6 +1265,20 @@ export function Dashboard({
                                         {holding.price_change_percent !== null
                                           ? formatPercent(
                                               holding.price_change_percent,
+                                              2,
+                                              true
+                                            )
+                                          : '—'}
+                                      </Text>
+                                    </td>
+                                    <td className="right sub-dimmed">
+                                      <Text size="sm" color="muted">
+                                        {holding.daily_volume !== null &&
+                                        holding.avg_volume_20 !== null &&
+                                        holding.avg_volume_20 > 0
+                                          ? formatNumber(
+                                              holding.daily_volume /
+                                                holding.avg_volume_20,
                                               2,
                                               true
                                             )
@@ -1356,6 +1441,20 @@ export function Dashboard({
                                 {holding.price_change_percent !== null
                                   ? formatPercent(
                                       holding.price_change_percent,
+                                      2,
+                                      true
+                                    )
+                                  : '—'}
+                              </MetricValue>
+                            </td>
+                            <td className="right">
+                              <MetricValue>
+                                {holding.daily_volume !== null &&
+                                holding.avg_volume_20 !== null &&
+                                holding.avg_volume_20 > 0
+                                  ? formatNumber(
+                                      holding.daily_volume /
+                                        holding.avg_volume_20,
                                       2,
                                       true
                                     )

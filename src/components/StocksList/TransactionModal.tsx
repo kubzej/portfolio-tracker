@@ -428,7 +428,15 @@ export function TransactionModal({
   const cannotAddTransaction = !isEditMode && (hasNoPortfolios || hasNoStocks);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} size="md">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      size="md"
+      closeOnOverlay={false}
+      closeOnEscape={false}
+      hideCloseButton
+    >
       {cannotAddTransaction ? (
         <div className="transaction-modal-empty">
           {hasNoPortfolios ? (

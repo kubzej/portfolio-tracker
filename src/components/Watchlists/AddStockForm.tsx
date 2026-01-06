@@ -340,6 +340,9 @@ export function AddStockForm({
       onClose={onClose}
       title={isEditing ? `Upravit ${item.ticker}` : 'Přidat akcii'}
       size="md"
+      closeOnOverlay={false}
+      closeOnEscape={false}
+      hideCloseButton
     >
       {success ? (
         <div className="form-success">
