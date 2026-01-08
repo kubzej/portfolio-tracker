@@ -252,11 +252,23 @@ export function StockDetail({
           <MetricValue size="lg">{formatShares(totalShares)}</MetricValue>
         </div>
         <div className="summary-card">
-          <MetricLabel>Prům. nákupní cena</MetricLabel>
+          <MetricLabel>
+            {stock.price_scale !== 1
+              ? 'Prům. cena (kotovaná)'
+              : 'Prům. nákupní cena'}
+          </MetricLabel>
           <MetricValue size="lg">
             {formatPrice(avgPrice / (stock.price_scale ?? 1), stock.currency)}
           </MetricValue>
         </div>
+        {stock.price_scale !== 1 && (
+          <div className="summary-card">
+            <MetricLabel>Prům. cena (reálná)</MetricLabel>
+            <MetricValue size="lg">
+              {formatPrice(avgPrice, stock.currency)}
+            </MetricValue>
+          </div>
+        )}
         <div className="summary-card">
           <MetricLabel>Celkem investováno (CZK)</MetricLabel>
           <MetricValue size="lg">

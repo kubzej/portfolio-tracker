@@ -14,17 +14,6 @@ import {
 } from '@/utils/format';
 import { cn } from '@/utils/cn';
 
-/**
- * Convert scaled price back to raw/quoted price for display.
- */
-function toDisplayPrice(
-  scaledPrice: number | null | undefined,
-  priceScale: number
-): number | null {
-  if (scaledPrice === null || scaledPrice === undefined) return null;
-  if (priceScale === 0) return scaledPrice;
-  return scaledPrice / priceScale;
-}
 import { useSortable } from '@/hooks';
 import {
   Button,
@@ -669,13 +658,7 @@ export function TransactionReport({
                     </td>
                     <td data-label="Cena" className="align-right">
                       <Text size="sm">
-                        {formatPrice(
-                          toDisplayPrice(
-                            tx.price_per_share,
-                            tx.stock?.price_scale ?? 1
-                          ),
-                          tx.currency
-                        )}
+                        {formatPrice(tx.price_per_share, tx.currency)}
                       </Text>
                     </td>
                     <td
