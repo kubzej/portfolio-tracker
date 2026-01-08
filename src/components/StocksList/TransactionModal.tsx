@@ -182,6 +182,21 @@ export function TransactionModal({
       setStocks(stocksData);
       setPortfolios(portfoliosData);
 
+      // In edit mode, convert actual price back to quoted price for display
+      if (transaction) {
+        const stock = stocksData.find((s) => s.id === transaction.stock_id);
+        const scale = stock?.price_scale ?? 1;
+        // Convert actual price back to quoted price (divide by scale)
+        const quotedPrice =
+          scale !== 0
+            ? transaction.price_per_share / scale
+            : transaction.price_per_share;
+        setFormData((prev) => ({
+          ...prev,
+          price_per_share: quotedPrice,
+        }));
+      }
+
       // Only set defaults in add mode
       if (!transaction) {
         // If we have stocks and no preselected one, select the first and use its currency
@@ -262,19 +277,28 @@ export function TransactionModal({
     }
 
     try {
+      // Get price_scale for the selected stock
+      const stock = stocks.find((s) => s.id === formData.stock_id);
+      const scale = stock?.price_scale ?? 1;
+      // Convert quoted price to actual price per share
+      const actualPrice = formData.price_per_share * scale;
+
       if (isEditMode && transaction) {
         await transactionsApi.update(transaction.id, {
           date: formData.date,
           type: formData.type,
           quantity: formData.quantity,
-          price_per_share: formData.price_per_share,
+          price_per_share: actualPrice,
           currency: formData.currency,
           exchange_rate_to_czk: formData.exchange_rate_to_czk,
           fees: formData.fees,
           notes: formData.notes || undefined,
         });
       } else {
-        await transactionsApi.create(formData);
+        await transactionsApi.create({
+          ...formData,
+          price_per_share: actualPrice,
+        });
       }
 
       if (!isEditMode) {
@@ -406,8 +430,13 @@ export function TransactionModal({
       ? totalAvailableShares
       : selectedLot?.remaining_shares || 0;
 
-  // Calculate totals for display
-  const totalAmount = formData.quantity * formData.price_per_share;
+  // Get selected stock for price_scale
+  const selectedStock = stocks.find((s) => s.id === formData.stock_id);
+  const priceScale = selectedStock?.price_scale ?? 1;
+
+  // Calculate totals for display (apply price_scale to get actual price per share)
+  const actualPricePerShare = formData.price_per_share * priceScale;
+  const totalAmount = formData.quantity * actualPricePerShare;
   const totalWithFees = totalAmount + (formData.fees || 0);
   const totalInCzk = formData.exchange_rate_to_czk
     ? totalWithFees * formData.exchange_rate_to_czk

@@ -58,6 +58,7 @@ const EMPTY_FORM: CreateStockInput = {
   target_price: undefined,
   notes: '',
   finnhub_ticker: '',
+  price_scale: 1,
 };
 
 interface StockModalProps {
@@ -94,6 +95,7 @@ export function StockModal({
           target_price: stock.target_price ?? undefined,
           notes: stock.notes ?? '',
           finnhub_ticker: stock.finnhub_ticker ?? '',
+          price_scale: stock.price_scale ?? 1,
         });
       } else {
         // Add mode - reset form
@@ -293,6 +295,26 @@ export function StockModal({
             />
             <Hint>
               Potřeba pouze pro ne-US akcie, pokud auto-detekce selhává
+            </Hint>
+          </div>
+
+          <div className="form-group">
+            <Label htmlFor="price_scale">Cenový poměr</Label>
+            <Input
+              type="number"
+              id="price_scale"
+              name="price_scale"
+              value={formData.price_scale ?? ''}
+              onChange={handleNumberChange}
+              placeholder="1"
+              step="any"
+              min="0.0001"
+              max="1"
+              fullWidth
+            />
+            <Hint>
+              Poměr pro převod kotované ceny na skutečnou cenu za akcii. 1 =
+              normální, 0.01 = cena za 100 ks (LSE)
             </Hint>
           </div>
         </div>

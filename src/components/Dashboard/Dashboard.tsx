@@ -46,13 +46,15 @@ interface AggregatedHolding {
   total_shares: number;
   total_invested_czk: number;
   current_value_czk: number | null;
-  // Weighted average price
+  // Weighted average price (actual/scaled price)
   avg_buy_price: number;
   // From the stock (same across portfolios)
   current_price: number | null;
   price_change_percent: number | null;
   daily_volume: number | null;
   avg_volume_20: number | null;
+  // Price scale for display conversion
+  price_scale: number;
   // Calculated
   gain_percentage: number | null;
   // Array of individual holdings from different portfolios
@@ -78,6 +80,19 @@ type SortKey =
   | 'portfolioName'
   | 'targetPrice'
   | 'distanceToTarget';
+
+/**
+ * Convert scaled price back to raw/quoted price for display.
+ * E.g., 12.90 GBP (actual) with scale 0.01 -> 1290 (quoted on LSE)
+ */
+function toDisplayPrice(
+  scaledPrice: number | null | undefined,
+  priceScale: number
+): number | null {
+  if (scaledPrice === null || scaledPrice === undefined) return null;
+  if (priceScale === 0) return scaledPrice;
+  return scaledPrice / priceScale;
+}
 
 // Helper function to aggregate holdings by stock
 function aggregateHoldings(holdings: PortfolioSummary[]): AggregatedHolding[] {
@@ -155,6 +170,7 @@ function aggregateHoldings(holdings: PortfolioSummary[]): AggregatedHolding[] {
       price_change_percent: first.price_change_percent,
       daily_volume: dailyVolume,
       avg_volume_20: avgVolume20,
+      price_scale: first.price_scale ?? 1,
       gain_percentage: gainPercentage,
       holdings: stockHoldings,
       target_price: targetPrice,
@@ -683,7 +699,12 @@ export function Dashboard({
                           <div className="holding-card-stat">
                             <MetricLabel>Aktuální cena</MetricLabel>
                             <MetricValue>
-                              {formatPrice(agg.current_price)}
+                              {formatPrice(
+                                toDisplayPrice(
+                                  agg.current_price,
+                                  agg.price_scale
+                                )
+                              )}
                             </MetricValue>
                           </div>
                           <div className="holding-card-stat">
@@ -729,7 +750,12 @@ export function Dashboard({
                           <div className="holding-card-stat">
                             <MetricLabel>Prům. cena</MetricLabel>
                             <MetricValue>
-                              {formatPrice(agg.avg_buy_price)}
+                              {formatPrice(
+                                toDisplayPrice(
+                                  agg.avg_buy_price,
+                                  agg.price_scale
+                                )
+                              )}
                             </MetricValue>
                           </div>
                           <div className="holding-card-stat">
@@ -848,7 +874,12 @@ export function Dashboard({
                           <div className="holding-card-stat">
                             <MetricLabel>Aktuální cena</MetricLabel>
                             <MetricValue>
-                              {formatPrice(holding.current_price)}
+                              {formatPrice(
+                                toDisplayPrice(
+                                  holding.current_price,
+                                  holding.price_scale ?? 1
+                                )
+                              )}
                             </MetricValue>
                           </div>
                           <div className="holding-card-stat">
@@ -895,7 +926,12 @@ export function Dashboard({
                           <div className="holding-card-stat">
                             <MetricLabel>Prům. cena</MetricLabel>
                             <MetricValue>
-                              {formatPrice(holding.avg_buy_price)}
+                              {formatPrice(
+                                toDisplayPrice(
+                                  holding.avg_buy_price,
+                                  holding.price_scale ?? 1
+                                )
+                              )}
                             </MetricValue>
                           </div>
                           <div className="holding-card-stat">
@@ -1092,7 +1128,12 @@ export function Dashboard({
                               </td>
                               <td className="right">
                                 <MetricValue>
-                                  {formatPrice(agg.current_price)}
+                                  {formatPrice(
+                                    toDisplayPrice(
+                                      agg.current_price,
+                                      agg.price_scale
+                                    )
+                                  )}
                                 </MetricValue>
                               </td>
                               <td className="right">
@@ -1134,7 +1175,12 @@ export function Dashboard({
                               </td>
                               <td className="right">
                                 <MetricValue>
-                                  {formatPrice(agg.avg_buy_price)}
+                                  {formatPrice(
+                                    toDisplayPrice(
+                                      agg.avg_buy_price,
+                                      agg.price_scale
+                                    )
+                                  )}
                                 </MetricValue>
                               </td>
                               <td className="right">
@@ -1248,7 +1294,12 @@ export function Dashboard({
                                     </td>
                                     <td className="right sub-dimmed">
                                       <Text size="sm" color="muted">
-                                        {formatPrice(holding.current_price)}
+                                        {formatPrice(
+                                          toDisplayPrice(
+                                            holding.current_price,
+                                            holding.price_scale ?? 1
+                                          )
+                                        )}
                                       </Text>
                                     </td>
                                     <td className="right sub-dimmed">
@@ -1294,7 +1345,12 @@ export function Dashboard({
                                     </td>
                                     <td className="right">
                                       <MetricValue>
-                                        {formatPrice(holding.avg_buy_price)}
+                                        {formatPrice(
+                                          toDisplayPrice(
+                                            holding.avg_buy_price,
+                                            holding.price_scale ?? 1
+                                          )
+                                        )}
                                       </MetricValue>
                                     </td>
                                     <td className="right">
@@ -1425,7 +1481,12 @@ export function Dashboard({
                             </td>
                             <td className="right">
                               <MetricValue>
-                                {formatPrice(holding.current_price)}
+                                {formatPrice(
+                                  toDisplayPrice(
+                                    holding.current_price,
+                                    holding.price_scale ?? 1
+                                  )
+                                )}
                               </MetricValue>
                             </td>
                             <td className="right">
@@ -1468,7 +1529,12 @@ export function Dashboard({
                             </td>
                             <td className="right">
                               <MetricValue>
-                                {formatPrice(holding.avg_buy_price)}
+                                {formatPrice(
+                                  toDisplayPrice(
+                                    holding.avg_buy_price,
+                                    holding.price_scale ?? 1
+                                  )
+                                )}
                               </MetricValue>
                             </td>
                             <td className="right">

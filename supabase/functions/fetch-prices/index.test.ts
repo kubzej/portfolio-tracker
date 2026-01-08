@@ -186,3 +186,73 @@ Deno.test('calculatePriceInCzk handles zero price', () => {
   const result = calculatePriceInCzk(0, 23.5);
   assertEquals(result, 0);
 });
+
+// ============================================================================
+// GBp (pence) currency handling tests
+// ============================================================================
+
+Deno.test('parseYahooChartResponse returns GBp currency for LSE stocks', () => {
+  // Yahoo returns GBp (pence) for LSE stocks, not GBP
+  const data = {
+    chart: {
+      result: [
+        {
+          meta: {
+            symbol: 'WIZZ.L',
+            regularMarketPrice: 1295, // Price in pence
+            currency: 'GBp', // Yahoo returns GBp, not GBP!
+            previousClose: 1270,
+          },
+        },
+      ],
+    },
+  };
+
+  const result = parseYahooChartResponse(data, 'WIZZ.L');
+  assertEquals(result?.ticker, 'WIZZ.L');
+  assertEquals(result?.price, 1295);
+  assertEquals(result?.currency, 'GBp'); // This is what Yahoo returns
+  assertEquals(result?.change, 25);
+});
+
+Deno.test('calculatePriceInCzk with GBP rate and price_scale', () => {
+  // WIZZ.L: Yahoo price 1295 GBp, price_scale 0.01, GBP/CZK rate ~30
+  // Actual price per share: 1295 * 0.01 = 12.95 GBP
+  // Value in CZK: 12.95 * 30 = 388.50 CZK per share
+
+  const yahooPrice = 1295; // GBp (pence)
+  const priceScale = 0.01;
+  const gbpToCzkRate = 30;
+
+  const actualPriceGbp = yahooPrice * priceScale; // 12.95 GBP
+  const valueCzk = calculatePriceInCzk(actualPriceGbp, gbpToCzkRate);
+
+  assertAlmostEquals(valueCzk, 388.5, 0.01);
+});
+
+Deno.test(
+  'exchange rate lookup should use DB currency not Yahoo currency',
+  () => {
+    // This test documents the expected behavior:
+    // - Yahoo returns currency: 'GBp' (pence)
+    // - DB has currency: 'GBP'
+    // - Exchange rate lookup should use 'GBP' from DB to find correct rate
+    // - If we used 'GBp' from Yahoo, rate would be 1 (not found, defaulted)
+
+    const exchangeRates = new Map<string, number>();
+    exchangeRates.set('CZK', 1);
+    exchangeRates.set('GBP', 30.5); // GBP rate exists
+    exchangeRates.set('USD', 23.5);
+
+    const yahooCurrency = 'GBp'; // What Yahoo returns
+    const dbCurrency = 'GBP'; // What we have in stocks table
+
+    // Wrong: using Yahoo currency
+    const wrongRate = exchangeRates.get(yahooCurrency) || 1;
+    assertEquals(wrongRate, 1); // Falls back to 1, WRONG!
+
+    // Correct: using DB currency
+    const correctRate = exchangeRates.get(dbCurrency) || 1;
+    assertEquals(correctRate, 30.5); // Finds the correct rate
+  }
+);

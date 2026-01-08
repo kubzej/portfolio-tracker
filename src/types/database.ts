@@ -34,6 +34,8 @@ export interface Stock {
   target_price: number | null;
   notes: string | null;
   finnhub_ticker: string | null;
+  /** Multiplier to convert quoted price to actual price per share. Default 1. Use 0.01 for stocks quoted per 100 shares. */
+  price_scale: number;
   created_at: string;
   updated_at: string;
 }
@@ -128,6 +130,8 @@ export interface PortfolioSummary {
   sector_name: string | null;
   exchange: string | null;
   country: string | null;
+  /** Multiplier to convert quoted price to actual price per share. Default 1. */
+  price_scale: number;
   total_shares: number;
   avg_buy_price: number;
   total_invested_czk: number;
@@ -135,7 +139,10 @@ export interface PortfolioSummary {
   first_purchase: string | null;
   last_purchase: string | null;
   purchase_count: number;
+  /** Current price (already scaled by price_scale) */
   current_price: number | null;
+  /** Raw price from API before scaling */
+  current_price_raw?: number | null;
   current_exchange_rate: number | null;
   price_change: number | null;
   price_change_percent: number | null;
@@ -161,6 +168,8 @@ export interface CreateStockInput {
   target_price?: number;
   notes?: string;
   finnhub_ticker?: string;
+  /** Multiplier to convert quoted price to actual price per share. Default 1. Use 0.01 for stocks quoted per 100 shares. */
+  price_scale?: number;
 }
 
 export interface UpdateStockInput {
@@ -172,6 +181,8 @@ export interface UpdateStockInput {
   target_price?: number | null;
   notes?: string | null;
   finnhub_ticker?: string | null;
+  /** Multiplier to convert quoted price to actual price per share. Default 1. Use 0.01 for stocks quoted per 100 shares. */
+  price_scale?: number;
 }
 
 export interface CreateTransactionInput {

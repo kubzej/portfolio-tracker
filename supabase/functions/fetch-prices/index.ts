@@ -206,7 +206,9 @@ serve(async (req) => {
         continue;
       }
 
-      const exchangeRate = exchangeRates.get(quote.currency) || 1;
+      // Use currency from DB (e.g., GBP) not from Yahoo (e.g., GBp for pence)
+      // This ensures correct exchange rate lookup
+      const exchangeRate = exchangeRates.get(holding.currency) || 1;
 
       const { error: updateError } = await supabase
         .from('current_prices')
