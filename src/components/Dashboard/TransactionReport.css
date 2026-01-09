@@ -181,8 +181,99 @@
   background: var(--bg-tertiary);
 }
 
-/* Mobile */
+/* ========================================
+   MOBILE TRANSACTION CARDS
+   ======================================== */
+
+/* Mobile cards - hidden on desktop */
+.transaction-report .transaction-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.transaction-report .transaction-card {
+  background: transparent;
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  border: 1px solid var(--border-light);
+}
+
+.transaction-report .transaction-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.transaction-report .transaction-card-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.transaction-report .transaction-card-badges {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.transaction-report .transaction-card-total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.transaction-report .transaction-card-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.25rem 1rem;
+}
+
+.transaction-report .transaction-card-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.375rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 0.5rem;
+}
+
+.transaction-report .transaction-card-stat .metric-label {
+  font-size: 0.625rem;
+}
+
+.transaction-report .transaction-card-stat .metric-value {
+  font-size: 0.8125rem;
+  text-align: right;
+}
+
+.transaction-report .transaction-card-stat--full {
+  grid-column: 1 / -1;
+}
+
+/* Desktop: hide cards, show table */
+@media (min-width: 769px) {
+  .transaction-report .transaction-cards {
+    display: none;
+  }
+
+  .transaction-report .table-container {
+    display: block;
+  }
+}
+
+/* Mobile: show cards, hide table */
 @media (max-width: 768px) {
+  .transaction-report .table-container {
+    display: none;
+  }
+
+  .transaction-report .transaction-cards {
+    display: flex;
+  }
+
   .transaction-report .report-header {
     flex-direction: row;
     align-items: center;
@@ -274,105 +365,5 @@
     flex-direction: column;
     align-items: flex-start;
     gap: var(--spacing-sm);
-  }
-
-  /* Mobile card layout for transactions */
-  .transaction-report .transactions-table {
-    display: block;
-  }
-
-  .transaction-report .transactions-table thead {
-    display: none;
-  }
-
-  .transaction-report .transactions-table tbody {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .transaction-report .transactions-table tr {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.25rem 1rem;
-    padding: 1rem;
-    background: transparent;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-light);
-  }
-
-  .transaction-report .transactions-table tr:hover,
-  .transaction-report .transactions-table tr:active,
-  .transaction-report .transactions-table tr:focus {
-    background: transparent;
-    border-color: var(--border-light);
-  }
-
-  .transaction-report .transactions-table td span[style*="cursor"] {
-    cursor: default !important;
-    pointer-events: none;
-  }
-
-  .transaction-report .transactions-table td {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding: 0.375rem 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    gap: 0.5rem;
-    white-space: normal;
-  }
-
-  .transaction-report .transactions-table td::before {
-    content: attr(data-label);
-    font-size: 0.625rem;
-    font-weight: 600;
-    color: var(--text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    flex-shrink: 0;
-  }
-
-  .transaction-report .transactions-table td.align-right {
-    text-align: right;
-  }
-
-  /* Stock transaction card layout */
-  .transaction-report .transactions-table:not(.options-table) td:nth-child(1) { grid-column: 1; } /* Datum */
-  .transaction-report .transactions-table:not(.options-table) td:nth-child(2) { grid-column: 2; } /* Ticker */
-  .transaction-report .transactions-table:not(.options-table) td:nth-child(3) { grid-column: 1 / -1; border-bottom: none; } /* Název - full width */
-  .transaction-report .transactions-table:not(.options-table) td:nth-child(4) { grid-column: 1; } /* Typ */
-  .transaction-report .transactions-table:not(.options-table) td:nth-child(5) { grid-column: 2; } /* Množství */
-  .transaction-report .transactions-table:not(.options-table) td:nth-child(6) { grid-column: 1; } /* Cena */
-  .transaction-report .transactions-table:not(.options-table) td:nth-child(7) { grid-column: 2; } /* Poplatky */
-  .transaction-report .transactions-table:not(.options-table) td:nth-child(8) { 
-    grid-column: 1 / -1; 
-    padding-top: 0.5rem;
-    border-top: 1px solid var(--border-light);
-    border-bottom: none;
-    margin-top: 0.25rem;
-  } /* Celkem CZK */
-
-  /* Options transaction card layout */
-  .transaction-report .options-table td:nth-child(1) { grid-column: 1; } /* Datum */
-  .transaction-report .options-table td:nth-child(2) { grid-column: 2; } /* Symbol */
-  .transaction-report .options-table td:nth-child(3) { grid-column: 1; } /* Typ */
-  .transaction-report .options-table td:nth-child(4) { grid-column: 2; } /* Strike */
-  .transaction-report .options-table td:nth-child(5) { grid-column: 1; } /* Expirace */
-  .transaction-report .options-table td:nth-child(6) { grid-column: 2; } /* Akce */
-  .transaction-report .options-table td:nth-child(7) { grid-column: 1; } /* Kontrakty */
-  .transaction-report .options-table td:nth-child(8) { grid-column: 2; } /* Prémium */
-  .transaction-report .options-table td:nth-child(9) { 
-    grid-column: 1 / -1;
-    padding-top: 0.5rem;
-    border-top: 1px solid var(--border-light);
-    border-bottom: none;
-    margin-top: 0.25rem;
-  } /* Celkem */
-  .transaction-report .options-table td:nth-child(10) { grid-column: 1 / -1; border-bottom: none; } /* Poplatky */
-
-  /* Hide empty fees cells on mobile */
-  .transaction-report .transactions-table td[data-label="Poplatky"][data-empty="true"] {
-    display: none;
   }
 }
