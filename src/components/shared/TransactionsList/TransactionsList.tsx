@@ -566,7 +566,7 @@ export function TransactionsList({
                             <MetricValue
                               size="sm"
                               sentiment={
-                                lotStatus.isFullySold ? 'negative' : 'warning'
+                                lotStatus.isFullySold ? 'negative' : undefined
                               }
                             >
                               {lotStatus.isFullySold
@@ -699,7 +699,7 @@ export function TransactionsList({
                                 );
                               }
                               return (
-                                <Text size="sm" color="warning">
+                                <Text size="sm" color="secondary">
                                   Zbývá {formatShares(lotStatus.remaining)}
                                 </Text>
                               );
