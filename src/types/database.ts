@@ -71,6 +71,11 @@ export interface Transaction {
 export interface TransactionWithStock extends Transaction {
   stock?: Stock;
   portfolio?: Portfolio;
+  // For SELL: the source BUY transaction (lot) that was sold
+  source_transaction?: Pick<
+    Transaction,
+    'id' | 'date' | 'price_per_share' | 'currency' | 'quantity'
+  > | null;
 }
 
 // Available lot for selling (BUY transaction with remaining shares)

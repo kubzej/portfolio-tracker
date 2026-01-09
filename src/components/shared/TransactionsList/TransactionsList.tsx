@@ -56,6 +56,21 @@ const TYPE_OPTIONS = [
   { value: 'SELL', label: 'Prodej' },
 ];
 
+// Helper to format source lot info for SELL transactions
+const formatSourceLot = (tx: TransactionWithStock): string | null => {
+  if (tx.type !== 'SELL') return null;
+  if (!tx.source_transaction_id) return 'Celá pozice';
+  if (tx.source_transaction) {
+    const date = formatDate(tx.source_transaction.date);
+    const price = formatPrice(
+      tx.source_transaction.price_per_share,
+      tx.source_transaction.currency
+    );
+    return `${date} @ ${price}`;
+  }
+  return 'Lot';
+};
+
 interface TransactionsListProps {
   /** Portfolio ID - if null, shows all portfolios */
   portfolioId?: string | null;
@@ -262,6 +277,29 @@ export function TransactionsList({
       totalSellCzk: sellTx.reduce((sum, tx) => sum + tx.total_amount_czk, 0),
     };
   }, [filteredTransactions]);
+
+  // Calculate sold quantity per BUY lot
+  const soldPerLot = useMemo(() => {
+    const map = new Map<string, number>();
+    // Go through all transactions (not just filtered) to get accurate counts
+    transactions.forEach((tx) => {
+      if (tx.type === 'SELL' && tx.source_transaction_id) {
+        const current = map.get(tx.source_transaction_id) || 0;
+        map.set(tx.source_transaction_id, current + tx.quantity);
+      }
+    });
+    return map;
+  }, [transactions]);
+
+  // Helper to get lot status for BUY transactions
+  const getLotStatus = (
+    tx: TransactionWithStock
+  ): { sold: number; remaining: number; isFullySold: boolean } | null => {
+    if (tx.type !== 'BUY') return null;
+    const sold = soldPerLot.get(tx.id) || 0;
+    const remaining = tx.quantity - sold;
+    return { sold, remaining, isFullySold: remaining <= 0 };
+  };
 
   const handleDeleteClick = async (transactionId: string) => {
     if (onDeleteTransaction) {
@@ -507,6 +545,38 @@ export function TransactionsList({
                       </div>
                     )}
 
+                    {/* Source lot info for SELL transactions */}
+                    {tx.type === 'SELL' && (
+                      <div className="transaction-card-lot">
+                        <MetricLabel>Lot</MetricLabel>
+                        <MetricValue size="sm">
+                          {formatSourceLot(tx)}
+                        </MetricValue>
+                      </div>
+                    )}
+
+                    {/* Lot status for BUY transactions */}
+                    {tx.type === 'BUY' &&
+                      (() => {
+                        const lotStatus = getLotStatus(tx);
+                        if (!lotStatus || lotStatus.sold === 0) return null;
+                        return (
+                          <div className="transaction-card-lot">
+                            <MetricLabel>Lot</MetricLabel>
+                            <MetricValue
+                              size="sm"
+                              sentiment={
+                                lotStatus.isFullySold ? 'negative' : 'warning'
+                              }
+                            >
+                              {lotStatus.isFullySold
+                                ? 'Prodáno'
+                                : `Zbývá ${formatShares(lotStatus.remaining)}`}
+                            </MetricValue>
+                          </div>
+                        );
+                      })()}
+
                     <div className="transaction-card-body">
                       <div className="transaction-card-stat">
                         <MetricLabel>Množství</MetricLabel>
@@ -546,6 +616,7 @@ export function TransactionsList({
                       )}
                       {!portfolioId && <th>Portfolio</th>}
                       <SortHeader label="Typ" sortKeyName="type" />
+                      <th>Lot</th>
                       <SortHeader
                         label="Množství"
                         sortKeyName="quantity"
@@ -604,6 +675,36 @@ export function TransactionsList({
                           <Badge variant={tx.type === 'BUY' ? 'buy' : 'sell'}>
                             {tx.type}
                           </Badge>
+                        </td>
+                        <td>
+                          {tx.type === 'SELL' ? (
+                            <Text size="sm" color="secondary">
+                              {formatSourceLot(tx)}
+                            </Text>
+                          ) : (
+                            (() => {
+                              const lotStatus = getLotStatus(tx);
+                              if (!lotStatus || lotStatus.sold === 0) {
+                                return (
+                                  <Text size="sm" color="muted">
+                                    —
+                                  </Text>
+                                );
+                              }
+                              if (lotStatus.isFullySold) {
+                                return (
+                                  <Text size="sm" color="danger">
+                                    Prodáno
+                                  </Text>
+                                );
+                              }
+                              return (
+                                <Text size="sm" color="warning">
+                                  Zbývá {formatShares(lotStatus.remaining)}
+                                </Text>
+                              );
+                            })()
+                          )}
                         </td>
                         <td className="right">{formatShares(tx.quantity)}</td>
                         <td className="right">

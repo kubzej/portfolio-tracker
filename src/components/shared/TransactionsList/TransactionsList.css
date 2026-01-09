@@ -146,6 +146,13 @@
   margin-bottom: 0.5rem;
 }
 
+.transaction-card-lot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  margin-bottom: 0.75rem;
+}
+
 .transaction-card-body {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
