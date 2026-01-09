@@ -27,6 +27,7 @@ import { Input } from '@/components/shared/Input';
 import {
   SectionTitle,
   Text,
+  MetricLabel,
   MetricValue,
   Badge,
   Ticker,
@@ -599,6 +600,69 @@ export function TransactionReport({
               fields={STOCK_SORT_FIELDS}
             />
           </div>
+
+          {/* Mobile Cards */}
+          <div className="transaction-cards">
+            {filteredStockTx.map((tx) => (
+              <div key={tx.id} className="transaction-card">
+                <div className="transaction-card-header">
+                  <div className="transaction-card-title">
+                    {tx.stock?.id && onStockClick ? (
+                      <span
+                        onClick={() => onStockClick(tx.stock!.id)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <Ticker>{tx.stock?.ticker}</Ticker>
+                      </span>
+                    ) : (
+                      <Ticker>{tx.stock?.ticker || '—'}</Ticker>
+                    )}
+                    <StockName truncate>{tx.stock?.name || '—'}</StockName>
+                  </div>
+                  <div className="transaction-card-total">
+                    <MetricValue
+                      sentiment={tx.type === 'BUY' ? 'negative' : 'positive'}
+                    >
+                      {formatCurrency(tx.total_amount_czk)}
+                    </MetricValue>
+                    <Badge variant={tx.type === 'BUY' ? 'buy' : 'sell'}>
+                      {tx.type === 'BUY' ? 'Nákup' : 'Prodej'}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="transaction-card-stats">
+                  <div className="transaction-card-stat">
+                    <MetricLabel>Datum</MetricLabel>
+                    <MetricValue>{formatDate(tx.date)}</MetricValue>
+                  </div>
+                  <div className="transaction-card-stat">
+                    <MetricLabel>Množství</MetricLabel>
+                    <MetricValue>{formatShares(tx.quantity)}</MetricValue>
+                  </div>
+                  <div className="transaction-card-stat">
+                    <MetricLabel>Cena</MetricLabel>
+                    <MetricValue>
+                      {formatPrice(tx.price_per_share, tx.currency)}
+                    </MetricValue>
+                  </div>
+                  <div className="transaction-card-stat">
+                    <MetricLabel>Poplatky</MetricLabel>
+                    <MetricValue>
+                      {tx.fees ? formatPrice(tx.fees, tx.currency) : '—'}
+                    </MetricValue>
+                  </div>
+                  {showPortfolioColumn && (
+                    <div className="transaction-card-stat transaction-card-stat--full">
+                      <MetricLabel>Portfolio</MetricLabel>
+                      <MetricValue>{tx.portfolio?.name || '—'}</MetricValue>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table */}
           <div className="table-container">
             <table className="transactions-table">
               <thead>
@@ -625,8 +689,10 @@ export function TransactionReport({
               <tbody>
                 {filteredStockTx.map((tx) => (
                   <tr key={tx.id}>
-                    <td data-label="Datum">{formatDate(tx.date)}</td>
-                    <td data-label="Ticker">
+                    <td>
+                      <Text size="sm">{formatDate(tx.date)}</Text>
+                    </td>
+                    <td>
                       {tx.stock?.id && onStockClick ? (
                         <span
                           onClick={() => onStockClick(tx.stock!.id)}
@@ -638,39 +704,35 @@ export function TransactionReport({
                         <Ticker>{tx.stock?.ticker || '—'}</Ticker>
                       )}
                     </td>
-                    <td data-label="Název">
+                    <td>
                       <StockName truncate>{tx.stock?.name || '—'}</StockName>
                     </td>
                     {showPortfolioColumn && (
-                      <td data-label="Portfolio">
+                      <td>
                         <Text size="sm" color="muted">
                           {tx.portfolio?.name || '—'}
                         </Text>
                       </td>
                     )}
-                    <td data-label="Typ">
+                    <td>
                       <Badge variant={tx.type === 'BUY' ? 'buy' : 'sell'}>
                         {tx.type === 'BUY' ? 'Nákup' : 'Prodej'}
                       </Badge>
                     </td>
-                    <td data-label="Množství" className="align-right">
+                    <td className="align-right">
                       <Text size="sm">{formatShares(tx.quantity)}</Text>
                     </td>
-                    <td data-label="Cena" className="align-right">
+                    <td className="align-right">
                       <Text size="sm">
                         {formatPrice(tx.price_per_share, tx.currency)}
                       </Text>
                     </td>
-                    <td
-                      data-label="Poplatky"
-                      data-empty={!tx.fees}
-                      className="align-right"
-                    >
+                    <td className="align-right">
                       <Text size="sm" color="muted">
                         {tx.fees ? formatPrice(tx.fees, tx.currency) : '—'}
                       </Text>
                     </td>
-                    <td data-label="Celkem CZK" className="align-right">
+                    <td className="align-right">
                       <MetricValue
                         sentiment={tx.type === 'BUY' ? 'negative' : 'positive'}
                       >
@@ -702,6 +764,95 @@ export function TransactionReport({
               fields={OPTION_SORT_FIELDS}
             />
           </div>
+
+          {/* Mobile Cards */}
+          <div className="transaction-cards">
+            {filteredOptionTx.map((tx) => (
+              <div key={tx.id} className="transaction-card">
+                <div className="transaction-card-header">
+                  <div className="transaction-card-title">
+                    <Ticker>{tx.symbol}</Ticker>
+                    <div className="transaction-card-badges">
+                      <Badge
+                        variant={tx.option_type === 'call' ? 'info' : 'warning'}
+                      >
+                        {tx.option_type.toUpperCase()}
+                      </Badge>
+                      <Badge
+                        variant={
+                          tx.action === 'BTO' || tx.action === 'BTC'
+                            ? 'buy'
+                            : tx.action === 'STO' || tx.action === 'STC'
+                            ? 'sell'
+                            : 'hold'
+                        }
+                      >
+                        {tx.action}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="transaction-card-total">
+                    <MetricValue
+                      sentiment={
+                        tx.action === 'STO' || tx.action === 'STC'
+                          ? 'positive'
+                          : tx.action === 'BTO' || tx.action === 'BTC'
+                          ? 'negative'
+                          : 'neutral'
+                      }
+                    >
+                      {tx.total_premium !== null
+                        ? formatPrice(tx.total_premium, 'USD')
+                        : '—'}
+                    </MetricValue>
+                  </div>
+                </div>
+                <div className="transaction-card-stats">
+                  <div className="transaction-card-stat">
+                    <MetricLabel>Datum</MetricLabel>
+                    <MetricValue>{formatDate(tx.date)}</MetricValue>
+                  </div>
+                  <div className="transaction-card-stat">
+                    <MetricLabel>Strike</MetricLabel>
+                    <MetricValue>${tx.strike_price}</MetricValue>
+                  </div>
+                  <div className="transaction-card-stat">
+                    <MetricLabel>Expirace</MetricLabel>
+                    <MetricValue>{formatDate(tx.expiration_date)}</MetricValue>
+                  </div>
+                  <div className="transaction-card-stat">
+                    <MetricLabel>Kontrakty</MetricLabel>
+                    <MetricValue>{tx.contracts}</MetricValue>
+                  </div>
+                  <div className="transaction-card-stat">
+                    <MetricLabel>Prémium</MetricLabel>
+                    <MetricValue>
+                      {tx.premium !== null
+                        ? formatPrice(tx.premium, 'USD')
+                        : '—'}
+                    </MetricValue>
+                  </div>
+                  <div className="transaction-card-stat">
+                    <MetricLabel>Poplatky</MetricLabel>
+                    <MetricValue>
+                      {tx.fees ? formatPrice(tx.fees, 'USD') : '—'}
+                    </MetricValue>
+                  </div>
+                  {showPortfolioColumn && (
+                    <div className="transaction-card-stat transaction-card-stat--full">
+                      <MetricLabel>Portfolio</MetricLabel>
+                      <MetricValue>
+                        {portfolios.find((p) => p.id === tx.portfolio_id)
+                          ?.name || '—'}
+                      </MetricValue>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table */}
           <div className="table-container">
             <table className="transactions-table options-table">
               <thead>
@@ -726,32 +877,34 @@ export function TransactionReport({
               <tbody>
                 {filteredOptionTx.map((tx) => (
                   <tr key={tx.id}>
-                    <td data-label="Datum">{formatDate(tx.date)}</td>
-                    <td data-label="Symbol">
+                    <td>
+                      <Text size="sm">{formatDate(tx.date)}</Text>
+                    </td>
+                    <td>
                       <Ticker>{tx.symbol}</Ticker>
                     </td>
-                    <td data-label="Typ">
+                    <td>
                       <Badge
                         variant={tx.option_type === 'call' ? 'info' : 'warning'}
                       >
                         {tx.option_type.toUpperCase()}
                       </Badge>
                     </td>
-                    <td data-label="Strike">
+                    <td>
                       <Text size="sm">${tx.strike_price}</Text>
                     </td>
-                    <td data-label="Expirace">
+                    <td>
                       <Text size="sm">{formatDate(tx.expiration_date)}</Text>
                     </td>
                     {showPortfolioColumn && (
-                      <td data-label="Portfolio">
+                      <td>
                         <Text size="sm" color="muted">
                           {portfolios.find((p) => p.id === tx.portfolio_id)
                             ?.name || '—'}
                         </Text>
                       </td>
                     )}
-                    <td data-label="Akce">
+                    <td>
                       <Badge
                         variant={
                           tx.action === 'BTO' || tx.action === 'BTC'
@@ -764,17 +917,17 @@ export function TransactionReport({
                         {tx.action}
                       </Badge>
                     </td>
-                    <td data-label="Kontrakty" className="align-right">
+                    <td className="align-right">
                       <Text size="sm">{tx.contracts}</Text>
                     </td>
-                    <td data-label="Prémium" className="align-right">
+                    <td className="align-right">
                       <Text size="sm">
                         {tx.premium !== null
                           ? formatPrice(tx.premium, 'USD')
                           : '—'}
                       </Text>
                     </td>
-                    <td data-label="Celkem" className="align-right">
+                    <td className="align-right">
                       <MetricValue
                         sentiment={
                           tx.action === 'STO' || tx.action === 'STC'
@@ -789,11 +942,7 @@ export function TransactionReport({
                           : '—'}
                       </MetricValue>
                     </td>
-                    <td
-                      data-label="Poplatky"
-                      data-empty={!tx.fees}
-                      className="align-right"
-                    >
+                    <td className="align-right">
                       <Text size="sm" color="muted">
                         {tx.fees ? formatPrice(tx.fees, 'USD') : '—'}
                       </Text>

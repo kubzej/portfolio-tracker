@@ -18,7 +18,8 @@ export const transactionsApi = {
         `
         *,
         stock:stocks (*),
-        portfolio:portfolios (*)
+        portfolio:portfolios (*),
+        source_transaction:source_transaction_id (id, date, price_per_share, currency, quantity)
       `
       )
       .order('date', { ascending: false });
@@ -46,7 +47,8 @@ export const transactionsApi = {
         `
         *,
         stock:stocks (*),
-        portfolio:portfolios (*)
+        portfolio:portfolios (*),
+        source_transaction:source_transaction_id (id, date, price_per_share, currency, quantity)
       `
       )
       .eq('stock_id', stockId)
@@ -71,7 +73,8 @@ export const transactionsApi = {
       .select(
         `
         *,
-        stock:stocks (*)
+        stock:stocks (*),
+        source_transaction:source_transaction_id (id, date, price_per_share, currency, quantity)
       `
       )
       .eq('id', id)
@@ -146,7 +149,8 @@ export const transactionsApi = {
       .select(
         `
         *,
-        stock:stocks (*)
+        stock:stocks (*),
+        source_transaction:source_transaction_id (id, date, price_per_share, currency, quantity)
       `
       )
       .gte('date', startDate)
@@ -166,7 +170,8 @@ export const transactionsApi = {
       .select(
         `
         *,
-        stock:stocks (*)
+        stock:stocks (*),
+        source_transaction:source_transaction_id (id, date, price_per_share, currency, quantity)
       `
       )
       .order('date', { ascending: false })

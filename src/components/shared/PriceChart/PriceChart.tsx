@@ -294,20 +294,33 @@ export function PriceChart({
 
   // Data to display in header (hovered or latest)
   const displayData = useMemo(() => {
-    const data =
-      activeIndex !== null && chartData[activeIndex]
-        ? chartData[activeIndex]
-        : chartData.length > 0
-        ? chartData[chartData.length - 1]
-        : null;
-    if (!data) return null;
+    if (chartData.length === 0) return null;
 
-    // Daily change: close vs open of the same day
-    const change = data.close - data.open;
-    const changePercent = data.open !== 0 ? (change / data.open) * 100 : 0;
+    const firstPrice = chartData[0].close;
+    const lastData = chartData[chartData.length - 1];
+    const lastPrice = lastData.close;
+
+    // If hovering over a specific point
+    if (activeIndex !== null && chartData[activeIndex]) {
+      const hoveredData = chartData[activeIndex];
+      // Show change: hovered price vs current (last) price
+      const change = hoveredData.close - lastPrice;
+      const changePercent = lastPrice !== 0 ? (change / lastPrice) * 100 : 0;
+
+      return {
+        ...hoveredData,
+        change,
+        changePercent,
+        isPositive: change >= 0,
+      };
+    }
+
+    // Default: show period change (current vs first price in period)
+    const change = lastPrice - firstPrice;
+    const changePercent = firstPrice !== 0 ? (change / firstPrice) * 100 : 0;
 
     return {
-      ...data,
+      ...lastData,
       change,
       changePercent,
       isPositive: change >= 0,
