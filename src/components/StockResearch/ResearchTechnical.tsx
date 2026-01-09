@@ -436,13 +436,13 @@ export function ResearchTechnical({
           </div>
           <div className="rsi-info-cards">
             <div className="rsi-info-card">
-              <Text size="sm" weight="semibold" color="danger">
-                &gt;70 Overbought
+              <Text size="sm" weight="semibold" color="success">
+                &lt;30 Oversold
               </Text>
               <Text size="xs" color="secondary">
-                Možný pokles
+                Možný odraz
               </Text>
-              <InfoTooltip text="**Překoupená (>70)** | Akcie rostla příliš rychle a může být 'přehřátá'. | • Často následuje korekce (pokles ceny) | • Rizikový čas pro nákup, možný čas pro prodej." />
+              <InfoTooltip text="**Přeprodaná (<30)** | Akcie klesla příliš rychle a může být 've slevě'. | • Často následuje odraz ceny nahoru (rebound) | • Může být dobrá příležitost k nákupu (pokud je firma zdravá)." />
             </div>
             <div className="rsi-info-card">
               <Text size="sm" weight="semibold" color="secondary">
@@ -454,13 +454,13 @@ export function ResearchTechnical({
               <InfoTooltip text="**Neutrální (30-70)** | Cena se pohybuje v normálním rozmezí. | • RSI nad 50 značí spíše rostoucí trend | • RSI pod 50 značí spíše klesající trend." />
             </div>
             <div className="rsi-info-card">
-              <Text size="sm" weight="semibold" color="success">
-                &lt;30 Oversold
+              <Text size="sm" weight="semibold" color="danger">
+                &gt;70 Overbought
               </Text>
               <Text size="xs" color="secondary">
-                Možný odraz
+                Možný pokles
               </Text>
-              <InfoTooltip text="**Přeprodaná (<30)** | Akcie klesla příliš rychle a může být 've slevě'. | • Často následuje odraz ceny nahoru (rebound) | • Může být dobrá příležitost k nákupu (pokud je firma zdravá)." />
+              <InfoTooltip text="**Překoupená (>70)** | Akcie rostla příliš rychle a může být 'přehřátá'. | • Často následuje korekce (pokles ceny) | • Rizikový čas pro nákup, možný čas pro prodej." />
             </div>
           </div>
           <div className="rsi-current">
